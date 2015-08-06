@@ -57,7 +57,8 @@ DISTFILES += \
     ../kiss_fft130/README \
     ../qcustomplot/changelog.txt \
     ../qcustomplot/GPL.txt \
-    jmsk.rc
+    jmsk.rc \
+    ../README.md
 
 win32 {
 RC_FILE = jmsk.rc
