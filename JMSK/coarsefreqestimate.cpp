@@ -63,11 +63,11 @@ void CoarseFreqEstimate::ProcessBasebandData(const QVector<cpx_type> &data)
     assert(nfft==data.size());
 
     //remove high frequencies then square and do fft and shift (0hz bin is at nfft/2)
-    fft->transform(data.data(),out.data());
+    fft->transform(data,out);
     for(int i=startbin;i<=stopbin;i++)out[i]=0;
-    ifft->transform(out.data(),in.data());
+    ifft->transform(out,in);
     for(int i=0;i<nfft;i++)in[i]=in[i]*in[i];
-    fft->transform(in.data(),out.data());
+    fft->transform(in,out);
     for(int i=0;i<nfft/2;i++)std::swap(out[i+nfft/2],out[i]);
 
 

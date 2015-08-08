@@ -6,7 +6,7 @@ QSpectrumDisplay::QSpectrumDisplay(QWidget *parent)
     : QCustomPlot(parent)
 {
 
-    fft = new FFT(pow(2,SPECTRUM_FFT_POWER),false);
+    fftr = new FFTr(pow(2,SPECTRUM_FFT_POWER),false);
     addGraph();
 
     timer.start();
@@ -75,7 +75,7 @@ void QSpectrumDisplay::setSampleRate(double samplerate)
 
 QSpectrumDisplay::~QSpectrumDisplay()
 {
-    delete fft;
+    delete fftr;
 }
 
 void QSpectrumDisplay::setPlottables(double freq_est,double _freq_center,double bandwidth)
@@ -104,7 +104,7 @@ void QSpectrumDisplay::setFFTData(const QVector<double> &data)
     {
         in[i]=hann_window[i]*data[i];
     }
-    fft->transform(in.data(),out.data());
+    fftr->transform(in,out);
     double maxval=0;
     double aveval=0;
     for(int i=0;i<spec_log_abs_vals.size();i++)

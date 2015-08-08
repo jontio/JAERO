@@ -4,9 +4,9 @@
 #include <QObject>
 #include <QVector>
 
-#include "../kiss_fft130/kissfft.hh"
+#include "fftwrapper.h"
 
-typedef kissfft<double> FFT;
+typedef FFTWrapper<double> FFT;
 typedef std::complex<double> cpx_type;
 
 class CoarseFreqEstimate : public QObject

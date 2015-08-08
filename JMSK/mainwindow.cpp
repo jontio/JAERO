@@ -1,7 +1,6 @@
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
 #include <QDebug>
-#include "../kiss_fft130/kissfft.hh"
 
 
 MainWindow::MainWindow(QWidget *parent) :

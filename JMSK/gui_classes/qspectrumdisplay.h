@@ -6,9 +6,9 @@
 #include <vector>
 
 #include "../../qcustomplot/qcustomplot.h"
-#include "../../kiss_fft130/kissfft.hh"
+#include "fftrwrapper.h"
 
-typedef kissfft<double> FFT;
+typedef FFTrWrapper<double> FFTr;
 typedef std::complex<double> cpx_type;
 
 #include <QMouseEvent>
@@ -34,9 +34,9 @@ protected:
 private:
     QCPBars *freqmarker;
     QCPBars *lockingbwbar;
-    FFT *fft;
+    FFTr *fftr;
     QVector<cpx_type> out;
-    QVector<cpx_type> in;
+    QVector<double> in;
     QVector<double> spec_log_abs_vals;
     QVector<double> spec_freq_vals;
     QVector<double> hann_window;

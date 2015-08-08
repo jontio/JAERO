@@ -12,6 +12,14 @@ greaterThan(QT_MAJOR_VERSION, 4): QT += widgets  printsupport
 TARGET = JMSK
 TEMPLATE = app
 
+#message("QT_ARCH is \"$$QT_ARCH\"");
+contains(QT_ARCH, i386) {
+    #message("32-bit")
+    DEFINES += kiss_fft_scalar=float
+} else {
+    #message("64-bit")
+    DEFINES += kiss_fft_scalar=double
+}
 
 SOURCES += main.cpp\
         mainwindow.cpp \
@@ -26,7 +34,11 @@ SOURCES += main.cpp\
     gui_classes/qspectrumdisplay.cpp \
     gui_classes/qled.cpp \
     varicodepipedecoder.cpp \
-    varicodewrapper.cpp
+    varicodewrapper.cpp \
+    ../kiss_fft130/kiss_fft.c \
+    fftwrapper.cpp \
+    fftrwrapper.cpp \
+    ../kiss_fft130/kiss_fftr.c
 
 HEADERS  += mainwindow.h \
     coarsefreqestimate.h \
@@ -42,7 +54,11 @@ HEADERS  += mainwindow.h \
     gui_classes/qled.h \
     varicodepipedecoder.h \
     varicodewrapper.h \
-    ../kiss_fft130/kissfft.hh
+    ../kiss_fft130/_kiss_fft_guts.h \
+    ../kiss_fft130/kiss_fft.h \
+    fftwrapper.h \
+    fftrwrapper.h \
+    ../kiss_fft130/kiss_fftr.h
 
 FORMS    += mainwindow.ui
 
