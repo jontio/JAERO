@@ -5,7 +5,11 @@
 #include <QUdpSocket>
 #include <QLabel>
 #include "audiomskdemodulator.h"
+#include "audiomskmodulator.h"
 #include "varicodepipedecoder.h"
+#include "varicodepipeencoder.h"
+#include "serialppt.h"
+#include "gui_classes/settingsdialog.h"
 
 namespace Ui {
 class MainWindow;
@@ -27,6 +31,15 @@ private:
     QLabel *freqlabel;
     QUdpSocket *udpsocket;
     VariCodePipeDecoder *varicodepipedecoder;
+
+    //modulator
+    AudioMskModulator *audiomskmodulator;
+    AudioMskModulator::Settings audiomskmodulatorsettings;
+    VariCodePipeEncoder *varicodepipeencoder;
+    SerialPPT *serialPPT;
+
+    SettingsDialog *settingsdialog;
+
 private slots:
     void SignalStatusSlot(bool signal);
     void EbNoSlot(double EbNo);
@@ -42,6 +55,7 @@ private slots:
     void on_comboBoxdisplay_currentIndexChanged(const QString &arg1);
     void on_actionConnectToUDPPort_toggled(bool arg1);
     void on_actionRawOutput_triggered();
+    void on_action_Settings_triggered();
 };
 
 #endif // MAINWINDOW_H

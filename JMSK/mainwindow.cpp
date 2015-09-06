@@ -8,9 +8,19 @@ MainWindow::MainWindow(QWidget *parent) :
     ui(new Ui::MainWindow)
 {
     ui->setupUi(this);
+
+    //create the modulator, varicode encoder pipe, and serial ppt
+    varicodepipeencoder = new VariCodePipeEncoder(this);
+    audiomskmodulator = new AudioMskModulator(this);
+    serialPPT = new SerialPPT(this);
+
+    //create settings dialog. only some modulator settings are held atm.
+    settingsdialog = new SettingsDialog(this);
+
+    //create the demodulator
     audiomskdemodulator = new AudioMskDemodulator(this);
 
-    //a udp socket and a varicode decoder as sinks if wanted
+    //create a udp socket and a varicode decoder pipe
     udpsocket = new QUdpSocket(this);
     varicodepipedecoder = new VariCodePipeDecoder(this);
 
@@ -56,7 +66,6 @@ MainWindow::MainWindow(QWidget *parent) :
     ui->actionRawOutput->setChecked(settings.value("actionRawOutput",false).toBool());
     double tmpfreq=settings.value("freq_center",1000).toDouble();
 
-
     //set audio msk demodulator settings and start
     on_comboBoxafc_currentIndexChanged(ui->comboBoxafc->currentText());
     on_comboBoxsql_currentIndexChanged(ui->comboBoxsql->currentText());
@@ -67,6 +76,38 @@ MainWindow::MainWindow(QWidget *parent) :
     audiomskdemodulatorsettings.freq_center=tmpfreq;
     audiomskdemodulator->setSettings(audiomskdemodulatorsettings);
     audiomskdemodulator->start();
+
+
+
+    //start modulator setup. the modulator is new and is and add on.
+
+        //connect the modulator to the encoder to the text widget
+        audiomskmodulator->ConnectSourceDevice(varicodepipeencoder);
+        varicodepipeencoder->ConnectSourceDevice(ui->inputwidget->textinputdevice);
+
+        //connect tx button, idle button, clear tx window, ptt and soundard to things
+        connect(ui->actionTXRX,SIGNAL(triggered(bool)),audiomskmodulator,SLOT(startstop(bool)));
+        connect(ui->actionTXRX,SIGNAL(triggered(bool)),ui->inputwidget,SLOT(reset()));
+        connect(ui->actionTXRX,SIGNAL(triggered(bool)),serialPPT,SLOT(setPPT(bool)));
+        connect(ui->inputwidget->textinputdevice,SIGNAL(eof()),audiomskmodulator,SLOT(stopgraceful()));
+        connect(audiomskmodulator,SIGNAL(statechanged(bool)),ui->actionTXRX,SLOT(setChecked(bool)));
+        connect(audiomskmodulator,SIGNAL(statechanged(bool)),serialPPT,SLOT(setPPT(bool)));
+        connect(audiomskmodulator,SIGNAL(closed()),ui->inputwidget,SLOT(reset()));
+        connect(ui->actionIdleTX,SIGNAL(triggered(bool)),ui->inputwidget->textinputdevice,SLOT(setIdle_on_eof(bool)));
+        connect(ui->actionClearTXWindow,SIGNAL(triggered(bool)),ui->inputwidget,SLOT(clear()));
+        connect(serialPPT,SIGNAL(Warning(QString)),this,SLOT(WarningTextSlot(QString)));
+
+        //set audio msk modulator settings
+        settingsdialog->populatesettings();
+        audiomskmodulatorsettings.freq_center=settingsdialog->audiomskmodulatorsettings.freq_center;//this is the only one that gets set
+        ui->inputwidget->textinputdevice->preamble=settingsdialog->Preamble;
+        ui->inputwidget->textinputdevice->postamble=settingsdialog->Postamble;
+        serialPPT->setportname(settingsdialog->Serialportname);
+        serialPPT->setPPT(ui->actionTXRX->isChecked());
+        audiomskmodulator->setSettings(audiomskmodulatorsettings);
+
+    //--end modulator setup
+
 
 }
 
@@ -101,7 +142,7 @@ void MainWindow::EbNoSlot(double EbNo)
 
 void MainWindow::WarningTextSlot(QString warning)
 {
-    ui->statusBar->showMessage("Warning: "+warning,1000);
+    ui->statusBar->showMessage("Warning: "+warning,5000);
 }
 
 void MainWindow::PeakVolumeSlot(double Volume)
@@ -122,14 +163,17 @@ void MainWindow::PlottablesSlot(double freq_est,double freq_center,double bandwi
 void MainWindow::AboutSlot()
 {
     QMessageBox::about(this,"JMSK",""
-                                     "<H1>An MSK/GMSK demodulator</H1>"
-                                     "<p>This is a program to demodulate varicode encoded differentially encoded MSK or GMSK.</p>"
+                                     "<H1>An MSK/GMSK modem</H1>"
+                                     "<H3>v1.1.0</H3>"
+                                     "<p>This is a program to modulate and or demodulate varicode encoded differentially encoded MSK or GMSK.</p>"
                                      "<p>For more information about this application see <a href=\"http://jontio.zapto.org/hda1/jmsk.html\">http://jontio.zapto.org/hda1/jmsk.html</a>.</p>"
                                      "<p>Jonti 2015</p>" );
 }
 
 void MainWindow::on_comboBoxbps_currentIndexChanged(const QString &arg1)
 {
+
+    //demodulator settings
     audiomskdemodulatorsettings.fb=arg1.split(" ")[0].toDouble();
     audiomskdemodulatorsettings.Fs=8000;
     if(audiomskdemodulatorsettings.fb==50)audiomskdemodulatorsettings.symbolspercycle=8;
@@ -142,6 +186,12 @@ void MainWindow::on_comboBoxbps_currentIndexChanged(const QString &arg1)
     if(idx>=0)ui->comboBoxlbw->setCurrentIndex(idx);
     audiomskdemodulatorsettings.freq_center=audiomskdemodulator->getCurrentFreq();
     audiomskdemodulator->setSettings(audiomskdemodulatorsettings);
+
+    //modulator setting
+    audiomskmodulatorsettings.fb=audiomskdemodulatorsettings.fb;
+    audiomskmodulatorsettings.Fs=audiomskdemodulatorsettings.Fs;
+    audiomskmodulator->setSettings(audiomskmodulatorsettings);
+
 }
 
 void MainWindow::on_comboBoxlbw_currentIndexChanged(const QString &arg1)
@@ -212,4 +262,22 @@ void MainWindow::on_actionConnectToUDPPort_toggled(bool arg1)
 void MainWindow::on_actionRawOutput_triggered()
 {
     on_actionConnectToUDPPort_toggled(ui->actionConnectToUDPPort->isChecked());
+}
+
+void MainWindow::on_action_Settings_triggered()
+{
+    settingsdialog->populatesettings();
+    if(settingsdialog->exec()==QDialog::Accepted)
+    {
+        ui->statusBar->clearMessage();
+        ui->inputwidget->textinputdevice->preamble=settingsdialog->Preamble;
+        ui->inputwidget->textinputdevice->postamble=settingsdialog->Postamble;
+        if(audiomskmodulatorsettings.freq_center!=settingsdialog->audiomskmodulatorsettings.freq_center)
+        {
+            audiomskmodulatorsettings.freq_center=settingsdialog->audiomskmodulatorsettings.freq_center;//this is the only one that gets set
+            audiomskmodulator->setSettings(audiomskmodulatorsettings);
+        }
+        serialPPT->setportname(settingsdialog->Serialportname);
+        serialPPT->setPPT(ui->actionTXRX->isChecked());
+    }
 }

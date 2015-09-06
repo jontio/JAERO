@@ -1,0 +1,15 @@
+<?xml version="1.0"?>
+<svg width="500" height="500" xmlns="http://www.w3.org/2000/svg" xmlns:svg="http://www.w3.org/2000/svg">
+ <!-- Created with SVG-edit - http://svg-edit.googlecode.com/ -->
+ <defs>
+  <radialGradient gradientTransform="translate(0.995,0) scale(-0.99,1)" r="0.786718" cy="0.5" cx="0.5" spreadMethod="pad" id="svg_22">
+   <stop offset="0" stop-opacity="0.996094" stop-color="#ff2a2a"/>
+   <stop offset="1" stop-opacity="0.996094" stop-color="#ff0000"/>
+  </radialGradient>
+ </defs>
+ <g>
+  <title>Layer 1</title>
+  <rect ry="25" rx="25" id="svg_13" height="413" width="413" y="43.5" x="43.5" stroke-linecap="null" stroke-linejoin="null" stroke-dasharray="null" stroke-width="2" stroke="#000000" fill="url(#svg_22)"/>
+  <text transform="matrix(8.95368, 0, 0, 9.42379, -1419.37, -1941.46)" xml:space="preserve" text-anchor="middle" font-family="Serif" font-size="24" id="svg_12" y="240.928366" x="186.215328" stroke-linecap="null" stroke-linejoin="null" stroke-dasharray="null" stroke-width="0" stroke="#000000" fill="#000000">TX</text>
+ </g>
+</svg>

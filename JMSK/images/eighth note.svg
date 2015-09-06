@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+<svg xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" xmlns="http://www.w3.org/2000/svg" xmlns:cc="http://creativecommons.org/ns#" xmlns:xlink="http://www.w3.org/1999/xlink" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:svg="http://www.w3.org/2000/svg" xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape" xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd" xmlns:ns1="http://sozi.baierouge.fr" id="svg2986" viewBox="0 0 744.09 1052.4" version="1.1" inkscape:version="0.91 r13725">
+  <title id="title3044">eighth note</title>
+  <defs id="defs2988">
+    <linearGradient id="linearGradient3019" y2="333.89" gradientUnits="userSpaceOnUse" x2="490.53" gradientTransform="matrix(2.0779 0 0 2.0779 -518.08 -281.8)" y1="489.14" x1="382.34">
+      <stop id="stop3015" style="stop-color:#000000;stop-opacity:.82639" offset="0"/>
+      <stop id="stop3017" style="stop-color:#000000" offset="1"/>
+    </linearGradient>
+  </defs>
+  <g id="layer1">
+    <path id="path3" style="stroke-linejoin:round;fill-rule:evenodd;stroke:#000000;stroke-linecap:round;stroke-width:5.9241;fill:url(#linearGradient3019)" d="m418.39 231.34c14.32 21.136 21.682 46.728 40.135 64.982 21.135 27.835 48.146 50.891 69.089 79.058 15.157 19.681 31.771 40.599 36.074 65.357 11.587 31.757 6.556 67.409-5.8056 98.498-13.947 16.765-23.482-4.9319-19.589-18.365 0.59324-18.535 0.32293-37.021-6.7859-54.528-6.3047-26.255-17.834-51.101-37.136-70.366-16.772-14.701-35.813-47.095-61.382-35.941-16.885 10.637-9.5289 32.139-11.346 48.712-1.0035 101.95-1.0707 203.94-2.7005 305.87-1.2461 42.809-38.247 71.529-72.88 89.908-30.854 18.567-67.795 28.966-103.61 20.691-33.304-3.4173-67.756-27.73-68.454-63.704-2.2204-41.711 27.904-80.552 64.988-97.024 36.404-20.749 82.429-25.246 121.63-10.331 19.156 6.0549 24.483-11.721 26.874-28.819 2.2123-129.77 3.9829-259.54 4.4354-389.33 0.36593-12.973 21.496-16.139 26.461-4.6603z"/>
+  </g>
+  <metadata>
+    <rdf:RDF>
+      <cc:Work>
+        <dc:format>image/svg+xml</dc:format>
+        <dc:type rdf:resource="http://purl.org/dc/dcmitype/StillImage"/>
+        <cc:license rdf:resource="http://creativecommons.org/licenses/publicdomain/"/>
+        <dc:publisher>
+          <cc:Agent rdf:about="http://openclipart.org/">
+            <dc:title>Openclipart</dc:title>
+          </cc:Agent>
+        </dc:publisher>
+        <dc:title>Eighth Note (Stem Facing Up)</dc:title>
+        <dc:date>2010-10-27T16:06:43</dc:date>
+        <dc:description>a single stem facing up eighth note</dc:description>
+        <dc:source>https://openclipart.org/detail/92869/eighth-note-(stem-facing-up)-by-jaschon</dc:source>
+        <dc:creator>
+          <cc:Agent>
+            <dc:title>jaschon</dc:title>
+          </cc:Agent>
+        </dc:creator>
+        <dc:subject>
+          <rdf:Bag>
+            <rdf:li>black and white</rdf:li>
+            <rdf:li>eighth</rdf:li>
+            <rdf:li>flag</rdf:li>
+            <rdf:li>music</rdf:li>
+            <rdf:li>music note</rdf:li>
+            <rdf:li>musical notation</rdf:li>
+            <rdf:li>quaver</rdf:li>
+            <rdf:li>sound</rdf:li>
+            <rdf:li>staff</rdf:li>
+          </rdf:Bag>
+        </dc:subject>
+      </cc:Work>
+      <cc:License rdf:about="http://creativecommons.org/licenses/publicdomain/">
+        <cc:permits rdf:resource="http://creativecommons.org/ns#Reproduction"/>
+        <cc:permits rdf:resource="http://creativecommons.org/ns#Distribution"/>
+        <cc:permits rdf:resource="http://creativecommons.org/ns#DerivativeWorks"/>
+      </cc:License>
+    </rdf:RDF>
+  </metadata>
+</svg>

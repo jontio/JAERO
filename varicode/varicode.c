@@ -47,7 +47,7 @@ int varicode_encode1(short varicode_out[], char ascii_in[], int max_out, int n_i
 
     while(n_in && (n_out < max_out)) {
 
-        assert((unsigned int)(*ascii_in) < 128);
+        assert(((unsigned int)(*ascii_in)) < 128);
 
         index = 2*(unsigned int)(*ascii_in);
         byte1 = varicode_table1[index];

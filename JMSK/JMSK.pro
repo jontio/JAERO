@@ -7,7 +7,7 @@
 
 QT       += multimedia core gui svg
 
-greaterThan(QT_MAJOR_VERSION, 4): QT += widgets  printsupport
+greaterThan(QT_MAJOR_VERSION, 4): QT += widgets  printsupport serialport
 
 TARGET = JMSK
 TEMPLATE = app
@@ -38,7 +38,13 @@ SOURCES += main.cpp\
     ../kiss_fft130/kiss_fft.c \
     fftwrapper.cpp \
     fftrwrapper.cpp \
-    ../kiss_fft130/kiss_fftr.c
+    ../kiss_fft130/kiss_fftr.c \
+    mskmodulator.cpp \
+    audiomskmodulator.cpp \
+    varicodepipeencoder.cpp \
+    gui_classes/textinputwidget.cpp \
+    gui_classes/settingsdialog.cpp \
+    serialppt.cpp
 
 HEADERS  += mainwindow.h \
     coarsefreqestimate.h \
@@ -58,9 +64,16 @@ HEADERS  += mainwindow.h \
     ../kiss_fft130/kiss_fft.h \
     fftwrapper.h \
     fftrwrapper.h \
-    ../kiss_fft130/kiss_fftr.h
+    ../kiss_fft130/kiss_fftr.h \
+    mskmodulator.h \
+    audiomskmodulator.h \
+    varicodepipeencoder.h \
+    gui_classes/textinputwidget.h \
+    gui_classes/settingsdialog.h \
+    serialppt.h
 
-FORMS    += mainwindow.ui
+FORMS    += mainwindow.ui \
+    gui_classes/settingsdialog.ui
 
 RESOURCES += \
     jmsk.qrc

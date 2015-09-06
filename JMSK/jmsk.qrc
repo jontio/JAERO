@@ -10,5 +10,8 @@
         <file>images/off_led.svg</file>
         <file>images/primary-binary.svg</file>
         <file>images/primary-modem.svg</file>
+        <file>images/rx.svg</file>
+        <file>images/tx.svg</file>
+        <file>images/eighth note.svg</file>
     </qresource>
 </RCC>

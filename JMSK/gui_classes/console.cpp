@@ -55,7 +55,7 @@ Console::Console(QWidget *parent)
     consoledevice = new ConsoleDevice(this);
     connect(consoledevice,SIGNAL(PlainData(QByteArray)),this,SLOT(putPlainData(QByteArray)));
 
-    document()->setMaximumBlockCount(100);
+    document()->setMaximumBlockCount(1000);
     /*QPalette p = palette();
     p.setColor(QPalette::Base, Qt::white);//black);
     p.setColor(QPalette::Text, Qt::black);//green);
@@ -107,8 +107,13 @@ void Console::setEnableUpdates(bool enable)
 }
 
 //sort of works but has problems when the top line is deleted, then everything moves up by 1 line. how to fix?
-void Console::putPlainData(const QByteArray &data)
+//if someone could do a better job of this that would be good.
+void Console::putPlainData(const QByteArray &_data)
 {
+
+    QByteArray data=_data;
+    data.replace((char)22,"");
+
     if(!enableupdates)return;
     const QTextCursor old_cursor = textCursor();
     const int old_scrollbar_value = verticalScrollBar()->value();
