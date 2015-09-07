@@ -69,12 +69,17 @@ void AudioMskModulator::DelayedStateOpenSlot()
 
 void AudioMskModulator::setSettings(Settings _settings)
 {
-    bool wasopen=isOpen();
-    stop();
+
+    //can change the modulator setting while it is running.
+    MskModulator::setSettings(_settings);
 
     //if Fs has changed or the audio device doesnt exist then need to redo the audio device
     if((_settings.Fs!=settings.Fs)||(!m_audioOutput))
     {
+        bool wasopen=isOpen();
+
+        stop();
+
         settings=_settings;
 
         if(m_audioOutput)
@@ -95,11 +100,12 @@ void AudioMskModulator::setSettings(Settings _settings)
         m_audioOutput = new QAudioOutput(settings.audio_device_out, m_format, this);
         m_audioOutput->setBufferSize(settings.Fs);//1 second buffer
         connect(m_audioOutput,SIGNAL(stateChanged(QAudio::State)),this,SLOT(stateChanged(QAudio::State)));
+
+        if(wasopen)start();
     }
     settings=_settings;
 
-    MskModulator::setSettings(settings);
 
-    if(wasopen)start();
+
 
 }

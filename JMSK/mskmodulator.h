@@ -22,11 +22,13 @@ public:
         double freq_center;
         double fb;
         double Fs;
+        double secondsbeforereadysignalemited;
         Settings()
         {
             freq_center=1000;//Hz
             fb=125;//bps
             Fs=8000;//Hz
+            secondsbeforereadysignalemited=0;
         }
     };
     explicit MskModulator(QObject *parent);
@@ -41,6 +43,8 @@ public:
     qint64 readData(char *data, qint64 maxlen);
     qint64 writeData(const char *data, qint64 len);
     void setSettings(Settings settings);
+signals:
+    void ReadyState();
 private:
     WaveTable osc;
     WaveTable st;
@@ -48,6 +52,9 @@ private:
     BaceConverter bc;
 
     QPointer<QIODevice> pdatasourcedevice;
+
+    int bitcounter;
+    int bitstosendbeforereadystatesignal;
 
 };
 

@@ -68,9 +68,8 @@ double  WaveTable::DistancebetweenWT(double WTptr1, double WTptr2)
 
 void  WaveTable::WTnextFrame()
 {
-    //assert(WTstep>=0.0);
     assert(WTptr>=0.0);
-    if(WTstep<0){WTstep=0;qDebug()<<"123456";}
+    if(WTstep<0)WTstep=0;
     WTptr+=WTstep;
     while(((int)WTptr)>=WTSIZE) WTptr-=WTSIZE;
 }
@@ -127,7 +126,7 @@ void  WaveTable::WTsetFreq(int _freq,int _samplerate)
     freq=_freq;
     if(freq<0)freq=0;
     WTstep=((double)freq)*WTSIZE/((float)samplerate);
-    WTptr=0.0;
+    while(((int)WTptr)>=WTSIZE) WTptr-=WTSIZE;
 }
 
 void  WaveTable::SetFreq(double _freq,int _samplerate)
@@ -136,7 +135,7 @@ void  WaveTable::SetFreq(double _freq,int _samplerate)
     samplerate=_samplerate;
     if(freq<0)freq=0;
     WTstep=(freq)*((double)WTSIZE)/((float)samplerate);
-    WTptr=0.0;
+    while(((int)WTptr)>=WTSIZE) WTptr-=WTSIZE;
 }
 
 void  WaveTable::SetFreq(double _freq)

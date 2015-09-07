@@ -20,6 +20,8 @@ public:
 
     QString Serialportname;
     QString Preamble;
+    QString Preamble1;
+    QString Preamble2;
     QString Postamble;
     AudioMskModulator::Settings audiomskmodulatorsettings;
 

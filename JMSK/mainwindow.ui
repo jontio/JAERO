@@ -513,13 +513,11 @@
    <attribute name="toolBarBreak">
     <bool>false</bool>
    </attribute>
-   <addaction name="action_Settings"/>
-   <addaction name="separator"/>
-   <addaction name="separator"/>
    <addaction name="actionCleanConsole"/>
    <addaction name="actionConnectToUDPPort"/>
    <addaction name="actionRawOutput"/>
    <addaction name="separator"/>
+   <addaction name="action_Settings"/>
    <addaction name="separator"/>
    <addaction name="actionClearTXWindow"/>
    <addaction name="actionIdleTX"/>

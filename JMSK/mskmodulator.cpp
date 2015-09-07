@@ -13,61 +13,10 @@ MskModulator::MskModulator(QObject *parent)
 void MskModulator::setSettings(Settings _settings)
 {
     settings=_settings;
+    if((settings.freq_center+(1.5/2.0)*settings.fb)>(settings.Fs/2.0))settings.freq_center=(settings.Fs/2.0)-((1.5/2.0)*settings.fb);
+    if((settings.freq_center-(1.5/2.0)*settings.fb)<0.0)settings.freq_center=((1.5/2.0)*settings.fb);
     osc.SetFreq(settings.freq_center,settings.Fs);
     st.SetFreq(settings.fb,settings.Fs);
-
-  /*  if(_settings.Fs!=Fs)emit SampleRateChanged(_settings.Fs);
-    Fs=_settings.Fs;
-    lockingbw=_settings.lockingbw;
-    fb=_settings.fb;
-    freq_center=_settings.freq_center;
-    if(freq_center>((Fs/2.0)-(lockingbw/2.0)))freq_center=((Fs/2.0)-(lockingbw/2.0));
-    symbolspercycle=_settings.symbolspercycle;
-    signalthreshold=_settings.signalthreshold;
-
-    SamplesPerSymbol=Fs/fb;
-    bbnfft=pow(2,_settings.coarsefreqest_fft_power);
-    bbcycbuff.resize(bbnfft);
-    bbcycbuff_ptr=0;
-    bbtmpbuff.resize(bbnfft);
-    coarsefreqestimate->setSettings(_settings.coarsefreqest_fft_power,lockingbw,fb,Fs);
-    mixer_center.SetFreq(freq_center,Fs);
-    mixer2.SetFreq(freq_center,Fs);
-
-    delete matchedfilter_re;
-    delete matchedfilter_im;
-    matchedfilter_re = new FIR(2*SamplesPerSymbol);
-    matchedfilter_im = new FIR(2*SamplesPerSymbol);
-    for(int i=0;i<2*SamplesPerSymbol;i++)
-    {
-        matchedfilter_re->FIRSetPoint(i,sin(M_PI*i/(2.0*SamplesPerSymbol))/(2.0*SamplesPerSymbol));
-        matchedfilter_im->FIRSetPoint(i,sin(M_PI*i/(2.0*SamplesPerSymbol))/(2.0*SamplesPerSymbol));
-    }
-
-    delete agc;
-    agc = new AGC(4,Fs);
-
-    delete ebnomeasure;
-    ebnomeasure = new MSKEbNoMeasure(2.0*Fs);//1 second ave //SamplesPerSymbol*125);//125 symbol averaging
-
-    sig2buff.resize(SamplesPerSymbol*symbolspercycle);
-    sig2buff_ptr=0;
-    sigbuff.resize(sig2buff.size()+2*SamplesPerSymbol);
-    sigbuff_ptr=0;
-
-    pointbuff.resize(100);
-    pointbuff_ptr=0;
-    mse=10.0;
-
-    symbolbuff.resize(10);
-    symbolbuff_ptr=0;
-
-    lastindex=0;
-
-    delaybuff.resize(SamplesPerSymbol);
-
-    emit Plottables(mixer2.GetFreqHz(),mixer_center.GetFreqHz(),lockingbw);*/
-
 }
 
 MskModulator::~MskModulator()
@@ -96,6 +45,8 @@ void MskModulator::DisconnectSourceDevice()
 
 void MskModulator::start()
 {
+    bitstosendbeforereadystatesignal=settings.fb*settings.secondsbeforereadysignalemited;
+    bitcounter=0;
     open(QIODevice::ReadOnly);
 }
 
@@ -110,7 +61,6 @@ qint64 MskModulator::writeData(const char *data, qint64 len)
     Q_UNUSED(len);
     return 0;
 }
-
 
 qint64 MskModulator::readData(char *data, qint64 maxlen)
 {
@@ -140,6 +90,13 @@ qint64 MskModulator::readData(char *data, qint64 maxlen)
                 }
                  else bc.LoadSymbol(0);//this happens when no source is connected
 
+            }
+
+            //emits a signal when a certin number of bits have been sent. can be used for various tasks
+            if(bitcounter<=bitstosendbeforereadystatesignal)
+            {                
+                if(bitcounter==bitstosendbeforereadystatesignal)emit ReadyState();
+                bitcounter++;
             }
 
             //load bit

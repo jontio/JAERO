@@ -96,11 +96,15 @@ MainWindow::MainWindow(QWidget *parent) :
         connect(ui->actionIdleTX,SIGNAL(triggered(bool)),ui->inputwidget->textinputdevice,SLOT(setIdle_on_eof(bool)));
         connect(ui->actionClearTXWindow,SIGNAL(triggered(bool)),ui->inputwidget,SLOT(clear()));
         connect(serialPPT,SIGNAL(Warning(QString)),this,SLOT(WarningTextSlot(QString)));
+        connect(audiomskmodulator,SIGNAL(ReadyState()),ui->inputwidget->textinputdevice,SLOT(ModulatorReadySlot()));//connection to signal textinputdevice to go from preamble to normal operation
+
 
         //set audio msk modulator settings
         settingsdialog->populatesettings();
         audiomskmodulatorsettings.freq_center=settingsdialog->audiomskmodulatorsettings.freq_center;//this is the only one that gets set
-        ui->inputwidget->textinputdevice->preamble=settingsdialog->Preamble;
+        audiomskmodulatorsettings.secondsbeforereadysignalemited=settingsdialog->audiomskmodulatorsettings.secondsbeforereadysignalemited;//well there is two now
+        ui->inputwidget->textinputdevice->preamble1=settingsdialog->Preamble1;
+        ui->inputwidget->textinputdevice->preamble2=settingsdialog->Preamble2;
         ui->inputwidget->textinputdevice->postamble=settingsdialog->Postamble;
         serialPPT->setportname(settingsdialog->Serialportname);
         serialPPT->setPPT(ui->actionTXRX->isChecked());
@@ -270,13 +274,12 @@ void MainWindow::on_action_Settings_triggered()
     if(settingsdialog->exec()==QDialog::Accepted)
     {
         ui->statusBar->clearMessage();
-        ui->inputwidget->textinputdevice->preamble=settingsdialog->Preamble;
+        ui->inputwidget->textinputdevice->preamble1=settingsdialog->Preamble1;
+        ui->inputwidget->textinputdevice->preamble2=settingsdialog->Preamble2;
         ui->inputwidget->textinputdevice->postamble=settingsdialog->Postamble;
-        if(audiomskmodulatorsettings.freq_center!=settingsdialog->audiomskmodulatorsettings.freq_center)
-        {
-            audiomskmodulatorsettings.freq_center=settingsdialog->audiomskmodulatorsettings.freq_center;//this is the only one that gets set
-            audiomskmodulator->setSettings(audiomskmodulatorsettings);
-        }
+        audiomskmodulatorsettings.freq_center=settingsdialog->audiomskmodulatorsettings.freq_center;//this is the only one that gets set
+        audiomskmodulatorsettings.secondsbeforereadysignalemited=settingsdialog->audiomskmodulatorsettings.secondsbeforereadysignalemited;//well there is two now
+        audiomskmodulator->setSettings(audiomskmodulatorsettings);
         serialPPT->setportname(settingsdialog->Serialportname);
         serialPPT->setPPT(ui->actionTXRX->isChecked());
     }

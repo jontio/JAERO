@@ -26,8 +26,11 @@ public:
 
         idle_on_eof=false;
 
-        preamble="NOCALL NOCALL NOCALL NOCALL NOCALL\n";
+        preamble="NOCALL NOCALL NOCALL NOCALL NOCALL";
         postamble="\n73 NOCALL";
+
+
+        preamble2=" NOCALL\n";
     }
 
     int charpos;
@@ -68,12 +71,37 @@ public:
         //preamble text
         if((charpos==0)&&(preamble_ptr<preamble.size()))
         {
+
+            //change from first preamble to second preamble
+            if(modulatorready&&!lastmodulatorready)
+            {
+                preamble=preamble2;
+                preamble_ptr=0;
+            }
+            lastmodulatorready=modulatorready;
+
             QString tstr=preamble.mid(preamble_ptr,maxlen);
             for(int i=0;i<tstr.size();i++)
             {
                 data[i]=tstr.at(i).toLatin1();
+                if(data[i]==18)
+                {
+                  switch(qrand()%2)//seems to work better without 12
+                  {
+                  case 0:
+                      data[i]=0;
+                      break;
+                  case 1:
+                      data[i]=22;
+                      break;
+                  /*case 2:
+                      data[i]=12;
+                      break;*/
+                  }
+                }
             }
             preamble_ptr+=tstr.size();
+            if(!modulatorready)preamble_ptr%=preamble.size();
             return tstr.size();
         }
 
@@ -118,16 +146,22 @@ public:
     {
         str.clear();
         charpos=0;
+        preamble=preamble1;
         preamble_ptr=0;
         postamble_ptr=0;
+        modulatorready=false;
+        lastmodulatorready=false;
         emittedeof=false;
         return QIODevice::reset();
     }
     QString str;
     QByteArray idlebytes;
     bool idle_on_eof;
-    QString preamble;
+
+    QString preamble1;
+    QString preamble2;
     QString postamble;
+
 signals:
     void eof();
 public slots:
@@ -135,10 +169,19 @@ public slots:
     {
         idle_on_eof=state;
     }
+    void ModulatorReadySlot()
+    {
+        modulatorready=true;
+    }
 private:
+    bool modulatorready;
+    bool lastmodulatorready;
     bool emittedeof;
     int preamble_ptr;
     int postamble_ptr;
+
+    QString preamble;
+
 };
 
 class TextInputWidget : public QPlainTextEdit
