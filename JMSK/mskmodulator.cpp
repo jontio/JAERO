@@ -47,6 +47,7 @@ void MskModulator::start()
 {
     bitstosendbeforereadystatesignal=settings.fb*settings.secondsbeforereadysignalemited;
     bitcounter=0;
+    emit ReadyState(false);
     open(QIODevice::ReadOnly);
 }
 
@@ -95,7 +96,7 @@ qint64 MskModulator::readData(char *data, qint64 maxlen)
             //emits a signal when a certin number of bits have been sent. can be used for various tasks
             if(bitcounter<=bitstosendbeforereadystatesignal)
             {                
-                if(bitcounter==bitstosendbeforereadystatesignal)emit ReadyState();
+                if(bitcounter==bitstosendbeforereadystatesignal)emit ReadyState(true);
                 bitcounter++;
             }
 

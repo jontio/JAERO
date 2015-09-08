@@ -38,6 +38,9 @@ void SettingsDialog::poulatepublicvars()
     Postamble.replace("\\1",QChar(12));
     Postamble.replace("\\a",QChar(7));
     Serialportname=ui->comboBoxPTTdevice->currentText();
+    modulatordevicetype=AUDIO;
+    if(ui->comboBoxJDDS->currentText()=="PTT")modulatordevicetype=AUDIO;
+    if(ui->comboBoxJDDS->currentText()=="JDDS")modulatordevicetype=JDDS;
 }
 
 
@@ -60,6 +63,7 @@ void SettingsDialog::populatesettings()
     ui->linePostamble->setText(settings.value("linePostamble","\\n\\a73 NOCALL\\a\\n").toString());
     ui->comboBoxPTTdevice->setEditable(false);
     ui->comboBoxPTTdevice->setCurrentText(settings.value("comboBoxPTTdevice","None").toString());
+    ui->comboBoxJDDS->setCurrentText(settings.value("comboBoxJDDS","PTT").toString());
 
     poulatepublicvars();
 }
@@ -74,6 +78,7 @@ void SettingsDialog::accept()
     settings.setValue("linePreamble", ui->linePreamble->text());
     settings.setValue("linePostamble", ui->linePostamble->text());
     settings.setValue("comboBoxPTTdevice", ui->comboBoxPTTdevice->currentText());
+    settings.setValue("comboBoxJDDS", ui->comboBoxJDDS->currentText());
     poulatepublicvars();
     QDialog::accept();
 }

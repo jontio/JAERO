@@ -55,7 +55,7 @@ void SerialPPT::setPPT(bool state)
     //qDebug()<<"line = "<<state;
     if(!pserialport.data()->isOpen())
     {
-        emit Warning("Can not open serial port \""+pserialport.data()->portName()+"\"");
+        emit Warning("Serial port \""+pserialport.data()->portName()+"\" not open");
         return;
     }
     bool suc1 = pserialport.data()->setDataTerminalReady(state);

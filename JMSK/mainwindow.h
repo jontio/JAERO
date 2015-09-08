@@ -6,6 +6,7 @@
 #include <QLabel>
 #include "audiomskdemodulator.h"
 #include "audiomskmodulator.h"
+#include "ddsmskmodulator/ddsmskmodulator.h"
 #include "varicodepipedecoder.h"
 #include "varicodepipeencoder.h"
 #include "serialppt.h"
@@ -34,11 +35,18 @@ private:
 
     //modulator
     AudioMskModulator *audiomskmodulator;
+    DDSMSKModulator *ddsmskmodulator;
+    DDSMSKModulator::Settings ddsmskmodulatorsettings;
     AudioMskModulator::Settings audiomskmodulatorsettings;
     VariCodePipeEncoder *varicodepipeencoder;
     SerialPPT *serialPPT;
 
     SettingsDialog *settingsdialog;
+
+    SettingsDialog::Device modulatordevicetype;
+
+    void connectmodulatordevice(SettingsDialog::Device device);
+    void setSerialUser(SettingsDialog::Device device);
 
 private slots:
     void SignalStatusSlot(bool signal);

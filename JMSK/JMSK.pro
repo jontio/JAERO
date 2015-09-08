@@ -44,7 +44,9 @@ SOURCES += main.cpp\
     varicodepipeencoder.cpp \
     gui_classes/textinputwidget.cpp \
     gui_classes/settingsdialog.cpp \
-    serialppt.cpp
+    serialppt.cpp \
+    ddsmskmodulator/ddsmskmodulator.cpp \
+    ddsmskmodulator/Slip.cpp
 
 HEADERS  += mainwindow.h \
     coarsefreqestimate.h \
@@ -70,7 +72,9 @@ HEADERS  += mainwindow.h \
     varicodepipeencoder.h \
     gui_classes/textinputwidget.h \
     gui_classes/settingsdialog.h \
-    serialppt.h
+    serialppt.h \
+    ddsmskmodulator/ddsmskmodulator.h \
+    ddsmskmodulator/Slip.h
 
 FORMS    += mainwindow.ui \
     gui_classes/settingsdialog.ui

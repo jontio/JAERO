@@ -14,10 +14,12 @@ class SettingsDialog : public QDialog
     Q_OBJECT
 
 public:
+    enum Device{AUDIO,JDDS};
     explicit SettingsDialog(QWidget *parent = 0);
     ~SettingsDialog();
     void populatesettings();
 
+    Device  modulatordevicetype;
     QString Serialportname;
     QString Preamble;
     QString Preamble1;

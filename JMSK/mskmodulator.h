@@ -44,7 +44,7 @@ public:
     qint64 writeData(const char *data, qint64 len);
     void setSettings(Settings settings);
 signals:
-    void ReadyState();
+    void ReadyState(bool state);
 private:
     WaveTable osc;
     WaveTable st;

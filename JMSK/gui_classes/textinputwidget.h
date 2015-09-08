@@ -26,11 +26,10 @@ public:
 
         idle_on_eof=false;
 
-        preamble="NOCALL NOCALL NOCALL NOCALL NOCALL";
         postamble="\n73 NOCALL";
 
-
-        preamble2=" NOCALL\n";
+        preamble1="NOCALL";
+        preamble2="\n NOCALL\n";
     }
 
     int charpos;
@@ -39,7 +38,6 @@ public:
     {
 
         if(!maxlen)return 0;
-
 
         //idling bytes
         if(idle_on_eof&&(preamble_ptr>=preamble.size()))
@@ -73,12 +71,12 @@ public:
         {
 
             //change from first preamble to second preamble
-            if(modulatorready&&!lastmodulatorready)
+            if(sinkready&&!lastsinkready)
             {
                 preamble=preamble2;
                 preamble_ptr=0;
             }
-            lastmodulatorready=modulatorready;
+            lastsinkready=sinkready;
 
             QString tstr=preamble.mid(preamble_ptr,maxlen);
             for(int i=0;i<tstr.size();i++)
@@ -101,7 +99,7 @@ public:
                 }
             }
             preamble_ptr+=tstr.size();
-            if(!modulatorready)preamble_ptr%=preamble.size();
+            if(!sinkready)preamble_ptr%=preamble.size();
             return tstr.size();
         }
 
@@ -149,8 +147,11 @@ public:
         preamble=preamble1;
         preamble_ptr=0;
         postamble_ptr=0;
-        modulatorready=false;
-        lastmodulatorready=false;
+
+        //causes natural state of this device to cycle around preamble1 untill given a sinkreadyslot(true)
+        sinkready=false;
+        lastsinkready=false;
+
         emittedeof=false;
         return QIODevice::reset();
     }
@@ -169,13 +170,13 @@ public slots:
     {
         idle_on_eof=state;
     }
-    void ModulatorReadySlot()
+    void SinkReadySlot(bool state)
     {
-        modulatorready=true;
+        sinkready=state;
     }
 private:
-    bool modulatorready;
-    bool lastmodulatorready;
+    bool sinkready;
+    bool lastsinkready;
     bool emittedeof;
     int preamble_ptr;
     int postamble_ptr;

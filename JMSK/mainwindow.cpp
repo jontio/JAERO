@@ -9,9 +9,10 @@ MainWindow::MainWindow(QWidget *parent) :
 {
     ui->setupUi(this);
 
-    //create the modulator, varicode encoder pipe, and serial ppt
+    //create the modulators, varicode encoder pipe, and serial ppt
     varicodepipeencoder = new VariCodePipeEncoder(this);
     audiomskmodulator = new AudioMskModulator(this);
+    ddsmskmodulator = new DDSMSKModulator(this);
     serialPPT = new SerialPPT(this);
 
     //create settings dialog. only some modulator settings are held atm.
@@ -77,41 +78,112 @@ MainWindow::MainWindow(QWidget *parent) :
     audiomskdemodulator->setSettings(audiomskdemodulatorsettings);
     audiomskdemodulator->start();
 
+//start modulator setup. the modulator is new and is and add on.
+
+    //connect the encoder to the text widget. the text encoder to the modulator gets done later
+    varicodepipeencoder->ConnectSourceDevice(ui->inputwidget->textinputdevice);
+
+    //always connected
+    connect(ui->actionTXRX,SIGNAL(triggered(bool)),ui->inputwidget,SLOT(reset()));
+    connect(ui->actionIdleTX,SIGNAL(triggered(bool)),ui->inputwidget->textinputdevice,SLOT(setIdle_on_eof(bool)));
+    connect(ui->actionClearTXWindow,SIGNAL(triggered(bool)),ui->inputwidget,SLOT(clear()));
+
+    //set modulator settings and connections
+
+    settingsdialog->populatesettings();
+    modulatordevicetype=settingsdialog->modulatordevicetype;
+    connectmodulatordevice(modulatordevicetype);
+    setSerialUser(modulatordevicetype);
+
+    //set audio msk modulator settings
+    audiomskmodulatorsettings.freq_center=settingsdialog->audiomskmodulatorsettings.freq_center;//this is the only one that gets set
+    audiomskmodulatorsettings.secondsbeforereadysignalemited=settingsdialog->audiomskmodulatorsettings.secondsbeforereadysignalemited;//well there is two now
+    ui->inputwidget->textinputdevice->preamble1=settingsdialog->Preamble1;
+    ui->inputwidget->textinputdevice->preamble2=settingsdialog->Preamble2;
+    ui->inputwidget->textinputdevice->postamble=settingsdialog->Postamble;
+    serialPPT->setPPT(ui->actionTXRX->isChecked());
+    audiomskmodulator->setSettings(audiomskmodulatorsettings);
+
+    //set JDDS msk modulator settings
+    ddsmskmodulatorsettings.fb=audiomskmodulatorsettings.fb;
+    ddsmskmodulatorsettings.freq_center=audiomskmodulatorsettings.freq_center;
+    ddsmskmodulatorsettings.secondsbeforereadysignalemited=audiomskmodulatorsettings.secondsbeforereadysignalemited;
+    ddsmskmodulator->setSettings(ddsmskmodulatorsettings);
+
+//--end modulator setup
 
 
-    //start modulator setup. the modulator is new and is and add on.
+}
 
-        //connect the modulator to the encoder to the text widget
+void MainWindow::setSerialUser(SettingsDialog::Device device)
+{
+    if(device==SettingsDialog::AUDIO)
+    {
+        ddsmskmodulatorsettings.serialportname="None";
+        ddsmskmodulator->setSettings(ddsmskmodulatorsettings);
+        Sleep(500);
+        serialPPT->setportname(settingsdialog->Serialportname);
+    }
+
+    if(device==SettingsDialog::JDDS)
+    {
+        serialPPT->setportname("None");
+        Sleep(500);
+        ddsmskmodulatorsettings.serialportname=settingsdialog->Serialportname;
+        ddsmskmodulator->setSettings(ddsmskmodulatorsettings);
+    }
+}
+
+void MainWindow::connectmodulatordevice(SettingsDialog::Device device)
+{
+    if(device==SettingsDialog::JDDS)
+    {
+
+        //disconnect audio connections
+        audiomskmodulator->DisconnectSourceDevice();
+        disconnect(serialPPT,SIGNAL(Warning(QString)),this,SLOT(WarningTextSlot(QString)));
+        disconnect(ui->actionTXRX,SIGNAL(triggered(bool)),audiomskmodulator,SLOT(startstop(bool)));
+        disconnect(ui->actionTXRX,SIGNAL(triggered(bool)),serialPPT,SLOT(setPPT(bool)));
+        disconnect(ui->inputwidget->textinputdevice,SIGNAL(eof()),audiomskmodulator,SLOT(stopgraceful()));
+        disconnect(audiomskmodulator,SIGNAL(statechanged(bool)),ui->actionTXRX,SLOT(setChecked(bool)));
+        disconnect(audiomskmodulator,SIGNAL(statechanged(bool)),serialPPT,SLOT(setPPT(bool)));
+        disconnect(audiomskmodulator,SIGNAL(closed()),ui->inputwidget,SLOT(reset()));
+        disconnect(audiomskmodulator,SIGNAL(ReadyState(bool)),ui->inputwidget->textinputdevice,SLOT(SinkReadySlot(bool)));
+        //
+
+        //connections for JDDS
+        ddsmskmodulator->ConnectSourceDevice(varicodepipeencoder);
+        connect(ddsmskmodulator,SIGNAL(WarningMsg(QString)),this,SLOT(WarningTextSlot(QString)));
+        connect(ui->actionTXRX,SIGNAL(triggered(bool)),ddsmskmodulator,SLOT(startstop(bool)));
+        connect(ddsmskmodulator,SIGNAL(ReadyState(bool)),ui->inputwidget->textinputdevice,SLOT(SinkReadySlot(bool)));//connection to signal textinputdevice to go from preamble to normal operation
+        connect(ddsmskmodulator,SIGNAL(closed()),ui->inputwidget,SLOT(reset()));
+        connect(ddsmskmodulator,SIGNAL(statechanged(bool)),ui->actionTXRX,SLOT(setChecked(bool)));
+        connect(ui->inputwidget->textinputdevice,SIGNAL(eof()),ddsmskmodulator,SLOT(stopgraceful()));
+    }
+
+    if(device==SettingsDialog::AUDIO)
+    {
+        //disconnect jdds connections
+        ddsmskmodulator->DisconnectSourceDevice();
+        disconnect(ddsmskmodulator,SIGNAL(WarningMsg(QString)),this,SLOT(WarningTextSlot(QString)));
+        disconnect(ui->actionTXRX,SIGNAL(triggered(bool)),ddsmskmodulator,SLOT(startstop(bool)));
+        disconnect(ddsmskmodulator,SIGNAL(ReadyState(bool)),ui->inputwidget->textinputdevice,SLOT(SinkReadySlot(bool)));//connection to signal textinputdevice to go from preamble to normal operation
+        disconnect(ddsmskmodulator,SIGNAL(closed()),ui->inputwidget,SLOT(reset()));
+        disconnect(ddsmskmodulator,SIGNAL(statechanged(bool)),ui->actionTXRX,SLOT(setChecked(bool)));
+        disconnect(ui->inputwidget->textinputdevice,SIGNAL(eof()),ddsmskmodulator,SLOT(stopgraceful()));
+        //
+
+        //connections for audio out
         audiomskmodulator->ConnectSourceDevice(varicodepipeencoder);
-        varicodepipeencoder->ConnectSourceDevice(ui->inputwidget->textinputdevice);
-
-        //connect tx button, idle button, clear tx window, ptt and soundard to things
+        connect(serialPPT,SIGNAL(Warning(QString)),this,SLOT(WarningTextSlot(QString)));
         connect(ui->actionTXRX,SIGNAL(triggered(bool)),audiomskmodulator,SLOT(startstop(bool)));
-        connect(ui->actionTXRX,SIGNAL(triggered(bool)),ui->inputwidget,SLOT(reset()));
         connect(ui->actionTXRX,SIGNAL(triggered(bool)),serialPPT,SLOT(setPPT(bool)));
         connect(ui->inputwidget->textinputdevice,SIGNAL(eof()),audiomskmodulator,SLOT(stopgraceful()));
         connect(audiomskmodulator,SIGNAL(statechanged(bool)),ui->actionTXRX,SLOT(setChecked(bool)));
         connect(audiomskmodulator,SIGNAL(statechanged(bool)),serialPPT,SLOT(setPPT(bool)));
         connect(audiomskmodulator,SIGNAL(closed()),ui->inputwidget,SLOT(reset()));
-        connect(ui->actionIdleTX,SIGNAL(triggered(bool)),ui->inputwidget->textinputdevice,SLOT(setIdle_on_eof(bool)));
-        connect(ui->actionClearTXWindow,SIGNAL(triggered(bool)),ui->inputwidget,SLOT(clear()));
-        connect(serialPPT,SIGNAL(Warning(QString)),this,SLOT(WarningTextSlot(QString)));
-        connect(audiomskmodulator,SIGNAL(ReadyState()),ui->inputwidget->textinputdevice,SLOT(ModulatorReadySlot()));//connection to signal textinputdevice to go from preamble to normal operation
-
-
-        //set audio msk modulator settings
-        settingsdialog->populatesettings();
-        audiomskmodulatorsettings.freq_center=settingsdialog->audiomskmodulatorsettings.freq_center;//this is the only one that gets set
-        audiomskmodulatorsettings.secondsbeforereadysignalemited=settingsdialog->audiomskmodulatorsettings.secondsbeforereadysignalemited;//well there is two now
-        ui->inputwidget->textinputdevice->preamble1=settingsdialog->Preamble1;
-        ui->inputwidget->textinputdevice->preamble2=settingsdialog->Preamble2;
-        ui->inputwidget->textinputdevice->postamble=settingsdialog->Postamble;
-        serialPPT->setportname(settingsdialog->Serialportname);
-        serialPPT->setPPT(ui->actionTXRX->isChecked());
-        audiomskmodulator->setSettings(audiomskmodulatorsettings);
-
-    //--end modulator setup
-
+        connect(audiomskmodulator,SIGNAL(ReadyState(bool)),ui->inputwidget->textinputdevice,SLOT(SinkReadySlot(bool)));//connection to signal textinputdevice to go from preamble to normal operation
+    }
 
 }
 
@@ -128,7 +200,6 @@ MainWindow::~MainWindow()
     settings.setValue("actionConnectToUDPPort", ui->actionConnectToUDPPort->isChecked());
     settings.setValue("actionRawOutput", ui->actionRawOutput->isChecked());
     settings.setValue("freq_center", audiomskdemodulator->getCurrentFreq());
-
 
     delete ui;
 }
@@ -191,10 +262,15 @@ void MainWindow::on_comboBoxbps_currentIndexChanged(const QString &arg1)
     audiomskdemodulatorsettings.freq_center=audiomskdemodulator->getCurrentFreq();
     audiomskdemodulator->setSettings(audiomskdemodulatorsettings);
 
-    //modulator setting
+    //audio modulator setting
     audiomskmodulatorsettings.fb=audiomskdemodulatorsettings.fb;
     audiomskmodulatorsettings.Fs=audiomskdemodulatorsettings.Fs;
     audiomskmodulator->setSettings(audiomskmodulatorsettings);
+
+    //jdds modulator setting
+    ddsmskmodulatorsettings.fb=audiomskmodulatorsettings.fb;
+    ddsmskmodulatorsettings.freq_center=audiomskmodulatorsettings.freq_center;
+    ddsmskmodulator->setSettings(ddsmskmodulatorsettings);
 
 }
 
@@ -273,14 +349,32 @@ void MainWindow::on_action_Settings_triggered()
     settingsdialog->populatesettings();
     if(settingsdialog->exec()==QDialog::Accepted)
     {
+
         ui->statusBar->clearMessage();
         ui->inputwidget->textinputdevice->preamble1=settingsdialog->Preamble1;
         ui->inputwidget->textinputdevice->preamble2=settingsdialog->Preamble2;
         ui->inputwidget->textinputdevice->postamble=settingsdialog->Postamble;
+
+
+        if(modulatordevicetype!=settingsdialog->modulatordevicetype)
+        {
+            audiomskmodulator->stop();
+            ddsmskmodulator->stop();
+        }
+
+        modulatordevicetype=settingsdialog->modulatordevicetype;
+        connectmodulatordevice(modulatordevicetype);
+        setSerialUser(modulatordevicetype);
+
         audiomskmodulatorsettings.freq_center=settingsdialog->audiomskmodulatorsettings.freq_center;//this is the only one that gets set
         audiomskmodulatorsettings.secondsbeforereadysignalemited=settingsdialog->audiomskmodulatorsettings.secondsbeforereadysignalemited;//well there is two now
-        audiomskmodulator->setSettings(audiomskmodulatorsettings);
-        serialPPT->setportname(settingsdialog->Serialportname);
+        audiomskmodulator->setSettings(audiomskmodulatorsettings);     
         serialPPT->setPPT(ui->actionTXRX->isChecked());
+
+        ddsmskmodulatorsettings.fb=audiomskmodulatorsettings.fb;
+        ddsmskmodulatorsettings.freq_center=audiomskmodulatorsettings.freq_center;
+        ddsmskmodulatorsettings.secondsbeforereadysignalemited=audiomskmodulatorsettings.secondsbeforereadysignalemited;
+        ddsmskmodulator->setSettings(ddsmskmodulatorsettings);
+
     }
 }
