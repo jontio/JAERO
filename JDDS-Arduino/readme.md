@@ -13,7 +13,7 @@ The AD9850 module used for the hardware is pictured below.
 ![AD9850 module](images/AD9850-module.jpg)
 
 I bought a couple for five US dollars each a while ago but they seem to be somewhat more expensive these days.
-There seems a few variations of look for this module that can be bought but they all appeared to have the same pinouts.
+There seem to be a few different looking modules that can be bought but they all appear to have the same pinouts.
 
 For practical implementations of the hardware, an amplifier as well as a filter is probably required.
 Being MSK any nonlinear amplifier such as a class D or E or F will suffice.
