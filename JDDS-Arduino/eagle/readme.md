@@ -7,7 +7,7 @@ With [Eagle PCB software](http://www.cadsoftusa.com/) You can modify the schemat
 ![connections between Arduino and DDS module](images/sch.png)
 Schematic of the connections
 
-![Posible Arduino Uno shield](images/sch.png)
+![Posible Arduino Uno shield](images/brd-layout.png)
 Possible shield for the Arduino Uno
 
 Jonti

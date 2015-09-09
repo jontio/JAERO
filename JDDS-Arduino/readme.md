@@ -1,6 +1,6 @@
 JDDS is a physical device that can connect to the JMSK program to act as the MSK modulator.
 
-In these folders an Arduino implementation with a AD9850 module is given.
+In these folders an Arduino implementation with an AD9850 module is given.
 Both the source code and hardware design is given.
 
 The source code including the required libraries are given in the folders [jddsmsk](jddsmsk) and [libraries](libraries).
