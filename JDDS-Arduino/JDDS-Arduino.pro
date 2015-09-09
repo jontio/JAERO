@@ -18,7 +18,10 @@ DISTFILES += \
     eagle/jdds-arduino.sch \
     eagle/readme.md \
     eagle/images/brd-layout.png \
-    eagle/images/sch.png
+    eagle/images/sch.png \
+    readme.md \
+    images/AD9850-module.jpg \
+    jddsmsk/readme.md
 
 HEADERS += \
     libraries/AD9850/AD9850.h \
