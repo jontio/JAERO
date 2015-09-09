@@ -13,7 +13,12 @@ DISTFILES += \
     libraries/TimerOne/examples/Interrupt/Interrupt.pde \
     libraries/TimerOne/README.md \
     jddsmsk/license.txt \
-    libraries/readme.txt
+    libraries/readme.txt \
+    eagle/jdds-arduino.brd \
+    eagle/jdds-arduino.sch \
+    eagle/readme.md \
+    eagle/images/brd-layout.png \
+    eagle/images/sch.png
 
 HEADERS += \
     libraries/AD9850/AD9850.h \
