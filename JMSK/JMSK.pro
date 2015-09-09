@@ -91,7 +91,8 @@ DISTFILES += \
     ../qcustomplot/changelog.txt \
     ../qcustomplot/GPL.txt \
     jmsk.rc \
-    ../README.md
+    ../README.md \
+    ../images/screenshot-win-v1.1.0.png
 
 win32 {
 RC_FILE = jmsk.rc
