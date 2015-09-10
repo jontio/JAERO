@@ -19,6 +19,8 @@ public:
     ~SettingsDialog();
     void populatesettings();
 
+    int beaconminidle;
+    int beaconmaxidle;
     Device  modulatordevicetype;
     QString Serialportname;
     QString Preamble;
@@ -33,6 +35,9 @@ private:
 protected:
     void accept();
 
+private slots:
+    void on_spinBoxbeaconmaxidle_editingFinished();
+    void on_spinBoxbeaconminidle_editingFinished();
 };
 
 #endif // SETTINGSDIALOG_H

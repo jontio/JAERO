@@ -48,7 +48,9 @@ void AudioMskModulator::stateChanged(QAudio::State state)
     }
     if(state==QAudio::ActiveState)
     {
-        QTimer::singleShot(200, this, SLOT(DelayedStateOpenSlot()));
+        if(m_audioOutput&&(m_audioOutput->state()!=QAudio::ActiveState))return;
+        emit opened();
+        emit statechanged(true);
     }
 }
 
@@ -58,14 +60,6 @@ void AudioMskModulator::DelayedStateClosedSlot()
     emit closed();
     emit statechanged(false);
 }
-
-void AudioMskModulator::DelayedStateOpenSlot()
-{
-    if(m_audioOutput&&(m_audioOutput->state()!=QAudio::ActiveState))return;
-    emit opened();
-    emit statechanged(true);
-}
-
 
 void AudioMskModulator::setSettings(Settings _settings)
 {

@@ -43,7 +43,6 @@ private:
 private slots:
     void stateChanged(QAudio::State state);
     void DelayedStateClosedSlot();
-    void DelayedStateOpenSlot();
     void stopgracefulslot();
 };
 

@@ -41,6 +41,8 @@ void SettingsDialog::poulatepublicvars()
     modulatordevicetype=AUDIO;
     if(ui->comboBoxJDDS->currentText()=="PTT")modulatordevicetype=AUDIO;
     if(ui->comboBoxJDDS->currentText()=="JDDS")modulatordevicetype=JDDS;
+    beaconminidle=ui->spinBoxbeaconminidle->value();
+    beaconmaxidle=ui->spinBoxbeaconmaxidle->value();
 }
 
 
@@ -64,13 +66,15 @@ void SettingsDialog::populatesettings()
     ui->comboBoxPTTdevice->setEditable(false);
     ui->comboBoxPTTdevice->setCurrentText(settings.value("comboBoxPTTdevice","None").toString());
     ui->comboBoxJDDS->setCurrentText(settings.value("comboBoxJDDS","PTT").toString());
-
+    ui->spinBoxbeaconminidle->setValue(settings.value("spinBoxbeaconminidle",110).toInt());
+    ui->spinBoxbeaconmaxidle->setValue(settings.value("spinBoxbeaconmaxidle",130).toInt());
     poulatepublicvars();
 }
 
 
 void SettingsDialog::accept()
-{
+{    
+
     //save settings
     QSettings settings("Jontisoft", "JMSK");
     settings.setValue("doubleSpinboxminpreamble", ui->doubleSpinboxminpreamble->value());
@@ -79,6 +83,18 @@ void SettingsDialog::accept()
     settings.setValue("linePostamble", ui->linePostamble->text());
     settings.setValue("comboBoxPTTdevice", ui->comboBoxPTTdevice->currentText());
     settings.setValue("comboBoxJDDS", ui->comboBoxJDDS->currentText());
+    settings.setValue("spinBoxbeaconminidle", ui->spinBoxbeaconminidle->value());
+    settings.setValue("spinBoxbeaconmaxidle", ui->spinBoxbeaconmaxidle->value());
     poulatepublicvars();
     QDialog::accept();
+}
+
+void SettingsDialog::on_spinBoxbeaconmaxidle_editingFinished()
+{
+    if(ui->spinBoxbeaconmaxidle->value()<ui->spinBoxbeaconminidle->value())ui->spinBoxbeaconminidle->setValue(ui->spinBoxbeaconmaxidle->value());
+}
+
+void SettingsDialog::on_spinBoxbeaconminidle_editingFinished()
+{
+    if(ui->spinBoxbeaconmaxidle->value()<ui->spinBoxbeaconminidle->value())ui->spinBoxbeaconmaxidle->setValue(ui->spinBoxbeaconminidle->value());
 }

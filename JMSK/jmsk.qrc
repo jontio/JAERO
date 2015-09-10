@@ -13,5 +13,6 @@
         <file>images/rx.svg</file>
         <file>images/tx.svg</file>
         <file>images/eighth note.svg</file>
+        <file>images/beacon.svg</file>
     </qresource>
 </RCC>

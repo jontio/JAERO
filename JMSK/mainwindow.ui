@@ -521,6 +521,7 @@
    <addaction name="separator"/>
    <addaction name="actionClearTXWindow"/>
    <addaction name="actionIdleTX"/>
+   <addaction name="actionBeacon"/>
    <addaction name="actionTXRX"/>
   </widget>
   <action name="action_Exit">
@@ -644,6 +645,21 @@
    </property>
    <property name="toolTip">
     <string>Open settings dialog</string>
+   </property>
+  </action>
+  <action name="actionBeacon">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="icon">
+    <iconset resource="jmsk.qrc">
+     <normaloff>:/images/beacon.svg</normaloff>:/images/beacon.svg</iconset>
+   </property>
+   <property name="text">
+    <string>Beacon</string>
+   </property>
+   <property name="toolTip">
+    <string>Enable TX beacon</string>
    </property>
   </action>
  </widget>

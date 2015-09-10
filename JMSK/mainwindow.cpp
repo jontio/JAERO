@@ -25,6 +25,9 @@ MainWindow::MainWindow(QWidget *parent) :
     udpsocket = new QUdpSocket(this);
     varicodepipedecoder = new VariCodePipeDecoder(this);
 
+    //create a beacon handler
+    beaconhandler = new BeaconHandler(this);
+
     //default sink is the varicode input of the console
     audiomskdemodulator->ConnectSinkDevice(ui->console->varicodeconsoledevice);
 
@@ -55,6 +58,7 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(audiomskdemodulator, SIGNAL(ScatterPoints(QVector<cpx_type>)),              ui->scatterplot,SLOT(setData(QVector<cpx_type>)));
     connect(ui->spectrumdisplay, SIGNAL(CenterFreqChanged(double)),                     audiomskdemodulator,SLOT(CenterFreqChangedSlot(double)));
     connect(ui->action_About,    SIGNAL(triggered()),                                   this, SLOT(AboutSlot()));
+    connect(audiomskdemodulator, SIGNAL(SignalStatus(bool)),                            beaconhandler,SLOT(SignalStatus(bool)));
 
     //load settings
     QSettings settings("Jontisoft", "JMSK");
@@ -84,9 +88,10 @@ MainWindow::MainWindow(QWidget *parent) :
     varicodepipeencoder->ConnectSourceDevice(ui->inputwidget->textinputdevice);
 
     //always connected
-    connect(ui->actionTXRX,SIGNAL(triggered(bool)),ui->inputwidget,SLOT(reset()));
+    //connect(ui->actionTXRX,SIGNAL(triggered(bool)),ui->inputwidget,SLOT(reset()));
     connect(ui->actionIdleTX,SIGNAL(triggered(bool)),ui->inputwidget->textinputdevice,SLOT(setIdle_on_eof(bool)));
     connect(ui->actionClearTXWindow,SIGNAL(triggered(bool)),ui->inputwidget,SLOT(clear()));
+    connect(ui->actionBeacon,SIGNAL(triggered(bool)),beaconhandler,SLOT(StartStop(bool)));
 
     //set modulator settings and connections
 
@@ -101,6 +106,7 @@ MainWindow::MainWindow(QWidget *parent) :
     ui->inputwidget->textinputdevice->preamble1=settingsdialog->Preamble1;
     ui->inputwidget->textinputdevice->preamble2=settingsdialog->Preamble2;
     ui->inputwidget->textinputdevice->postamble=settingsdialog->Postamble;
+    ui->inputwidget->reset();
     serialPPT->setPPT(ui->actionTXRX->isChecked());
     audiomskmodulator->setSettings(audiomskmodulatorsettings);
 
@@ -109,6 +115,11 @@ MainWindow::MainWindow(QWidget *parent) :
     ddsmskmodulatorsettings.freq_center=audiomskmodulatorsettings.freq_center;
     ddsmskmodulatorsettings.secondsbeforereadysignalemited=audiomskmodulatorsettings.secondsbeforereadysignalemited;
     ddsmskmodulator->setSettings(ddsmskmodulatorsettings);
+
+    //set beacon handler settings
+    beaconhandlersettings.beaconminidle=settingsdialog->beaconminidle;
+    beaconhandlersettings.beaconmaxidle=settingsdialog->beaconmaxidle;
+    beaconhandler->setSettings(beaconhandlersettings);
 
 //--end modulator setup
 
@@ -147,8 +158,10 @@ void MainWindow::connectmodulatordevice(SettingsDialog::Device device)
         disconnect(ui->inputwidget->textinputdevice,SIGNAL(eof()),audiomskmodulator,SLOT(stopgraceful()));
         disconnect(audiomskmodulator,SIGNAL(statechanged(bool)),ui->actionTXRX,SLOT(setChecked(bool)));
         disconnect(audiomskmodulator,SIGNAL(statechanged(bool)),serialPPT,SLOT(setPPT(bool)));
-        disconnect(audiomskmodulator,SIGNAL(closed()),ui->inputwidget,SLOT(reset()));
+        disconnect(audiomskmodulator,SIGNAL(statechanged(bool)),ui->inputwidget,SLOT(reset()));
         disconnect(audiomskmodulator,SIGNAL(ReadyState(bool)),ui->inputwidget->textinputdevice,SLOT(SinkReadySlot(bool)));
+        disconnect(audiomskmodulator,SIGNAL(statechanged(bool)),beaconhandler,SLOT(TransmissionStatus(bool)));
+        disconnect(beaconhandler,SIGNAL(DoTransmissionNow()),audiomskmodulator,SLOT(start()));
         //
 
         //connections for JDDS
@@ -156,9 +169,12 @@ void MainWindow::connectmodulatordevice(SettingsDialog::Device device)
         connect(ddsmskmodulator,SIGNAL(WarningMsg(QString)),this,SLOT(WarningTextSlot(QString)));
         connect(ui->actionTXRX,SIGNAL(triggered(bool)),ddsmskmodulator,SLOT(startstop(bool)));
         connect(ddsmskmodulator,SIGNAL(ReadyState(bool)),ui->inputwidget->textinputdevice,SLOT(SinkReadySlot(bool)));//connection to signal textinputdevice to go from preamble to normal operation
-        connect(ddsmskmodulator,SIGNAL(closed()),ui->inputwidget,SLOT(reset()));
+        connect(ddsmskmodulator,SIGNAL(statechanged(bool)),ui->inputwidget,SLOT(reset()));
+
         connect(ddsmskmodulator,SIGNAL(statechanged(bool)),ui->actionTXRX,SLOT(setChecked(bool)));
         connect(ui->inputwidget->textinputdevice,SIGNAL(eof()),ddsmskmodulator,SLOT(stopgraceful()));
+        connect(ddsmskmodulator,SIGNAL(statechanged(bool)),beaconhandler,SLOT(TransmissionStatus(bool)));
+        connect(beaconhandler,SIGNAL(DoTransmissionNow()),ddsmskmodulator,SLOT(start()));
     }
 
     if(device==SettingsDialog::AUDIO)
@@ -168,9 +184,11 @@ void MainWindow::connectmodulatordevice(SettingsDialog::Device device)
         disconnect(ddsmskmodulator,SIGNAL(WarningMsg(QString)),this,SLOT(WarningTextSlot(QString)));
         disconnect(ui->actionTXRX,SIGNAL(triggered(bool)),ddsmskmodulator,SLOT(startstop(bool)));
         disconnect(ddsmskmodulator,SIGNAL(ReadyState(bool)),ui->inputwidget->textinputdevice,SLOT(SinkReadySlot(bool)));//connection to signal textinputdevice to go from preamble to normal operation
-        disconnect(ddsmskmodulator,SIGNAL(closed()),ui->inputwidget,SLOT(reset()));
+        disconnect(ddsmskmodulator,SIGNAL(statechanged(bool)),ui->inputwidget,SLOT(reset()));
         disconnect(ddsmskmodulator,SIGNAL(statechanged(bool)),ui->actionTXRX,SLOT(setChecked(bool)));
         disconnect(ui->inputwidget->textinputdevice,SIGNAL(eof()),ddsmskmodulator,SLOT(stopgraceful()));
+        disconnect(ddsmskmodulator,SIGNAL(statechanged(bool)),beaconhandler,SLOT(TransmissionStatus(bool)));
+        disconnect(beaconhandler,SIGNAL(DoTransmissionNow()),ddsmskmodulator,SLOT(start()));
         //
 
         //connections for audio out
@@ -181,8 +199,10 @@ void MainWindow::connectmodulatordevice(SettingsDialog::Device device)
         connect(ui->inputwidget->textinputdevice,SIGNAL(eof()),audiomskmodulator,SLOT(stopgraceful()));
         connect(audiomskmodulator,SIGNAL(statechanged(bool)),ui->actionTXRX,SLOT(setChecked(bool)));
         connect(audiomskmodulator,SIGNAL(statechanged(bool)),serialPPT,SLOT(setPPT(bool)));
-        connect(audiomskmodulator,SIGNAL(closed()),ui->inputwidget,SLOT(reset()));
+        connect(audiomskmodulator,SIGNAL(statechanged(bool)),ui->inputwidget,SLOT(reset()));
         connect(audiomskmodulator,SIGNAL(ReadyState(bool)),ui->inputwidget->textinputdevice,SLOT(SinkReadySlot(bool)));//connection to signal textinputdevice to go from preamble to normal operation
+        connect(audiomskmodulator,SIGNAL(statechanged(bool)),beaconhandler,SLOT(TransmissionStatus(bool)));
+        connect(beaconhandler,SIGNAL(DoTransmissionNow()),audiomskmodulator,SLOT(start()));
     }
 
 }
@@ -376,5 +396,29 @@ void MainWindow::on_action_Settings_triggered()
         ddsmskmodulatorsettings.secondsbeforereadysignalemited=audiomskmodulatorsettings.secondsbeforereadysignalemited;
         ddsmskmodulator->setSettings(ddsmskmodulatorsettings);
 
+        beaconhandlersettings.beaconminidle=settingsdialog->beaconminidle;
+        beaconhandlersettings.beaconmaxidle=settingsdialog->beaconmaxidle;
+        beaconhandler->setSettings(beaconhandlersettings);
+
     }
+}
+
+//button exclusion
+void MainWindow::on_actionBeacon_triggered(bool checked)
+{
+    if(checked)
+    {
+        ui->actionIdleTX->setChecked(false);
+        ui->actionIdleTX->setEnabled(false);
+    }
+     else ui->actionIdleTX->setEnabled(true);
+}
+void MainWindow::on_actionIdleTX_triggered(bool checked)
+{
+    if(checked)
+    {
+        ui->actionBeacon->setChecked(false);
+        ui->actionBeacon->setEnabled(false);
+    }
+     else ui->actionBeacon->setEnabled(true);
 }

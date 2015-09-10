@@ -38,7 +38,6 @@ TextInputWidget::TextInputWidget(QWidget *parent)
     connect(timer, SIGNAL(timeout()), this, SLOT(redupdate()));
     timer->start(500);
 
-
 }
 
 void TextInputWidget::showContextMenu(const QPoint &pt)
@@ -142,7 +141,6 @@ void TextInputWidget::keyPressEvent(QKeyEvent *e)
             int selectionend=tc.selectionEnd();
 
             int charsremoved=abs(selectionend-selectionstart);
-            int charsadded=e->text().size();
 
             if(e->key()==Qt::Key_Backspace&&!charsremoved)
             {
@@ -161,9 +159,9 @@ void TextInputWidget::keyPressEvent(QKeyEvent *e)
 
             textinputdevice->str.remove(selectionstart,charsremoved);
 
-            if((e->key()==Qt::Key_Backspace||e->key()==Qt::Key_Delete||e->text().toLatin1()[0]<0x20)&&!(e->key()==Qt::Key_Return||e->key()==Qt::Key_Enter))
+            if((e->key()==Qt::Key_Backspace||e->key()==Qt::Key_Delete||e->text().toLatin1()[0]<(char)0x20)&&!(e->key()==Qt::Key_Return||e->key()==Qt::Key_Enter))
             {
-                charsadded=0;
+                // no chars added
             }
              else textinputdevice->str.insert(selectionstart,e->text());
 

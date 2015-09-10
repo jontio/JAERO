@@ -11,6 +11,7 @@
 #include "varicodepipeencoder.h"
 #include "serialppt.h"
 #include "gui_classes/settingsdialog.h"
+#include "beaconhandler.h"
 
 namespace Ui {
 class MainWindow;
@@ -42,8 +43,10 @@ private:
     SerialPPT *serialPPT;
 
     SettingsDialog *settingsdialog;
-
     SettingsDialog::Device modulatordevicetype;
+
+    BeaconHandler *beaconhandler;
+    BeaconHandler::Settings beaconhandlersettings;
 
     void connectmodulatordevice(SettingsDialog::Device device);
     void setSerialUser(SettingsDialog::Device device);
@@ -64,6 +67,8 @@ private slots:
     void on_actionConnectToUDPPort_toggled(bool arg1);
     void on_actionRawOutput_triggered();
     void on_action_Settings_triggered();
+    void on_actionBeacon_triggered(bool checked);
+    void on_actionIdleTX_triggered(bool checked);
 };
 
 #endif // MAINWINDOW_H
