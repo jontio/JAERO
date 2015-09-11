@@ -43,6 +43,7 @@ void SettingsDialog::poulatepublicvars()
     if(ui->comboBoxJDDS->currentText()=="JDDS")modulatordevicetype=JDDS;
     beaconminidle=ui->spinBoxbeaconminidle->value();
     beaconmaxidle=ui->spinBoxbeaconmaxidle->value();
+    scrapeingenabled=ui->checkBoxenablescrapeing->isChecked();
 
     //put scraping into the format needed by the webscraper
     scrapemapcontainer.scrapemap.clear();
@@ -110,7 +111,7 @@ void SettingsDialog::populatesettings()
     ui->comboBoxJDDS->setCurrentText(settings.value("comboBoxJDDS","PTT").toString());
     ui->spinBoxbeaconminidle->setValue(settings.value("spinBoxbeaconminidle",110).toInt());
     ui->spinBoxbeaconmaxidle->setValue(settings.value("spinBoxbeaconmaxidle",130).toInt());
-
+    ui->checkBoxenablescrapeing->setChecked(settings.value("checkBoxenablescrapeing",false).toBool());
 
     //load scrapings
     ui->tableWidgetscrapings->setRowCount(settings.value("scrapings-rows",0).toInt());
@@ -141,6 +142,7 @@ void SettingsDialog::accept()
     settings.setValue("comboBoxJDDS", ui->comboBoxJDDS->currentText());
     settings.setValue("spinBoxbeaconminidle", ui->spinBoxbeaconminidle->value());
     settings.setValue("spinBoxbeaconmaxidle", ui->spinBoxbeaconmaxidle->value());
+    settings.setValue("checkBoxenablescrapeing", ui->checkBoxenablescrapeing->isChecked());
 
 
 

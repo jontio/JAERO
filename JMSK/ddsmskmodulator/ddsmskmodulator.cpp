@@ -93,12 +93,12 @@ void DDSMSKModulator::start()
     emit ReadyState(false);
     open(QIODevice::ReadOnly);
 
-    //queue 2 secs of buffer before activating
+    //queue 3 secs of buffer before activating
     reqbuffer.clear();
-    int twosecbuffersize=2.0*settings.fb/8.0;//two secs of buffer
-    while(twosecbuffersize)
+    int threesecbuffersize=3.0*settings.fb/8.0;//three secs of buffer
+    while(threesecbuffersize)
     {
-        int buffersizetoload=twosecbuffersize;
+        int buffersizetoload=threesecbuffersize;
         if(buffersizetoload>254)
         {
             buffersizetoload=254;
@@ -109,7 +109,7 @@ void DDSMSKModulator::start()
         if(!reqbuffer.size())break;
         queueJDDSData(reqbuffer);
 
-        twosecbuffersize-=buffersizetoload;
+        threesecbuffersize-=buffersizetoload;
     }
 
     setJDDSstate(true);

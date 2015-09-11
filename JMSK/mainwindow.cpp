@@ -36,84 +36,6 @@ MainWindow::MainWindow(QWidget *parent) :
     webscraper = new WebScraper(this);
     webscraper->setTextReplacementMap(textreplacement->textmap);
 
- //scraping eg start
-
-    ScrapeMapContainer scrapemapcontainer;
-    ScrapeItem item;
-    /*item.url="http://www.weatherzone.co.nz/north-island/paraparaumu";
-    item.valueifmissing="???";
-    item.rx.setPattern("<td class=\"hilite bg_yellow\">(.+)</td>");
-    item.rx.setMinimal(true);
-    item.refreshintervalsecs=300;
-    item.removehtmltags=false;
-    scrapemapcontainer.scrapemap.insert("[wind]",item);
-
-    item.url="http://www.weatherzone.co.nz/north-island/paraparaumu";
-    item.valueifmissing="???";
-    item.rx.setPattern("<span class=\"tempnow\">(.+)&deg;C</span>");
-    item.rx.setMinimal(true);
-    item.refreshintervalsecs=300;
-    item.removehtmltags=false;
-    scrapemapcontainer.scrapemap.insert("[temp]",item);*/
-
-    item.url="http://google.com";
-    item.valueifmissing="???";
-    item.rx.setPattern("<TITLE>(.+)</TITLE>");
-    item.rx.setMinimal(true);
-    item.refreshintervalsecs=3000;
-    item.removehtmltags=false;
-    scrapemapcontainer.scrapemap.insert("[1]",item);
-
-
-
-    item.url="http://jontio.zapto.org";
-    item.valueifmissing="???";
-    item.rx.setPattern("(.+)");
-    item.rx.setMinimal(false);
-    item.refreshintervalsecs=1200;
-    item.removehtmltags=true;
-    scrapemapcontainer.scrapemap.insert("[4]",item);
-
-  //  webscraper->setScrapeMap(scrapemapcontainer);
-
-   // webscraper->setScrapingInterval(10);
-   // webscraper->start();
-
-
-
-    item.url="http://google.com";
-    item.valueifmissing="???";
-    item.rx.setPattern("(.+)");
-    item.rx.setMinimal(false);
-    item.refreshintervalsecs=1200;
-    item.removehtmltags=true;
-    scrapemapcontainer.scrapemap.insert("[3]",item);
-
-  //  webscraper->setScrapeMap(scrapemapcontainer);
-  //  webscraper->cachescrape();
-
-
-  /*  ScrapeItem item;
-    item.url="http://www.weatherzone.co.nz/north-island/paraparaumu";
-    item.valueifmissing="???";
-    item.rx.setPattern("<td class=\"hilite bg_yellow\">(.+)</td>");
-    item.rx.setMinimal(true);
-    item.key="[wind]";
-    webscraper->scrapeitems.push_back(item);
-
-    item.url="http://www.weatherzone.co.nz/north-island/paraparaumu";
-    item.valueifmissing="???";
-    item.rx.setPattern("<span class=\"tempnow\">(.+)&deg;C</span>");
-    item.rx.setMinimal(true);
-    item.key="[temp]";
-    webscraper->scrapeitems.push_back(item);*/
-
-    //webscraper->setScrapingInterval(3600);
-    //webscraper->start();
-//scraping eg end
-
-
-
     //default sink is the varicode input of the console
     audiomskdemodulator->ConnectSinkDevice(ui->console->varicodeconsoledevice);
 
@@ -156,6 +78,7 @@ MainWindow::MainWindow(QWidget *parent) :
     ui->actionConnectToUDPPort->setChecked(settings.value("actionConnectToUDPPort",false).toBool());
     ui->actionRawOutput->setChecked(settings.value("actionRawOutput",false).toBool());
     double tmpfreq=settings.value("freq_center",1000).toDouble();
+    ui->inputwidget->setPlainText(settings.value("inputwidget","").toString());
 
     //set audio msk demodulator settings and start
     on_comboBoxafc_currentIndexChanged(ui->comboBoxafc->currentText());
@@ -213,7 +136,7 @@ MainWindow::MainWindow(QWidget *parent) :
 
     //load scrapings to the webscraper and start the scraper
     webscraper->setScrapeMap(settingsdialog->scrapemapcontainer);
-    webscraper->start();
+    if(settingsdialog->scrapeingenabled)webscraper->start();
 
 //--end modulator setup
 
@@ -314,6 +237,7 @@ MainWindow::~MainWindow()
     settings.setValue("actionConnectToUDPPort", ui->actionConnectToUDPPort->isChecked());
     settings.setValue("actionRawOutput", ui->actionRawOutput->isChecked());
     settings.setValue("freq_center", audiomskdemodulator->getCurrentFreq());
+    settings.setValue("inputwidget", ui->inputwidget->toPlainText());
 
     delete ui;
 }
@@ -499,6 +423,9 @@ void MainWindow::on_action_Settings_triggered()
 
 
         webscraper->setScrapeMap(settingsdialog->scrapemapcontainer);
+        if(settingsdialog->scrapeingenabled)webscraper->start();
+         else webscraper->stop();
+
 
     }
 }

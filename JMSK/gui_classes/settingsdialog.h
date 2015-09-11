@@ -30,6 +30,7 @@ public:
     QString Postamble;
     AudioMskModulator::Settings audiomskmodulatorsettings;
     ScrapeMapContainer scrapemapcontainer;
+    bool scrapeingenabled;
 
 private:
     Ui::SettingsDialog *ui;    
