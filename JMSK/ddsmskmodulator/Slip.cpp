@@ -129,5 +129,5 @@ void Slip::close()
 
 bool Slip::isOpen()
 {
-    m_serialPort->isOpen();
+    return m_serialPort->isOpen();
 }

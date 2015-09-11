@@ -22,8 +22,6 @@ TextInputWidget::TextInputWidget(QWidget *parent)
     connect(this,SIGNAL(customContextMenuRequested(const QPoint&)),
             this,SLOT(showContextMenu(const QPoint &)));
 
-
-
     lastredcharpos=0;
 
     defaultformat=currentCharFormat();

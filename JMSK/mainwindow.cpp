@@ -28,6 +28,92 @@ MainWindow::MainWindow(QWidget *parent) :
     //create a beacon handler
     beaconhandler = new BeaconHandler(this);
 
+    //create somthing to rewrite text in the tx window
+    textreplacement = new TextReplacement(this);
+    textreplacement->setPlainTextEdit(ui->inputwidget);
+
+    //create a webscraper
+    webscraper = new WebScraper(this);
+    webscraper->setTextReplacementMap(textreplacement->textmap);
+
+ //scraping eg start
+
+    ScrapeMapContainer scrapemapcontainer;
+    ScrapeItem item;
+    /*item.url="http://www.weatherzone.co.nz/north-island/paraparaumu";
+    item.valueifmissing="???";
+    item.rx.setPattern("<td class=\"hilite bg_yellow\">(.+)</td>");
+    item.rx.setMinimal(true);
+    item.refreshintervalsecs=300;
+    item.removehtmltags=false;
+    scrapemapcontainer.scrapemap.insert("[wind]",item);
+
+    item.url="http://www.weatherzone.co.nz/north-island/paraparaumu";
+    item.valueifmissing="???";
+    item.rx.setPattern("<span class=\"tempnow\">(.+)&deg;C</span>");
+    item.rx.setMinimal(true);
+    item.refreshintervalsecs=300;
+    item.removehtmltags=false;
+    scrapemapcontainer.scrapemap.insert("[temp]",item);*/
+
+    item.url="http://google.com";
+    item.valueifmissing="???";
+    item.rx.setPattern("<TITLE>(.+)</TITLE>");
+    item.rx.setMinimal(true);
+    item.refreshintervalsecs=3000;
+    item.removehtmltags=false;
+    scrapemapcontainer.scrapemap.insert("[1]",item);
+
+
+
+    item.url="http://jontio.zapto.org";
+    item.valueifmissing="???";
+    item.rx.setPattern("(.+)");
+    item.rx.setMinimal(false);
+    item.refreshintervalsecs=1200;
+    item.removehtmltags=true;
+    scrapemapcontainer.scrapemap.insert("[4]",item);
+
+  //  webscraper->setScrapeMap(scrapemapcontainer);
+
+   // webscraper->setScrapingInterval(10);
+   // webscraper->start();
+
+
+
+    item.url="http://google.com";
+    item.valueifmissing="???";
+    item.rx.setPattern("(.+)");
+    item.rx.setMinimal(false);
+    item.refreshintervalsecs=1200;
+    item.removehtmltags=true;
+    scrapemapcontainer.scrapemap.insert("[3]",item);
+
+  //  webscraper->setScrapeMap(scrapemapcontainer);
+  //  webscraper->cachescrape();
+
+
+  /*  ScrapeItem item;
+    item.url="http://www.weatherzone.co.nz/north-island/paraparaumu";
+    item.valueifmissing="???";
+    item.rx.setPattern("<td class=\"hilite bg_yellow\">(.+)</td>");
+    item.rx.setMinimal(true);
+    item.key="[wind]";
+    webscraper->scrapeitems.push_back(item);
+
+    item.url="http://www.weatherzone.co.nz/north-island/paraparaumu";
+    item.valueifmissing="???";
+    item.rx.setPattern("<span class=\"tempnow\">(.+)&deg;C</span>");
+    item.rx.setMinimal(true);
+    item.key="[temp]";
+    webscraper->scrapeitems.push_back(item);*/
+
+    //webscraper->setScrapingInterval(3600);
+    //webscraper->start();
+//scraping eg end
+
+
+
     //default sink is the varicode input of the console
     audiomskdemodulator->ConnectSinkDevice(ui->console->varicodeconsoledevice);
 
@@ -84,11 +170,15 @@ MainWindow::MainWindow(QWidget *parent) :
 
 //start modulator setup. the modulator is new and is and add on.
 
+    //connections for replacing text
+    connect(audiomskmodulator,SIGNAL(statechanged(bool)),textreplacement,SLOT(onstatechange(bool)));
+    connect(ddsmskmodulator,SIGNAL(statechanged(bool)),textreplacement,SLOT(onstatechange(bool)));
+
     //connect the encoder to the text widget. the text encoder to the modulator gets done later
     varicodepipeencoder->ConnectSourceDevice(ui->inputwidget->textinputdevice);
 
     //always connected
-    //connect(ui->actionTXRX,SIGNAL(triggered(bool)),ui->inputwidget,SLOT(reset()));
+    //connect(ui->actionTXRX,SIGNAL(triggered(bool)),ui->inputwidget,SLOT(reset()));//not needed
     connect(ui->actionIdleTX,SIGNAL(triggered(bool)),ui->inputwidget->textinputdevice,SLOT(setIdle_on_eof(bool)));
     connect(ui->actionClearTXWindow,SIGNAL(triggered(bool)),ui->inputwidget,SLOT(clear()));
     connect(ui->actionBeacon,SIGNAL(triggered(bool)),beaconhandler,SLOT(StartStop(bool)));
@@ -120,6 +210,10 @@ MainWindow::MainWindow(QWidget *parent) :
     beaconhandlersettings.beaconminidle=settingsdialog->beaconminidle;
     beaconhandlersettings.beaconmaxidle=settingsdialog->beaconmaxidle;
     beaconhandler->setSettings(beaconhandlersettings);
+
+    //load scrapings to the webscraper and start the scraper
+    webscraper->setScrapeMap(settingsdialog->scrapemapcontainer);
+    webscraper->start();
 
 //--end modulator setup
 
@@ -370,11 +464,14 @@ void MainWindow::on_action_Settings_triggered()
     if(settingsdialog->exec()==QDialog::Accepted)
     {
 
+        //it a td to tricky keeping the modulator running when settings have been changed so i'm tring out stopping the modulator when settings are changed
+        audiomskmodulator->stop();
+        ddsmskmodulator->stop();
+
         ui->statusBar->clearMessage();
         ui->inputwidget->textinputdevice->preamble1=settingsdialog->Preamble1;
         ui->inputwidget->textinputdevice->preamble2=settingsdialog->Preamble2;
         ui->inputwidget->textinputdevice->postamble=settingsdialog->Postamble;
-
 
         if(modulatordevicetype!=settingsdialog->modulatordevicetype)
         {
@@ -399,6 +496,9 @@ void MainWindow::on_action_Settings_triggered()
         beaconhandlersettings.beaconminidle=settingsdialog->beaconminidle;
         beaconhandlersettings.beaconmaxidle=settingsdialog->beaconmaxidle;
         beaconhandler->setSettings(beaconhandlersettings);
+
+
+        webscraper->setScrapeMap(settingsdialog->scrapemapcontainer);
 
     }
 }

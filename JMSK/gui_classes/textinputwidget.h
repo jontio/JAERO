@@ -196,7 +196,6 @@ public:
     int postamble_bytes;
     QString textamble;
 
-
 public slots:
     void cut();
     void paste();

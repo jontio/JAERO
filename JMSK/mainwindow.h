@@ -12,6 +12,8 @@
 #include "serialppt.h"
 #include "gui_classes/settingsdialog.h"
 #include "beaconhandler.h"
+#include "textreplacement.h"
+#include "webscraper.h"
 
 namespace Ui {
 class MainWindow;
@@ -47,6 +49,10 @@ private:
 
     BeaconHandler *beaconhandler;
     BeaconHandler::Settings beaconhandlersettings;
+
+    TextReplacement *textreplacement;
+
+    WebScraper *webscraper;
 
     void connectmodulatordevice(SettingsDialog::Device device);
     void setSerialUser(SettingsDialog::Device device);

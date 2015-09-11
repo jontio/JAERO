@@ -47,7 +47,9 @@ SOURCES += main.cpp\
     serialppt.cpp \
     ddsmskmodulator/ddsmskmodulator.cpp \
     ddsmskmodulator/Slip.cpp \
-    beaconhandler.cpp
+    beaconhandler.cpp \
+    textreplacement.cpp \
+    webscraper.cpp
 
 HEADERS  += mainwindow.h \
     coarsefreqestimate.h \
@@ -76,7 +78,9 @@ HEADERS  += mainwindow.h \
     serialppt.h \
     ddsmskmodulator/ddsmskmodulator.h \
     ddsmskmodulator/Slip.h \
-    beaconhandler.h
+    beaconhandler.h \
+    textreplacement.h \
+    webscraper.h
 
 FORMS    += mainwindow.ui \
     gui_classes/settingsdialog.ui

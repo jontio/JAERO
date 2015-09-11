@@ -43,6 +43,48 @@ void SettingsDialog::poulatepublicvars()
     if(ui->comboBoxJDDS->currentText()=="JDDS")modulatordevicetype=JDDS;
     beaconminidle=ui->spinBoxbeaconminidle->value();
     beaconmaxidle=ui->spinBoxbeaconmaxidle->value();
+
+    //put scraping into the format needed by the webscraper
+    scrapemapcontainer.scrapemap.clear();
+    ScrapeItem scrapeitem;
+    QString scrapeid;
+    for(int row=0;row<ui->tableWidgetscrapings->rowCount();row++)
+    {
+        for(int column=0;column<ui->tableWidgetscrapings->columnCount();column++)
+        {
+            QTableWidgetItem *tableitem = ui->tableWidgetscrapings->item(row,column);
+            if(!tableitem)continue;
+            switch(column)
+            {
+            case SCRAPE_ID:
+                scrapeid=tableitem->text();
+                break;
+            case SCRAPE_URL:
+                scrapeitem.url=tableitem->text();
+                break;
+            case SCRAPE_REGEXPR:
+                scrapeitem.rx.setPattern(tableitem->text());
+                break;
+            case SCRAPE_MINIMAL:
+                if(tableitem->text().trimmed().toUpper()=="YES")scrapeitem.rx.setMinimal(true);
+                 else scrapeitem.rx.setMinimal(false);
+                break;
+            case SCRAPE_REFRESHVALUE:
+                scrapeitem.refreshintervalsecs=tableitem->text().trimmed().toInt();
+                break;
+            case SCRAPE_DROP_HTMLTAGS:
+                if(tableitem->text().trimmed().toUpper()=="YES")scrapeitem.removehtmltags=true;
+                 else scrapeitem.removehtmltags=false;
+                break;
+            case SCRAPE_DEFAULTVALUE:
+                scrapeitem.valueifmissing=tableitem->text();
+                break;
+            }
+        }
+        scrapemapcontainer.scrapemap.insert(scrapeid,scrapeitem);
+    }
+
+
 }
 
 
@@ -68,6 +110,20 @@ void SettingsDialog::populatesettings()
     ui->comboBoxJDDS->setCurrentText(settings.value("comboBoxJDDS","PTT").toString());
     ui->spinBoxbeaconminidle->setValue(settings.value("spinBoxbeaconminidle",110).toInt());
     ui->spinBoxbeaconmaxidle->setValue(settings.value("spinBoxbeaconmaxidle",130).toInt());
+
+
+    //load scrapings
+    ui->tableWidgetscrapings->setRowCount(settings.value("scrapings-rows",0).toInt());
+    for(int row=0;row<ui->tableWidgetscrapings->rowCount();row++)
+    {
+        for(int column=0;column<ui->tableWidgetscrapings->columnCount();column++)
+        {
+            QString str=((QString)"scrapings-%1-%2").arg(row).arg(column);
+            QTableWidgetItem *newItem = new QTableWidgetItem(settings.value(str,"").toString());
+            ui->tableWidgetscrapings->setItem(row, column, newItem);
+        }
+    }
+
     poulatepublicvars();
 }
 
@@ -85,6 +141,21 @@ void SettingsDialog::accept()
     settings.setValue("comboBoxJDDS", ui->comboBoxJDDS->currentText());
     settings.setValue("spinBoxbeaconminidle", ui->spinBoxbeaconminidle->value());
     settings.setValue("spinBoxbeaconmaxidle", ui->spinBoxbeaconmaxidle->value());
+
+
+
+    //save scrapings
+    settings.setValue("scrapings-rows",ui->tableWidgetscrapings->rowCount());
+    for(int row=0;row<ui->tableWidgetscrapings->rowCount();row++)
+    {
+        for(int column=0;column<ui->tableWidgetscrapings->columnCount();column++)
+        {
+            QString str=((QString)"scrapings-%1-%2").arg(row).arg(column);
+            if(ui->tableWidgetscrapings->item(row,column))settings.setValue(str,ui->tableWidgetscrapings->item(row,column)->text());
+        }
+    }
+
+
     poulatepublicvars();
     QDialog::accept();
 }
@@ -97,4 +168,14 @@ void SettingsDialog::on_spinBoxbeaconmaxidle_editingFinished()
 void SettingsDialog::on_spinBoxbeaconminidle_editingFinished()
 {
     if(ui->spinBoxbeaconmaxidle->value()<ui->spinBoxbeaconminidle->value())ui->spinBoxbeaconmaxidle->setValue(ui->spinBoxbeaconminidle->value());
+}
+
+void SettingsDialog::on_pushButtonadd_clicked()
+{
+    ui->tableWidgetscrapings->setRowCount(ui->tableWidgetscrapings->rowCount()+1);
+}
+
+void SettingsDialog::on_pushButtondel_clicked()
+{
+    ui->tableWidgetscrapings->removeRow(ui->tableWidgetscrapings->currentRow());
 }

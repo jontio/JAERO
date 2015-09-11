@@ -51,7 +51,7 @@ QVector<short> &VariCodePipeEncoder::Encode(QByteArray &bytes)
 {
     for(int i=0;i<bytes.size();i++)
     {
-        if(bytes[i]<0)bytes[i]=0;//the vericode im using dont do numbers above 127
+        if(bytes[i]<(char)0)bytes[i]=(char)0;//the vericode im using dont do numbers above 127
     }
     sbits.resize((bytes.size()+1)*16);
     sbits.resize(varicode_encode(sbits.data(),bytes.data(),sbits.size(),bytes.size(),1));
