@@ -227,6 +227,9 @@ void MainWindow::connectmodulatordevice(SettingsDialog::Device device)
 MainWindow::~MainWindow()
 {
 
+    //restore text in tx window b4 closeing
+    textreplacement->RestoreIfUnchanged();
+
     //save settings
     QSettings settings("Jontisoft", "JMSK");
     settings.setValue("comboBoxafc", ui->comboBoxafc->currentIndex());

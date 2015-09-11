@@ -50,9 +50,20 @@ void TextReplacement::Replace(QPlainTextEdit *te)
 
     for(int i=0;i<textmap->map.size();i++)orgtext_converted.replace(textmap->map.keys().at(i),textmap->map.values().at(i));
 
-    te->setPlainText(orgtext_converted);
+
     if(orgtext==orgtext_converted)replacedtext=false;
-     else replacedtext=true;
+     else
+     {
+        bool atend=te->textCursor().atEnd();
+        te->setPlainText(orgtext_converted);
+        if(atend)
+        {
+            QTextCursor cursor = te->textCursor();
+            cursor.movePosition(QTextCursor::End);
+            te->setTextCursor(cursor);
+        }
+        replacedtext=true;
+     }
 
 }
 

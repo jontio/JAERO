@@ -91,6 +91,8 @@ private:
     QPointer<QIODevice> pdatasourcedevice;
     int bitcounter;
     int bitstosendbeforereadystatesignal;
+
+    int noresponcecount;
 };
 
 #endif // DDSMSKMODULATOR_H

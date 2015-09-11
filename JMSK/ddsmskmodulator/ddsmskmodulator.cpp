@@ -6,6 +6,7 @@
 DDSMSKModulator::DDSMSKModulator(QObject *parent)
 :   QIODevice(parent)
 {
+    noresponcecount=0;
     slip = new Slip(this);
     JDDSTimeout = new QTimer(this);
     connect(slip,SIGNAL(rxpacket(QByteArray)),this,SLOT(handlerxslippacket(QByteArray)));
@@ -14,10 +15,10 @@ DDSMSKModulator::DDSMSKModulator(QObject *parent)
 
 void DDSMSKModulator::TimeoutSlot()
 {
-    WarningMsg("No responce from JDDS device");
+    if(noresponcecount<100)noresponcecount++;
+    if(noresponcecount>2)WarningMsg("No responce from JDDS device");
     JDDSTimeout->stop();
     stop();
-
 }
 
 void DDSMSKModulator::stoptimeout()
@@ -139,22 +140,26 @@ void DDSMSKModulator::handlerxslippacket(QByteArray pkt)
     switch(pkt_type)//switch on packet type
     {
     case JPKT_GEN_ACK:
+        noresponcecount=0;
         if(pkt.length()>=2)SlipMsg(((QString)"JPKT_GEN_ACK %1 %2").arg((uchar)pkt.at(0)).arg((uchar)pkt.at(1)));
          else if(pkt.length()>=1)SlipMsg(((QString)"JPKT_GEN_ACK %1").arg((uchar)pkt.at(0)));
           else if(pkt.length()>=0)SlipMsg(((QString)"JPKT_GEN_ACK"));
         break;
     case JPKT_GEN_NAK:
+        noresponcecount=0;
         if(pkt.length()>=2)SlipMsg(((QString)"JPKT_GEN_NAK %1 %2").arg((uchar)pkt.at(0)).arg((uchar)pkt.at(1)));
          else if(pkt.length()>=1)SlipMsg(((QString)"JPKT_GEN_NAK %1").arg((uchar)pkt.at(0)));
           else if(pkt.length()>=0)SlipMsg(((QString)"JPKT_GEN_NAK"));
         break;
     case JPKT_SET_FREQS:
+        noresponcecount=0;
         if(!(pkt.length()%4))
         {
             SlipMsg(((QString)"JPKT_SET_FREQS"));
         }
         break;
     case JPKT_FREQ:
+        noresponcecount=0;
         if(pkt.length()==(4))
         {
             qint32 freq=qFromLittleEndian<qint32>((uchar*)pkt.data());
@@ -162,6 +167,7 @@ void DDSMSKModulator::handlerxslippacket(QByteArray pkt)
         }
         break;
     case JPKT_PHASE:
+        noresponcecount=0;
         if(pkt.length()==(4))
         {
             qint32 phase=qFromLittleEndian<qint32>((uchar*)pkt.data());
@@ -171,6 +177,7 @@ void DDSMSKModulator::handlerxslippacket(QByteArray pkt)
     case JPKT_ON:
         if(pkt.length()==(1))
         {
+            noresponcecount=0;
             if(pkt[0])
             {
 
@@ -195,6 +202,7 @@ void DDSMSKModulator::handlerxslippacket(QByteArray pkt)
         }
         break;
     case JPKT_REQ:
+        noresponcecount=0;
         if(pkt.length()==(1)&&!ignorereq)
         {
             uchar byteswanted=pkt[0]-1;
@@ -207,17 +215,21 @@ void DDSMSKModulator::handlerxslippacket(QByteArray pkt)
         }else JDDSTimeout->start(5000);
         break;
     case JPKT_DATA_ACK:
+        //noresponcecount=0;
         //if(!pkt.length())SlipMsg("ACK of data sent to Arduino");
         break;
     case JPKT_DATA_NACK:
+        noresponcecount=0;
         if(!pkt.length())SlipMsg("NACK of data sent to Arduino");
         break;
     case JPKT_PILOT_ON:
+        noresponcecount=0;
         if(!pkt.length())SlipMsg("DDS Pilot on");
         break;
     case JPKT_SYMBOL_PERIOD:
         if(pkt.length()==(4))
         {
+            noresponcecount=0;
             qint32 symbol_period=qFromLittleEndian<qint32>((uchar*)pkt.data());
             SlipMsg(((QString)"Symbol rate on DDS is %1").arg(1000000/((double)symbol_period)));
         }
@@ -288,7 +300,6 @@ qint64 DDSMSKModulator::writeData(const char *data, qint64 len)
     Q_UNUSED(len);
     return 0;
 }
-
 
 qint64 DDSMSKModulator::readData(char *data, qint64 maxlen)
 {
