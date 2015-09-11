@@ -8,6 +8,7 @@ BeaconHandler::BeaconHandler(QObject *parent) : QObject(parent)
     backoffcnt=0;
     istransmitting=false;
     gotsignal=false;
+    enabled=false;
 }
 
 void BeaconHandler::MainTimeOut()
@@ -26,7 +27,7 @@ void BeaconHandler::MainTimeOut()
         }
         int randtxtime=(qrand()%settings.backoff);
         //qDebug()<<"backing off for"<<randtxtime<<"secs";
-        maintimer->start(1000*randtxtime);
+        if(enabled)maintimer->start(1000*randtxtime);
         return;
     }
     backoffcnt=0;
@@ -36,12 +37,14 @@ void BeaconHandler::MainTimeOut()
 void BeaconHandler::Start()
 {
     Stop();
+    enabled=true;
     maintimer->start(1000);
     emit Started();
 }
 
 void BeaconHandler::Stop()
 {
+    enabled=false;
     maintimer->stop();
     backoffcnt=0;
     emit Stoped();
@@ -60,7 +63,7 @@ void BeaconHandler::setSettings(Settings _settings)
             {
                 randtxtime+=(qrand()%(settings.beaconmaxidle-settings.beaconminidle));
             }
-            maintimer->start(1000*randtxtime);
+            if(enabled)maintimer->start(1000*randtxtime);
         }
     }
 }
@@ -82,7 +85,7 @@ void BeaconHandler::TransmissionStatus(bool _istransmitting)
             randtxtime+=(qrand()%(settings.beaconmaxidle-settings.beaconminidle));
         }
         //qDebug()<<"setting timeout for"<<randtxtime<<"seconds";
-        maintimer->start(1000*randtxtime);
+        if(enabled)maintimer->start(1000*randtxtime);
     }
     istransmitting=_istransmitting;
 }

@@ -57,6 +57,7 @@ private:
     bool gotsignal;
     bool istransmitting;
     int backoffcnt;
+    bool enabled;
 };
 
 #endif // BEACONHANDLER_H

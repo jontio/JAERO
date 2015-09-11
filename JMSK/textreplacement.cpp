@@ -38,7 +38,7 @@ void TextReplacement::Restore(QString &text)
 
 void TextReplacement::RestoreIfUnchanged(QString &text)
 {
-    if(text==orgtext_converted)text=orgtext;
+    if(text.left(orgtext_converted.size())==orgtext_converted)text=(orgtext+text.right(text.size()-orgtext_converted.size()));//untested and unused atm
 }
 
 void TextReplacement::Replace(QPlainTextEdit *te)
@@ -75,7 +75,16 @@ void TextReplacement::Restore(QPlainTextEdit *te)
 
 void TextReplacement::RestoreIfUnchanged(QPlainTextEdit *te)
 {
-    if(te->toPlainText()==orgtext_converted)te->setPlainText(orgtext);
+    bool atend=te->textCursor().atEnd();
+    QString text=te->toPlainText();
+    if(text.left(orgtext_converted.size())==orgtext_converted)te->setPlainText(orgtext+text.right(text.size()-orgtext_converted.size()));
+    if(atend)
+    {
+        QTextCursor cursor = te->textCursor();
+        cursor.movePosition(QTextCursor::End);
+        te->setTextCursor(cursor);
+    }
+
 }
 
 void TextReplacement::Replace()
