@@ -46,19 +46,20 @@ void DDSMSKModulator::setSettings(Settings _settings)
         if(!slip->open(QIODevice::ReadWrite))WarningMsg("Cant open serial port \""+settings.serialportname+"\"");
         change=true;
     }
-    if(change)
-    {
-        setJDDSstate(false);
-        setJDDSSymbolRate(settings.fb);
+    if(change)LoadSettings();
+}
 
-        QList<float> freqs;
-        float freq=settings.freq_center-settings.fb/4.0;
-        freqs.push_back(freq);
-        freq=settings.freq_center+settings.fb/4.0;
-        freqs.push_back(freq);
-        setJDDSfreqs(freqs);
+void DDSMSKModulator::LoadSettings()
+{
+    setJDDSstate(false);
+    setJDDSSymbolRate(settings.fb);
 
-    }
+    QList<float> freqs;
+    float freq=settings.freq_center-settings.fb/4.0;
+    freqs.push_back(freq);
+    freq=settings.freq_center+settings.fb/4.0;
+    freqs.push_back(freq);
+    setJDDSfreqs(freqs);
 }
 
 ///Connects a source device to the modem for the data to modulate
@@ -91,6 +92,7 @@ void DDSMSKModulator::start()
         setSettings(settings);
         if(!(slip->isOpen()))return;
     }
+    LoadSettings();
     emit ReadyState(false);
     open(QIODevice::ReadOnly);
 

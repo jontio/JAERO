@@ -81,6 +81,7 @@ private:
     void setJDDSstate(bool state);
     void setJDDSfreqs(QList<float> freqs);
     void setJDDSSymbolRate(double rate);
+    void LoadSettings();
 
     QTimer *JDDSTimeout;
 

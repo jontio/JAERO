@@ -2,6 +2,14 @@
 #include "ui_mainwindow.h"
 #include <QDebug>
 
+#ifdef __linux__
+#include <unistd.h>
+#define Sleep(x) usleep(x * 1000);
+#endif
+#ifdef _WIN32
+#include <windows.h>
+#endif
+
 
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),

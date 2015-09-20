@@ -1,6 +1,5 @@
 #include "Slip.h"
 #include <QDebug>
-#include <windows.h>
 
 Slip::Slip(QObject *parent)
     : QObject(parent)
