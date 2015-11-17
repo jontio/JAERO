@@ -200,7 +200,6 @@ void MskDemodulator::CenterFreqChangedSlot(double freq_center)//spectrum display
     emit Plottables(mixer2.GetFreqHz(),mixer_center.GetFreqHz(),lockingbw);
 }
 
-
 MskDemodulator::~MskDemodulator()
 {
     delete matchedfilter_re;
@@ -219,7 +218,6 @@ void MskDemodulator::stop()
 {
     close();
 }
-
 
 qint64 MskDemodulator::readData(char *data, qint64 maxlen)
 {

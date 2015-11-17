@@ -249,13 +249,13 @@ FIR::~FIR()
 double  FIR::FIRUpdateAndProcess(double sig)
 {
         buff[ptr]=sig;
-        ptr++;ptr%=buffsize;
+        ptr++;if(ptr>=buffsize)ptr=0;//ptr%=buffsize;
         int tptr=ptr;
         outsum=0;
         for(int i=0;i<NumberOfPoints;i++)
         {
                 outsum+=points[i]*buff[tptr];
-                tptr++;tptr%=buffsize;
+                tptr++;if(tptr>=buffsize)tptr=0;//tptr%=buffsize;
         }
         return outsum;
 }
