@@ -314,7 +314,17 @@
          </item>
          <item>
           <property name="text">
+           <string>600 bps</string>
+          </property>
+         </item>
+         <item>
+          <property name="text">
            <string>1000 bps</string>
+          </property>
+         </item>
+         <item>
+          <property name="text">
+           <string>1200 bps</string>
           </property>
          </item>
          <item>
@@ -378,7 +388,17 @@
          </item>
          <item>
           <property name="text">
+           <string>900 Hz</string>
+          </property>
+         </item>
+         <item>
+          <property name="text">
            <string>1500 Hz</string>
+          </property>
+         </item>
+         <item>
+          <property name="text">
+           <string>1800 Hz</string>
           </property>
          </item>
          <item>

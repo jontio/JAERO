@@ -304,7 +304,9 @@ void MainWindow::on_comboBoxbps_currentIndexChanged(const QString &arg1)
     if(audiomskdemodulatorsettings.fb==125)audiomskdemodulatorsettings.symbolspercycle=16;
     if(audiomskdemodulatorsettings.fb==250)audiomskdemodulatorsettings.symbolspercycle=16;
     if(audiomskdemodulatorsettings.fb==500)audiomskdemodulatorsettings.symbolspercycle=24;
+    if(audiomskdemodulatorsettings.fb==600){audiomskdemodulatorsettings.symbolspercycle=24;audiomskdemodulatorsettings.Fs=12000;}
     if(audiomskdemodulatorsettings.fb==1000)audiomskdemodulatorsettings.symbolspercycle=24;
+    if(audiomskdemodulatorsettings.fb==1200){audiomskdemodulatorsettings.symbolspercycle=16;audiomskdemodulatorsettings.Fs=24000;}
     if(audiomskdemodulatorsettings.fb==1225){audiomskdemodulatorsettings.symbolspercycle=24;audiomskdemodulatorsettings.Fs=22050;}
     int idx=ui->comboBoxlbw->findText(((QString)"%1 Hz").arg(audiomskdemodulatorsettings.fb*1.5));
     if(idx>=0)ui->comboBoxlbw->setCurrentIndex(idx);
