@@ -20,7 +20,7 @@ The [JMSK](JMSK) directory is where the Qt pro file is for the main application.
 
 ##Compiling JMSK
 
-Compiling JMSK requires the Qt framework which can be obtained from http://www.qt.io/download-open-source/ . Qt Creator can be used to compile JMSK and comes with the Qt framework. At least version 5 of the Qt framework is required.
+Compiling JMSK requires the Qt framework which can be obtained from http://www.qt.io/download-open-source/ . Qt Creator can be used to compile JMSK and comes with the Qt framework. At least version 5 of the Qt framework is required. Currently MinGW and GCC work as compilers but VC++ does not.
 
 After installing Qt download the JMSK zip or the tar.gz source file to your computer. No other third-party downloads should be required.
 
