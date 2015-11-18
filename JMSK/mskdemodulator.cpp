@@ -379,9 +379,9 @@ qint64 MskDemodulator::writeData(const char *data, qint64 len)
             //Carrier tracking
             double carriererror=(pi/180.0)*(rotationest-90.0);
             //phase adjustment for next time
-            mixer2.IncresePhaseDeg((180.0/pi)*(carriererror)*cos(carriererror)*0.65);
+            mixer2.IncresePhaseDeg((180.0/pi)*(carriererror)*0.65);
             //adjust carrier frequency for next time
-            mixer2.IncreseFreqHz(2.0*0.5*0.90*(180.0/pi)*(1.0-0.9999*cos(carriererror))*(carriererror)/(360.0*symbolspercycle*SamplesPerSymbol/Fs));
+            mixer2.IncreseFreqHz(1.0*0.5*0.90*(180.0/pi)*(1.0-0.9999*cos(carriererror))*(carriererror)/(360.0*symbolspercycle*SamplesPerSymbol/Fs));
             if((mixer2.GetFreqHz()-mixer_center.GetFreqHz())>(lockingbw/2.0))
             {
                 mixer2.SetFreq(mixer_center.GetFreqHz()+(lockingbw/2.0));
@@ -408,7 +408,7 @@ qint64 MskDemodulator::writeData(const char *data, qint64 len)
             //correct any residule rotaion (optional not sure if better or worse atm)
             for(int k=0;k<sigbuff.size();k++)
             {
-                sigbuff[k]=sigbuff[k]*std::exp(imag*carriererror*0.5);
+          //      sigbuff[k]=sigbuff[k]*std::exp(imag*carriererror*0.5);
             }
 
             //create sample index and make sure we dont miss any points due to jitter
