@@ -25,15 +25,13 @@ bool PreambleDetector::setPreamble(quint64 bitpreamble,int len)
     if(preamble.size()<1)preamble.resize(1);
     buffer.fill(0,preamble.size());
     buffer_ptr=0;
-
-    qDebug()<<preamble;
     return true;
 }
 bool PreambleDetector::Update(int val)
 { 
     for(int i=0;i<(buffer.size()-1);i++)buffer[i]=buffer[i+1];
     buffer[buffer.size()-1]=val;
-    if(buffer==preamble){qDebug()<<"PreambleDetector: found";return true;}
+    if(buffer==preamble)return true;
     return false;
 }
 
@@ -89,28 +87,41 @@ QByteArray &AeroL::Decode(QVector<short> &bits)//0 --> oldest
     //return decodedbytes;
 
     static int cntr=1000000000;
+    static int formatid=0;
+    static int supfrmaker=0;
+    static int framecounter1=0;
+    static int framecounter2=0;
+    static int nibble=0;
+    static int nibblecntr=0;
 
     for(int i=0;i<bits.size();i++)
     {
         if(cntr<1000000000)cntr++;
-
         if(cntr<16)
         {
+            nibblecntr++;nibblecntr%=4;
+            if(cntr==0)nibblecntr=0;
+            if(nibblecntr==0)nibble=0;
+            if(bits[i])nibble|=(1<<(3-nibblecntr));
+
+            if(cntr==3)formatid=nibble;
+            if(cntr==7)supfrmaker=nibble;
+            if(cntr==11)framecounter1=nibble;
+            if(cntr==15)framecounter2=nibble;
+
             decodedbytes.push_back((bits[i])+48);
         }
-        if(cntr==15)decodedbytes.push_back('\n');
+        if(cntr==15)
+        {
+            decodedbytes.push_back('\n');
+            if(framecounter1!=framecounter2)decodedbytes.push_back("Error: Frame Counter mismatch");
+             else decodedbytes.push_back((((QString)"Format ID = %1\nSuper Frame Marker = %2\nFrame Counter = %3\n").arg(formatid).arg(supfrmaker).arg(framecounter1)).toLatin1());
+        }
 
-        if(preambledetector.Update(bits[i])){cntr=-1;decodedbytes+="Got sync\n";}
-
+        if(preambledetector.Update(bits[i])){decodedbytes+=((QString)"Bits for superframe = %1\n").arg(cntr+1);cntr=-1;decodedbytes+="Got sync\n";}
 
 
     }
-    //if(decodedbytes.isEmpty())decodedbytes=".";
-
-   // qDebug()<<decodedbytes;
-   // static int ii=0;
-   // ii++;ii%=10;
-   // if(ii!=0)decodedbytes.clear();
 
     return decodedbytes;
 }
