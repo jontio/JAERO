@@ -17,7 +17,7 @@ bool PreambleDetector::setPreamble(quint64 bitpreamble,int len)
 {
     if(len<1||len>64)return false;
     preamble.clear();
-    for(int i=0;i<len;i++)
+    for(int i=len-1;i>=0;i--)
     {
         if((bitpreamble>>i)&1)preamble.push_back(1);
          else preamble.push_back(0);
@@ -30,9 +30,9 @@ bool PreambleDetector::setPreamble(quint64 bitpreamble,int len)
     return true;
 }
 bool PreambleDetector::Update(int val)
-{
-    buffer[buffer_ptr]=val;
-    buffer_ptr++;buffer_ptr%=buffer.size();
+{ 
+    for(int i=0;i<(buffer.size()-1);i++)buffer[i]=buffer[i+1];
+    buffer[buffer.size()-1]=val;
     if(buffer==preamble){qDebug()<<"PreambleDetector: found";return true;}
     return false;
 }
@@ -41,8 +41,7 @@ AeroL::AeroL(QObject *parent) : QIODevice(parent)
 {
     sbits.reserve(1000);
     decodedbytes.reserve(1000);
-    preambledetector.setPreamble(0xE15AE893,32);//0x3780831379,0b11100001010110101110100010010011
-    //preambledetector.setPreamble(496,12);
+    preambledetector.setPreamble(3780831379LL,32);//0x3780831379,0b11100001010110101110100010010011
 }
 
 
@@ -86,12 +85,12 @@ QByteArray &AeroL::Decode(QVector<short> &bits)//0 --> oldest
     decodedbytes.clear();
 
     //for(int i=(bits.size()-1);i>=0;i--)
-   // for(int i=0;i<bits.size();i++)decodedbytes.push_back(bits[i]+48);
-   // return decodedbytes;
+    //for(int i=0;i<bits.size();i++)decodedbytes.push_back((bits[i])+48);
+    //return decodedbytes;
 
     for(int i=0;i<bits.size();i++)
     {
-        if(preambledetector.Update(bits[i]))decodedbytes="Got sync\n";//currently never found
+        if(preambledetector.Update(bits[i]))decodedbytes="Got sync\n";
     }
     //if(decodedbytes.isEmpty())decodedbytes=".";
 
