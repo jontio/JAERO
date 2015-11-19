@@ -88,9 +88,22 @@ QByteArray &AeroL::Decode(QVector<short> &bits)//0 --> oldest
     //for(int i=0;i<bits.size();i++)decodedbytes.push_back((bits[i])+48);
     //return decodedbytes;
 
+    static int cntr=1000000000;
+
     for(int i=0;i<bits.size();i++)
     {
-        if(preambledetector.Update(bits[i]))decodedbytes="Got sync\n";
+        if(cntr<1000000000)cntr++;
+
+        if(cntr<16)
+        {
+            decodedbytes.push_back((bits[i])+48);
+        }
+        if(cntr==15)decodedbytes.push_back('\n');
+
+        if(preambledetector.Update(bits[i])){cntr=-1;decodedbytes+="Got sync\n";}
+
+
+
     }
     //if(decodedbytes.isEmpty())decodedbytes=".";
 
