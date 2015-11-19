@@ -36,8 +36,6 @@ void VariCodePipeDecoder::ConnectSinkDevice(QIODevice *device)
     Start();
 }
 
-
-
 void VariCodePipeDecoder::DisconnectSinkDevice()
 {
     Stop();

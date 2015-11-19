@@ -21,7 +21,8 @@ MainWindow::MainWindow(QWidget *parent) :
     varicodepipeencoder = new VariCodePipeEncoder(this);
     audiomskmodulator = new AudioMskModulator(this);
     ddsmskmodulator = new DDSMSKModulator(this);
-    serialPPT = new SerialPPT(this);
+    serialPPT = new SerialPPT(this);    
+    aerol = new AeroL(this); //Create Aero L test sink
 
     //create settings dialog. only some modulator settings are held atm.
     settingsdialog = new SettingsDialog(this);
@@ -384,9 +385,7 @@ void MainWindow::on_actionConnectToUDPPort_toggled(bool arg1)
     }
      else
      {
-        ui->actionRawOutput->setEnabled(false);
-        ui->console->setEnableUpdates(true);
-        audiomskdemodulator->ConnectSinkDevice(ui->console->varicodeconsoledevice);
+         audiomskdemodulator->ConnectSinkDevice(ui->console->varicodeconsoledevice);
      }
 }
 
@@ -461,4 +460,37 @@ void MainWindow::on_actionIdleTX_triggered(bool checked)
         ui->actionBeacon->setEnabled(false);
     }
      else ui->actionBeacon->setEnabled(true);
+}
+
+void MainWindow::on_actionTest_device_triggered(bool checked)
+{
+
+    //stuff so visually evything works as expected
+    if(ui->actionTest_device->isChecked()!=checked)return;
+    ui->console->setEnableUpdates(true);
+    audiomskdemodulator->DisconnectSinkDevice();
+    udpsocket->close();
+    aerol->DisconnectSinkDevice();
+    ui->actionConnectToUDPPort->setChecked(false);
+    ui->actionRawOutput->setChecked(false);
+    if(checked)
+    {
+        ui->actionConnectToUDPPort->setEnabled(false);
+        ui->actionRawOutput->setEnabled(false);
+    }
+     else
+     {
+        ui->actionConnectToUDPPort->setEnabled(true);
+        ui->actionRawOutput->setEnabled(true);
+     }
+
+    if(checked)
+    {
+
+        //connect demodulator to aerol device and aerol device to console
+        audiomskdemodulator->ConnectSinkDevice(aerol);
+        aerol->ConnectSinkDevice(ui->console->consoledevice);
+
+    }
+     else audiomskdemodulator->ConnectSinkDevice(ui->console->varicodeconsoledevice);
 }

@@ -49,7 +49,8 @@ SOURCES += main.cpp\
     ddsmskmodulator/Slip.cpp \
     beaconhandler.cpp \
     textreplacement.cpp \
-    webscraper.cpp
+    webscraper.cpp \
+    aerol.cpp
 
 HEADERS  += mainwindow.h \
     coarsefreqestimate.h \
@@ -80,7 +81,8 @@ HEADERS  += mainwindow.h \
     ddsmskmodulator/Slip.h \
     beaconhandler.h \
     textreplacement.h \
-    webscraper.h
+    webscraper.h \
+    aerol.h
 
 FORMS    += mainwindow.ui \
     gui_classes/settingsdialog.ui

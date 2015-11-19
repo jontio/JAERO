@@ -543,6 +543,7 @@
    <addaction name="actionIdleTX"/>
    <addaction name="actionBeacon"/>
    <addaction name="actionTXRX"/>
+   <addaction name="actionTest_device"/>
   </widget>
   <action name="action_Exit">
    <property name="icon">
@@ -680,6 +681,14 @@
    </property>
    <property name="toolTip">
     <string>Enable TX beacon</string>
+   </property>
+  </action>
+  <action name="actionTest_device">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>Test device</string>
    </property>
   </action>
  </widget>

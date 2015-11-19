@@ -14,6 +14,7 @@
 #include "beaconhandler.h"
 #include "textreplacement.h"
 #include "webscraper.h"
+#include "aerol.h"
 
 namespace Ui {
 class MainWindow;
@@ -35,6 +36,8 @@ private:
     QLabel *freqlabel;
     QUdpSocket *udpsocket;
     VariCodePipeDecoder *varicodepipedecoder;
+
+    AeroL *aerol;
 
     //modulator
     AudioMskModulator *audiomskmodulator;
@@ -75,6 +78,7 @@ private slots:
     void on_action_Settings_triggered();
     void on_actionBeacon_triggered(bool checked);
     void on_actionIdleTX_triggered(bool checked);
+    void on_actionTest_device_triggered(bool checked);
 };
 
 #endif // MAINWINDOW_H
