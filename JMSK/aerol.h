@@ -6,6 +6,21 @@
 #include <QVector>
 #include <QDebug>
 
+class AeroLInterleaver
+{
+public:
+    AeroLInterleaver();
+    void setSize(int N);
+    QVector<int> &interleave(QVector<int> &block);
+    QVector<int> &deinterleave(QVector<int> &block);
+private:
+    QVector<int> matrix;
+    int M;
+    int N;
+    QVector<int> interleaverowpermute;
+    QVector<int> interleaverowdepermute;
+};
+
 class PreambleDetector
 {
 public:
@@ -40,6 +55,10 @@ private:
     QVector<short> sbits;
     QByteArray decodedbytes;
     PreambleDetector preambledetector;
+
+    QVector<int> block;
+    AeroLInterleaver leaver;
+
 };
 
 #endif // AEROL_H

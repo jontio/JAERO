@@ -1,4 +1,77 @@
 #include "aerol.h"
+#include <assert.h>
+
+AeroLInterleaver::AeroLInterleaver()
+{
+    M=64;
+
+    interleaverowpermute.resize(M);
+    interleaverowdepermute.resize(M);
+
+    for(int i=0;i<M;i++)
+    {
+        interleaverowpermute[(i*27)%M]=i;
+        interleaverowdepermute[i]=(i*27)%M;
+//        interleaverowdepermute[(i*19)%M]=i;
+    }
+    setSize(6);
+}
+
+void AeroLInterleaver::setSize(int _N)
+{
+    if(_N<1)return;
+    N=_N;
+    matrix.resize(M*N);
+}
+
+QVector<int> &AeroLInterleaver::interleave(QVector<int> &block)
+{
+    if(block.size()!=(M*N))
+    {
+        matrix.fill(0);
+        assert("AeroLInterleaver: block.size()!=(M*N)");
+    }
+
+    int k=0;
+    for(int i=0;i<M;i++)
+    {
+        for(int j=0;j<N;j++)
+        {
+            int entry=interleaverowpermute[i]+M*j;
+            assert(entry<block.size());
+            assert(k<matrix.size());
+            matrix[k]=block[entry];
+            k++;
+        }
+    }
+
+    return matrix;
+
+}
+
+QVector<int> &AeroLInterleaver::deinterleave(QVector<int> &block)
+{
+    if(block.size()!=(M*N))
+    {
+        matrix.fill(0);
+        assert("AeroLInterleaver: block.size()!=(M*N)");
+    }
+
+    int k=0;
+    for(int j=0;j<N;j++)
+    {
+        for(int i=0;i<M;i++)
+        {
+            int entry=interleaverowdepermute[i]*N+j;
+            assert(entry<block.size());
+            assert(k<matrix.size());
+            matrix[k]=block[entry];
+            k++;
+        }
+    }
+
+    return matrix;
+}
 
 PreambleDetector::PreambleDetector()
 {
@@ -31,7 +104,7 @@ bool PreambleDetector::Update(int val)
 { 
     for(int i=0;i<(buffer.size()-1);i++)buffer[i]=buffer[i+1];
     buffer[buffer.size()-1]=val;
-    if(buffer==preamble)return true;
+    if(buffer==preamble){buffer.fill(0);return true;}
     return false;
 }
 
@@ -39,7 +112,13 @@ AeroL::AeroL(QObject *parent) : QIODevice(parent)
 {
     sbits.reserve(1000);
     decodedbytes.reserve(1000);
+
     preambledetector.setPreamble(3780831379LL,32);//0x3780831379,0b11100001010110101110100010010011
+
+    //TODO: set size automatically
+    leaver.setSize(9);//9 for 1200 baud, 6 for 600 baud
+    block.resize(9*64);
+
 }
 
 
@@ -114,11 +193,35 @@ QByteArray &AeroL::Decode(QVector<short> &bits)//0 --> oldest
         if(cntr==15)
         {
             decodedbytes.push_back('\n');
-            if(framecounter1!=framecounter2)decodedbytes.push_back("Error: Frame Counter mismatch");
+            if(framecounter1!=framecounter2)decodedbytes.push_back("Error: Frame Counter mismatch\n");
              else decodedbytes.push_back((((QString)"Format ID = %1\nSuper Frame Marker = %2\nFrame Counter = %3\n").arg(formatid).arg(supfrmaker).arg(framecounter1)).toLatin1());
         }
+        if(cntr>=16)
+        {
 
-        if(preambledetector.Update(bits[i])){decodedbytes+=((QString)"Bits for superframe = %1\n").arg(cntr+1);cntr=-1;decodedbytes+="Got sync\n";}
+            //deinterleave
+            int idx=(cntr-16)%block.size();
+            block[idx]=bits[i];
+            if(idx==(block.size()-1))
+            {
+                QVector<int> deleaveredblock=leaver.deinterleave(block);
+                for(int j=0;j<deleaveredblock.size();j++)decodedbytes+=('0'+deleaveredblock[j])+QChar(',');
+
+                //put viterbi decoder here
+
+            }
+
+            //raw
+            //if((cntr-16)<1152)decodedbytes+=('0'+bits[i])+QChar(',');
+        }
+
+        //if(cntr+1==1200)cntr=-1;
+        //if((framecounter1!=framecounter2||cntr>1300)&&preambledetector.Update(bits[i]))
+        if(preambledetector.Update(bits[i]))
+        {
+            decodedbytes+=((QString)"\nBits for superframe = %1\n").arg(cntr+1);cntr=-1;
+            decodedbytes+="Got sync\n";
+        }
 
 
     }
