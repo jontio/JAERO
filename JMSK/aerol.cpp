@@ -117,8 +117,8 @@ AeroL::AeroL(QObject *parent) : QIODevice(parent)
     convolcodec=new ViterbiCodec(7, polynomials);
     convolcodec->setPaddingLength(24);
 
-    dl1.setLength(12);
-    dl2.setLength(576-6);//?? correct ??? hope it delays data to next frame
+    dl1.setLength(12);//delay for decode encode BER check
+    dl2.setLength(576-6);//delay's data to next frame
 
     preambledetector.setPreamble(3780831379LL,32);//0x3780831379,0b11100001010110101110100010010011
 
@@ -236,12 +236,30 @@ QByteArray &AeroL::Decode(QVector<short> &bits)//0 --> oldest
                 float unencoded_BER_estimate=((float)diffsum)/((float)deleaveredblock.size());
                 decodedbytes+=((QString)"unencoded BER estimate=%1%\n").arg(QString::number( 100.0*unencoded_BER_estimate, 'f', 1));
 
-                //delay line for super frame alignment
+                //delay line for frame alignment
                 dl2.update(deconvol);
 
                 //scrambler
-                scrambler.reset();
                 scrambler.update(deconvol);
+
+                //code to pack the bits into bytes and display to console
+                int charptr=0;
+                uchar ch=0;
+                for(int h=0;h<deconvol.size();h++)
+                {
+                    ch|=deconvol[h];
+                    charptr++;charptr%=8;
+                    if(charptr==0)
+                    {
+                        decodedbytes+=((QString)"%1,").arg(ch);
+                        ch=0;
+                        //break;
+                    }
+                     else ch<<=1;
+                }
+                decodedbytes+='\n';
+
+
 
            //     for(int j=0;j<deconvol.size();j++)decodedbytes+=('0'+deconvol[j])+QChar(',');
 
@@ -257,11 +275,16 @@ QByteArray &AeroL::Decode(QVector<short> &bits)//0 --> oldest
        // if((framecounter1!=framecounter2||cntr>1300)&&preambledetector.Update(bits[i]))
         if(preambledetector.Update(bits[i]))
         {
-            decodedbytes+=((QString)"Bits for superframe = %1\n").arg(cntr+1);cntr=-1;
+            decodedbytes+=((QString)"Bits for frame = %1\n").arg(cntr+1);cntr=-1;
             decodedbytes+="\nGot sync\n";
+            scrambler.reset();
         }
 
-        if(cntr+1==1200)cntr=-1;
+        if(cntr+1==1200)
+        {
+            scrambler.reset();
+            cntr=-1;
+        }
 
 
     }

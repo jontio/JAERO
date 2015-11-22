@@ -18,6 +18,7 @@ public:
     void reset()
     {
         int tmp[]={1,1,0,1,0,0,1,0,1,0,1,1,0,0,1,-1};
+        state.clear();
         for(int i=0;tmp[i]>=0;i++)state.push_back(tmp[i]);
     }
     void update(QVector<int> &data)
@@ -117,6 +118,7 @@ private:
     QVector<int> block;
     AeroLInterleaver leaver;
     AeroLScrambler scrambler;
+
     ViterbiCodec *convolcodec;
     DelayLine dl1,dl2;
 
