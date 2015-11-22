@@ -50,7 +50,8 @@ SOURCES += main.cpp\
     beaconhandler.cpp \
     textreplacement.cpp \
     webscraper.cpp \
-    aerol.cpp
+    aerol.cpp \
+    ../viterbi-xukmin/viterbi.cpp
 
 HEADERS  += mainwindow.h \
     coarsefreqestimate.h \
@@ -82,7 +83,8 @@ HEADERS  += mainwindow.h \
     beaconhandler.h \
     textreplacement.h \
     webscraper.h \
-    aerol.h
+    aerol.h \
+    ../viterbi-xukmin/viterbi.h
 
 FORMS    += mainwindow.ui \
     gui_classes/settingsdialog.ui
@@ -100,7 +102,9 @@ DISTFILES += \
     ../qcustomplot/GPL.txt \
     jmsk.rc \
     ../README.md \
-    ../images/screenshot-win-v1.1.0.png
+    ../images/screenshot-win-v1.1.0.png \
+    ../viterbi-xukmin/LICENSE.md \
+    ../viterbi-xukmin/README.md
 
 win32 {
 RC_FILE = jmsk.rc

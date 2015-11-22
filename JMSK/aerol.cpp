@@ -1,5 +1,5 @@
 #include "aerol.h"
-#include <assert.h>
+
 
 AeroLInterleaver::AeroLInterleaver()
 {
@@ -16,14 +16,12 @@ AeroLInterleaver::AeroLInterleaver()
     }
     setSize(6);
 }
-
 void AeroLInterleaver::setSize(int _N)
 {
     if(_N<1)return;
     N=_N;
     matrix.resize(M*N);
 }
-
 QVector<int> &AeroLInterleaver::interleave(QVector<int> &block)
 {
     if(block.size()!=(M*N))
@@ -48,7 +46,6 @@ QVector<int> &AeroLInterleaver::interleave(QVector<int> &block)
     return matrix;
 
 }
-
 QVector<int> &AeroLInterleaver::deinterleave(QVector<int> &block)
 {
     if(block.size()!=(M*N))
@@ -113,6 +110,16 @@ AeroL::AeroL(QObject *parent) : QIODevice(parent)
     sbits.reserve(1000);
     decodedbytes.reserve(1000);
 
+    //ViterbiCodec is not Qt so needs deleting when finished
+    std::vector<int> polynomials;
+    polynomials.push_back(109);
+    polynomials.push_back(79);
+    convolcodec=new ViterbiCodec(7, polynomials);
+    convolcodec->setPaddingLength(24);
+
+    dl1.setLength(12);
+    dl2.setLength(576-6);//?? correct ??? hope it delays data to next frame
+
     preambledetector.setPreamble(3780831379LL,32);//0x3780831379,0b11100001010110101110100010010011
 
     //TODO: set size automatically
@@ -124,7 +131,7 @@ AeroL::AeroL(QObject *parent) : QIODevice(parent)
 
 AeroL::~AeroL()
 {
-
+    delete convolcodec;
 }
 
 bool AeroL::Start()
@@ -204,10 +211,41 @@ QByteArray &AeroL::Decode(QVector<short> &bits)//0 --> oldest
             block[idx]=bits[i];
             if(idx==(block.size()-1))
             {
-                QVector<int> deleaveredblock=leaver.deinterleave(block);
-                for(int j=0;j<deleaveredblock.size();j++)decodedbytes+=('0'+deleaveredblock[j])+QChar(',');
 
-                //put viterbi decoder here
+                //deinterleaver
+                QVector<int> deleaveredblock=leaver.deinterleave(block);
+                //for(int j=0;j<deleaveredblock.size();j++)decodedbytes+=('0'+deleaveredblock[j])+QChar(',');
+
+                //viterbi decoder
+                QVector<int> deconvol=convolcodec->Decode_Continuous(deleaveredblock);
+
+                //
+                //Checking deinterleaving and viterbi decoder are getting valid data
+                //
+                //convol encode
+                QVector<int> convol=convolcodec->Encode_Continuous(deconvol);
+                //delay line for unencoded BER estimate
+                dl1.update(deleaveredblock);
+                //count differences
+                assert(deleaveredblock.size()==convol.size());
+                int diffsum=0;
+                for(int k=0;k<deleaveredblock.size();k++)
+                {
+                    if(deleaveredblock[k]!=convol[k])diffsum++;
+                }
+                float unencoded_BER_estimate=((float)diffsum)/((float)deleaveredblock.size());
+                decodedbytes+=((QString)"unencoded BER estimate=%1%\n").arg(QString::number( 100.0*unencoded_BER_estimate, 'f', 1));
+
+                //delay line for super frame alignment
+                dl2.update(deconvol);
+
+                //scrambler
+                scrambler.reset();
+                scrambler.update(deconvol);
+
+           //     for(int j=0;j<deconvol.size();j++)decodedbytes+=('0'+deconvol[j])+QChar(',');
+
+
 
             }
 
@@ -215,13 +253,15 @@ QByteArray &AeroL::Decode(QVector<short> &bits)//0 --> oldest
             //if((cntr-16)<1152)decodedbytes+=('0'+bits[i])+QChar(',');
         }
 
-        //if(cntr+1==1200)cntr=-1;
-        //if((framecounter1!=framecounter2||cntr>1300)&&preambledetector.Update(bits[i]))
+       // if(cntr+1==1200)cntr=-1;
+       // if((framecounter1!=framecounter2||cntr>1300)&&preambledetector.Update(bits[i]))
         if(preambledetector.Update(bits[i]))
         {
-            decodedbytes+=((QString)"\nBits for superframe = %1\n").arg(cntr+1);cntr=-1;
-            decodedbytes+="Got sync\n";
+            decodedbytes+=((QString)"Bits for superframe = %1\n").arg(cntr+1);cntr=-1;
+            decodedbytes+="\nGot sync\n";
         }
+
+        if(cntr+1==1200)cntr=-1;
 
 
     }

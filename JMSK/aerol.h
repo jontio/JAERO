@@ -5,6 +5,64 @@
 #include <QPointer>
 #include <QVector>
 #include <QDebug>
+#include <assert.h>
+#include "../viterbi-xukmin/viterbi.h"
+
+class AeroLScrambler
+{
+public:
+    AeroLScrambler()
+    {
+        reset();
+    }
+    void reset()
+    {
+        int tmp[]={1,1,0,1,0,0,1,0,1,0,1,1,0,0,1,-1};
+        for(int i=0;tmp[i]>=0;i++)state.push_back(tmp[i]);
+    }
+    void update(QVector<int> &data)
+    {
+        for(int j=0;j<data.size();j++)
+        {
+            int val0=state[0]^state[14];
+            data[j]^=val0;
+            for(int i=state.size()-1;i>0;i--)state[i]=state[i-1];
+            state[0]=val0;
+        }
+    }
+private:
+    QVector<int> state;
+};
+
+class DelayLine
+{
+public:
+    DelayLine()
+    {
+        setLength(12);
+    }
+    void setLength(int length)
+    {
+        length++;
+        assert(length>0);
+        buffer.resize(length);
+        buffer_ptr=0;
+        buffer_sz=buffer.size();
+    }
+    void update(QVector<int> &data)
+    {
+        for(int i=0;i<data.size();i++)
+        {
+            buffer[buffer_ptr]=data[i];
+            buffer_ptr++;buffer_ptr%=buffer_sz;
+            data[i]=buffer[buffer_ptr];
+        }
+    }
+private:
+    QVector<int> buffer;
+    int buffer_ptr;
+    int buffer_sz;
+};
 
 class AeroLInterleaver
 {
@@ -58,6 +116,9 @@ private:
 
     QVector<int> block;
     AeroLInterleaver leaver;
+    AeroLScrambler scrambler;
+    ViterbiCodec *convolcodec;
+    DelayLine dl1,dl2;
 
 };
 
