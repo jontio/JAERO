@@ -1,6 +1,5 @@
 #include "aerol.h"
 
-
 AeroLInterleaver::AeroLInterleaver()
 {
     M=64;
@@ -119,6 +118,7 @@ AeroL::AeroL(QObject *parent) : QIODevice(parent)
 
     dl1.setLength(12);//delay for decode encode BER check
     dl2.setLength(576-6);//delay's data to next frame
+    dl3.setLength(1);
 
     preambledetector.setPreamble(3780831379LL,32);//0x3780831379,0b11100001010110101110100010010011
 
@@ -185,7 +185,20 @@ QByteArray &AeroL::Decode(QVector<short> &bits)//0 --> oldest
         if(cntr<1000000000)cntr++;
         if(cntr<16)
         {
-            nibblecntr++;nibblecntr%=4;
+
+            if(cntr==0)
+            {
+                frameinfo=bits[i];
+                infofield.clear();
+            }
+             else
+             {
+                frameinfo<<=1;
+                frameinfo|=bits[i];
+             }
+
+
+            /*nibblecntr++;nibblecntr%=4;
             if(cntr==0)nibblecntr=0;
             if(nibblecntr==0)nibble=0;
             if(bits[i])nibble|=(1<<(3-nibblecntr));
@@ -195,26 +208,44 @@ QByteArray &AeroL::Decode(QVector<short> &bits)//0 --> oldest
             if(cntr==11)framecounter1=nibble;
             if(cntr==15)framecounter2=nibble;
 
-            decodedbytes.push_back((bits[i])+48);
+            decodedbytes.push_back((bits[i])+48);*/
         }
         if(cntr==15)
         {
-            decodedbytes.push_back('\n');
-            if(framecounter1!=framecounter2)decodedbytes.push_back("Error: Frame Counter mismatch\n");
-             else decodedbytes.push_back((((QString)"Format ID = %1\nSuper Frame Marker = %2\nFrame Counter = %3\n").arg(formatid).arg(supfrmaker).arg(framecounter1)).toLatin1());
+            //decodedbytes.push_back('\n');
+
+            //decodedbytes.append(((QString)"%1\n").arg(frameinfo));
+
+            //delay frame info by one frame needed as viterbi decoder and delaylime make 1 frame delay
+            quint16 tval=frameinfo;
+            frameinfo=lastframeinfo;
+            lastframeinfo=tval;
+
+            //if(framecounter1!=framecounter2)decodedbytes.push_back("Error: Frame Counter mismatch\n");
+            // else decodedbytes.push_back((((QString)"Format ID = %1\nSuper Frame Marker = %2\nFrame Counter = %3\n").arg(formatid).arg(supfrmaker).arg(framecounter1)).toLatin1());
+
+            formatid=(frameinfo>>12)&0x000F;
+            supfrmaker=(frameinfo>>8)&0x000F;
+            framecounter1=(frameinfo>>4)&0x000F;
+            framecounter2=(frameinfo>>0)&0x000F;
+
+            decodedbytes.push_back((((QString)"Last info is Format ID = %1\nSuper Frame Marker = %2\nFrame Counter = %3\n").arg(formatid).arg(supfrmaker).arg(framecounter1)).toLatin1());
         }
         if(cntr>=16)
         {
 
-            //deinterleave
+            //fill block
+            static int blockcnt=-1;
+            if(cntr==16)blockcnt=-1;
             int idx=(cntr-16)%block.size();
             block[idx]=bits[i];
-            if(idx==(block.size()-1))
+            if(idx==(block.size()-1))//block is now filled
             {
+
+                blockcnt++;
 
                 //deinterleaver
                 QVector<int> deleaveredblock=leaver.deinterleave(block);
-                //for(int j=0;j<deleaveredblock.size();j++)decodedbytes+=('0'+deleaveredblock[j])+QChar(',');
 
                 //viterbi decoder
                 QVector<int> deconvol=convolcodec->Decode_Continuous(deleaveredblock);
@@ -242,7 +273,7 @@ QByteArray &AeroL::Decode(QVector<short> &bits)//0 --> oldest
                 //scrambler
                 scrambler.update(deconvol);
 
-                //code to pack the bits into bytes and display to console
+                //pack the bits into bytes
                 int charptr=0;
                 uchar ch=0;
                 for(int h=0;h<deconvol.size();h++)
@@ -251,19 +282,43 @@ QByteArray &AeroL::Decode(QVector<short> &bits)//0 --> oldest
                     charptr++;charptr%=8;
                     if(charptr==0)
                     {
-                        decodedbytes+=((QString)"%1,").arg(ch);
+                        infofield+=ch;//actual data of information field in bytearray
+                        //decodedbytes+=((QString)"0x%1 ").arg(((QString)"").sprintf("%02X", ch)) ;//for console
                         ch=0;
-                        //break;
                     }
                      else ch<<=1;
                 }
-                decodedbytes+='\n';
+                //decodedbytes+='\n';
 
 
+                if((cntr-16)==(1152-1))//frame is done when this is true
+                {
 
-           //     for(int j=0;j<deconvol.size();j++)decodedbytes+=('0'+deconvol[j])+QChar(',');
+                    //run through all bytes in info field for console
+                    for(int k=0;k<infofield.size();k++)decodedbytes+=((QString)"0x%1 ").arg(((QString)"").sprintf("%02X", (uchar)infofield[k])) ;//for console
+                    decodedbytes+='\n';
 
+                    //run through all SUs and check CRCs
+                    //12 bytes for all SUs in P signal i think? or do extended SUs exist in the P signal????
+                    char *infofieldptr=infofield.data();
+                    bool allgood=true;
+                    for(int k=0;k<infofield.size()/12;k++)
+                    {
+                        quint16 crc_calc=crc16.calcusingbytes(&infofieldptr[k*12],10);
+                        quint16 crc_rec=(((uchar)infofield[k*12+10])<<8)|((uchar)infofield[k*12+11]);
 
+                        if(crc_calc==crc_rec)qDebug()<<k<<((QString)"").sprintf("rec = %02X", crc_rec)<<((QString)"").sprintf("calc = %02X", crc_calc)<<"OK";
+                         else
+                         {
+                            allgood=false;
+                            qDebug()<<k<<((QString)"").sprintf("rec = %02X", crc_rec)<<((QString)"").sprintf("calc = %02X", crc_calc)<<"Bad CRC";
+                         }
+
+                    }
+
+                    if(!allgood)decodedbytes+="Got at least one bad SU (a SU failed CRC check)\n";//tell the console
+
+                }
 
             }
 
@@ -275,7 +330,9 @@ QByteArray &AeroL::Decode(QVector<short> &bits)//0 --> oldest
        // if((framecounter1!=framecounter2||cntr>1300)&&preambledetector.Update(bits[i]))
         if(preambledetector.Update(bits[i]))
         {
-            decodedbytes+=((QString)"Bits for frame = %1\n").arg(cntr+1);cntr=-1;
+            if(cntr+1!=1200)decodedbytes+="Error short frame!!! probably the soundcard droped some sound card buffers\n";
+            decodedbytes+=((QString)"Bits for frame = %1\n").arg(cntr+1);
+            cntr=-1;
             decodedbytes+="\nGot sync\n";
             scrambler.reset();
         }
