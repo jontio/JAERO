@@ -123,9 +123,25 @@ AeroL::AeroL(QObject *parent) : QIODevice(parent)
     preambledetector.setPreamble(3780831379LL,32);//0x3780831379,0b11100001010110101110100010010011
 
     //TODO: set size automatically
-    leaver.setSize(9);//9 for 1200 baud, 6 for 600 baud
-    block.resize(9*64);
+    setBaudRate(baud600);
 
+}
+
+void AeroL::setBaudRate(BaudRate rate)
+{
+    switch(rate)
+    {
+    case baud600:
+        leaver.setSize(6);//9 for 1200 baud, 6 for 600 baud
+        block.resize(6*64);
+        break;
+    case baud1200:
+        leaver.setSize(9);//9 for 1200 baud, 6 for 600 baud
+        block.resize(9*64);
+        break;
+    default:
+        break;
+    }
 }
 
 
@@ -177,8 +193,6 @@ QByteArray &AeroL::Decode(QVector<short> &bits)//0 --> oldest
     static int supfrmaker=0;
     static int framecounter1=0;
     static int framecounter2=0;
-    static int nibble=0;
-    static int nibblecntr=0;
 
     for(int i=0;i<bits.size();i++)
     {
@@ -189,26 +203,13 @@ QByteArray &AeroL::Decode(QVector<short> &bits)//0 --> oldest
             if(cntr==0)
             {
                 frameinfo=bits[i];
-                infofield.clear();
+
             }
              else
              {
                 frameinfo<<=1;
                 frameinfo|=bits[i];
              }
-
-
-            /*nibblecntr++;nibblecntr%=4;
-            if(cntr==0)nibblecntr=0;
-            if(nibblecntr==0)nibble=0;
-            if(bits[i])nibble|=(1<<(3-nibblecntr));
-
-            if(cntr==3)formatid=nibble;
-            if(cntr==7)supfrmaker=nibble;
-            if(cntr==11)framecounter1=nibble;
-            if(cntr==15)framecounter2=nibble;
-
-            decodedbytes.push_back((bits[i])+48);*/
         }
         if(cntr==15)
         {
@@ -229,7 +230,7 @@ QByteArray &AeroL::Decode(QVector<short> &bits)//0 --> oldest
             framecounter1=(frameinfo>>4)&0x000F;
             framecounter2=(frameinfo>>0)&0x000F;
 
-            decodedbytes.push_back((((QString)"Last info is Format ID = %1\nSuper Frame Marker = %2\nFrame Counter = %3\n").arg(formatid).arg(supfrmaker).arg(framecounter1)).toLatin1());
+            //decodedbytes.push_back((((QString)"Last info is Format ID = %1\nSuper Frame Marker = %2\nFrame Counter = %3\n").arg(formatid).arg(supfrmaker).arg(framecounter1)).toLatin1());
         }
         if(cntr>=16)
         {
@@ -265,7 +266,7 @@ QByteArray &AeroL::Decode(QVector<short> &bits)//0 --> oldest
                     if(deleaveredblock[k]!=convol[k])diffsum++;
                 }
                 float unencoded_BER_estimate=((float)diffsum)/((float)deleaveredblock.size());
-                decodedbytes+=((QString)"unencoded BER estimate=%1%\n").arg(QString::number( 100.0*unencoded_BER_estimate, 'f', 1));
+                //decodedbytes+=((QString)"unencoded BER estimate=%1%\n").arg(QString::number( 100.0*unencoded_BER_estimate, 'f', 1));
 
                 //delay line for frame alignment
                 dl2.update(deconvol);
@@ -278,7 +279,7 @@ QByteArray &AeroL::Decode(QVector<short> &bits)//0 --> oldest
                 uchar ch=0;
                 for(int h=0;h<deconvol.size();h++)
                 {
-                    ch|=deconvol[h];
+                    ch|=deconvol[h]*128;
                     charptr++;charptr%=8;
                     if(charptr==0)
                     {
@@ -286,7 +287,7 @@ QByteArray &AeroL::Decode(QVector<short> &bits)//0 --> oldest
                         //decodedbytes+=((QString)"0x%1 ").arg(((QString)"").sprintf("%02X", ch)) ;//for console
                         ch=0;
                     }
-                     else ch<<=1;
+                     else ch>>=1;
                 }
                 //decodedbytes+='\n';
 
@@ -295,28 +296,153 @@ QByteArray &AeroL::Decode(QVector<short> &bits)//0 --> oldest
                 {
 
                     //run through all bytes in info field for console
-                    for(int k=0;k<infofield.size();k++)decodedbytes+=((QString)"0x%1 ").arg(((QString)"").sprintf("%02X", (uchar)infofield[k])) ;//for console
-                    decodedbytes+='\n';
+                    //for(int k=0;k<infofield.size();k++)decodedbytes+=((QString)"0x%1 ").arg(((QString)"").sprintf("%02X", (uchar)infofield[k])) ;//for console
+                    //decodedbytes+='\n';
 
                     //run through all SUs and check CRCs
                     //12 bytes for all SUs in P signal i think? or do extended SUs exist in the P signal????
                     char *infofieldptr=infofield.data();
                     bool allgood=true;
+                    if(framecounter1==framecounter2)decodedbytes+=((QString)"").sprintf("Frame %d\n", framecounter1);
+                     else decodedbytes+="frame count error\n";
+                    if(formatid!=1)decodedbytes+="format ID error\n";
                     for(int k=0;k<infofield.size()/12;k++)
                     {
                         quint16 crc_calc=crc16.calcusingbytes(&infofieldptr[k*12],10);
-                        quint16 crc_rec=(((uchar)infofield[k*12+10])<<8)|((uchar)infofield[k*12+11]);
+                        quint16 crc_rec=(((uchar)infofield[k*12+11])<<8)|((uchar)infofield[k*12+10]);
 
-                        if(crc_calc==crc_rec)qDebug()<<k<<((QString)"").sprintf("rec = %02X", crc_rec)<<((QString)"").sprintf("calc = %02X", crc_calc)<<"OK";
+                        decodedbytes+=(k+'0');//SU number in frame
+                        for(int j=0;j<10;j++)
+                        {
+                            decodedbytes+=((QString)" 0x%1").arg(((QString)"").sprintf("%02X", (uchar)infofield[k*12+j]));
+                            //if(((uchar)infofield[j])>30&&((uchar)infofield[k*12+j])<127)decodedbytes+=(char)infofield[k*12+j];
+                            // else decodedbytes+='.';
+                        }
+                        decodedbytes+=((QString)"").sprintf(" rec = %04X calc = %04X", crc_rec,crc_calc);
+                        if(crc_calc==crc_rec)
+                        {
+                            MessageType message=(MessageType)((uchar)infofield[k*12]);
+                            decodedbytes+=" OK ";
+                            switch(message)
+                            {
+                            case Reserved_0:
+                                decodedbytes+="Reserved_0";
+                                break;
+                            case Fill_in_signal_unit:
+                                decodedbytes+="Fill_in_signal_unit";
+                                break;
+                            case AES_system_table_broadcast_GES_Psmc_and_Rsmc_channels_COMPLETE:
+                                decodedbytes+="AES_system_table_broadcast_GES_Psmc_and_Rsmc_channels_COMPLETE";
+                                break;
+                            case AES_system_table_broadcast_GES_beam_support_COMPLETE:
+                                decodedbytes+="AES_system_table_broadcast_GES_beam_support_COMPLETE";
+                                break;
+                            case AES_system_table_broadcast_index:
+                                decodedbytes+="AES_system_table_broadcast_index";
+                                break;
+                            case AES_system_table_broadcast_satellite_identification_COMPLETE:
+                                decodedbytes+="AES_system_table_broadcast_satellite_identification_COMPLETE";
+                                break;
+
+                            //SYSTEM LOG-ON/LOG-OFF
+                            case Log_on_request:
+                                decodedbytes+="Log_on_request";
+                                break;
+                            case Log_on_confirm:
+                                decodedbytes+="Log_on_confirm";
+                                break;
+                            case Log_control_P_channel_log_off_request:
+                                decodedbytes+="Log_control_P_channel_log_off_request";
+                                break;
+                            case Log_control_P_channel_log_on_reject:
+                                decodedbytes+="Log_control_P_channel_log_on_reject";
+                                break;
+                            case Log_control_P_channel_log_on_interrogation:
+                                decodedbytes+="Log_control_P_channel_log_on_interrogation";
+                                break;
+                            case Log_on_log_off_acknowledge_P_channel:
+                                decodedbytes+="Log_on_log_off_acknowledge_P_channel";
+                                break;
+                            case Log_control_P_channel_log_on_prompt:
+                                decodedbytes+="Log_control_P_channel_log_on_prompt";
+                                break;
+                            case Log_control_P_channel_data_channel_reassignment:
+                                decodedbytes+="Log_control_P_channel_data_channel_reassignment";
+                                break;
+
+                            case Reserved_18:
+                                decodedbytes+="Reserved_18";
+                                break;
+                            case Reserved_19:
+                                decodedbytes+="Reserved_19";
+                                break;
+                            case Reserved_26:
+                                decodedbytes+="Reserved_26";
+                                break;
+
+                            //CALL INITIATION
+                            case Data_EIRP_table_broadcast_complete_sequence:
+                                decodedbytes+="Data_EIRP_table_broadcast_complete_sequence";
+                                break;
+
+                            case T_channel_assignment:
+                                decodedbytes+="T_channel_assignment";
+                                break;
+
+                            //CHANNEL INFORMATION
+                            case P_R_channel_control_ISU:
+                                decodedbytes+="P_R_channel_control_ISU";
+                                break;
+                            case T_channel_control_ISU:
+                                decodedbytes+="T_channel_control_ISU";
+                                break;
+
+                            //ACKNOWLEDGEMENT
+                            case Request_for_acknowledgement_RQA_P_channel:
+                                decodedbytes+="Request_for_acknowledgement_RQA_P_channel";
+                                break;
+                            case Acknowledge_RACK_TACK_P_channel:
+                                decodedbytes+="Acknowledge_RACK_TACK_P_channel";
+                                break;
+
+
+                            case User_data_ISU_RLS_P_T_channel:
+                                decodedbytes+="User_data_ISU_RLS_P_T_channel";
+                                break;
+                            case User_data_3_octet_LSDU_RLS_P_channel:
+                                decodedbytes+="User_data_3_octet_LSDU_RLS_P_channel";
+                                break;
+                            case User_data_4_octet_LSDU_RLS_P_channel:
+                                decodedbytes+="User_data_4_octet_LSDU_RLS_P_channel";
+                                break;
+                            default:
+                                if((message&0xC0)==0xC0)
+                                {
+                                    decodedbytes+="SUBSEQUENT SIGNAL UNITS";
+                                }
+                                break;
+                            }
+                            decodedbytes+='\n';
+                        }
+                         else
+                         {
+                            decodedbytes+=" Bad CRC\n";
+                            allgood=false;
+                         }
+
+                        /*if(crc_calc==crc_rec)qDebug()<<k<<((QString)"").sprintf("rec = %02X", crc_rec)<<((QString)"").sprintf("calc = %02X", crc_calc)<<"OK"<<unencoded_BER_estimate*100.0;
                          else
                          {
                             allgood=false;
-                            qDebug()<<k<<((QString)"").sprintf("rec = %02X", crc_rec)<<((QString)"").sprintf("calc = %02X", crc_calc)<<"Bad CRC";
+                            qDebug()<<k<<((QString)"").sprintf("rec = %02X", crc_rec)<<((QString)"").sprintf("calc = %02X", crc_calc)<<"Bad CRC"<<unencoded_BER_estimate*100.0;
                          }
+                         */
 
                     }
 
                     if(!allgood)decodedbytes+="Got at least one bad SU (a SU failed CRC check)\n";//tell the console
+
+
 
                 }
 
@@ -335,12 +461,14 @@ QByteArray &AeroL::Decode(QVector<short> &bits)//0 --> oldest
             cntr=-1;
             decodedbytes+="\nGot sync\n";
             scrambler.reset();
+            infofield.clear();
         }
 
         if(cntr+1==1200)
         {
             scrambler.reset();
             cntr=-1;
+            infofield.clear();
         }
 
 
