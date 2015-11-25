@@ -1,4 +1,5 @@
 #include "aerol.h"
+#include <QtEndian>
 
 AeroLInterleaver::AeroLInterleaver()
 {
@@ -122,24 +123,25 @@ AeroL::AeroL(QObject *parent) : QIODevice(parent)
 
     preambledetector.setPreamble(3780831379LL,32);//0x3780831379,0b11100001010110101110100010010011
 
-    //TODO: set size automatically
-    setBaudRate(baud600);
+    setBitRate(1200);
 
 }
 
-void AeroL::setBaudRate(BaudRate rate)
+void AeroL::setBitRate(double fb)
 {
-    switch(rate)
+    switch(qRound(fb))
     {
-    case baud600:
-        leaver.setSize(6);//9 for 1200 baud, 6 for 600 baud
+    case 600:
+        leaver.setSize(6);//9 for 1200 bps, 6 for 600 bps
         block.resize(6*64);
         break;
-    case baud1200:
-        leaver.setSize(9);//9 for 1200 baud, 6 for 600 baud
+    case 1200:
+        leaver.setSize(9);//9 for 1200 bps, 6 for 600 bps
         block.resize(9*64);
         break;
     default:
+        leaver.setSize(9);//9 for 1200 bps, 6 for 600 bps
+        block.resize(9*64);
         break;
     }
 }
@@ -266,7 +268,7 @@ QByteArray &AeroL::Decode(QVector<short> &bits)//0 --> oldest
                     if(deleaveredblock[k]!=convol[k])diffsum++;
                 }
                 float unencoded_BER_estimate=((float)diffsum)/((float)deleaveredblock.size());
-                //decodedbytes+=((QString)"unencoded BER estimate=%1%\n").arg(QString::number( 100.0*unencoded_BER_estimate, 'f', 1));
+//                decodedbytes+=((QString)"unencoded BER estimate=%1%\n").arg(QString::number( 100.0*unencoded_BER_estimate, 'f', 1));
 
                 //delay line for frame alignment
                 dl2.update(deconvol);
@@ -303,13 +305,17 @@ QByteArray &AeroL::Decode(QVector<short> &bits)//0 --> oldest
                     //12 bytes for all SUs in P signal i think? or do extended SUs exist in the P signal????
                     char *infofieldptr=infofield.data();
                     bool allgood=true;
-                    if(framecounter1==framecounter2)decodedbytes+=((QString)"").sprintf("Frame %d\n", framecounter1);
-                     else decodedbytes+="frame count error\n";
-                    if(formatid!=1)decodedbytes+="format ID error\n";
+//                    if(framecounter1==framecounter2)decodedbytes+=((QString)"").sprintf("Frame %d\n", framecounter1);
+//                     else decodedbytes+="frame count error\n";
+//                    if(formatid!=1)decodedbytes+="format ID error\n";
                     for(int k=0;k<infofield.size()/12;k++)
                     {
                         quint16 crc_calc=crc16.calcusingbytes(&infofieldptr[k*12],10);
                         quint16 crc_rec=(((uchar)infofield[k*12+11])<<8)|((uchar)infofield[k*12+10]);
+
+                        MessageType message=(MessageType)((uchar)infofield[k*12]);
+
+if(message==0x26||message==0x0A)continue;//to skip the boring SUs
 
                         decodedbytes+=(k+'0');//SU number in frame
                         for(int j=0;j<10;j++)
@@ -321,7 +327,7 @@ QByteArray &AeroL::Decode(QVector<short> &bits)//0 --> oldest
                         decodedbytes+=((QString)"").sprintf(" rec = %04X calc = %04X", crc_rec,crc_calc);
                         if(crc_calc==crc_rec)
                         {
-                            MessageType message=(MessageType)((uchar)infofield[k*12]);
+
                             decodedbytes+=" OK ";
                             switch(message)
                             {
@@ -342,6 +348,12 @@ QByteArray &AeroL::Decode(QVector<short> &bits)//0 --> oldest
                                 break;
                             case AES_system_table_broadcast_satellite_identification_COMPLETE:
                                 decodedbytes+="AES_system_table_broadcast_satellite_identification_COMPLETE";
+                                {
+                                    int byte3=((uchar)infofield[k*12-1+3]);
+                                    int seqno=(byte3>>2)&0x3F;
+                                    int satid=byte3&0x03;
+                                    decodedbytes+=((QString)" SATELLITE ID = %1 SEQUENCE NO = %2").arg(satid).arg(seqno);
+                                }
                                 break;
 
                             //SYSTEM LOG-ON/LOG-OFF
@@ -408,6 +420,11 @@ QByteArray &AeroL::Decode(QVector<short> &bits)//0 --> oldest
 
                             case User_data_ISU_RLS_P_T_channel:
                                 decodedbytes+="User_data_ISU_RLS_P_T_channel";
+                                {
+                                    quint32 AESID=((uchar)infofield[k*12+1])<<8*2|((uchar)infofield[k*12+2])<<8*1|((uchar)infofield[k*12+3])<<8*0;
+                                    uchar GESID=(uchar)infofield[k*12+4];
+                                    decodedbytes+=((QString)" AESID = %1 GESID = %2").arg(AESID).arg(GESID);
+                                }
                                 break;
                             case User_data_3_octet_LSDU_RLS_P_channel:
                                 decodedbytes+="User_data_3_octet_LSDU_RLS_P_channel";
@@ -419,6 +436,18 @@ QByteArray &AeroL::Decode(QVector<short> &bits)//0 --> oldest
                                 if((message&0xC0)==0xC0)
                                 {
                                     decodedbytes+="SUBSEQUENT SIGNAL UNITS";
+                                    decodedbytes+=" \"";
+                                    for(int m=2;m<10;m++)
+                                    {
+                                        int byte=((uchar)infofield[k*12+m]);
+                                        byte&=0x7F;//what does 8th bit mean?
+                                        if((byte>=0x20)&&(byte<=0x7E))
+                                        {
+                                            decodedbytes+=(char)byte;
+                                        }
+                                         else decodedbytes+=" ";
+                                    }
+                                    decodedbytes+="\"";
                                 }
                                 break;
                             }
@@ -457,9 +486,9 @@ QByteArray &AeroL::Decode(QVector<short> &bits)//0 --> oldest
         if(preambledetector.Update(bits[i]))
         {
             if(cntr+1!=1200)decodedbytes+="Error short frame!!! probably the soundcard droped some sound card buffers\n";
-            decodedbytes+=((QString)"Bits for frame = %1\n").arg(cntr+1);
+//            decodedbytes+=((QString)"Bits for frame = %1\n").arg(cntr+1);
             cntr=-1;
-            decodedbytes+="\nGot sync\n";
+//            decodedbytes+="\nGot sync\n";
             scrambler.reset();
             infofield.clear();
         }

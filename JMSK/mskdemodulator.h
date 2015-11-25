@@ -147,6 +147,7 @@ signals:
     void WarningTextSignal(const QString &str);
     void EbNoMeasurmentSignal(double EbNo);
     void SampleRateChanged(double Fs);
+    void BitRateChanged(double fb);
 public slots:
     void FreqOffsetEstimateSlot(double freq_offset_est);
     void CenterFreqChangedSlot(double freq_center);

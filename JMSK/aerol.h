@@ -150,11 +150,6 @@ class AeroL : public QIODevice
 {
     Q_OBJECT
 public:
-    typedef enum BaudRate
-    {
-        baud600=600,
-        baud1200=1200
-    } BaudRate;
     typedef enum MessageType
     {
         Reserved_0=0x00,
@@ -187,10 +182,6 @@ public:
         P_R_channel_control_ISU=0x40,
         T_channel_control_ISU=0x41,
 
-
-
-
-
         T_channel_assignment=0x51,
 
         //ACKNOWLEDGEMENT
@@ -210,10 +201,10 @@ public:
     void DisconnectSinkDevice();
     qint64 readData(char *data, qint64 maxlen);
     qint64 writeData(const char *data, qint64 len);
-    void setBaudRate(BaudRate rate);
 signals:
 
 public slots:
+    void setBitRate(double fb);
 private:
     bool Start();
     void Stop();

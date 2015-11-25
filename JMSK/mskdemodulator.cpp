@@ -131,6 +131,7 @@ void MskDemodulator::setSettings(Settings _settings)
     if(_settings.Fs!=Fs)emit SampleRateChanged(_settings.Fs);
     Fs=_settings.Fs;
     lockingbw=_settings.lockingbw;
+    if(_settings.fb!=fb)emit BitRateChanged(_settings.fb);
     fb=_settings.fb;
     freq_center=_settings.freq_center;
     if(freq_center>((Fs/2.0)-(lockingbw/2.0)))freq_center=((Fs/2.0)-(lockingbw/2.0));
@@ -271,8 +272,6 @@ qint64 MskDemodulator::writeData(const char *data, qint64 len)
             emit BBOverlapedBuffer(bbtmpbuff);
         }
 
-
-
         //matched filter.
         cpx_type cval= mixer2.WTCISValue()*dval;
         cpx_type sig2 = cpx_type(matchedfilter_re->FIRUpdateAndProcess(cval.real()),matchedfilter_im->FIRUpdateAndProcess(cval.imag()));
@@ -408,7 +407,7 @@ qint64 MskDemodulator::writeData(const char *data, qint64 len)
             //correct any residule rotaion (optional not sure if better or worse atm)
             for(int k=0;k<sigbuff.size();k++)
             {
-          //      sigbuff[k]=sigbuff[k]*std::exp(imag*carriererror*0.5);
+                sigbuff[k]=sigbuff[k]*std::exp(imag*carriererror*0.5);
             }
 
             //create sample index and make sure we dont miss any points due to jitter
@@ -416,7 +415,7 @@ qint64 MskDemodulator::writeData(const char *data, qint64 len)
             tixd.clear();
             for(int k=0;;k++)
             {
-                int tval=round(symboltimingstartest+((double)k)*2.0*SamplesPerSymbol);
+                int tval=round(symboltimingstartest+((double)(k-1))*2.0*SamplesPerSymbol);
                 if(tval>=sigbuff.size())break;
                 if((tval>=0)&&(tval<sigbuff.size())&&((tval-lastindex)>=SamplesPerSymbol))
                 {

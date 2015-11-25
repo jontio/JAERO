@@ -76,6 +76,8 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(ui->spectrumdisplay, SIGNAL(CenterFreqChanged(double)),                     audiomskdemodulator,SLOT(CenterFreqChangedSlot(double)));
     connect(ui->action_About,    SIGNAL(triggered()),                                   this, SLOT(AboutSlot()));
     connect(audiomskdemodulator, SIGNAL(SignalStatus(bool)),                            beaconhandler,SLOT(SignalStatus(bool)));
+    connect(audiomskdemodulator, SIGNAL(BitRateChanged(double)),                        aerol,SLOT(setBitRate(double)));
+
 
     //load settings
     QSettings settings("Jontisoft", "JMSK");
