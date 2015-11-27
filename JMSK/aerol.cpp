@@ -1,6 +1,233 @@
 #include "aerol.h"
 #include <QtEndian>
 
+using namespace AEROL;
+
+int ISUData::findisuitem71(ISUItem &anisuitem)
+{
+    if(anisuitem.NOOCTLESTINLASTSSU>8)return -1;
+    for(int i=0;i<isuitems.size();i++)
+    {
+        if((anisuitem.AESID==isuitems[i].AESID)&&(anisuitem.GESID==isuitems[i].GESID)&&(anisuitem.QNO==isuitems[i].QNO)&&(anisuitem.REFNO==isuitems[i].REFNO))return i;
+    }
+    return -1;
+}
+int ISUData::findisuitemC0(ISUItem &anisuitem)
+{
+    if(anisuitem.NOOCTLESTINLASTSSU>8)return -1;
+    for(int i=0;i<isuitems.size();i++)
+    {
+        if(((anisuitem.SEQNO+1)==isuitems[i].SEQNO)&&(anisuitem.QNO==isuitems[i].QNO)&&(anisuitem.REFNO==isuitems[i].REFNO))return i;
+    }
+    return -1;
+}
+
+void ISUData::deleteoldisuitems()
+{
+    for(int i=0;i<isuitems.size();i++)
+    {
+        isuitems[i].count++;
+        if(isuitems[i].count>10)//keep last 10 0x71 SUs
+        {
+            isuitems.removeAt(i);
+            i--;
+        }
+    }
+}
+
+bool ISUData::update(QByteArray data)
+{
+    missingssu=false;
+    assert(data.size()>=10);
+    uchar message=data[0];
+    switch(message)
+    {
+    case User_data_ISU_RLS_P_T_channel:
+    {
+
+        deleteoldisuitems();//limit number of isu saved
+
+        anisuitem.AESID=((uchar)data[1])<<8*2|((uchar)data[2])<<8*1|((uchar)data[3])<<8*0;
+        anisuitem.GESID=(uchar)data[4];
+        uchar val=data[5];
+        anisuitem.QNO=(val>>4)&0x0F;
+        anisuitem.REFNO=val&0x0F;
+        val=data[6];
+        anisuitem.SEQNO=val&0x3F;
+        val=data[7];
+        anisuitem.NOOCTLESTINLASTSSU=(val>>4)&0x0F;
+        anisuitem.count=0;
+        anisuitem.userdata.clear();
+        for(int i=8;i<=9;i++)anisuitem.userdata+=data[i];
+
+        int idx=findisuitem71(anisuitem);
+        if(idx<0)isuitems.push_back(anisuitem);
+         else isuitems[idx]=anisuitem;
+
+        //qDebug()<<(((QString)"71 isudata: AESID = %1 GESID = %2 QNO = %3 REFNO = %4 SEQNO = %5 NOOCTLESTINLASTSSU = %6").arg(anisuitem.AESID).arg(anisuitem.GESID).arg(anisuitem.QNO).arg(anisuitem.REFNO).arg(anisuitem.SEQNO).arg(anisuitem.NOOCTLESTINLASTSSU));
+    }
+        break;
+    default:
+    {
+        if((message&0xC0)!=0xC0)break;
+        anisuitem.SEQNO=message&0x3F;
+        int val=data[1];
+        anisuitem.QNO=(val>>4)&0x0F;
+        anisuitem.REFNO=val&0x0F;
+
+        int idx=findisuitemC0(anisuitem);
+        if(idx<0)
+        {
+            //qDebug()<<"missing su/ssu";
+            missingssu=true;
+            return false;
+        }
+        ISUItem *pisuitem;
+        pisuitem=&isuitems[idx];
+
+        pisuitem->SEQNO--;
+        if(pisuitem->SEQNO==0)
+        {
+            for(int i=2;i<=(pisuitem->NOOCTLESTINLASTSSU+1);i++)pisuitem->userdata+=data[i];
+            lastvalidisuitem=*pisuitem;
+            //qDebug()<<"final ssu";
+            return true;
+        }
+         else for(int i=2;i<=9;i++)pisuitem->userdata+=data[i];
+
+        //qDebug()<<((QString)"").sprintf("ssu data: SEQNO %d, QNO %d, REFNO %d",pisuitem->SEQNO,pisuitem->QNO,pisuitem->REFNO);
+    }
+        break;
+    }
+    return false;
+}
+
+QString ParserISU::toHumanReadableInformation(ISUItem &isuitem)
+{
+    if(isuitem.AESID==0)return NULL;
+    QVector<int> parities;
+    QByteArray textish;
+    for(int i=0;i<isuitem.userdata.size();i++)
+    {
+        int byte=(uchar)isuitem.userdata[i];
+        int parity=0;for(int j=0;j<8;j++)if((byte>>j)&0x01)parity++;
+        parity&=1;
+        if(parity)parities.push_back(0x01);
+        else parities.push_back(0x00);
+        byte&=0x7F;
+        textish+=byte;
+    }
+
+    QString humantext;
+
+    //check that it matches the pattern
+    //(this is 8bit parity makes things differnet)
+    //FF FF *
+    //01 (SOH) *
+    //32 (mode)
+    //AE C8 C2 AD 4A C8 CD (reg)
+    //15 C1 B6 51 (??? seem to have parity but not printable, i think this is always 4 bytes)
+    //02 (STX) (only if text is there)
+    //2F D0 49 CB 43 D0 D9 C1 AE C1 C4 D3 AE C8 C2 AD 4A C8 CD B0 37 B0 34 B0 C2 B0 B0 B0 43 B0 B0 B0 C4 B0 31 B0 45 B0 31 31 B0 B0 B0 34 34 B0 C4
+    //83 or 93 (ETX/ETB) * (ETB when text is over 220 chars)
+    //93 AB (BSC no parity bits)
+    //7F (DEL) *
+    if((isuitem.userdata.size()>16)&&((uchar)isuitem.userdata[0])==0xFF&&((uchar)isuitem.userdata[1])==0xFF&&((uchar)isuitem.userdata[2])==0x01&&((((uchar)isuitem.userdata[isuitem.userdata.size()-1-3])==0x83)||(((uchar)isuitem.userdata[isuitem.userdata.size()-1-3])==0x97))&&((uchar)isuitem.userdata[isuitem.userdata.size()-1])==0x7F&&( ((uchar)isuitem.userdata[15])==0x83 || ((uchar)isuitem.userdata[15])==0x02 ))
+    {
+        uchar byte=((uchar)isuitem.userdata[3]);
+        char MODE=byte&0x7F;
+        uchar TAK=((uchar)textish[11]);
+        uchar LABEL[2];
+        LABEL[0]=((uchar)textish[12]);
+        LABEL[1]=((uchar)textish[13]);
+        uchar BI=((uchar)textish[14]);
+        QByteArray PLANEREG;
+        QByteArray TEXT;
+        QByteArray HEX;
+        bool havetext=false;
+        if(((uchar)isuitem.userdata[15])==0x02)havetext=true;
+        for(int k=4;k<4+7;k++)
+        {
+            byte=((uchar)isuitem.userdata[k]);
+            byte&=0x7F;
+            if(!parities[k])return ((QString)"").sprintf("ISU: AESID = %X GESID = %X QNO = %02X REFNO = %02X : Parity error",isuitem.AESID,isuitem.GESID,isuitem.QNO,isuitem.REFNO);
+            PLANEREG+=(char)byte;
+        }
+
+
+/*
+        int startoftextptr=-1;
+        int endoftextptr=isuitem.userdata.size()-1-3;
+        for(int k=11;k<(isuitem.userdata.size()-1-3);k++)
+        {
+            if(((uchar)isuitem.userdata[k])==0x02)
+            {
+                startoftextptr=k;
+                break;
+            }
+        }
+        if(startoftextptr>=0)
+        {
+            qDebug()<<"is text"<<startoftextptr;
+            for(int k=startoftextptr+1;k<(isuitem.userdata.size()-1-3);k++)
+            {
+                byte=((uchar)isuitem.userdata[k]);
+                byte&=0x7F;
+                TEXT+=(char)byte;
+            }
+
+        }
+        if(startoftextptr>=0)qDebug()<<startoftextptr;
+         else qDebug()<<endoftextptr;
+*/
+
+        if(havetext)//have text
+        {
+            for(int k=16;k<isuitem.userdata.size()-1-3;k++)
+            {
+                byte=((uchar)isuitem.userdata[k]);
+                byte&=0x7F;
+                if(!parities[k])return ((QString)"").sprintf("ISU: AESID = %X GESID = %X QNO = %02X REFNO = %02X : Parity error",isuitem.AESID,isuitem.GESID,isuitem.QNO,isuitem.REFNO);
+                if(byte==10||byte==13)continue;//filter out lf and cr
+                TEXT+=(char)byte;
+            }
+        }
+
+
+
+
+        for(int k=0;k<(isuitem.userdata.size());k++)
+        {
+            byte=((uchar)isuitem.userdata[k]);
+            //byte&=0x7F;
+            HEX+=((QString)"").sprintf("%02X ",byte);
+        }
+
+        QByteArray TAKstr;
+        TAKstr+=TAK;
+        if(TAK==0x15)TAKstr=((QString)"<NAK>").toLatin1();
+        if(TEXT.isEmpty())humantext+=((QString)"").sprintf("ISU: AESID = %06X GESID = %02X QNO = %02X REFNO = %02X MODE = %c REG = %s TAK = %s LABEL = %02X%02X BI = %c",isuitem.AESID,isuitem.GESID,isuitem.QNO,isuitem.REFNO,MODE,PLANEREG.data(),TAKstr.data(),LABEL[0],LABEL[1],BI);
+         else humantext+=((QString)"").sprintf("ISU: AESID = %06X GESID = %02X QNO = %02X REFNO = %02X MODE = %c REG = %s TAK = %s LABEL = %02X%02X BI = %c TEXT = \"%s\"",isuitem.AESID,isuitem.GESID,isuitem.QNO,isuitem.REFNO,MODE,PLANEREG.data(),TAKstr.data(),LABEL[0],LABEL[1],BI,TEXT.data());
+        if((((uchar)isuitem.userdata[isuitem.userdata.size()-1-3])==0x97))humantext+=" ...more to come... ";
+        humantext+="\t( "+HEX+" )";
+    }
+     else
+     {
+        QByteArray HEX;
+        for(int k=0;k<(isuitem.userdata.size());k++)
+        {
+            uchar byte=((uchar)isuitem.userdata[k]);
+            //byte&=0x7F;
+            HEX+=((QString)"").sprintf("%02X ",byte);
+        }
+        humantext+=((QString)"").sprintf("ISU: AESID = %06X GESID = %02X QNO = %02X REFNO = %02X : Unknown format",isuitem.AESID,isuitem.GESID,isuitem.QNO,isuitem.REFNO);
+        humantext+="\t( "+HEX+" )";
+     }
+
+    return humantext;
+
+}
+
 AeroLInterleaver::AeroLInterleaver()
 {
     M=64;
@@ -8,6 +235,7 @@ AeroLInterleaver::AeroLInterleaver()
     interleaverowpermute.resize(M);
     interleaverowdepermute.resize(M);
 
+    //this is 1-1 and onto
     for(int i=0;i<M;i++)
     {
         interleaverowpermute[(i*27)%M]=i;
@@ -24,12 +252,7 @@ void AeroLInterleaver::setSize(int _N)
 }
 QVector<int> &AeroLInterleaver::interleave(QVector<int> &block)
 {
-    if(block.size()!=(M*N))
-    {
-        matrix.fill(0);
-        assert("AeroLInterleaver: block.size()!=(M*N)");
-    }
-
+    assert(block.size()==(M*N));
     int k=0;
     for(int i=0;i<M;i++)
     {
@@ -42,18 +265,11 @@ QVector<int> &AeroLInterleaver::interleave(QVector<int> &block)
             k++;
         }
     }
-
     return matrix;
-
 }
 QVector<int> &AeroLInterleaver::deinterleave(QVector<int> &block)
 {
-    if(block.size()!=(M*N))
-    {
-        matrix.fill(0);
-        assert("AeroLInterleaver: block.size()!=(M*N)");
-    }
-
+    assert(block.size()==(M*N));
     int k=0;
     for(int j=0;j<N;j++)
     {
@@ -66,7 +282,6 @@ QVector<int> &AeroLInterleaver::deinterleave(QVector<int> &block)
             k++;
         }
     }
-
     return matrix;
 }
 
@@ -119,7 +334,6 @@ AeroL::AeroL(QObject *parent) : QIODevice(parent)
 
     dl1.setLength(12);//delay for decode encode BER check
     dl2.setLength(576-6);//delay's data to next frame
-    dl3.setLength(1);
 
     preambledetector.setPreamble(3780831379LL,32);//0x3780831379,0b11100001010110101110100010010011
 
@@ -145,7 +359,6 @@ void AeroL::setBitRate(double fb)
         break;
     }
 }
-
 
 AeroL::~AeroL()
 {
@@ -182,13 +395,9 @@ void AeroL::DisconnectSinkDevice()
     if(!psinkdevice.isNull())psinkdevice.clear();
 }
 
-QByteArray &AeroL::Decode(QVector<short> &bits)//0 --> oldest
+QByteArray &AeroL::Decode(QVector<short> &bits)//0 bit --> oldest bit
 {
     decodedbytes.clear();
-
-    //for(int i=(bits.size()-1);i>=0;i--)
-    //for(int i=0;i<bits.size();i++)decodedbytes.push_back((bits[i])+48);
-    //return decodedbytes;
 
     static int cntr=1000000000;
     static int formatid=0;
@@ -201,11 +410,10 @@ QByteArray &AeroL::Decode(QVector<short> &bits)//0 --> oldest
         if(cntr<1000000000)cntr++;
         if(cntr<16)
         {
-
             if(cntr==0)
             {
                 frameinfo=bits[i];
-
+                infofield.clear();
             }
              else
              {
@@ -219,7 +427,7 @@ QByteArray &AeroL::Decode(QVector<short> &bits)//0 --> oldest
 
             //decodedbytes.append(((QString)"%1\n").arg(frameinfo));
 
-            //delay frame info by one frame needed as viterbi decoder and delaylime make 1 frame delay
+            //delay frame info by one frame needed as viterbi decoder and delayline make 1 frame delay
             quint16 tval=frameinfo;
             frameinfo=lastframeinfo;
             lastframeinfo=tval;
@@ -304,10 +512,10 @@ QByteArray &AeroL::Decode(QVector<short> &bits)//0 --> oldest
                     //run through all SUs and check CRCs
                     //12 bytes for all SUs in P signal i think? or do extended SUs exist in the P signal????
                     char *infofieldptr=infofield.data();
-                    bool allgood=true;
+                    //bool allgood=true;
 //                    if(framecounter1==framecounter2)decodedbytes+=((QString)"").sprintf("Frame %d\n", framecounter1);
 //                     else decodedbytes+="frame count error\n";
-//                    if(formatid!=1)decodedbytes+="format ID error\n";
+                    if(formatid!=1)decodedbytes+="format ID error\n";
                     for(int k=0;k<infofield.size()/12;k++)
                     {
                         quint16 crc_calc=crc16.calcusingbytes(&infofieldptr[k*12],10);
@@ -417,13 +625,13 @@ if(message==0x26||message==0x0A)continue;//to skip the boring SUs
                                 decodedbytes+="Acknowledge_RACK_TACK_P_channel";
                                 break;
 
-
                             case User_data_ISU_RLS_P_T_channel:
                                 decodedbytes+="User_data_ISU_RLS_P_T_channel";
                                 {
-                                    quint32 AESID=((uchar)infofield[k*12+1])<<8*2|((uchar)infofield[k*12+2])<<8*1|((uchar)infofield[k*12+3])<<8*0;
+                                    /*quint32 AESID=((uchar)infofield[k*12+1])<<8*2|((uchar)infofield[k*12+2])<<8*1|((uchar)infofield[k*12+3])<<8*0;
                                     uchar GESID=(uchar)infofield[k*12+4];
-                                    decodedbytes+=((QString)" AESID = %1 GESID = %2").arg(AESID).arg(GESID);
+                                    decodedbytes+=((QString)" AESID = %1 GESID = %2").arg(AESID).arg(GESID);*/
+                                    isudata.update(infofield.mid(k*12,10));
                                 }
                                 break;
                             case User_data_3_octet_LSDU_RLS_P_channel:
@@ -435,12 +643,20 @@ if(message==0x26||message==0x0A)continue;//to skip the boring SUs
                             default:
                                 if((message&0xC0)==0xC0)
                                 {
-                                    decodedbytes+="SUBSEQUENT SIGNAL UNITS";
+                                    decodedbytes+="SSU";
+
+                                    if(isudata.update(infofield.mid(k*12,10)))
+                                    {
+                                        emit HumanReadableInformation(parserisu.toHumanReadableInformation(isudata.lastvalidisuitem));
+                                    }
+                                     else if(isudata.missingssu)decodedbytes+=" missing (or if unimplimented then TODO in C++)";
+
+/*                                    decodedbytes+="SUBSEQUENT SIGNAL UNITS";
                                     decodedbytes+=" \"";
                                     for(int m=2;m<10;m++)
                                     {
                                         int byte=((uchar)infofield[k*12+m]);
-                                        byte&=0x7F;//what does 8th bit mean?
+                                        byte&=0x7F;//8th bit is parity check?
                                         if((byte>=0x20)&&(byte<=0x7E))
                                         {
                                             decodedbytes+=(char)byte;
@@ -448,6 +664,7 @@ if(message==0x26||message==0x0A)continue;//to skip the boring SUs
                                          else decodedbytes+=" ";
                                     }
                                     decodedbytes+="\"";
+*/
                                 }
                                 break;
                             }
@@ -456,7 +673,7 @@ if(message==0x26||message==0x0A)continue;//to skip the boring SUs
                          else
                          {
                             decodedbytes+=" Bad CRC\n";
-                            allgood=false;
+                            //allgood=false;
                          }
 
                         /*if(crc_calc==crc_rec)qDebug()<<k<<((QString)"").sprintf("rec = %02X", crc_rec)<<((QString)"").sprintf("calc = %02X", crc_calc)<<"OK"<<unencoded_BER_estimate*100.0;
@@ -469,7 +686,7 @@ if(message==0x26||message==0x0A)continue;//to skip the boring SUs
 
                     }
 
-                    if(!allgood)decodedbytes+="Got at least one bad SU (a SU failed CRC check)\n";//tell the console
+                    //if(!allgood)decodedbytes+="Got at least one bad SU (a SU failed CRC check)\n";//tell the console
 
 
 
@@ -490,14 +707,12 @@ if(message==0x26||message==0x0A)continue;//to skip the boring SUs
             cntr=-1;
 //            decodedbytes+="\nGot sync\n";
             scrambler.reset();
-            infofield.clear();
         }
 
         if(cntr+1==1200)
         {
             scrambler.reset();
             cntr=-1;
-            infofield.clear();
         }
 
 

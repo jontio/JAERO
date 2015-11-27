@@ -78,6 +78,9 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(audiomskdemodulator, SIGNAL(SignalStatus(bool)),                            beaconhandler,SLOT(SignalStatus(bool)));
     connect(audiomskdemodulator, SIGNAL(BitRateChanged(double)),                        aerol,SLOT(setBitRate(double)));
 
+//aeroL human info text
+    connect(aerol,SIGNAL(HumanReadableInformation(QString)),ui->inputwidget,SLOT(appendPlainText(QString)));
+
 
     //load settings
     QSettings settings("Jontisoft", "JMSK");
@@ -150,6 +153,9 @@ MainWindow::MainWindow(QWidget *parent) :
     if(settingsdialog->scrapeingenabled)webscraper->start();
 
 //--end modulator setup
+
+    ui->inputwidget->clear();
+    ui->inputwidget->appendHtml("<b>TAK LABEL and BI are have a mask of 0x7F on them. I'm not sure if this is right.<br>The BSC bytes are ignored<br>TAK seems to be a NAK or a one digit number. BI seems to be a capital char. LABEL is often non pritable<br>Only 0x71 SUs and SSU are implimented in this edit</b>");
 
 
 }

@@ -15,8 +15,10 @@ TextInputWidget::TextInputWidget(QWidget *parent)
     p.setColor(QPalette::Text, Qt::black);
     setPalette(p);
     QFont f=font();
-    f.setPointSize(12);
+    f.setPointSize(11);//12);
     setFont(f);
+
+    setLineWrapMode(QPlainTextEdit::NoWrap);
 
     setContextMenuPolicy(Qt::CustomContextMenu);
     connect(this,SIGNAL(customContextMenuRequested(const QPoint&)),
