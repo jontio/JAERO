@@ -294,42 +294,12 @@
          </property>
          <item>
           <property name="text">
-           <string>50 bps</string>
-          </property>
-         </item>
-         <item>
-          <property name="text">
-           <string>125 bps</string>
-          </property>
-         </item>
-         <item>
-          <property name="text">
-           <string>250 bps</string>
-          </property>
-         </item>
-         <item>
-          <property name="text">
-           <string>500 bps</string>
-          </property>
-         </item>
-         <item>
-          <property name="text">
            <string>600 bps</string>
           </property>
          </item>
          <item>
           <property name="text">
-           <string>1000 bps</string>
-          </property>
-         </item>
-         <item>
-          <property name="text">
            <string>1200 bps</string>
-          </property>
-         </item>
-         <item>
-          <property name="text">
-           <string>1225 bps</string>
           </property>
          </item>
         </widget>
@@ -363,47 +333,12 @@
          </property>
          <item>
           <property name="text">
-           <string>75 Hz</string>
-          </property>
-         </item>
-         <item>
-          <property name="text">
-           <string>187.5 Hz</string>
-          </property>
-         </item>
-         <item>
-          <property name="text">
-           <string>375 Hz</string>
-          </property>
-         </item>
-         <item>
-          <property name="text">
-           <string>500 Hz</string>
-          </property>
-         </item>
-         <item>
-          <property name="text">
-           <string>750 Hz</string>
-          </property>
-         </item>
-         <item>
-          <property name="text">
            <string>900 Hz</string>
           </property>
          </item>
          <item>
           <property name="text">
-           <string>1500 Hz</string>
-          </property>
-         </item>
-         <item>
-          <property name="text">
            <string>1800 Hz</string>
-          </property>
-         </item>
-         <item>
-          <property name="text">
-           <string>1837.5 Hz</string>
           </property>
          </item>
         </widget>
@@ -534,16 +469,12 @@
     <bool>false</bool>
    </attribute>
    <addaction name="actionCleanConsole"/>
+   <addaction name="actionClearTXWindow"/>
    <addaction name="actionConnectToUDPPort"/>
    <addaction name="actionRawOutput"/>
    <addaction name="separator"/>
    <addaction name="action_Settings"/>
-   <addaction name="separator"/>
-   <addaction name="actionClearTXWindow"/>
-   <addaction name="actionIdleTX"/>
-   <addaction name="actionBeacon"/>
    <addaction name="actionTXRX"/>
-   <addaction name="actionTest_device"/>
   </widget>
   <action name="action_Exit">
    <property name="icon">
@@ -568,7 +499,7 @@
     <string>CleanConsole</string>
    </property>
    <property name="toolTip">
-    <string>Clear the RX window</string>
+    <string>Clear the top window</string>
    </property>
   </action>
   <action name="actionConnectToUDPPort">
@@ -584,7 +515,7 @@
     <string>ConnectToUDPPort</string>
    </property>
    <property name="toolTip">
-    <string>Connects RX bit stream to the UDP port instead of the RX window</string>
+    <string>Connects RX bit stream or top window to the UDP port</string>
    </property>
   </action>
   <action name="actionRawOutput">
@@ -623,25 +554,10 @@
     <string>TX</string>
    </property>
    <property name="toolTip">
-    <string>Toggle transmit/receive</string>
+    <string>Send bottom window using varicode just for fun</string>
    </property>
    <property name="menuRole">
     <enum>QAction::NoRole</enum>
-   </property>
-  </action>
-  <action name="actionIdleTX">
-   <property name="checkable">
-    <bool>true</bool>
-   </property>
-   <property name="icon">
-    <iconset resource="jmsk.qrc">
-     <normaloff>:/images/eighth note.svg</normaloff>:/images/eighth note.svg</iconset>
-   </property>
-   <property name="text">
-    <string>IdleTX</string>
-   </property>
-   <property name="toolTip">
-    <string>Continues to transmit when idle</string>
    </property>
   </action>
   <action name="actionClearTXWindow">
@@ -653,7 +569,7 @@
     <string>clearTXWindow</string>
    </property>
    <property name="toolTip">
-    <string>Clear the TX window</string>
+    <string>Clear the bottom window</string>
    </property>
   </action>
   <action name="action_Settings">
@@ -666,29 +582,6 @@
    </property>
    <property name="toolTip">
     <string>Open settings dialog</string>
-   </property>
-  </action>
-  <action name="actionBeacon">
-   <property name="checkable">
-    <bool>true</bool>
-   </property>
-   <property name="icon">
-    <iconset resource="jmsk.qrc">
-     <normaloff>:/images/beacon.svg</normaloff>:/images/beacon.svg</iconset>
-   </property>
-   <property name="text">
-    <string>Beacon</string>
-   </property>
-   <property name="toolTip">
-    <string>Enable TX beacon</string>
-   </property>
-  </action>
-  <action name="actionTest_device">
-   <property name="checkable">
-    <bool>true</bool>
-   </property>
-   <property name="text">
-    <string>Test device</string>
    </property>
   </action>
  </widget>

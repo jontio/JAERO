@@ -702,7 +702,7 @@ if(message==0x26||message==0x0A)continue;//to skip the boring SUs
        // if((framecounter1!=framecounter2||cntr>1300)&&preambledetector.Update(bits[i]))
         if(preambledetector.Update(bits[i]))
         {
-            if(cntr+1!=1200)decodedbytes+="Error short frame!!! probably the soundcard droped some sound card buffers\n";
+            if(cntr+1!=1200)decodedbytes+="Error short frame!!! maybe the soundcard dropped some sound card buffers\n";
 //            decodedbytes+=((QString)"Bits for frame = %1\n").arg(cntr+1);
             cntr=-1;
 //            decodedbytes+="\nGot sync\n";

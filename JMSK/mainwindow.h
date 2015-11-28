@@ -6,14 +6,9 @@
 #include <QLabel>
 #include "audiomskdemodulator.h"
 #include "audiomskmodulator.h"
-#include "ddsmskmodulator/ddsmskmodulator.h"
 #include "varicodepipedecoder.h"
 #include "varicodepipeencoder.h"
-#include "serialppt.h"
 #include "gui_classes/settingsdialog.h"
-#include "beaconhandler.h"
-#include "textreplacement.h"
-#include "webscraper.h"
 #include "aerol.h"
 
 namespace Ui {
@@ -41,24 +36,11 @@ private:
 
     //modulator
     AudioMskModulator *audiomskmodulator;
-    DDSMSKModulator *ddsmskmodulator;
-    DDSMSKModulator::Settings ddsmskmodulatorsettings;
     AudioMskModulator::Settings audiomskmodulatorsettings;
     VariCodePipeEncoder *varicodepipeencoder;
-    SerialPPT *serialPPT;
 
     SettingsDialog *settingsdialog;
-    SettingsDialog::Device modulatordevicetype;
 
-    BeaconHandler *beaconhandler;
-    BeaconHandler::Settings beaconhandlersettings;
-
-    TextReplacement *textreplacement;
-
-    WebScraper *webscraper;
-
-    void connectmodulatordevice(SettingsDialog::Device device);
-    void setSerialUser(SettingsDialog::Device device);
 
 private slots:
     void SignalStatusSlot(bool signal);
@@ -76,9 +58,6 @@ private slots:
     void on_actionConnectToUDPPort_toggled(bool arg1);
     void on_actionRawOutput_triggered();
     void on_action_Settings_triggered();
-    void on_actionBeacon_triggered(bool checked);
-    void on_actionIdleTX_triggered(bool checked);
-    void on_actionTest_device_triggered(bool checked);
 };
 
 #endif // MAINWINDOW_H

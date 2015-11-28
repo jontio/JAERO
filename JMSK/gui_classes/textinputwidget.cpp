@@ -18,6 +18,8 @@ TextInputWidget::TextInputWidget(QWidget *parent)
     f.setPointSize(11);//12);
     setFont(f);
 
+    setMaximumBlockCount(10000);
+
     setLineWrapMode(QPlainTextEdit::NoWrap);
 
     setContextMenuPolicy(Qt::CustomContextMenu);

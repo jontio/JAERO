@@ -19,9 +19,7 @@ MainWindow::MainWindow(QWidget *parent) :
 
     //create the modulators, varicode encoder pipe, and serial ppt
     varicodepipeencoder = new VariCodePipeEncoder(this);
-    audiomskmodulator = new AudioMskModulator(this);
-    ddsmskmodulator = new DDSMSKModulator(this);
-    serialPPT = new SerialPPT(this);    
+    audiomskmodulator = new AudioMskModulator(this);  
     aerol = new AeroL(this); //Create Aero L test sink
 
     //create settings dialog. only some modulator settings are held atm.
@@ -34,23 +32,15 @@ MainWindow::MainWindow(QWidget *parent) :
     udpsocket = new QUdpSocket(this);
     varicodepipedecoder = new VariCodePipeDecoder(this);
 
-    //create a beacon handler
-    beaconhandler = new BeaconHandler(this);
-
-    //create somthing to rewrite text in the tx window
-    textreplacement = new TextReplacement(this);
-    textreplacement->setPlainTextEdit(ui->inputwidget);
-
-    //create a webscraper
-    webscraper = new WebScraper(this);
-    webscraper->setTextReplacementMap(textreplacement->textmap);
-
-    //default sink is the varicode input of the console
-    audiomskdemodulator->ConnectSinkDevice(ui->console->varicodeconsoledevice);
+    //default sink is the aerol device
+    audiomskdemodulator->ConnectSinkDevice(aerol);
 
     //console setup
     ui->console->setEnabled(true);
     ui->console->setLocalEchoEnabled(true);
+
+    //aerol setup
+    aerol->ConnectSinkDevice(ui->console->consoledevice);
 
     //statusbar setup
     freqlabel = new QLabel();
@@ -75,7 +65,6 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(audiomskdemodulator, SIGNAL(ScatterPoints(QVector<cpx_type>)),              ui->scatterplot,SLOT(setData(QVector<cpx_type>)));
     connect(ui->spectrumdisplay, SIGNAL(CenterFreqChanged(double)),                     audiomskdemodulator,SLOT(CenterFreqChangedSlot(double)));
     connect(ui->action_About,    SIGNAL(triggered()),                                   this, SLOT(AboutSlot()));
-    connect(audiomskdemodulator, SIGNAL(SignalStatus(bool)),                            beaconhandler,SLOT(SignalStatus(bool)));
     connect(audiomskdemodulator, SIGNAL(BitRateChanged(double)),                        aerol,SLOT(setBitRate(double)));
 
 //aeroL human info text
@@ -83,7 +72,7 @@ MainWindow::MainWindow(QWidget *parent) :
 
 
     //load settings
-    QSettings settings("Jontisoft", "JMSK");
+    QSettings settings("Jontisoft", "JAEROL");
     ui->comboBoxafc->setCurrentIndex(settings.value("comboBoxafc",0).toInt());
     ui->comboBoxsql->setCurrentIndex(settings.value("comboBoxsql",0).toInt());
     ui->comboBoxbps->setCurrentIndex(settings.value("comboBoxbps",0).toInt());
@@ -107,25 +96,17 @@ MainWindow::MainWindow(QWidget *parent) :
 
 //start modulator setup. the modulator is new and is and add on.
 
-    //connections for replacing text
-    connect(audiomskmodulator,SIGNAL(statechanged(bool)),textreplacement,SLOT(onstatechange(bool)));
-    connect(ddsmskmodulator,SIGNAL(statechanged(bool)),textreplacement,SLOT(onstatechange(bool)));
-
     //connect the encoder to the text widget. the text encoder to the modulator gets done later
     varicodepipeencoder->ConnectSourceDevice(ui->inputwidget->textinputdevice);
 
     //always connected
     //connect(ui->actionTXRX,SIGNAL(triggered(bool)),ui->inputwidget,SLOT(reset()));//not needed
-    connect(ui->actionIdleTX,SIGNAL(triggered(bool)),ui->inputwidget->textinputdevice,SLOT(setIdle_on_eof(bool)));
     connect(ui->actionClearTXWindow,SIGNAL(triggered(bool)),ui->inputwidget,SLOT(clear()));
-    connect(ui->actionBeacon,SIGNAL(triggered(bool)),beaconhandler,SLOT(StartStop(bool)));
 
     //set modulator settings and connections
 
     settingsdialog->populatesettings();
-    modulatordevicetype=settingsdialog->modulatordevicetype;
-    connectmodulatordevice(modulatordevicetype);
-    setSerialUser(modulatordevicetype);
+
 
     //set audio msk modulator settings
     audiomskmodulatorsettings.freq_center=settingsdialog->audiomskmodulatorsettings.freq_center;//this is the only one that gets set
@@ -134,121 +115,29 @@ MainWindow::MainWindow(QWidget *parent) :
     ui->inputwidget->textinputdevice->preamble2=settingsdialog->Preamble2;
     ui->inputwidget->textinputdevice->postamble=settingsdialog->Postamble;
     ui->inputwidget->reset();
-    serialPPT->setPPT(ui->actionTXRX->isChecked());
     audiomskmodulator->setSettings(audiomskmodulatorsettings);
 
-    //set JDDS msk modulator settings
-    ddsmskmodulatorsettings.fb=audiomskmodulatorsettings.fb;
-    ddsmskmodulatorsettings.freq_center=audiomskmodulatorsettings.freq_center;
-    ddsmskmodulatorsettings.secondsbeforereadysignalemited=audiomskmodulatorsettings.secondsbeforereadysignalemited;
-    ddsmskmodulator->setSettings(ddsmskmodulatorsettings);
+    //connections for audio out
+    audiomskmodulator->ConnectSourceDevice(varicodepipeencoder);
+    connect(ui->actionTXRX,SIGNAL(triggered(bool)),audiomskmodulator,SLOT(startstop(bool)));
+    connect(ui->inputwidget->textinputdevice,SIGNAL(eof()),audiomskmodulator,SLOT(stopgraceful()));
+    connect(audiomskmodulator,SIGNAL(statechanged(bool)),ui->actionTXRX,SLOT(setChecked(bool)));
+    connect(audiomskmodulator,SIGNAL(statechanged(bool)),ui->inputwidget,SLOT(reset()));
+    connect(audiomskmodulator,SIGNAL(ReadyState(bool)),ui->inputwidget->textinputdevice,SLOT(SinkReadySlot(bool)));//connection to signal textinputdevice to go from preamble to normal operation
 
-    //set beacon handler settings
-    beaconhandlersettings.beaconminidle=settingsdialog->beaconminidle;
-    beaconhandlersettings.beaconmaxidle=settingsdialog->beaconmaxidle;
-    beaconhandler->setSettings(beaconhandlersettings);
-
-    //load scrapings to the webscraper and start the scraper
-    webscraper->setScrapeMap(settingsdialog->scrapemapcontainer);
-    if(settingsdialog->scrapeingenabled)webscraper->start();
 
 //--end modulator setup
 
-    ui->inputwidget->clear();
-    ui->inputwidget->appendHtml("<b>TAK LABEL and BI are have a mask of 0x7F on them. I'm not sure if this is right.<br>The BSC bytes are ignored<br>TAK seems to be a NAK or a one digit number. BI seems to be a capital char. LABEL is often non pritable<br>Only 0x71 SUs and SSU are implimented in this edit</b>");
-
-
-}
-
-void MainWindow::setSerialUser(SettingsDialog::Device device)
-{
-    if(device==SettingsDialog::AUDIO)
-    {
-        ddsmskmodulatorsettings.serialportname="None";
-        ddsmskmodulator->setSettings(ddsmskmodulatorsettings);
-        Sleep(500);
-        serialPPT->setportname(settingsdialog->Serialportname);
-    }
-
-    if(device==SettingsDialog::JDDS)
-    {
-        serialPPT->setportname("None");
-        Sleep(500);
-        ddsmskmodulatorsettings.serialportname=settingsdialog->Serialportname;
-        ddsmskmodulator->setSettings(ddsmskmodulatorsettings);
-    }
-}
-
-void MainWindow::connectmodulatordevice(SettingsDialog::Device device)
-{
-    if(device==SettingsDialog::JDDS)
-    {
-
-        //disconnect audio connections
-        audiomskmodulator->DisconnectSourceDevice();
-        disconnect(serialPPT,SIGNAL(Warning(QString)),this,SLOT(WarningTextSlot(QString)));
-        disconnect(ui->actionTXRX,SIGNAL(triggered(bool)),audiomskmodulator,SLOT(startstop(bool)));
-        disconnect(ui->actionTXRX,SIGNAL(triggered(bool)),serialPPT,SLOT(setPPT(bool)));
-        disconnect(ui->inputwidget->textinputdevice,SIGNAL(eof()),audiomskmodulator,SLOT(stopgraceful()));
-        disconnect(audiomskmodulator,SIGNAL(statechanged(bool)),ui->actionTXRX,SLOT(setChecked(bool)));
-        disconnect(audiomskmodulator,SIGNAL(statechanged(bool)),serialPPT,SLOT(setPPT(bool)));
-        disconnect(audiomskmodulator,SIGNAL(statechanged(bool)),ui->inputwidget,SLOT(reset()));
-        disconnect(audiomskmodulator,SIGNAL(ReadyState(bool)),ui->inputwidget->textinputdevice,SLOT(SinkReadySlot(bool)));
-        disconnect(audiomskmodulator,SIGNAL(statechanged(bool)),beaconhandler,SLOT(TransmissionStatus(bool)));
-        disconnect(beaconhandler,SIGNAL(DoTransmissionNow()),audiomskmodulator,SLOT(start()));
-        //
-
-        //connections for JDDS
-        ddsmskmodulator->ConnectSourceDevice(varicodepipeencoder);
-        connect(ddsmskmodulator,SIGNAL(WarningMsg(QString)),this,SLOT(WarningTextSlot(QString)));
-        connect(ui->actionTXRX,SIGNAL(triggered(bool)),ddsmskmodulator,SLOT(startstop(bool)));
-        connect(ddsmskmodulator,SIGNAL(ReadyState(bool)),ui->inputwidget->textinputdevice,SLOT(SinkReadySlot(bool)));//connection to signal textinputdevice to go from preamble to normal operation
-        connect(ddsmskmodulator,SIGNAL(statechanged(bool)),ui->inputwidget,SLOT(reset()));
-
-        connect(ddsmskmodulator,SIGNAL(statechanged(bool)),ui->actionTXRX,SLOT(setChecked(bool)));
-        connect(ui->inputwidget->textinputdevice,SIGNAL(eof()),ddsmskmodulator,SLOT(stopgraceful()));
-        connect(ddsmskmodulator,SIGNAL(statechanged(bool)),beaconhandler,SLOT(TransmissionStatus(bool)));
-        connect(beaconhandler,SIGNAL(DoTransmissionNow()),ddsmskmodulator,SLOT(start()));
-    }
-
-    if(device==SettingsDialog::AUDIO)
-    {
-        //disconnect jdds connections
-        ddsmskmodulator->DisconnectSourceDevice();
-        disconnect(ddsmskmodulator,SIGNAL(WarningMsg(QString)),this,SLOT(WarningTextSlot(QString)));
-        disconnect(ui->actionTXRX,SIGNAL(triggered(bool)),ddsmskmodulator,SLOT(startstop(bool)));
-        disconnect(ddsmskmodulator,SIGNAL(ReadyState(bool)),ui->inputwidget->textinputdevice,SLOT(SinkReadySlot(bool)));//connection to signal textinputdevice to go from preamble to normal operation
-        disconnect(ddsmskmodulator,SIGNAL(statechanged(bool)),ui->inputwidget,SLOT(reset()));
-        disconnect(ddsmskmodulator,SIGNAL(statechanged(bool)),ui->actionTXRX,SLOT(setChecked(bool)));
-        disconnect(ui->inputwidget->textinputdevice,SIGNAL(eof()),ddsmskmodulator,SLOT(stopgraceful()));
-        disconnect(ddsmskmodulator,SIGNAL(statechanged(bool)),beaconhandler,SLOT(TransmissionStatus(bool)));
-        disconnect(beaconhandler,SIGNAL(DoTransmissionNow()),ddsmskmodulator,SLOT(start()));
-        //
-
-        //connections for audio out
-        audiomskmodulator->ConnectSourceDevice(varicodepipeencoder);
-        connect(serialPPT,SIGNAL(Warning(QString)),this,SLOT(WarningTextSlot(QString)));
-        connect(ui->actionTXRX,SIGNAL(triggered(bool)),audiomskmodulator,SLOT(startstop(bool)));
-        connect(ui->actionTXRX,SIGNAL(triggered(bool)),serialPPT,SLOT(setPPT(bool)));
-        connect(ui->inputwidget->textinputdevice,SIGNAL(eof()),audiomskmodulator,SLOT(stopgraceful()));
-        connect(audiomskmodulator,SIGNAL(statechanged(bool)),ui->actionTXRX,SLOT(setChecked(bool)));
-        connect(audiomskmodulator,SIGNAL(statechanged(bool)),serialPPT,SLOT(setPPT(bool)));
-        connect(audiomskmodulator,SIGNAL(statechanged(bool)),ui->inputwidget,SLOT(reset()));
-        connect(audiomskmodulator,SIGNAL(ReadyState(bool)),ui->inputwidget->textinputdevice,SLOT(SinkReadySlot(bool)));//connection to signal textinputdevice to go from preamble to normal operation
-        connect(audiomskmodulator,SIGNAL(statechanged(bool)),beaconhandler,SLOT(TransmissionStatus(bool)));
-        connect(beaconhandler,SIGNAL(DoTransmissionNow()),audiomskmodulator,SLOT(start()));
-    }
+    //add todays date
+    ui->inputwidget->appendHtml("<b>"+QDateTime::currentDateTime().toString("h:mmap ddd d-MMM-yyyy")+"</b>");
 
 }
 
 MainWindow::~MainWindow()
 {
 
-    //restore text in tx window b4 closeing
-    textreplacement->RestoreIfUnchanged();
-
     //save settings
-    QSettings settings("Jontisoft", "JMSK");
+    QSettings settings("Jontisoft", "JAEROL");
     settings.setValue("comboBoxafc", ui->comboBoxafc->currentIndex());
     settings.setValue("comboBoxsql", ui->comboBoxsql->currentIndex());
     settings.setValue("comboBoxbps", ui->comboBoxbps->currentIndex());
@@ -295,28 +184,32 @@ void MainWindow::PlottablesSlot(double freq_est,double freq_center,double bandwi
 
 void MainWindow::AboutSlot()
 {
-    QMessageBox::about(this,"JMSK",""
-                                     "<H1>An MSK/GMSK modem</H1>"
-                                     "<H3>v1.1.0</H3>"
-                                     "<p>This is a program to modulate and or demodulate varicode encoded differentially encoded MSK or GMSK.</p>"
+    QMessageBox::about(this,"JAEROL",""
+                                     "<H1>An Aero-L demodulator and decoder</H1>"
+                                     "<H3>v1.0.0</H3>"
+                                     "<p>This is a program to demodulate and decode Aero-L P signals.</p>"
                                      "<p>For more information about this application see <a href=\"http://jontio.zapto.org/hda1/jmsk.html\">http://jontio.zapto.org/hda1/jmsk.html</a>.</p>"
                                      "<p>Jonti 2015</p>" );
 }
 
-void MainWindow::on_comboBoxbps_currentIndexChanged(const QString &arg1)
+void MainWindow::on_comboBoxbps_currentIndexChanged(const QString &arg)
 {
+    QString arg1=arg;
+    if(arg1.isEmpty())
+    {
+        ui->comboBoxbps->setCurrentIndex(0);
+        arg1=ui->comboBoxbps->currentText();
+    }
 
     //demodulator settings
     audiomskdemodulatorsettings.fb=arg1.split(" ")[0].toDouble();
-    audiomskdemodulatorsettings.Fs=8000;
-    if(audiomskdemodulatorsettings.fb==50)audiomskdemodulatorsettings.symbolspercycle=8;
-    if(audiomskdemodulatorsettings.fb==125)audiomskdemodulatorsettings.symbolspercycle=16;
-    if(audiomskdemodulatorsettings.fb==250)audiomskdemodulatorsettings.symbolspercycle=16;
-    if(audiomskdemodulatorsettings.fb==500)audiomskdemodulatorsettings.symbolspercycle=24;
     if(audiomskdemodulatorsettings.fb==600){audiomskdemodulatorsettings.symbolspercycle=12;audiomskdemodulatorsettings.Fs=12000;}
-    if(audiomskdemodulatorsettings.fb==1000)audiomskdemodulatorsettings.symbolspercycle=24;
     if(audiomskdemodulatorsettings.fb==1200){audiomskdemodulatorsettings.symbolspercycle=12;audiomskdemodulatorsettings.Fs=24000;}
-    if(audiomskdemodulatorsettings.fb==1225){audiomskdemodulatorsettings.symbolspercycle=24;audiomskdemodulatorsettings.Fs=22050;}
+
+    if(audiomskdemodulatorsettings.fb==600){audiomskdemodulatorsettings.symbolspercycle=12;audiomskdemodulatorsettings.Fs=48000;}
+    if(audiomskdemodulatorsettings.fb==1200){audiomskdemodulatorsettings.symbolspercycle=12;audiomskdemodulatorsettings.Fs=48000;}
+
+
     int idx=ui->comboBoxlbw->findText(((QString)"%1 Hz").arg(audiomskdemodulatorsettings.fb*1.5));
     if(idx>=0)ui->comboBoxlbw->setCurrentIndex(idx);
     audiomskdemodulatorsettings.freq_center=audiomskdemodulator->getCurrentFreq();
@@ -327,10 +220,6 @@ void MainWindow::on_comboBoxbps_currentIndexChanged(const QString &arg1)
     audiomskmodulatorsettings.Fs=audiomskdemodulatorsettings.Fs;
     audiomskmodulator->setSettings(audiomskmodulatorsettings);
 
-    //jdds modulator setting
-    ddsmskmodulatorsettings.fb=audiomskmodulatorsettings.fb;
-    ddsmskmodulatorsettings.freq_center=audiomskmodulatorsettings.freq_center;
-    ddsmskmodulator->setSettings(ddsmskmodulatorsettings);
 
 }
 
@@ -371,6 +260,7 @@ void MainWindow::on_comboBoxdisplay_currentIndexChanged(const QString &arg1)
 void MainWindow::on_actionConnectToUDPPort_toggled(bool arg1)
 {
     audiomskdemodulator->DisconnectSinkDevice();
+    aerol->DisconnectSinkDevice();
     udpsocket->close();
     if(arg1)
     {
@@ -385,15 +275,17 @@ void MainWindow::on_actionConnectToUDPPort_toggled(bool arg1)
         }
          else
          {
-            audiomskdemodulator->ConnectSinkDevice(varicodepipedecoder);
-            varicodepipedecoder->ConnectSinkDevice(udpsocket);
-            ui->console->setEnableUpdates(false,"Console disabled while varicode decoded demodulated data is routed to UDP port 8765 at LocalHost.");
+            audiomskdemodulator->ConnectSinkDevice(aerol);
+            aerol->ConnectSinkDevice(udpsocket);
+            ui->console->setEnableUpdates(false,"Console disabled while decoded and demodulated data is routed to UDP port 8765 at LocalHost.");
          }
 
     }
      else
      {
-         audiomskdemodulator->ConnectSinkDevice(ui->console->varicodeconsoledevice);
+         audiomskdemodulator->ConnectSinkDevice(aerol);
+         aerol->ConnectSinkDevice(ui->console->consoledevice);
+         ui->console->setEnableUpdates(true);
      }
 }
 
@@ -408,97 +300,19 @@ void MainWindow::on_action_Settings_triggered()
     if(settingsdialog->exec()==QDialog::Accepted)
     {
 
-        //it a td to tricky keeping the modulator running when settings have been changed so i'm tring out stopping the modulator when settings are changed
+        //it a tad to tricky keeping the modulator running when settings have been changed so i'm tring out stopping the modulator when settings are changed
         audiomskmodulator->stop();
-        ddsmskmodulator->stop();
 
         ui->statusBar->clearMessage();
         ui->inputwidget->textinputdevice->preamble1=settingsdialog->Preamble1;
         ui->inputwidget->textinputdevice->preamble2=settingsdialog->Preamble2;
         ui->inputwidget->textinputdevice->postamble=settingsdialog->Postamble;
 
-        if(modulatordevicetype!=settingsdialog->modulatordevicetype)
-        {
-            audiomskmodulator->stop();
-            ddsmskmodulator->stop();
-        }
-
-        modulatordevicetype=settingsdialog->modulatordevicetype;
-        connectmodulatordevice(modulatordevicetype);
-        setSerialUser(modulatordevicetype);
-
         audiomskmodulatorsettings.freq_center=settingsdialog->audiomskmodulatorsettings.freq_center;//this is the only one that gets set
         audiomskmodulatorsettings.secondsbeforereadysignalemited=settingsdialog->audiomskmodulatorsettings.secondsbeforereadysignalemited;//well there is two now
         audiomskmodulator->setSettings(audiomskmodulatorsettings);     
-        serialPPT->setPPT(ui->actionTXRX->isChecked());
-
-        ddsmskmodulatorsettings.fb=audiomskmodulatorsettings.fb;
-        ddsmskmodulatorsettings.freq_center=audiomskmodulatorsettings.freq_center;
-        ddsmskmodulatorsettings.secondsbeforereadysignalemited=audiomskmodulatorsettings.secondsbeforereadysignalemited;
-        ddsmskmodulator->setSettings(ddsmskmodulatorsettings);
-
-        beaconhandlersettings.beaconminidle=settingsdialog->beaconminidle;
-        beaconhandlersettings.beaconmaxidle=settingsdialog->beaconmaxidle;
-        beaconhandler->setSettings(beaconhandlersettings);
-
-
-        webscraper->setScrapeMap(settingsdialog->scrapemapcontainer);
-        if(settingsdialog->scrapeingenabled)webscraper->start();
-         else webscraper->stop();
-
 
     }
 }
 
-//button exclusion
-void MainWindow::on_actionBeacon_triggered(bool checked)
-{
-    if(checked)
-    {
-        ui->actionIdleTX->setChecked(false);
-        ui->actionIdleTX->setEnabled(false);
-    }
-     else ui->actionIdleTX->setEnabled(true);
-}
-void MainWindow::on_actionIdleTX_triggered(bool checked)
-{
-    if(checked)
-    {
-        ui->actionBeacon->setChecked(false);
-        ui->actionBeacon->setEnabled(false);
-    }
-     else ui->actionBeacon->setEnabled(true);
-}
 
-void MainWindow::on_actionTest_device_triggered(bool checked)
-{
-
-    //stuff so visually evything works as expected
-    if(ui->actionTest_device->isChecked()!=checked)return;
-    ui->console->setEnableUpdates(true);
-    audiomskdemodulator->DisconnectSinkDevice();
-    udpsocket->close();
-    aerol->DisconnectSinkDevice();
-    ui->actionConnectToUDPPort->setChecked(false);
-    ui->actionRawOutput->setChecked(false);
-    if(checked)
-    {
-        ui->actionConnectToUDPPort->setEnabled(false);
-        ui->actionRawOutput->setEnabled(false);
-    }
-     else
-     {
-        ui->actionConnectToUDPPort->setEnabled(true);
-        ui->actionRawOutput->setEnabled(true);
-     }
-
-    if(checked)
-    {
-
-        //connect demodulator to aerol device and aerol device to console
-        audiomskdemodulator->ConnectSinkDevice(aerol);
-        aerol->ConnectSinkDevice(ui->console->consoledevice);
-
-    }
-     else audiomskdemodulator->ConnectSinkDevice(ui->console->varicodeconsoledevice);
-}

@@ -44,12 +44,6 @@ SOURCES += main.cpp\
     varicodepipeencoder.cpp \
     gui_classes/textinputwidget.cpp \
     gui_classes/settingsdialog.cpp \
-    serialppt.cpp \
-    ddsmskmodulator/ddsmskmodulator.cpp \
-    ddsmskmodulator/Slip.cpp \
-    beaconhandler.cpp \
-    textreplacement.cpp \
-    webscraper.cpp \
     aerol.cpp \
     ../viterbi-xukmin/viterbi.cpp
 
@@ -77,12 +71,6 @@ HEADERS  += mainwindow.h \
     varicodepipeencoder.h \
     gui_classes/textinputwidget.h \
     gui_classes/settingsdialog.h \
-    serialppt.h \
-    ddsmskmodulator/ddsmskmodulator.h \
-    ddsmskmodulator/Slip.h \
-    beaconhandler.h \
-    textreplacement.h \
-    webscraper.h \
     aerol.h \
     ../viterbi-xukmin/viterbi.h
 
