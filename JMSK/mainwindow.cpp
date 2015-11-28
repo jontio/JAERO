@@ -69,12 +69,12 @@ MainWindow::MainWindow(QWidget *parent) :
 
 //aeroL human info text
     connect(aerol,SIGNAL(HumanReadableInformation(QString)),ui->inputwidget,SLOT(appendPlainText(QString)));
+    connect(aerol,SIGNAL(DataCarrierDetect(bool)),this,SLOT(DataCarrierDetectStatusSlot(bool)));
 
 
     //load settings
     QSettings settings("Jontisoft", "JAEROL");
     ui->comboBoxafc->setCurrentIndex(settings.value("comboBoxafc",0).toInt());
-    ui->comboBoxsql->setCurrentIndex(settings.value("comboBoxsql",0).toInt());
     ui->comboBoxbps->setCurrentIndex(settings.value("comboBoxbps",0).toInt());
     ui->comboBoxlbw->setCurrentIndex(settings.value("comboBoxlbw",0).toInt());
     ui->comboBoxdisplay->setCurrentIndex(settings.value("comboBoxdisplay",0).toInt());
@@ -85,12 +85,13 @@ MainWindow::MainWindow(QWidget *parent) :
 
     //set audio msk demodulator settings and start
     on_comboBoxafc_currentIndexChanged(ui->comboBoxafc->currentText());
-    on_comboBoxsql_currentIndexChanged(ui->comboBoxsql->currentText());
     on_comboBoxbps_currentIndexChanged(ui->comboBoxbps->currentText());
     on_comboBoxlbw_currentIndexChanged(ui->comboBoxlbw->currentText());
     on_comboBoxdisplay_currentIndexChanged(ui->comboBoxdisplay->currentText());
     on_actionConnectToUDPPort_toggled(ui->actionConnectToUDPPort->isChecked());
+
     audiomskdemodulatorsettings.freq_center=tmpfreq;
+    audiomskdemodulator->setSQL(false);
     audiomskdemodulator->setSettings(audiomskdemodulatorsettings);
     audiomskdemodulator->start();
 
@@ -139,7 +140,6 @@ MainWindow::~MainWindow()
     //save settings
     QSettings settings("Jontisoft", "JAEROL");
     settings.setValue("comboBoxafc", ui->comboBoxafc->currentIndex());
-    settings.setValue("comboBoxsql", ui->comboBoxsql->currentIndex());
     settings.setValue("comboBoxbps", ui->comboBoxbps->currentIndex());
     settings.setValue("comboBoxlbw", ui->comboBoxlbw->currentIndex());
     settings.setValue("comboBoxdisplay", ui->comboBoxdisplay->currentIndex());
@@ -154,7 +154,13 @@ MainWindow::~MainWindow()
 void MainWindow::SignalStatusSlot(bool signal)
 {
     if(signal)ui->ledsignal->setLED(QIcon::On);
-     else ui->ledsignal->setLED(QIcon::Off);
+     else {ui->ledsignal->setLED(QIcon::Off);aerol->LostSignal();}
+}
+
+void MainWindow::DataCarrierDetectStatusSlot(bool dcd)
+{
+    if(dcd)ui->leddata->setLED(QIcon::On);
+     else ui->leddata->setLED(QIcon::Off);
 }
 
 void MainWindow::EbNoSlot(double EbNo)
@@ -187,8 +193,8 @@ void MainWindow::AboutSlot()
     QMessageBox::about(this,"JAEROL",""
                                      "<H1>An Aero-L demodulator and decoder</H1>"
                                      "<H3>v1.0.0</H3>"
-                                     "<p>This is a program to demodulate and decode Aero-L P signals.</p>"
-                                     "<p>For more information about this application see <a href=\"http://jontio.zapto.org/hda1/jmsk.html\">http://jontio.zapto.org/hda1/jmsk.html</a>.</p>"
+                                     "<p>This is a program to demodulate and decode Aero-L P signals. This Aeronautical (Classic Aero) from Inmarsat using low gain antennas.</p>"
+                                     "<p>For more information about this application see who knows just yet<!--<a href=\"http://jontio.zapto.org/hda1/jmsk.html\">http://jontio.zapto.org/hda1/jmsk.html</a>-->.</p>"
                                      "<p>Jonti 2015</p>" );
 }
 
@@ -206,8 +212,8 @@ void MainWindow::on_comboBoxbps_currentIndexChanged(const QString &arg)
     if(audiomskdemodulatorsettings.fb==600){audiomskdemodulatorsettings.symbolspercycle=12;audiomskdemodulatorsettings.Fs=12000;}
     if(audiomskdemodulatorsettings.fb==1200){audiomskdemodulatorsettings.symbolspercycle=12;audiomskdemodulatorsettings.Fs=24000;}
 
-    if(audiomskdemodulatorsettings.fb==600){audiomskdemodulatorsettings.symbolspercycle=12;audiomskdemodulatorsettings.Fs=48000;}
-    if(audiomskdemodulatorsettings.fb==1200){audiomskdemodulatorsettings.symbolspercycle=12;audiomskdemodulatorsettings.Fs=48000;}
+    //if(audiomskdemodulatorsettings.fb==600){audiomskdemodulatorsettings.symbolspercycle=12;audiomskdemodulatorsettings.Fs=48000;}
+    //if(audiomskdemodulatorsettings.fb==1200){audiomskdemodulatorsettings.symbolspercycle=12;audiomskdemodulatorsettings.Fs=48000;}
 
 
     int idx=ui->comboBoxlbw->findText(((QString)"%1 Hz").arg(audiomskdemodulatorsettings.fb*1.5));
@@ -234,12 +240,6 @@ void MainWindow::on_comboBoxafc_currentIndexChanged(const QString &arg1)
 {
     if(arg1=="AFC on")audiomskdemodulator->setAFC(true);
      else audiomskdemodulator->setAFC(false);
-}
-
-void MainWindow::on_comboBoxsql_currentIndexChanged(const QString &arg1)
-{
-    if(arg1=="SQL on")audiomskdemodulator->setSQL(true);
-     else audiomskdemodulator->setSQL(false);
 }
 
 void MainWindow::on_actionCleanConsole_triggered()

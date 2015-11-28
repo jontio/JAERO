@@ -4,6 +4,7 @@
 #include <QObject>
 #include <QPointer>
 #include <QVector>
+#include <QTimer>
 #include <QList>
 #include <QDebug>
 #include <assert.h>
@@ -75,6 +76,7 @@ public:
     bool update(QByteArray data);
     ISUItem lastvalidisuitem;
     bool missingssu;
+    void reset(){isuitems.clear();}
 private:
     QList<ISUItem> isuitems;
     ISUItem anisuitem;
@@ -241,8 +243,17 @@ public:
     qint64 writeData(const char *data, qint64 len);
 signals:
     void HumanReadableInformation(QString str);
+    void DataCarrierDetect(bool status);
 public slots:
     void setBitRate(double fb);
+    void LostSignal()
+    {
+        cntr=1000000000;
+        datacdcountdown=0;
+        datacd=false;
+        emit DataCarrierDetect(false);
+    }
+
 private:
     bool Start();
     void Stop();
@@ -269,6 +280,12 @@ private:
     ISUData isudata;
     ParserISU parserisu;
 
+    int datacdcountdown;
+    bool datacd;
+    int cntr;
+
+private slots:
+    void updateDCD();
 };
 
 #endif // AEROL_H

@@ -85,7 +85,7 @@ bool ISUData::update(QByteArray data)
         ISUItem *pisuitem;
         pisuitem=&isuitems[idx];
 
-        pisuitem->SEQNO--;
+        (pisuitem->SEQNO)--;
         if(pisuitem->SEQNO==0)
         {
             for(int i=2;i<=(pisuitem->NOOCTLESTINLASTSSU+1);i++)pisuitem->userdata+=data[i];
@@ -322,6 +322,15 @@ bool PreambleDetector::Update(int val)
 
 AeroL::AeroL(QObject *parent) : QIODevice(parent)
 {
+    cntr=1000000000;
+    datacdcountdown=0;
+    datacd=false;
+    emit DataCarrierDetect(datacd);
+
+    QTimer *dcdtimer=new QTimer(this);
+    connect(dcdtimer,SIGNAL(timeout()),this,SLOT(updateDCD()));
+    dcdtimer->start(1000);
+
     sbits.reserve(1000);
     decodedbytes.reserve(1000);
 
@@ -395,11 +404,33 @@ void AeroL::DisconnectSinkDevice()
     if(!psinkdevice.isNull())psinkdevice.clear();
 }
 
+void AeroL::updateDCD()
+{
+    //qDebug()<<datacdcountdown;
+
+    //keep track of the DCD
+    if(datacdcountdown>0)datacdcountdown-=3;
+     else {if(datacdcountdown<0)datacdcountdown=0;}
+    if(datacd&&!datacdcountdown)
+    {
+        datacd=false;
+        emit DataCarrierDetect(datacd);
+    }
+}
+
 QByteArray &AeroL::Decode(QVector<short> &bits)//0 bit --> oldest bit
 {
     decodedbytes.clear();
 
-    static int cntr=1000000000;
+    //keep track of the DCD
+    /*if(datacdcountdown>0)datacdcountdown-=qMin(bits.count(),datacdcountdown);
+    if(datacd&&!datacdcountdown)
+    {
+        datacd=false;
+        emit DataCarrierDetect(datacd);
+    }*/
+
+    //static int cntr=1000000000;
     static int formatid=0;
     static int supfrmaker=0;
     static int framecounter1=0;
@@ -407,6 +438,9 @@ QByteArray &AeroL::Decode(QVector<short> &bits)//0 bit --> oldest bit
 
     for(int i=0;i<bits.size();i++)
     {
+
+
+
         if(cntr<1000000000)cntr++;
         if(cntr<16)
         {
@@ -520,6 +554,15 @@ QByteArray &AeroL::Decode(QVector<short> &bits)//0 bit --> oldest bit
                     {
                         quint16 crc_calc=crc16.calcusingbytes(&infofieldptr[k*12],10);
                         quint16 crc_rec=(((uchar)infofield[k*12+11])<<8)|((uchar)infofield[k*12+10]);
+
+                        //keep track of the DCD
+                        if(crc_calc==crc_rec){if(datacdcountdown<12)datacdcountdown+=2;}
+                         else {if(datacdcountdown>0)datacdcountdown-=3;}
+                        if(!datacd&&datacdcountdown>2)
+                        {
+                            datacd=true;
+                            emit DataCarrierDetect(datacd);
+                        }
 
                         MessageType message=(MessageType)((uchar)infofield[k*12]);
 
@@ -702,10 +745,20 @@ if(message==0x26||message==0x0A)continue;//to skip the boring SUs
        // if((framecounter1!=framecounter2||cntr>1300)&&preambledetector.Update(bits[i]))
         if(preambledetector.Update(bits[i]))
         {
-            if(cntr+1!=1200)decodedbytes+="Error short frame!!! maybe the soundcard dropped some sound card buffers\n";
+            if(cntr+1!=1200)
+            {
+                isudata.reset();
+                decodedbytes+="Error short frame!!! maybe the soundcard dropped some sound card buffers\n";
+            }
 //            decodedbytes+=((QString)"Bits for frame = %1\n").arg(cntr+1);
             cntr=-1;
 //            decodedbytes+="\nGot sync\n";
+
+            //got a signal
+            datacd=true;
+            datacdcountdown=12;
+            emit DataCarrierDetect(datacd);
+
             scrambler.reset();
         }
 
@@ -718,6 +771,7 @@ if(message==0x26||message==0x0A)continue;//to skip the boring SUs
 
     }
 
+    if(!datacd)decodedbytes.clear();
     return decodedbytes;
 }
 

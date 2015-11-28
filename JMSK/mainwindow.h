@@ -43,6 +43,7 @@ private:
 
 
 private slots:
+    void DataCarrierDetectStatusSlot(bool dcd);
     void SignalStatusSlot(bool signal);
     void EbNoSlot(double EbNo);
     void WarningTextSlot(QString warning);
@@ -51,7 +52,6 @@ private slots:
     void AboutSlot();
     void on_comboBoxbps_currentIndexChanged(const QString &arg1);
     void on_comboBoxlbw_currentIndexChanged(const QString &arg1);
-    void on_comboBoxsql_currentIndexChanged(const QString &arg1);
     void on_comboBoxafc_currentIndexChanged(const QString &arg1);
     void on_actionCleanConsole_triggered();
     void on_comboBoxdisplay_currentIndexChanged(const QString &arg1);
