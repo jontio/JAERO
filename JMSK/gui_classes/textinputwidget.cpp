@@ -200,6 +200,11 @@ void TextInputWidget::reset()
 
 }
 
+void TextInputWidget::scrolltoend()
+{
+    verticalScrollBar()->setValue(verticalScrollBar()->maximum());
+}
+
 void TextInputWidget::clear()
 {
     textinputdevice->str.clear();

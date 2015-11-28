@@ -77,6 +77,7 @@ MainWindow::MainWindow(QWidget *parent) :
     ui->comboBoxafc->setCurrentIndex(settings.value("comboBoxafc",0).toInt());
     ui->comboBoxbps->setCurrentIndex(settings.value("comboBoxbps",0).toInt());
     ui->comboBoxlbw->setCurrentIndex(settings.value("comboBoxlbw",0).toInt());
+    ui->comboBoxDisplayformat->setCurrentIndex(settings.value("comboBoxDisplayformat",0).toInt());
     ui->comboBoxdisplay->setCurrentIndex(settings.value("comboBoxdisplay",0).toInt());
     ui->actionConnectToUDPPort->setChecked(settings.value("actionConnectToUDPPort",false).toBool());
     ui->actionRawOutput->setChecked(settings.value("actionRawOutput",false).toBool());
@@ -130,8 +131,8 @@ MainWindow::MainWindow(QWidget *parent) :
 //--end modulator setup
 
     //add todays date
-    ui->inputwidget->appendHtml("<b>"+QDateTime::currentDateTime().toString("h:mmap ddd d-MMM-yyyy")+"</b>");
-
+    ui->inputwidget->appendHtml("<b>"+QDateTime::currentDateTime().toString("h:mmap ddd d-MMM-yyyy")+" JAREOL started</b>");
+    QTimer::singleShot(100,ui->inputwidget,SLOT(scrolltoend()));
 }
 
 MainWindow::~MainWindow()
@@ -143,6 +144,7 @@ MainWindow::~MainWindow()
     settings.setValue("comboBoxbps", ui->comboBoxbps->currentIndex());
     settings.setValue("comboBoxlbw", ui->comboBoxlbw->currentIndex());
     settings.setValue("comboBoxdisplay", ui->comboBoxdisplay->currentIndex());
+    settings.setValue("comboBoxDisplayformat", ui->comboBoxDisplayformat->currentIndex());
     settings.setValue("actionConnectToUDPPort", ui->actionConnectToUDPPort->isChecked());
     settings.setValue("actionRawOutput", ui->actionRawOutput->isChecked());
     settings.setValue("freq_center", audiomskdemodulator->getCurrentFreq());
@@ -212,8 +214,8 @@ void MainWindow::on_comboBoxbps_currentIndexChanged(const QString &arg)
     if(audiomskdemodulatorsettings.fb==600){audiomskdemodulatorsettings.symbolspercycle=12;audiomskdemodulatorsettings.Fs=12000;}
     if(audiomskdemodulatorsettings.fb==1200){audiomskdemodulatorsettings.symbolspercycle=12;audiomskdemodulatorsettings.Fs=24000;}
 
-    //if(audiomskdemodulatorsettings.fb==600){audiomskdemodulatorsettings.symbolspercycle=12;audiomskdemodulatorsettings.Fs=48000;}
-    //if(audiomskdemodulatorsettings.fb==1200){audiomskdemodulatorsettings.symbolspercycle=12;audiomskdemodulatorsettings.Fs=48000;}
+    if(audiomskdemodulatorsettings.fb==600){audiomskdemodulatorsettings.symbolspercycle=12;audiomskdemodulatorsettings.Fs=48000;}
+    if(audiomskdemodulatorsettings.fb==1200){audiomskdemodulatorsettings.symbolspercycle=12;audiomskdemodulatorsettings.Fs=48000;}
 
 
     int idx=ui->comboBoxlbw->findText(((QString)"%1 Hz").arg(audiomskdemodulatorsettings.fb*1.5));
@@ -240,6 +242,12 @@ void MainWindow::on_comboBoxafc_currentIndexChanged(const QString &arg1)
 {
     if(arg1=="AFC on")audiomskdemodulator->setAFC(true);
      else audiomskdemodulator->setAFC(false);
+}
+
+void MainWindow::on_comboBoxDisplayformat_currentIndexChanged(const QString &arg1)
+{
+    if(arg1=="1")aerol->setCompactHumanReadableInformationMode(1);
+    if(arg1=="2")aerol->setCompactHumanReadableInformationMode(2);
 }
 
 void MainWindow::on_actionCleanConsole_triggered()
@@ -314,5 +322,7 @@ void MainWindow::on_action_Settings_triggered()
 
     }
 }
+
+
 
 

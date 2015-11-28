@@ -58,6 +58,7 @@ private slots:
     void on_actionConnectToUDPPort_toggled(bool arg1);
     void on_actionRawOutput_triggered();
     void on_action_Settings_triggered();
+    void on_comboBoxDisplayformat_currentIndexChanged(const QString &arg1);
 };
 
 #endif // MAINWINDOW_H

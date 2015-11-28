@@ -201,6 +201,7 @@ public slots:
     void paste();
     void reset();
     void clear();
+    void scrolltoend();
 
 protected:
     virtual void keyPressEvent(QKeyEvent *e);

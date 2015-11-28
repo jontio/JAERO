@@ -5,6 +5,7 @@
 #include <QPointer>
 #include <QVector>
 #include <QTimer>
+#include <QDateTime>
 #include <QList>
 #include <QDebug>
 #include <assert.h>
@@ -88,8 +89,9 @@ private:
 class ParserISU
 {
 public:
-    ParserISU(){}
+    ParserISU(){compactmumanreadableinformationmode=1;}
     QString toHumanReadableInformation(ISUItem &isuitem);
+    int compactmumanreadableinformationmode;
 };
 
 class AeroLcrc16 //this seems to be called GENIBUS not CCITT
@@ -253,6 +255,7 @@ public slots:
         datacd=false;
         emit DataCarrierDetect(false);
     }
+    void setCompactHumanReadableInformationMode(int state);
 
 private:
     bool Start();

@@ -205,11 +205,29 @@ QString ParserISU::toHumanReadableInformation(ISUItem &isuitem)
 
         QByteArray TAKstr;
         TAKstr+=TAK;
-        if(TAK==0x15)TAKstr=((QString)"<NAK>").toLatin1();
-        if(TEXT.isEmpty())humantext+=((QString)"").sprintf("ISU: AESID = %06X GESID = %02X QNO = %02X REFNO = %02X MODE = %c REG = %s TAK = %s LABEL = %02X%02X BI = %c",isuitem.AESID,isuitem.GESID,isuitem.QNO,isuitem.REFNO,MODE,PLANEREG.data(),TAKstr.data(),LABEL[0],LABEL[1],BI);
-         else humantext+=((QString)"").sprintf("ISU: AESID = %06X GESID = %02X QNO = %02X REFNO = %02X MODE = %c REG = %s TAK = %s LABEL = %02X%02X BI = %c TEXT = \"%s\"",isuitem.AESID,isuitem.GESID,isuitem.QNO,isuitem.REFNO,MODE,PLANEREG.data(),TAKstr.data(),LABEL[0],LABEL[1],BI,TEXT.data());
-        if((((uchar)isuitem.userdata[isuitem.userdata.size()-1-3])==0x97))humantext+=" ...more to come... ";
-        humantext+="\t( "+HEX+" )";
+        switch(compactmumanreadableinformationmode)
+        {
+        case 2:
+        {
+            humantext+=QDateTime::currentDateTime().toString("hh:mm:ss dd-MM-yy ");
+            if(TAK==0x15)TAKstr=((QString)"!").toLatin1();
+            if(LABEL[1]==127)LABEL[1]='d';
+            if(TEXT.isEmpty())humantext+=((QString)"").sprintf("AES:%06X GES:%02X %c %s %s %c%c %c",isuitem.AESID,isuitem.GESID,MODE,PLANEREG.data(),TAKstr.data(),LABEL[0],LABEL[1],BI);
+             else humantext+=((QString)"").sprintf("AES:%06X GES:%02X %c %s %s %c%c %c %s",isuitem.AESID,isuitem.GESID,MODE,PLANEREG.data(),TAKstr.data(),LABEL[0],LABEL[1],BI,TEXT.data());
+            if((((uchar)isuitem.userdata[isuitem.userdata.size()-1-3])==0x97))humantext+=" ...more to come... ";
+        }
+            break;
+        default: //0 or 1
+        {
+            if(TAK==0x15)TAKstr=((QString)"<NAK>").toLatin1();
+            if(TEXT.isEmpty())humantext+=((QString)"").sprintf("ISU: AESID = %06X GESID = %02X QNO = %02X REFNO = %02X MODE = %c REG = %s TAK = %s LABEL = %02X%02X BI = %c",isuitem.AESID,isuitem.GESID,isuitem.QNO,isuitem.REFNO,MODE,PLANEREG.data(),TAKstr.data(),LABEL[0],LABEL[1],BI);
+            else humantext+=((QString)"").sprintf("ISU: AESID = %06X GESID = %02X QNO = %02X REFNO = %02X MODE = %c REG = %s TAK = %s LABEL = %02X%02X BI = %c TEXT = \"%s\"",isuitem.AESID,isuitem.GESID,isuitem.QNO,isuitem.REFNO,MODE,PLANEREG.data(),TAKstr.data(),LABEL[0],LABEL[1],BI,TEXT.data());
+            if((((uchar)isuitem.userdata[isuitem.userdata.size()-1-3])==0x97))humantext+=" ...more to come... ";
+            humantext+="\t( "+HEX+" )";
+        }
+            break;
+        }
+
     }
      else
      {
@@ -322,6 +340,7 @@ bool PreambleDetector::Update(int val)
 
 AeroL::AeroL(QObject *parent) : QIODevice(parent)
 {
+
     cntr=1000000000;
     datacdcountdown=0;
     datacd=false;
@@ -416,6 +435,11 @@ void AeroL::updateDCD()
         datacd=false;
         emit DataCarrierDetect(datacd);
     }
+}
+
+void AeroL::setCompactHumanReadableInformationMode(int state)
+{
+    parserisu.compactmumanreadableinformationmode=state;
 }
 
 QByteArray &AeroL::Decode(QVector<short> &bits)//0 bit --> oldest bit
