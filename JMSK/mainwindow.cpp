@@ -17,6 +17,9 @@ MainWindow::MainWindow(QWidget *parent) :
 {
     ui->setupUi(this);
 
+    //plane logging window
+    planelog = new PlaneLog;
+
     //create the modulators, varicode encoder pipe, and serial ppt
     varicodepipeencoder = new VariCodePipeEncoder(this);
     audiomskmodulator = new AudioMskModulator(this);  
@@ -70,6 +73,7 @@ MainWindow::MainWindow(QWidget *parent) :
 //aeroL human info text
     connect(aerol,SIGNAL(HumanReadableInformation(QString)),ui->inputwidget,SLOT(appendPlainText(QString)));
     connect(aerol,SIGNAL(DataCarrierDetect(bool)),this,SLOT(DataCarrierDetectStatusSlot(bool)));
+    connect(aerol,SIGNAL(isuitemsignal(ISUItem&)),planelog,SLOT(update(ISUItem&)));
 
 
     //load settings
@@ -77,7 +81,6 @@ MainWindow::MainWindow(QWidget *parent) :
     ui->comboBoxafc->setCurrentIndex(settings.value("comboBoxafc",0).toInt());
     ui->comboBoxbps->setCurrentIndex(settings.value("comboBoxbps",0).toInt());
     ui->comboBoxlbw->setCurrentIndex(settings.value("comboBoxlbw",0).toInt());
-    ui->comboBoxDisplayformat->setCurrentIndex(settings.value("comboBoxDisplayformat",0).toInt());
     ui->comboBoxdisplay->setCurrentIndex(settings.value("comboBoxdisplay",0).toInt());
     ui->actionConnectToUDPPort->setChecked(settings.value("actionConnectToUDPPort",false).toBool());
     ui->actionRawOutput->setChecked(settings.value("actionRawOutput",false).toBool());
@@ -133,9 +136,14 @@ MainWindow::MainWindow(QWidget *parent) :
     //add todays date
     ui->inputwidget->appendHtml("<b>"+QDateTime::currentDateTime().toString("h:mmap ddd d-MMM-yyyy")+" JAREOL started</b>");
     QTimer::singleShot(100,ui->inputwidget,SLOT(scrolltoend()));
+
+    ui->actionTXRX->setVisible(false);//there is a hidden audio modulator
+
+    acceptsettings();
+
 }
 
-MainWindow::~MainWindow()
+void MainWindow::closeEvent(QCloseEvent *event)
 {
 
     //save settings
@@ -144,12 +152,18 @@ MainWindow::~MainWindow()
     settings.setValue("comboBoxbps", ui->comboBoxbps->currentIndex());
     settings.setValue("comboBoxlbw", ui->comboBoxlbw->currentIndex());
     settings.setValue("comboBoxdisplay", ui->comboBoxdisplay->currentIndex());
-    settings.setValue("comboBoxDisplayformat", ui->comboBoxDisplayformat->currentIndex());
     settings.setValue("actionConnectToUDPPort", ui->actionConnectToUDPPort->isChecked());
     settings.setValue("actionRawOutput", ui->actionRawOutput->isChecked());
     settings.setValue("freq_center", audiomskdemodulator->getCurrentFreq());
     settings.setValue("inputwidget", ui->inputwidget->toPlainText());
 
+    planelog->close();
+    event->accept();
+}
+
+MainWindow::~MainWindow()
+{
+    delete planelog;
     delete ui;
 }
 
@@ -192,10 +206,10 @@ void MainWindow::PlottablesSlot(double freq_est,double freq_center,double bandwi
 
 void MainWindow::AboutSlot()
 {
-    QMessageBox::about(this,"JAEROL",""
-                                     "<H1>An Aero-L demodulator and decoder</H1>"
+    QMessageBox::about(this,"JAERO",""
+                                     "<H1>An Aero demodulator and decoder</H1>"
                                      "<H3>v1.0.0</H3>"
-                                     "<p>This is a program to demodulate and decode Aero-L P signals. This Aeronautical (Classic Aero) from Inmarsat using low gain antennas.</p>"
+                                     "<p>This is a program to demodulate and decode Aero signals. These signals contain SatCom ACARS (<em>Satelitle Comunication Aircraft Communications Addressing and Reporting System</em>) information as used by planes beyond VHF ACARS range. This protocol is used by Inmarsat's \"Classic Aero\" system and can be received using low gain L band antennas.</p>"
                                      "<p>For more information about this application see who knows just yet<!--<a href=\"http://jontio.zapto.org/hda1/jmsk.html\">http://jontio.zapto.org/hda1/jmsk.html</a>-->.</p>"
                                      "<p>Jonti 2015</p>" );
 }
@@ -214,9 +228,8 @@ void MainWindow::on_comboBoxbps_currentIndexChanged(const QString &arg)
     if(audiomskdemodulatorsettings.fb==600){audiomskdemodulatorsettings.symbolspercycle=12;audiomskdemodulatorsettings.Fs=12000;}
     if(audiomskdemodulatorsettings.fb==1200){audiomskdemodulatorsettings.symbolspercycle=12;audiomskdemodulatorsettings.Fs=24000;}
 
-    if(audiomskdemodulatorsettings.fb==600){audiomskdemodulatorsettings.symbolspercycle=12;audiomskdemodulatorsettings.Fs=48000;}
-    if(audiomskdemodulatorsettings.fb==1200){audiomskdemodulatorsettings.symbolspercycle=12;audiomskdemodulatorsettings.Fs=48000;}
-
+   // if(audiomskdemodulatorsettings.fb==600){audiomskdemodulatorsettings.symbolspercycle=12;audiomskdemodulatorsettings.Fs=48000;}
+   // if(audiomskdemodulatorsettings.fb==1200){audiomskdemodulatorsettings.symbolspercycle=12;audiomskdemodulatorsettings.Fs=48000;}
 
     int idx=ui->comboBoxlbw->findText(((QString)"%1 Hz").arg(audiomskdemodulatorsettings.fb*1.5));
     if(idx>=0)ui->comboBoxlbw->setCurrentIndex(idx);
@@ -242,12 +255,6 @@ void MainWindow::on_comboBoxafc_currentIndexChanged(const QString &arg1)
 {
     if(arg1=="AFC on")audiomskdemodulator->setAFC(true);
      else audiomskdemodulator->setAFC(false);
-}
-
-void MainWindow::on_comboBoxDisplayformat_currentIndexChanged(const QString &arg1)
-{
-    if(arg1=="1")aerol->setCompactHumanReadableInformationMode(1);
-    if(arg1=="2")aerol->setCompactHumanReadableInformationMode(2);
 }
 
 void MainWindow::on_actionCleanConsole_triggered()
@@ -305,24 +312,30 @@ void MainWindow::on_actionRawOutput_triggered()
 void MainWindow::on_action_Settings_triggered()
 {
     settingsdialog->populatesettings();
-    if(settingsdialog->exec()==QDialog::Accepted)
-    {
-
-        //it a tad to tricky keeping the modulator running when settings have been changed so i'm tring out stopping the modulator when settings are changed
-        audiomskmodulator->stop();
-
-        ui->statusBar->clearMessage();
-        ui->inputwidget->textinputdevice->preamble1=settingsdialog->Preamble1;
-        ui->inputwidget->textinputdevice->preamble2=settingsdialog->Preamble2;
-        ui->inputwidget->textinputdevice->postamble=settingsdialog->Postamble;
-
-        audiomskmodulatorsettings.freq_center=settingsdialog->audiomskmodulatorsettings.freq_center;//this is the only one that gets set
-        audiomskmodulatorsettings.secondsbeforereadysignalemited=settingsdialog->audiomskmodulatorsettings.secondsbeforereadysignalemited;//well there is two now
-        audiomskmodulator->setSettings(audiomskmodulatorsettings);     
-
-    }
+    if(settingsdialog->exec()==QDialog::Accepted)acceptsettings();
 }
 
+void MainWindow::acceptsettings()
+{
+    //it a tad to tricky keeping the modulator running when settings have been changed so i'm tring out stopping the modulator when settings are changed
+    audiomskmodulator->stop();
 
+    ui->statusBar->clearMessage();
+    ui->inputwidget->textinputdevice->preamble1=settingsdialog->Preamble1;
+    ui->inputwidget->textinputdevice->preamble2=settingsdialog->Preamble2;
+    ui->inputwidget->textinputdevice->postamble=settingsdialog->Postamble;
 
+    audiomskmodulatorsettings.freq_center=settingsdialog->audiomskmodulatorsettings.freq_center;//this is the only one that gets set
+    audiomskmodulatorsettings.secondsbeforereadysignalemited=settingsdialog->audiomskmodulatorsettings.secondsbeforereadysignalemited;//well there is two now
+    audiomskmodulator->setSettings(audiomskmodulatorsettings);
 
+    aerol->setDoNotDisplaySUs(settingsdialog->donotdisplaysus);
+    aerol->setDropNonTextMessages(settingsdialog->dropnontextmsgs);
+    if(settingsdialog->msgdisplayformat=="1")aerol->setCompactHumanReadableInformationMode(1);
+    if(settingsdialog->msgdisplayformat=="2")aerol->setCompactHumanReadableInformationMode(2);
+}
+
+void MainWindow::on_action_PlaneLog_triggered()
+{
+    planelog->show();
+}

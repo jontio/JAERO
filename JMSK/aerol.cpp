@@ -58,6 +58,9 @@ bool ISUData::update(QByteArray data)
         anisuitem.NOOCTLESTINLASTSSU=(val>>4)&0x0F;
         anisuitem.count=0;
         anisuitem.userdata.clear();
+        anisuitem.humantext.clear();
+        anisuitem.REG.clear();
+        anisuitem.hasacarcstext=false;
         for(int i=8;i<=9;i++)anisuitem.userdata+=data[i];
 
         int idx=findisuitem71(anisuitem);
@@ -89,6 +92,9 @@ bool ISUData::update(QByteArray data)
         if(pisuitem->SEQNO==0)
         {
             for(int i=2;i<=(pisuitem->NOOCTLESTINLASTSSU+1);i++)pisuitem->userdata+=data[i];
+            pisuitem->humantext.clear();
+            pisuitem->REG.clear();
+            pisuitem->hasacarcstext=false;
             lastvalidisuitem=*pisuitem;
             //qDebug()<<"final ssu";
             return true;
@@ -102,9 +108,15 @@ bool ISUData::update(QByteArray data)
     return false;
 }
 
-QString ParserISU::toHumanReadableInformation(ISUItem &isuitem)
+bool ParserISU::toHumanReadableInformation(ISUItem &isuitem)
 {
-    if(isuitem.AESID==0)return NULL;
+
+    validmessage=false;
+    acarsmessagecontainstext=false;
+    isacarsmessage=false;
+
+
+    if(isuitem.AESID==0){humantext="Error: AESID == 0";isuitem.humantext=humantext;return validmessage;}
     QVector<int> parities;
     QByteArray textish;
     for(int i=0;i<isuitem.userdata.size();i++)
@@ -118,9 +130,9 @@ QString ParserISU::toHumanReadableInformation(ISUItem &isuitem)
         textish+=byte;
     }
 
-    QString humantext;
+    humantext.clear();
 
-    //check that it matches the pattern
+    //check that it matches the pattern of acars message
     //(this is 8bit parity makes things differnet)
     //FF FF *
     //01 (SOH) *
@@ -131,9 +143,10 @@ QString ParserISU::toHumanReadableInformation(ISUItem &isuitem)
     //2F D0 49 CB 43 D0 D9 C1 AE C1 C4 D3 AE C8 C2 AD 4A C8 CD B0 37 B0 34 B0 C2 B0 B0 B0 43 B0 B0 B0 C4 B0 31 B0 45 B0 31 31 B0 B0 B0 34 34 B0 C4
     //83 or 93 (ETX/ETB) * (ETB when text is over 220 chars)
     //93 AB (BSC no parity bits)
-    //7F (DEL) *
+    //7F (DEL) *    
     if((isuitem.userdata.size()>16)&&((uchar)isuitem.userdata[0])==0xFF&&((uchar)isuitem.userdata[1])==0xFF&&((uchar)isuitem.userdata[2])==0x01&&((((uchar)isuitem.userdata[isuitem.userdata.size()-1-3])==0x83)||(((uchar)isuitem.userdata[isuitem.userdata.size()-1-3])==0x97))&&((uchar)isuitem.userdata[isuitem.userdata.size()-1])==0x7F&&( ((uchar)isuitem.userdata[15])==0x83 || ((uchar)isuitem.userdata[15])==0x02 ))
     {
+        isacarsmessage=true;
         uchar byte=((uchar)isuitem.userdata[3]);
         char MODE=byte&0x7F;
         uchar TAK=((uchar)textish[11]);
@@ -150,9 +163,15 @@ QString ParserISU::toHumanReadableInformation(ISUItem &isuitem)
         {
             byte=((uchar)isuitem.userdata[k]);
             byte&=0x7F;
-            if(!parities[k])return ((QString)"").sprintf("ISU: AESID = %X GESID = %X QNO = %02X REFNO = %02X : Parity error",isuitem.AESID,isuitem.GESID,isuitem.QNO,isuitem.REFNO);
+            if(!parities[k])
+            {
+                humantext=((QString)"").sprintf("ISU: AESID = %X GESID = %X QNO = %02X REFNO = %02X : Parity error",isuitem.AESID,isuitem.GESID,isuitem.QNO,isuitem.REFNO);
+                isuitem.humantext=humantext;
+                return validmessage;
+            }
             PLANEREG+=(char)byte;
         }
+        isuitem.REG=PLANEREG;
 
 
 /*
@@ -187,8 +206,20 @@ QString ParserISU::toHumanReadableInformation(ISUItem &isuitem)
             {
                 byte=((uchar)isuitem.userdata[k]);
                 byte&=0x7F;
-                if(!parities[k])return ((QString)"").sprintf("ISU: AESID = %X GESID = %X QNO = %02X REFNO = %02X : Parity error",isuitem.AESID,isuitem.GESID,isuitem.QNO,isuitem.REFNO);
-                if(byte==10||byte==13)continue;//filter out lf and cr
+                if(!parities[k])
+                {
+                    humantext=((QString)"").sprintf("ISU: AESID = %X GESID = %X QNO = %02X REFNO = %02X : Parity error",isuitem.AESID,isuitem.GESID,isuitem.QNO,isuitem.REFNO);
+                    isuitem.humantext=humantext;
+                    return validmessage;
+                }
+                if(byte==10||byte==13)//replace CR and LF with a circle
+                {
+                    if((TEXT.size()>3)&&((uchar)TEXT[TEXT.size()-3]==0xE2)&&((uchar)TEXT[TEXT.size()-2]==0x9A)&&((uchar)TEXT[TEXT.size()-1]==0xAB))continue;
+                    TEXT+=(uchar)0xE2;
+                    TEXT+=(uchar)0x9A;
+                    TEXT+=(uchar)0xAB;
+                    continue;
+                }
                 TEXT+=(char)byte;
             }
         }
@@ -212,18 +243,37 @@ QString ParserISU::toHumanReadableInformation(ISUItem &isuitem)
             humantext+=QDateTime::currentDateTime().toString("hh:mm:ss dd-MM-yy ");
             if(TAK==0x15)TAKstr=((QString)"!").toLatin1();
             if(LABEL[1]==127)LABEL[1]='d';
+
             if(TEXT.isEmpty())humantext+=((QString)"").sprintf("AES:%06X GES:%02X %c %s %s %c%c %c",isuitem.AESID,isuitem.GESID,MODE,PLANEREG.data(),TAKstr.data(),LABEL[0],LABEL[1],BI);
-             else humantext+=((QString)"").sprintf("AES:%06X GES:%02X %c %s %s %c%c %c %s",isuitem.AESID,isuitem.GESID,MODE,PLANEREG.data(),TAKstr.data(),LABEL[0],LABEL[1],BI,TEXT.data());
+             else humantext+=(((QString)"").sprintf("AES:%06X GES:%02X %c %s %s %c%c %c ",isuitem.AESID,isuitem.GESID,MODE,PLANEREG.data(),TAKstr.data(),LABEL[0],LABEL[1],BI))+QString::fromUtf8(TEXT.data());
             if((((uchar)isuitem.userdata[isuitem.userdata.size()-1-3])==0x97))humantext+=" ...more to come... ";
+
+
+            if(TEXT.isEmpty())isuitem.humantext=((QString)"").sprintf("%c %s %s %c%c %c",MODE,PLANEREG.data(),TAKstr.data(),LABEL[0],LABEL[1],BI);
+             else isuitem.humantext+=(((QString)"").sprintf("%c %s %s %c%c %c ",MODE,PLANEREG.data(),TAKstr.data(),LABEL[0],LABEL[1],BI))+QString::fromUtf8(TEXT.data());
+            if((((uchar)isuitem.userdata[isuitem.userdata.size()-1-3])==0x97))isuitem.humantext+=" ...more to come... ";
+
+
+            validmessage=true;
+            acarsmessagecontainstext=havetext;
+            isuitem.hasacarcstext=havetext;
         }
             break;
         default: //0 or 1
         {
             if(TAK==0x15)TAKstr=((QString)"<NAK>").toLatin1();
             if(TEXT.isEmpty())humantext+=((QString)"").sprintf("ISU: AESID = %06X GESID = %02X QNO = %02X REFNO = %02X MODE = %c REG = %s TAK = %s LABEL = %02X%02X BI = %c",isuitem.AESID,isuitem.GESID,isuitem.QNO,isuitem.REFNO,MODE,PLANEREG.data(),TAKstr.data(),LABEL[0],LABEL[1],BI);
-            else humantext+=((QString)"").sprintf("ISU: AESID = %06X GESID = %02X QNO = %02X REFNO = %02X MODE = %c REG = %s TAK = %s LABEL = %02X%02X BI = %c TEXT = \"%s\"",isuitem.AESID,isuitem.GESID,isuitem.QNO,isuitem.REFNO,MODE,PLANEREG.data(),TAKstr.data(),LABEL[0],LABEL[1],BI,TEXT.data());
+             else humantext+=(((QString)"").sprintf("ISU: AESID = %06X GESID = %02X QNO = %02X REFNO = %02X MODE = %c REG = %s TAK = %s LABEL = %02X%02X BI = %c TEXT = \"",isuitem.AESID,isuitem.GESID,isuitem.QNO,isuitem.REFNO,MODE,PLANEREG.data(),TAKstr.data(),LABEL[0],LABEL[1],BI)+QString::fromUtf8(TEXT.data())+"\"");
             if((((uchar)isuitem.userdata[isuitem.userdata.size()-1-3])==0x97))humantext+=" ...more to come... ";
             humantext+="\t( "+HEX+" )";
+
+            if(TEXT.isEmpty())isuitem.humantext=((QString)"").sprintf("%c %s %s %c%c %c",MODE,PLANEREG.data(),TAKstr.data(),LABEL[0],LABEL[1],BI);
+             else isuitem.humantext+=(((QString)"").sprintf("%c %s %s %c%c %c ",MODE,PLANEREG.data(),TAKstr.data(),LABEL[0],LABEL[1],BI))+QString::fromUtf8(TEXT.data());
+            if((((uchar)isuitem.userdata[isuitem.userdata.size()-1-3])==0x97))isuitem.humantext+=" ...more to come... ";
+
+            validmessage=true;
+            acarsmessagecontainstext=havetext;
+            isuitem.hasacarcstext=havetext;
         }
             break;
         }
@@ -240,9 +290,13 @@ QString ParserISU::toHumanReadableInformation(ISUItem &isuitem)
         }
         humantext+=((QString)"").sprintf("ISU: AESID = %06X GESID = %02X QNO = %02X REFNO = %02X : Unknown format",isuitem.AESID,isuitem.GESID,isuitem.QNO,isuitem.REFNO);
         humantext+="\t( "+HEX+" )";
+
+        isuitem.humantext=humantext;
      }
 
-    return humantext;
+
+
+    return validmessage;
 
 }
 
@@ -340,6 +394,9 @@ bool PreambleDetector::Update(int val)
 
 AeroL::AeroL(QObject *parent) : QIODevice(parent)
 {
+
+    dropnontextmsgs=false;
+    donotdisplaysus.clear();
 
     cntr=1000000000;
     datacdcountdown=0;
@@ -573,7 +630,8 @@ QByteArray &AeroL::Decode(QVector<short> &bits)//0 bit --> oldest bit
                     //bool allgood=true;
 //                    if(framecounter1==framecounter2)decodedbytes+=((QString)"").sprintf("Frame %d\n", framecounter1);
 //                     else decodedbytes+="frame count error\n";
-                    if(formatid!=1)decodedbytes+="format ID error\n";
+                    QString decline;
+                    if(formatid!=1)decline+="format ID error\n";
                     for(int k=0;k<infofield.size()/12;k++)
                     {
                         quint16 crc_calc=crc16.calcusingbytes(&infofieldptr[k*12],10);
@@ -590,44 +648,46 @@ QByteArray &AeroL::Decode(QVector<short> &bits)//0 bit --> oldest bit
 
                         MessageType message=(MessageType)((uchar)infofield[k*12]);
 
-if(message==0x26||message==0x0A)continue;//to skip the boring SUs
 
-                        decodedbytes+=(k+'0');//SU number in frame
+
+//if(message==0x26||message==0x0A)continue;//to skip the boring SUs
+
+                        decline+=(k+'0');//SU number in frame
                         for(int j=0;j<10;j++)
                         {
-                            decodedbytes+=((QString)" 0x%1").arg(((QString)"").sprintf("%02X", (uchar)infofield[k*12+j]));
+                            decline+=((QString)" 0x%1").arg(((QString)"").sprintf("%02X", (uchar)infofield[k*12+j]));
                             //if(((uchar)infofield[j])>30&&((uchar)infofield[k*12+j])<127)decodedbytes+=(char)infofield[k*12+j];
                             // else decodedbytes+='.';
                         }
-                        decodedbytes+=((QString)"").sprintf(" rec = %04X calc = %04X", crc_rec,crc_calc);
+                        decline+=((QString)"").sprintf(" rec = %04X calc = %04X", crc_rec,crc_calc);
                         if(crc_calc==crc_rec)
                         {
 
-                            decodedbytes+=" OK ";
+                            decline+=" OK ";
                             switch(message)
                             {
                             case Reserved_0:
-                                decodedbytes+="Reserved_0";
+                                decline+="Reserved_0";
                                 break;
                             case Fill_in_signal_unit:
-                                decodedbytes+="Fill_in_signal_unit";
+                                decline+="Fill_in_signal_unit";
                                 break;
                             case AES_system_table_broadcast_GES_Psmc_and_Rsmc_channels_COMPLETE:
-                                decodedbytes+="AES_system_table_broadcast_GES_Psmc_and_Rsmc_channels_COMPLETE";
+                                decline+="AES_system_table_broadcast_GES_Psmc_and_Rsmc_channels_COMPLETE";
                                 break;
                             case AES_system_table_broadcast_GES_beam_support_COMPLETE:
-                                decodedbytes+="AES_system_table_broadcast_GES_beam_support_COMPLETE";
+                                decline+="AES_system_table_broadcast_GES_beam_support_COMPLETE";
                                 break;
                             case AES_system_table_broadcast_index:
-                                decodedbytes+="AES_system_table_broadcast_index";
+                                decline+="AES_system_table_broadcast_index";
                                 break;
                             case AES_system_table_broadcast_satellite_identification_COMPLETE:
-                                decodedbytes+="AES_system_table_broadcast_satellite_identification_COMPLETE";
+                                decline+="AES_system_table_broadcast_satellite_identification_COMPLETE";
                                 {
                                     int byte3=((uchar)infofield[k*12-1+3]);
                                     int seqno=(byte3>>2)&0x3F;
                                     int satid=byte3&0x03;
-                                    decodedbytes+=((QString)" SATELLITE ID = %1 SEQUENCE NO = %2").arg(satid).arg(seqno);
+                                    decline+=((QString)" SATELLITE ID = %1 SEQUENCE NO = %2").arg(satid).arg(seqno);
                                 }
                                 break;
 
@@ -636,64 +696,64 @@ if(message==0x26||message==0x0A)continue;//to skip the boring SUs
                                 decodedbytes+="Log_on_request";
                                 break;
                             case Log_on_confirm:
-                                decodedbytes+="Log_on_confirm";
+                                decline+="Log_on_confirm";
                                 break;
                             case Log_control_P_channel_log_off_request:
-                                decodedbytes+="Log_control_P_channel_log_off_request";
+                                decline+="Log_control_P_channel_log_off_request";
                                 break;
                             case Log_control_P_channel_log_on_reject:
-                                decodedbytes+="Log_control_P_channel_log_on_reject";
+                                decline+="Log_control_P_channel_log_on_reject";
                                 break;
                             case Log_control_P_channel_log_on_interrogation:
-                                decodedbytes+="Log_control_P_channel_log_on_interrogation";
+                                decline+="Log_control_P_channel_log_on_interrogation";
                                 break;
                             case Log_on_log_off_acknowledge_P_channel:
-                                decodedbytes+="Log_on_log_off_acknowledge_P_channel";
+                                decline+="Log_on_log_off_acknowledge_P_channel";
                                 break;
                             case Log_control_P_channel_log_on_prompt:
-                                decodedbytes+="Log_control_P_channel_log_on_prompt";
+                                decline+="Log_control_P_channel_log_on_prompt";
                                 break;
                             case Log_control_P_channel_data_channel_reassignment:
-                                decodedbytes+="Log_control_P_channel_data_channel_reassignment";
+                                decline+="Log_control_P_channel_data_channel_reassignment";
                                 break;
 
                             case Reserved_18:
-                                decodedbytes+="Reserved_18";
+                                decline+="Reserved_18";
                                 break;
                             case Reserved_19:
-                                decodedbytes+="Reserved_19";
+                                decline+="Reserved_19";
                                 break;
                             case Reserved_26:
-                                decodedbytes+="Reserved_26";
+                                decline+="Reserved_26";
                                 break;
 
                             //CALL INITIATION
                             case Data_EIRP_table_broadcast_complete_sequence:
-                                decodedbytes+="Data_EIRP_table_broadcast_complete_sequence";
+                                decline+="Data_EIRP_table_broadcast_complete_sequence";
                                 break;
 
                             case T_channel_assignment:
-                                decodedbytes+="T_channel_assignment";
+                                decline+="T_channel_assignment";
                                 break;
 
                             //CHANNEL INFORMATION
                             case P_R_channel_control_ISU:
-                                decodedbytes+="P_R_channel_control_ISU";
+                                decline+="P_R_channel_control_ISU";
                                 break;
                             case T_channel_control_ISU:
-                                decodedbytes+="T_channel_control_ISU";
+                                decline+="T_channel_control_ISU";
                                 break;
 
                             //ACKNOWLEDGEMENT
                             case Request_for_acknowledgement_RQA_P_channel:
-                                decodedbytes+="Request_for_acknowledgement_RQA_P_channel";
+                                decline+="Request_for_acknowledgement_RQA_P_channel";
                                 break;
                             case Acknowledge_RACK_TACK_P_channel:
-                                decodedbytes+="Acknowledge_RACK_TACK_P_channel";
+                                decline+="Acknowledge_RACK_TACK_P_channel";
                                 break;
 
                             case User_data_ISU_RLS_P_T_channel:
-                                decodedbytes+="User_data_ISU_RLS_P_T_channel";
+                                decline+="User_data_ISU_RLS_P_T_channel";
                                 {
                                     /*quint32 AESID=((uchar)infofield[k*12+1])<<8*2|((uchar)infofield[k*12+2])<<8*1|((uchar)infofield[k*12+3])<<8*0;
                                     uchar GESID=(uchar)infofield[k*12+4];
@@ -702,21 +762,30 @@ if(message==0x26||message==0x0A)continue;//to skip the boring SUs
                                 }
                                 break;
                             case User_data_3_octet_LSDU_RLS_P_channel:
-                                decodedbytes+="User_data_3_octet_LSDU_RLS_P_channel";
+                                decline+="User_data_3_octet_LSDU_RLS_P_channel";
                                 break;
                             case User_data_4_octet_LSDU_RLS_P_channel:
-                                decodedbytes+="User_data_4_octet_LSDU_RLS_P_channel";
+                                decline+="User_data_4_octet_LSDU_RLS_P_channel";
                                 break;
                             default:
                                 if((message&0xC0)==0xC0)
                                 {
-                                    decodedbytes+="SSU";
+                                    decline+="SSU";
 
                                     if(isudata.update(infofield.mid(k*12,10)))
                                     {
-                                        emit HumanReadableInformation(parserisu.toHumanReadableInformation(isudata.lastvalidisuitem));
+                                        parserisu.toHumanReadableInformation(isudata.lastvalidisuitem);
+                                        if(parserisu.validmessage&&parserisu.isacarsmessage)
+                                        {
+                                            if(dropnontextmsgs&&!parserisu.acarsmessagecontainstext)isudata.lastvalidisuitem.humantext.clear();
+                                            emit isuitemsignal(isudata.lastvalidisuitem);
+                                        }
+                                        if(!dropnontextmsgs||parserisu.acarsmessagecontainstext)
+                                        {
+                                            emit HumanReadableInformation(parserisu.humantext);
+                                        }
                                     }
-                                     else if(isudata.missingssu)decodedbytes+=" missing (or if unimplimented then TODO in C++)";
+                                     else if(isudata.missingssu)decline+=" missing (or if unimplimented then TODO in C++)";
 
 /*                                    decodedbytes+="SUBSEQUENT SIGNAL UNITS";
                                     decodedbytes+=" \"";
@@ -735,11 +804,15 @@ if(message==0x26||message==0x0A)continue;//to skip the boring SUs
                                 }
                                 break;
                             }
-                            decodedbytes+='\n';
+                            decline+='\n';
+
+                            if(((message&0xC0)==0xC0)&&(donotdisplaysus.contains(0xC0)))decline.clear();
+                             else if(donotdisplaysus.contains(message))decline.clear();//do not display these SUs as given to us by user
+
                         }
                          else
                          {
-                            decodedbytes+=" Bad CRC\n";
+                            decline+=" Bad CRC\n";
                             //allgood=false;
                          }
 
@@ -750,6 +823,8 @@ if(message==0x26||message==0x0A)continue;//to skip the boring SUs
                             qDebug()<<k<<((QString)"").sprintf("rec = %02X", crc_rec)<<((QString)"").sprintf("calc = %02X", crc_calc)<<"Bad CRC"<<unencoded_BER_estimate*100.0;
                          }
                          */
+
+                        decodedbytes+=decline;
 
                     }
 

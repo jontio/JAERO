@@ -16,9 +16,126 @@
   <layout class="QVBoxLayout" name="verticalLayout">
    <item>
     <widget class="QTabWidget" name="tabWidget">
+     <property name="enabled">
+      <bool>true</bool>
+     </property>
      <property name="currentIndex">
       <number>0</number>
      </property>
+     <widget class="QWidget" name="Decoding">
+      <attribute name="title">
+       <string>Decoding</string>
+      </attribute>
+      <widget class="QGroupBox" name="groupBox">
+       <property name="geometry">
+        <rect>
+         <x>10</x>
+         <y>10</y>
+         <width>351</width>
+         <height>71</height>
+        </rect>
+       </property>
+       <property name="title">
+        <string>Do not display SU types</string>
+       </property>
+       <widget class="QLineEdit" name="lineEditdonotdisplaysus">
+        <property name="geometry">
+         <rect>
+          <x>10</x>
+          <y>30</y>
+          <width>331</width>
+          <height>21</height>
+         </rect>
+        </property>
+        <property name="text">
+         <string>26 0A</string>
+        </property>
+       </widget>
+      </widget>
+      <widget class="QGroupBox" name="groupBox_4">
+       <property name="geometry">
+        <rect>
+         <x>10</x>
+         <y>90</y>
+         <width>351</width>
+         <height>221</height>
+        </rect>
+       </property>
+       <property name="title">
+        <string>ACARS window</string>
+       </property>
+       <widget class="QCheckBox" name="checkBoxdropnontextmsgs">
+        <property name="geometry">
+         <rect>
+          <x>30</x>
+          <y>120</y>
+          <width>201</width>
+          <height>19</height>
+         </rect>
+        </property>
+        <property name="text">
+         <string>Drop non text messages</string>
+        </property>
+       </widget>
+       <widget class="QLabel" name="label_8">
+        <property name="geometry">
+         <rect>
+          <x>25</x>
+          <y>48</y>
+          <width>48</width>
+          <height>25</height>
+         </rect>
+        </property>
+        <property name="minimumSize">
+         <size>
+          <width>0</width>
+          <height>25</height>
+         </size>
+        </property>
+        <property name="maximumSize">
+         <size>
+          <width>16777215</width>
+          <height>25</height>
+         </size>
+        </property>
+        <property name="text">
+         <string>Format</string>
+        </property>
+        <property name="alignment">
+         <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+        </property>
+       </widget>
+       <widget class="QComboBox" name="comboBoxDisplayformat">
+        <property name="geometry">
+         <rect>
+          <x>80</x>
+          <y>50</y>
+          <width>38</width>
+          <height>21</height>
+         </rect>
+        </property>
+        <property name="maximumSize">
+         <size>
+          <width>40</width>
+          <height>16777215</height>
+         </size>
+        </property>
+        <property name="currentIndex">
+         <number>0</number>
+        </property>
+        <item>
+         <property name="text">
+          <string>1</string>
+         </property>
+        </item>
+        <item>
+         <property name="text">
+          <string>2</string>
+         </property>
+        </item>
+       </widget>
+      </widget>
+     </widget>
      <widget class="QWidget" name="Transmission">
       <attribute name="title">
        <string>Transmission</string>

@@ -2,6 +2,7 @@
 #define SETTINGSDIALOG_H
 
 #include <QDialog>
+#include <QVector>
 #include "../audiomskmodulator.h"
 
 namespace Ui {
@@ -22,6 +23,10 @@ public:
     QString Preamble2;
     QString Postamble;
     AudioMskModulator::Settings audiomskmodulatorsettings;
+
+    QVector<int> donotdisplaysus;
+    bool dropnontextmsgs;
+    QString msgdisplayformat;
 
 private:
     Ui::SettingsDialog *ui;    

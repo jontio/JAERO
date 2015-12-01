@@ -8,6 +8,8 @@ SettingsDialog::SettingsDialog(QWidget *parent) :
     ui(new Ui::SettingsDialog)
 {
     ui->setupUi(this);
+    ui->tabWidget->removeTab(ui->tabWidget->indexOf(ui->Transmission));//these are transmission settings
+    populatesettings();
 }
 
 SettingsDialog::~SettingsDialog()
@@ -38,6 +40,19 @@ void SettingsDialog::poulatepublicvars()
     Postamble.replace("\\1",QChar(12));
     Postamble.replace("\\a",QChar(7));
 
+    msgdisplayformat=ui->comboBoxDisplayformat->currentText();
+    dropnontextmsgs=ui->checkBoxdropnontextmsgs->isChecked();
+    donotdisplaysus.clear();
+    QRegExp rx("([\\da-fA-F]+)");
+    int pos = 0;
+    while ((pos = rx.indexIn(ui->lineEditdonotdisplaysus->text(), pos)) != -1)
+    {
+        bool ok = false;
+        uint value = rx.cap(1).toUInt(&ok,16);
+        if(ok)donotdisplaysus.push_back(value);
+        pos += rx.matchedLength();
+    }
+
 }
 
 
@@ -50,6 +65,9 @@ void SettingsDialog::populatesettings()
     ui->spinBoxTXFreq->setValue(settings.value("spinBoxTXFreq",1000).toInt());
     ui->linePreamble->setText(settings.value("linePreamble","\\r|\\aNOCALL\\a \\aNOCALL\\a \\aNOCALL\\a\\n").toString());
     ui->linePostamble->setText(settings.value("linePostamble","\\n\\a73 NOCALL\\a\\n").toString());
+    ui->comboBoxDisplayformat->setCurrentIndex(settings.value("comboBoxDisplayformat",0).toInt());
+    ui->lineEditdonotdisplaysus->setText(settings.value("lineEditdonotdisplaysus","71 18 19").toString());
+    ui->checkBoxdropnontextmsgs->setChecked(settings.value("checkBoxdropnontextmsgs",true).toBool());
 
     poulatepublicvars();
 }
@@ -64,6 +82,9 @@ void SettingsDialog::accept()
     settings.setValue("spinBoxTXFreq", ui->spinBoxTXFreq->value());
     settings.setValue("linePreamble", ui->linePreamble->text());
     settings.setValue("linePostamble", ui->linePostamble->text());
+    settings.setValue("comboBoxDisplayformat", ui->comboBoxDisplayformat->currentIndex());
+    settings.setValue("lineEditdonotdisplaysus", ui->lineEditdonotdisplaysus->text());
+    settings.setValue("checkBoxdropnontextmsgs", ui->checkBoxdropnontextmsgs->isChecked());
 
     poulatepublicvars();
     QDialog::accept();

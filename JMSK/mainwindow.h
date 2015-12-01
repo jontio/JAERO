@@ -10,6 +10,7 @@
 #include "varicodepipeencoder.h"
 #include "gui_classes/settingsdialog.h"
 #include "aerol.h"
+#include "gui_classes/planelog.h"
 
 namespace Ui {
 class MainWindow;
@@ -41,6 +42,13 @@ private:
 
     SettingsDialog *settingsdialog;
 
+    void acceptsettings();
+
+    PlaneLog *planelog;
+
+protected:
+    void closeEvent(QCloseEvent *event);
+
 
 private slots:
     void DataCarrierDetectStatusSlot(bool dcd);
@@ -58,7 +66,7 @@ private slots:
     void on_actionConnectToUDPPort_toggled(bool arg1);
     void on_actionRawOutput_triggered();
     void on_action_Settings_triggered();
-    void on_comboBoxDisplayformat_currentIndexChanged(const QString &arg1);
+    void on_action_PlaneLog_triggered();
 };
 
 #endif // MAINWINDOW_H

@@ -66,8 +66,13 @@ struct ISUItem {
     uchar REFNO;
     uchar NOOCTLESTINLASTSSU;
     QByteArray userdata;
+    bool hasacarcstext;//fill in if you want
+    QString humantext;//space for filling in later if you want to
+    QString REG;//reg if you want to fill this in
     int count;
 };
+
+
 
 //defragments 0x71 SUs with its SSUs
 class ISUData
@@ -90,8 +95,12 @@ class ParserISU
 {
 public:
     ParserISU(){compactmumanreadableinformationmode=1;}
-    QString toHumanReadableInformation(ISUItem &isuitem);
+    bool toHumanReadableInformation(ISUItem &isuitem);//return true if a valid ACARS message
     int compactmumanreadableinformationmode;
+    QString humantext;
+    bool validmessage;
+    bool isacarsmessage;
+    bool acarsmessagecontainstext;
 };
 
 class AeroLcrc16 //this seems to be called GENIBUS not CCITT
@@ -246,6 +255,7 @@ public:
 signals:
     void HumanReadableInformation(QString str);
     void DataCarrierDetect(bool status);
+    void isuitemsignal(ISUItem &anisuitem);
 public slots:
     void setBitRate(double fb);
     void LostSignal()
@@ -256,6 +266,8 @@ public slots:
         emit DataCarrierDetect(false);
     }
     void setCompactHumanReadableInformationMode(int state);
+    void setDoNotDisplaySUs(QVector<int> &list){donotdisplaysus=list;}
+    void setDropNonTextMessages(bool enable){dropnontextmsgs=enable;}
 
 private:
     bool Start();
@@ -286,6 +298,9 @@ private:
     int datacdcountdown;
     bool datacd;
     int cntr;
+
+    QVector<int> donotdisplaysus;
+    bool dropnontextmsgs;
 
 private slots:
     void updateDCD();

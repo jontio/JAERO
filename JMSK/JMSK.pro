@@ -45,7 +45,8 @@ SOURCES += main.cpp\
     gui_classes/textinputwidget.cpp \
     gui_classes/settingsdialog.cpp \
     aerol.cpp \
-    ../viterbi-xukmin/viterbi.cpp
+    ../viterbi-xukmin/viterbi.cpp \
+    gui_classes/planelog.cpp
 
 HEADERS  += mainwindow.h \
     coarsefreqestimate.h \
@@ -72,10 +73,12 @@ HEADERS  += mainwindow.h \
     gui_classes/textinputwidget.h \
     gui_classes/settingsdialog.h \
     aerol.h \
-    ../viterbi-xukmin/viterbi.h
+    ../viterbi-xukmin/viterbi.h \
+    gui_classes/planelog.h
 
 FORMS    += mainwindow.ui \
-    gui_classes/settingsdialog.ui
+    gui_classes/settingsdialog.ui \
+    gui_classes/planelog.ui
 
 RESOURCES += \
     jmsk.qrc
