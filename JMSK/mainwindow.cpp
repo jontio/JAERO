@@ -70,10 +70,11 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(ui->action_About,    SIGNAL(triggered()),                                   this, SLOT(AboutSlot()));
     connect(audiomskdemodulator, SIGNAL(BitRateChanged(double)),                        aerol,SLOT(setBitRate(double)));
 
-//aeroL human info text
-    connect(aerol,SIGNAL(HumanReadableInformation(QString)),ui->inputwidget,SLOT(appendPlainText(QString)));
+//aeroL connections
     connect(aerol,SIGNAL(DataCarrierDetect(bool)),this,SLOT(DataCarrierDetectStatusSlot(bool)));
-    connect(aerol,SIGNAL(isuitemsignal(ISUItem&)),planelog,SLOT(update(ISUItem&)));
+    connect(aerol,SIGNAL(ACARSsignal(ACARSItem&)),planelog,SLOT(ACARSslot(ACARSItem&)));
+    connect(aerol,SIGNAL(ACARSsignal(ACARSItem&)),this,SLOT(ACARSslot(ACARSItem&)));
+    connect(audiomskdemodulator, SIGNAL(SignalStatus(bool)),aerol,SLOT(SignalStatusSlot(bool)));
 
 
     //load settings
@@ -134,7 +135,7 @@ MainWindow::MainWindow(QWidget *parent) :
 //--end modulator setup
 
     //add todays date
-    ui->inputwidget->appendHtml("<b>"+QDateTime::currentDateTime().toString("h:mmap ddd d-MMM-yyyy")+" JAREOL started</b>");
+    ui->inputwidget->appendHtml("<b>"+QDateTime::currentDateTime().toString("h:mmap ddd d-MMM-yyyy")+" JAREO started</b>");
     QTimer::singleShot(100,ui->inputwidget,SLOT(scrolltoend()));
 
     ui->actionTXRX->setVisible(false);//there is a hidden audio modulator
@@ -170,7 +171,7 @@ MainWindow::~MainWindow()
 void MainWindow::SignalStatusSlot(bool signal)
 {
     if(signal)ui->ledsignal->setLED(QIcon::On);
-     else {ui->ledsignal->setLED(QIcon::Off);aerol->LostSignal();}
+     else ui->ledsignal->setLED(QIcon::Off);
 }
 
 void MainWindow::DataCarrierDetectStatusSlot(bool dcd)
@@ -330,12 +331,55 @@ void MainWindow::acceptsettings()
     audiomskmodulator->setSettings(audiomskmodulatorsettings);
 
     aerol->setDoNotDisplaySUs(settingsdialog->donotdisplaysus);
-    aerol->setDropNonTextMessages(settingsdialog->dropnontextmsgs);
-    if(settingsdialog->msgdisplayformat=="1")aerol->setCompactHumanReadableInformationMode(1);
-    if(settingsdialog->msgdisplayformat=="2")aerol->setCompactHumanReadableInformationMode(2);
+
 }
 
 void MainWindow::on_action_PlaneLog_triggered()
 {
     planelog->show();
+}
+
+//--new method of mainwindow getting second channel from aerol
+
+void MainWindow::ACARSslot(ACARSItem &acarsitem)
+{
+    if(!acarsitem.valid)return;
+    QString humantext;
+    QByteArray TAKstr;
+    TAKstr+=acarsitem.TAK;
+
+    //this is how you can change the display format in the lowwer window
+    if(settingsdialog->msgdisplayformat=="1")
+    {
+        if(acarsitem.TAK==0x15)TAKstr=((QString)"<NAK>").toLatin1();
+        if(acarsitem.message.isEmpty())humantext+=((QString)"").sprintf("ISU: AESID = %06X GESID = %02X QNO = %02X REFNO = %02X MODE = %c REG = %s TAK = %s LABEL = %02X%02X BI = %c",acarsitem.isuitem->AESID,acarsitem.isuitem->GESID,acarsitem.isuitem->QNO,acarsitem.isuitem->REFNO,acarsitem.MODE,acarsitem.PLANEREG.data(),TAKstr.data(),(uchar)acarsitem.LABEL[0],(uchar)acarsitem.LABEL[1],acarsitem.BI);
+        else humantext+=(((QString)"").sprintf("ISU: AESID = %06X GESID = %02X QNO = %02X REFNO = %02X MODE = %c REG = %s TAK = %s LABEL = %02X%02X BI = %c TEXT = \"",acarsitem.isuitem->AESID,acarsitem.isuitem->GESID,acarsitem.isuitem->QNO,acarsitem.isuitem->REFNO,acarsitem.MODE,acarsitem.PLANEREG.data(),TAKstr.data(),(uchar)acarsitem.LABEL[0],(uchar)acarsitem.LABEL[1],acarsitem.BI)+acarsitem.message+"\"");
+        if(acarsitem.moretocome)humantext+=" ...more to come... ";
+        humantext+="\t( ";
+        for(int k=0;k<(acarsitem.isuitem->userdata.size());k++)
+        {
+            uchar byte=((uchar)acarsitem.isuitem->userdata[k]);
+            //byte&=0x7F;
+            humantext+=((QString)"").sprintf("%02X ",byte);
+        }
+        humantext+=" )";
+        if((!settingsdialog->dropnontextmsgs)||(!acarsitem.message.isEmpty()))ui->inputwidget->appendPlainText(humantext);
+    }
+
+    if(settingsdialog->msgdisplayformat=="2")
+    {
+        humantext+=QDateTime::currentDateTime().toString("hh:mm:ss dd-MM-yy ");
+        if(acarsitem.TAK==0x15)TAKstr=((QString)"!").toLatin1();
+        if((uchar)acarsitem.LABEL[1]==127)acarsitem.LABEL[1]='d';
+        if(acarsitem.message.isEmpty())humantext+=((QString)"").sprintf("AES:%06X GES:%02X %c %s %s %c%c %c",acarsitem.isuitem->AESID,acarsitem.isuitem->GESID,acarsitem.MODE,acarsitem.PLANEREG.data(),TAKstr.data(),(uchar)acarsitem.LABEL[0],(uchar)acarsitem.LABEL[1],acarsitem.BI);
+        else humantext+=(((QString)"").sprintf("AES:%06X GES:%02X %c %s %s %c%c %c ",acarsitem.isuitem->AESID,acarsitem.isuitem->GESID,acarsitem.MODE,acarsitem.PLANEREG.data(),TAKstr.data(),(uchar)acarsitem.LABEL[0],(uchar)acarsitem.LABEL[1],acarsitem.BI))+acarsitem.message;
+        if(acarsitem.moretocome)humantext+=" ...more to come... ";
+        if((!settingsdialog->dropnontextmsgs)||(!acarsitem.message.isEmpty()))ui->inputwidget->appendPlainText(humantext);
+    }
+
+}
+
+void MainWindow::ERRorslot(QString &error)
+{
+    ui->inputwidget->appendHtml("<font color=\"red\">"+error+"</font>");
 }

@@ -1,7 +1,7 @@
 #ifndef PLANELOG_H
 #define PLANELOG_H
 
-#include <QWidget>
+#include <QMainWindow>
 #include "../aerol.h"
 
 namespace Ui {
@@ -15,25 +15,26 @@ class PlaneLog : public QWidget
 public:
     explicit PlaneLog(QWidget *parent = 0);
     ~PlaneLog();
+protected:
+    void closeEvent(QCloseEvent *event);
+    void showEvent(QShowEvent *event);
 public slots:
-    void update(ISUItem &isuitem);
+    void ACARSslot(ACARSItem &acarsitem);
 
 private slots:
-    void on_pushButtonsmall_clicked();
 
-    void on_pushButtonlarge_clicked();
+    void on_actionClear_triggered();
 
-    void on_pushButtonstopsort_clicked();
+    void on_actionUpDown_triggered();
 
-    void on_pushButtonsrink_clicked();
+    void on_actionLeftRight_triggered();
 
-    void on_pushButtonexpand_clicked();
-
-    void on_pushButtonclear_clicked();
+    void on_actionStopSorting_triggered();
 
 private:
     Ui::PlaneLog *ui;
     int wantedheightofrow;
+    QToolBar * toolBar;
 };
 
 #endif // PLANELOG_H

@@ -6,6 +6,8 @@
 #include <QFontMetrics>
 #include <QSettings>
 #include <QPlainTextEdit>
+#include <QVBoxLayout>
+#include <QToolBar>
 
 PlaneLog::PlaneLog(QWidget *parent) :
     QWidget(parent),
@@ -15,6 +17,22 @@ PlaneLog::PlaneLog(QWidget *parent) :
     wantedheightofrow=3;
     ui->tableWidget->horizontalHeader()->setAutoScroll(true);
 
+    //cant i just use a qmainwindow 2 times???
+    QMainWindow * mainWindow = new QMainWindow();
+    mainWindow->setCentralWidget(ui->widget);
+    toolBar = new QToolBar();
+    toolBar->addAction(ui->actionClear);
+    toolBar->addSeparator();
+    toolBar->addSeparator();
+    toolBar->addAction(ui->actionUpDown);
+    toolBar->addAction(ui->actionLeftRight);
+    toolBar->addAction(ui->actionStopSorting);
+    mainWindow->addToolBar(toolBar);
+    QHBoxLayout * layout = new QHBoxLayout();
+    layout->setMargin(0);
+    layout->setContentsMargins(0,0,0,0);
+    layout->addWidget(mainWindow);
+    setLayout(layout);
 
     //load settings
     QSettings settings("Jontisoft", "JAERO");
@@ -27,12 +45,23 @@ PlaneLog::PlaneLog(QWidget *parent) :
         {
             QString str=((QString)"tableWidget-%1-%2").arg(row).arg(column);
             QTableWidgetItem *newItem = new QTableWidgetItem(settings.value(str,"").toString());
-            if(column<4)newItem->setTextAlignment(Qt::AlignHCenter|Qt::AlignVCenter);
+            if(column<5)newItem->setTextAlignment(Qt::AlignHCenter|Qt::AlignVCenter);
             ui->tableWidget->setItem(row, column, newItem);
         }
     }
 
+}
 
+void PlaneLog::closeEvent(QCloseEvent *event)
+{
+    if(toolBar)toolBar->setHidden(true);
+    event->accept();
+}
+
+void PlaneLog::showEvent(QShowEvent *event)
+{
+    toolBar->setHidden(false);
+    event->accept();
 }
 
 PlaneLog::~PlaneLog()
@@ -54,14 +83,16 @@ PlaneLog::~PlaneLog()
     delete ui;    
 }
 
-void PlaneLog::update(ISUItem &isuitem)
+void PlaneLog::ACARSslot(ACARSItem &acarsitem)
 {
+
+    if(!acarsitem.valid)return;
+
     ui->tableWidget->setSortingEnabled(false);//!!!!!
 
-    QFontMetrics fm(ui->tableWidget->font());
 
     int rows = ui->tableWidget->rowCount();
-    QString AESIDstr=((QString)"").sprintf("%06X",isuitem.AESID);
+    QString AESIDstr=((QString)"").sprintf("%06X",acarsitem.isuitem->AESID);
     bool found = false;
     int idx=-1;
     for(int i = 0; i < rows; ++i)
@@ -75,41 +106,47 @@ void PlaneLog::update(ISUItem &isuitem)
     }
     QTableWidgetItem *AESitem;
     QTableWidgetItem *REGitem;
+    QTableWidgetItem *FirstHearditem;
     QTableWidgetItem *LastHearditem;
     QTableWidgetItem *Countitem;
     QTableWidgetItem *LastMessageitem;
     if(!found)
     {
-        ui->tableWidget->insertRow(0);
+        idx=ui->tableWidget->rowCount();
+        ui->tableWidget->insertRow(idx);
         QFontMetrics fm(ui->tableWidget->font());
-        ui->tableWidget->setRowHeight(0,fm.height()*wantedheightofrow);
-        idx=0;
+        ui->tableWidget->setRowHeight(idx,fm.height()*wantedheightofrow);
         AESitem = new QTableWidgetItem;
         REGitem = new QTableWidgetItem;
+        FirstHearditem = new QTableWidgetItem;
         LastHearditem = new QTableWidgetItem;
         Countitem = new QTableWidgetItem;
         LastMessageitem = new QTableWidgetItem;
-        ui->tableWidget->setItem(0,0,AESitem);
-        ui->tableWidget->setItem(0,1,REGitem);
-        ui->tableWidget->setItem(0,2,LastHearditem);
-        ui->tableWidget->setItem(0,3,Countitem);
-        ui->tableWidget->setItem(0,4,LastMessageitem);
+        ui->tableWidget->setItem(idx,0,AESitem);
+        ui->tableWidget->setItem(idx,1,REGitem);
+        ui->tableWidget->setItem(idx,2,FirstHearditem);
+        ui->tableWidget->setItem(idx,3,LastHearditem);
+        ui->tableWidget->setItem(idx,4,Countitem);
+        ui->tableWidget->setItem(idx,5,LastMessageitem);
         AESitem->setText(AESIDstr);
         Countitem->setText("0");
 
         AESitem->setTextAlignment(Qt::AlignHCenter|Qt::AlignVCenter);
         REGitem->setTextAlignment(Qt::AlignHCenter|Qt::AlignVCenter);
         Countitem->setTextAlignment(Qt::AlignHCenter|Qt::AlignVCenter);
+        FirstHearditem->setTextAlignment(Qt::AlignHCenter|Qt::AlignVCenter);
         LastHearditem->setTextAlignment(Qt::AlignHCenter|Qt::AlignVCenter);
+
+        FirstHearditem->setText(QDateTime::currentDateTime().toString("yy-MM-dd hh:mm:ss"));
     }
     AESitem = ui->tableWidget->item(idx, 0);
     REGitem = ui->tableWidget->item(idx, 1);
-    LastHearditem = ui->tableWidget->item(idx, 2);
-    Countitem = ui->tableWidget->item(idx, 3);
-    LastMessageitem = ui->tableWidget->item(idx, 4);
+    FirstHearditem = ui->tableWidget->item(idx, 2);
+    LastHearditem = ui->tableWidget->item(idx, 3);
+    Countitem = ui->tableWidget->item(idx, 4);
+    LastMessageitem = ui->tableWidget->item(idx, 5);
 
-    if(!isuitem.REG.isEmpty())REGitem->setText(isuitem.REG);
-     else REGitem->setText("Unknown");
+    REGitem->setText(acarsitem.PLANEREG);
     LastHearditem->setText(QDateTime::currentDateTime().toString("yy-MM-dd hh:mm:ss"));
 
     Countitem->setText(QString::number(Countitem->text().toInt()+1));
@@ -121,54 +158,81 @@ void PlaneLog::update(ISUItem &isuitem)
         tmp=tmp.right(tmp.size()-idx-1);
     }
 
-    if(LastMessageitem->text().isEmpty()&&!isuitem.humantext.isEmpty())LastMessageitem->setText("✈: "+QDateTime::currentDateTime().toString("hh:mm:ss dd-MM-yy ")+isuitem.humantext);
-     else if(!isuitem.humantext.isEmpty())LastMessageitem->setText(tmp+"\n✈: "+QDateTime::currentDateTime().toString("hh:mm:ss dd-MM-yy ")+isuitem.humantext);
+    if(!acarsitem.message.isEmpty())
+    {
+        if(!LastMessageitem->text().isEmpty())tmp+="\n";
+        LastMessageitem->setText(tmp+"✈: "+acarsitem.message);
+    }
 
 
     ui->tableWidget->setSortingEnabled(true);//allow sorting again
 }
 
-void PlaneLog::on_pushButtonsmall_clicked()
-{
-    wantedheightofrow=3;
-    QFontMetrics fm(ui->tableWidget->font());
-    int rows = ui->tableWidget->rowCount();
-    for(int i = 0; i < rows; i++)ui->tableWidget->setRowHeight(i,fm.height()*wantedheightofrow);
-}
-
-void PlaneLog::on_pushButtonlarge_clicked()
-{
-    wantedheightofrow=10;
-    QFontMetrics fm(ui->tableWidget->font());
-    int rows = ui->tableWidget->rowCount();
-    for(int i = 0; i < rows; i++)ui->tableWidget->setRowHeight(i,fm.height()*wantedheightofrow);
-}
-
-void PlaneLog::on_pushButtonstopsort_clicked()
-{
-    ui->tableWidget->sortItems(-1);
-
-}
-
-void PlaneLog::on_pushButtonsrink_clicked()
-{
-    QFontMetrics fm(ui->tableWidget->font());
-    ui->tableWidget->setColumnWidth(ui->tableWidget->columnCount()-1,fm.width('_')*10);
-    ui->tableWidget->horizontalHeader()->setStretchLastSection(true);
-}
-
-void PlaneLog::on_pushButtonexpand_clicked()
-{
-    QFontMetrics fm(ui->tableWidget->font());
-    ui->tableWidget->setColumnWidth(ui->tableWidget->columnCount()-1,fm.width('_')*(220+100));
 
     //you can add images like this
     //QPixmap pixmap( ":/images/clear.png" );
     //ui->tableWidget->item(0, 0)->setData(Qt::DecorationRole, pixmap);
-}
 
-void PlaneLog::on_pushButtonclear_clicked()
+
+void PlaneLog::on_actionClear_triggered()
 {
     ui->tableWidget->clearContents();
     for(int rows = 0; ui->tableWidget->rowCount(); rows++)ui->tableWidget->removeRow(0);
+}
+
+void PlaneLog::on_actionUpDown_triggered()
+{
+    QFontMetrics fm(ui->tableWidget->font());
+    int big=fm.height()*12;
+    int small=fm.height()*3;
+
+    //if adjusted by user then restore
+    int rows = ui->tableWidget->rowCount();
+    if(rows<1)return;
+    double ave=0;
+    for(int i = 0; i < rows; i++)
+    {
+        ave+=(double)ui->tableWidget->rowHeight(i);
+    }
+    ave=ave/((double)rows);
+    double val=qMin(qAbs(ave-(double)big),qAbs(ave-(double)small));
+    if(val>1.0)
+    {
+        int rows = ui->tableWidget->rowCount();
+        for(int i = 0; i < rows; i++)ui->tableWidget->setRowHeight(i,fm.height()*wantedheightofrow);
+        return;
+    }
+
+    if(wantedheightofrow>5)
+    {
+        wantedheightofrow=3;
+        QFontMetrics fm(ui->tableWidget->font());
+        int rows = ui->tableWidget->rowCount();
+        for(int i = 0; i < rows; i++)ui->tableWidget->setRowHeight(i,fm.height()*wantedheightofrow);
+    }
+     else
+     {
+        wantedheightofrow=12;
+        QFontMetrics fm(ui->tableWidget->font());
+        int rows = ui->tableWidget->rowCount();
+        for(int i = 0; i < rows; i++)ui->tableWidget->setRowHeight(i,fm.height()*wantedheightofrow);
+     }
+}
+
+void PlaneLog::on_actionLeftRight_triggered()
+{
+    QFontMetrics fm(ui->tableWidget->font());
+    int big=fm.width('_')*(220+20);
+    int small=fm.width('_')*(10);
+    if(ui->tableWidget->columnWidth(ui->tableWidget->columnCount()-1)>(big-2))
+    {
+        ui->tableWidget->setColumnWidth(ui->tableWidget->columnCount()-1,small);
+        ui->tableWidget->horizontalHeader()->setStretchLastSection(true);
+    }
+     else ui->tableWidget->setColumnWidth(ui->tableWidget->columnCount()-1,big);
+}
+
+void PlaneLog::on_actionStopSorting_triggered()
+{
+    ui->tableWidget->sortItems(-1);
 }

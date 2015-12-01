@@ -67,6 +67,8 @@ private slots:
     void on_actionRawOutput_triggered();
     void on_action_Settings_triggered();
     void on_action_PlaneLog_triggered();
+    void ACARSslot(ACARSItem &acarsitem);
+    void ERRorslot(QString &error);
 };
 
 #endif // MAINWINDOW_H

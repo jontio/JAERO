@@ -58,9 +58,6 @@ bool ISUData::update(QByteArray data)
         anisuitem.NOOCTLESTINLASTSSU=(val>>4)&0x0F;
         anisuitem.count=0;
         anisuitem.userdata.clear();
-        anisuitem.humantext.clear();
-        anisuitem.REG.clear();
-        anisuitem.hasacarcstext=false;
         for(int i=8;i<=9;i++)anisuitem.userdata+=data[i];
 
         int idx=findisuitem71(anisuitem);
@@ -92,9 +89,6 @@ bool ISUData::update(QByteArray data)
         if(pisuitem->SEQNO==0)
         {
             for(int i=2;i<=(pisuitem->NOOCTLESTINLASTSSU+1);i++)pisuitem->userdata+=data[i];
-            pisuitem->humantext.clear();
-            pisuitem->REG.clear();
-            pisuitem->hasacarcstext=false;
             lastvalidisuitem=*pisuitem;
             //qDebug()<<"final ssu";
             return true;
@@ -108,15 +102,20 @@ bool ISUData::update(QByteArray data)
     return false;
 }
 
-bool ParserISU::toHumanReadableInformation(ISUItem &isuitem)
+ParserISU::ParserISU(QObject *parent):
+    QObject(parent)
 {
+    //
+}
 
-    validmessage=false;
-    acarsmessagecontainstext=false;
-    isacarsmessage=false;
-
-
-    if(isuitem.AESID==0){humantext="Error: AESID == 0";isuitem.humantext=humantext;return validmessage;}
+bool ParserISU::parse(ISUItem &isuitem)
+{
+    if(isuitem.AESID==0)
+    {
+        anerror="Error: AESID == 0";
+        emit Errorsignal(anerror);
+        return false;
+    }
     QVector<int> parities;
     QByteArray textish;
     for(int i=0;i<isuitem.userdata.size();i++)
@@ -130,7 +129,7 @@ bool ParserISU::toHumanReadableInformation(ISUItem &isuitem)
         textish+=byte;
     }
 
-    humantext.clear();
+    //fill acars message in
 
     //check that it matches the pattern of acars message
     //(this is 8bit parity makes things differnet)
@@ -143,64 +142,36 @@ bool ParserISU::toHumanReadableInformation(ISUItem &isuitem)
     //2F D0 49 CB 43 D0 D9 C1 AE C1 C4 D3 AE C8 C2 AD 4A C8 CD B0 37 B0 34 B0 C2 B0 B0 B0 43 B0 B0 B0 C4 B0 31 B0 45 B0 31 31 B0 B0 B0 34 34 B0 C4
     //83 or 93 (ETX/ETB) * (ETB when text is over 220 chars)
     //93 AB (BSC no parity bits)
-    //7F (DEL) *    
+    //7F (DEL) *
     if((isuitem.userdata.size()>16)&&((uchar)isuitem.userdata[0])==0xFF&&((uchar)isuitem.userdata[1])==0xFF&&((uchar)isuitem.userdata[2])==0x01&&((((uchar)isuitem.userdata[isuitem.userdata.size()-1-3])==0x83)||(((uchar)isuitem.userdata[isuitem.userdata.size()-1-3])==0x97))&&((uchar)isuitem.userdata[isuitem.userdata.size()-1])==0x7F&&( ((uchar)isuitem.userdata[15])==0x83 || ((uchar)isuitem.userdata[15])==0x02 ))
     {
-        isacarsmessage=true;
+
+        //fill in header info
+        anacarsitem.clear();
+        anacarsitem.isuitem=&isuitem;
         uchar byte=((uchar)isuitem.userdata[3]);
-        char MODE=byte&0x7F;
-        uchar TAK=((uchar)textish[11]);
-        uchar LABEL[2];
-        LABEL[0]=((uchar)textish[12]);
-        LABEL[1]=((uchar)textish[13]);
-        uchar BI=((uchar)textish[14]);
-        QByteArray PLANEREG;
-        QByteArray TEXT;
-        QByteArray HEX;
-        bool havetext=false;
-        if(((uchar)isuitem.userdata[15])==0x02)havetext=true;
+        anacarsitem.MODE=byte&0x7F;
+        anacarsitem.TAK=((uchar)textish[11]);
+        anacarsitem.LABEL+=((uchar)textish[12]);
+        anacarsitem.LABEL+=((uchar)textish[13]);
+        anacarsitem.BI=((uchar)textish[14]);
+        if(((uchar)isuitem.userdata[15])==0x02)anacarsitem.hastext=true;
+        if(((uchar)isuitem.userdata[isuitem.userdata.size()-1-3])==0x97)anacarsitem.moretocome=true;
         for(int k=4;k<4+7;k++)
         {
             byte=((uchar)isuitem.userdata[k]);
             byte&=0x7F;
             if(!parities[k])
             {
-                humantext=((QString)"").sprintf("ISU: AESID = %X GESID = %X QNO = %02X REFNO = %02X : Parity error",isuitem.AESID,isuitem.GESID,isuitem.QNO,isuitem.REFNO);
-                isuitem.humantext=humantext;
-                return validmessage;
+                anerror=((QString)"").sprintf("ISU: AESID = %X GESID = %X QNO = %02X REFNO = %02X : Parity error",isuitem.AESID,isuitem.GESID,isuitem.QNO,isuitem.REFNO);
+                emit Errorsignal(anerror);
+                return false;
             }
-            PLANEREG+=(char)byte;
+            anacarsitem.PLANEREG+=(char)byte;
         }
-        isuitem.REG=PLANEREG;
 
-
-/*
-        int startoftextptr=-1;
-        int endoftextptr=isuitem.userdata.size()-1-3;
-        for(int k=11;k<(isuitem.userdata.size()-1-3);k++)
-        {
-            if(((uchar)isuitem.userdata[k])==0x02)
-            {
-                startoftextptr=k;
-                break;
-            }
-        }
-        if(startoftextptr>=0)
-        {
-            qDebug()<<"is text"<<startoftextptr;
-            for(int k=startoftextptr+1;k<(isuitem.userdata.size()-1-3);k++)
-            {
-                byte=((uchar)isuitem.userdata[k]);
-                byte&=0x7F;
-                TEXT+=(char)byte;
-            }
-
-        }
-        if(startoftextptr>=0)qDebug()<<startoftextptr;
-         else qDebug()<<endoftextptr;
-*/
-
-        if(havetext)//have text
+        //fill in message
+        if(anacarsitem.hastext)
         {
             for(int k=16;k<isuitem.userdata.size()-1-3;k++)
             {
@@ -208,95 +179,29 @@ bool ParserISU::toHumanReadableInformation(ISUItem &isuitem)
                 byte&=0x7F;
                 if(!parities[k])
                 {
-                    humantext=((QString)"").sprintf("ISU: AESID = %X GESID = %X QNO = %02X REFNO = %02X : Parity error",isuitem.AESID,isuitem.GESID,isuitem.QNO,isuitem.REFNO);
-                    isuitem.humantext=humantext;
-                    return validmessage;
+                    anerror=((QString)"").sprintf("ISU: AESID = %X GESID = %X QNO = %02X REFNO = %02X : Parity error",isuitem.AESID,isuitem.GESID,isuitem.QNO,isuitem.REFNO);
+                    emit Errorsignal(anerror);
+                    return false;
                 }
                 if(byte==10||byte==13)//replace CR and LF with a circle
                 {
-                    if((TEXT.size()>3)&&((uchar)TEXT[TEXT.size()-3]==0xE2)&&((uchar)TEXT[TEXT.size()-2]==0x9A)&&((uchar)TEXT[TEXT.size()-1]==0xAB))continue;
-                    TEXT+=(uchar)0xE2;
-                    TEXT+=(uchar)0x9A;
-                    TEXT+=(uchar)0xAB;
-                    continue;
+                    if(anacarsitem.message.right(1)=="●")continue;
+                    anacarsitem.message+="●";
                 }
-                TEXT+=(char)byte;
+                 else anacarsitem.message+=(char)byte;
             }
         }
 
+        //mark as valid
+        anacarsitem.valid=true;
 
+        //send acars message
+        emit ACARSsignal(anacarsitem);
 
-
-        for(int k=0;k<(isuitem.userdata.size());k++)
-        {
-            byte=((uchar)isuitem.userdata[k]);
-            //byte&=0x7F;
-            HEX+=((QString)"").sprintf("%02X ",byte);
-        }
-
-        QByteArray TAKstr;
-        TAKstr+=TAK;
-        switch(compactmumanreadableinformationmode)
-        {
-        case 2:
-        {
-            humantext+=QDateTime::currentDateTime().toString("hh:mm:ss dd-MM-yy ");
-            if(TAK==0x15)TAKstr=((QString)"!").toLatin1();
-            if(LABEL[1]==127)LABEL[1]='d';
-
-            if(TEXT.isEmpty())humantext+=((QString)"").sprintf("AES:%06X GES:%02X %c %s %s %c%c %c",isuitem.AESID,isuitem.GESID,MODE,PLANEREG.data(),TAKstr.data(),LABEL[0],LABEL[1],BI);
-             else humantext+=(((QString)"").sprintf("AES:%06X GES:%02X %c %s %s %c%c %c ",isuitem.AESID,isuitem.GESID,MODE,PLANEREG.data(),TAKstr.data(),LABEL[0],LABEL[1],BI))+QString::fromUtf8(TEXT.data());
-            if((((uchar)isuitem.userdata[isuitem.userdata.size()-1-3])==0x97))humantext+=" ...more to come... ";
-
-
-            if(TEXT.isEmpty())isuitem.humantext=((QString)"").sprintf("%c %s %s %c%c %c",MODE,PLANEREG.data(),TAKstr.data(),LABEL[0],LABEL[1],BI);
-             else isuitem.humantext+=(((QString)"").sprintf("%c %s %s %c%c %c ",MODE,PLANEREG.data(),TAKstr.data(),LABEL[0],LABEL[1],BI))+QString::fromUtf8(TEXT.data());
-            if((((uchar)isuitem.userdata[isuitem.userdata.size()-1-3])==0x97))isuitem.humantext+=" ...more to come... ";
-
-
-            validmessage=true;
-            acarsmessagecontainstext=havetext;
-            isuitem.hasacarcstext=havetext;
-        }
-            break;
-        default: //0 or 1
-        {
-            if(TAK==0x15)TAKstr=((QString)"<NAK>").toLatin1();
-            if(TEXT.isEmpty())humantext+=((QString)"").sprintf("ISU: AESID = %06X GESID = %02X QNO = %02X REFNO = %02X MODE = %c REG = %s TAK = %s LABEL = %02X%02X BI = %c",isuitem.AESID,isuitem.GESID,isuitem.QNO,isuitem.REFNO,MODE,PLANEREG.data(),TAKstr.data(),LABEL[0],LABEL[1],BI);
-             else humantext+=(((QString)"").sprintf("ISU: AESID = %06X GESID = %02X QNO = %02X REFNO = %02X MODE = %c REG = %s TAK = %s LABEL = %02X%02X BI = %c TEXT = \"",isuitem.AESID,isuitem.GESID,isuitem.QNO,isuitem.REFNO,MODE,PLANEREG.data(),TAKstr.data(),LABEL[0],LABEL[1],BI)+QString::fromUtf8(TEXT.data())+"\"");
-            if((((uchar)isuitem.userdata[isuitem.userdata.size()-1-3])==0x97))humantext+=" ...more to come... ";
-            humantext+="\t( "+HEX+" )";
-
-            if(TEXT.isEmpty())isuitem.humantext=((QString)"").sprintf("%c %s %s %c%c %c",MODE,PLANEREG.data(),TAKstr.data(),LABEL[0],LABEL[1],BI);
-             else isuitem.humantext+=(((QString)"").sprintf("%c %s %s %c%c %c ",MODE,PLANEREG.data(),TAKstr.data(),LABEL[0],LABEL[1],BI))+QString::fromUtf8(TEXT.data());
-            if((((uchar)isuitem.userdata[isuitem.userdata.size()-1-3])==0x97))isuitem.humantext+=" ...more to come... ";
-
-            validmessage=true;
-            acarsmessagecontainstext=havetext;
-            isuitem.hasacarcstext=havetext;
-        }
-            break;
-        }
-
+        return true;
     }
-     else
-     {
-        QByteArray HEX;
-        for(int k=0;k<(isuitem.userdata.size());k++)
-        {
-            uchar byte=((uchar)isuitem.userdata[k]);
-            //byte&=0x7F;
-            HEX+=((QString)"").sprintf("%02X ",byte);
-        }
-        humantext+=((QString)"").sprintf("ISU: AESID = %06X GESID = %02X QNO = %02X REFNO = %02X : Unknown format",isuitem.AESID,isuitem.GESID,isuitem.QNO,isuitem.REFNO);
-        humantext+="\t( "+HEX+" )";
 
-        isuitem.humantext=humantext;
-     }
-
-
-
-    return validmessage;
+    return false;
 
 }
 
@@ -395,7 +300,11 @@ bool PreambleDetector::Update(int val)
 AeroL::AeroL(QObject *parent) : QIODevice(parent)
 {
 
-    dropnontextmsgs=false;
+    //install parser
+    parserisu = new ParserISU(this);
+    connect(parserisu,SIGNAL(ACARSsignal(ACARSItem&)),this,SIGNAL(ACARSsignal(ACARSItem&)));
+    connect(parserisu,SIGNAL(Errorsignal(QString&)),this,SIGNAL(Errorsignal(QString&)));
+
     donotdisplaysus.clear();
 
     cntr=1000000000;
@@ -494,22 +403,9 @@ void AeroL::updateDCD()
     }
 }
 
-void AeroL::setCompactHumanReadableInformationMode(int state)
-{
-    parserisu.compactmumanreadableinformationmode=state;
-}
-
 QByteArray &AeroL::Decode(QVector<short> &bits)//0 bit --> oldest bit
 {
     decodedbytes.clear();
-
-    //keep track of the DCD
-    /*if(datacdcountdown>0)datacdcountdown-=qMin(bits.count(),datacdcountdown);
-    if(datacd&&!datacdcountdown)
-    {
-        datacd=false;
-        emit DataCarrierDetect(datacd);
-    }*/
 
     //static int cntr=1000000000;
     static int formatid=0;
@@ -774,16 +670,7 @@ QByteArray &AeroL::Decode(QVector<short> &bits)//0 bit --> oldest bit
 
                                     if(isudata.update(infofield.mid(k*12,10)))
                                     {
-                                        parserisu.toHumanReadableInformation(isudata.lastvalidisuitem);
-                                        if(parserisu.validmessage&&parserisu.isacarsmessage)
-                                        {
-                                            if(dropnontextmsgs&&!parserisu.acarsmessagecontainstext)isudata.lastvalidisuitem.humantext.clear();
-                                            emit isuitemsignal(isudata.lastvalidisuitem);
-                                        }
-                                        if(!dropnontextmsgs||parserisu.acarsmessagecontainstext)
-                                        {
-                                            emit HumanReadableInformation(parserisu.humantext);
-                                        }
+                                        parserisu->parse(isudata.lastvalidisuitem);//emits signals if it find valid acars data or errors
                                     }
                                      else if(isudata.missingssu)decline+=" missing (or if unimplimented then TODO in C++)";
 

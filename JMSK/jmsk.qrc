@@ -15,5 +15,8 @@
         <file>images/eighth note.svg</file>
         <file>images/beacon.svg</file>
         <file>images/log.png</file>
+        <file>images/arrow-right-left-512px.svg</file>
+        <file>images/arrow-up-down-512px.svg</file>
+        <file>images/stopsort-512px.svg</file>
     </qresource>
 </RCC>

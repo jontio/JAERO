@@ -66,13 +66,37 @@ struct ISUItem {
     uchar REFNO;
     uchar NOOCTLESTINLASTSSU;
     QByteArray userdata;
-    bool hasacarcstext;//fill in if you want
-    QString humantext;//space for filling in later if you want to
-    QString REG;//reg if you want to fill this in
     int count;
 };
 
+struct ACARSItem {
+    ISUItem *isuitem;
 
+    char MODE;
+    uchar TAK;
+    QByteArray LABEL;
+    uchar BI;
+    QByteArray PLANEREG;
+
+    bool valid;
+    bool hastext;
+    bool moretocome;
+    QString message;
+    void clear()
+    {
+        isuitem=NULL;
+        valid=false;
+        hastext=false;
+        moretocome=false;
+        MODE=0;
+        TAK=0;
+        BI=0;
+        PLANEREG.clear();
+        LABEL.clear();
+        message.clear();
+    }
+    ACARSItem(){clear();}
+};
 
 //defragments 0x71 SUs with its SSUs
 class ISUData
@@ -91,16 +115,18 @@ private:
     void deleteoldisuitems();
 };
 
-class ParserISU
+class ParserISU : public QObject
 {
+    Q_OBJECT
 public:
-    ParserISU(){compactmumanreadableinformationmode=1;}
-    bool toHumanReadableInformation(ISUItem &isuitem);//return true if a valid ACARS message
-    int compactmumanreadableinformationmode;
-    QString humantext;
-    bool validmessage;
-    bool isacarsmessage;
-    bool acarsmessagecontainstext;
+    explicit ParserISU(QObject *parent = 0);
+    bool parse(ISUItem &isuitem);
+signals:
+    void ACARSsignal(ACARSItem &acarsitem);
+    void Errorsignal(QString &error);
+private:
+    ACARSItem anacarsitem;
+    QString anerror;
 };
 
 class AeroLcrc16 //this seems to be called GENIBUS not CCITT
@@ -253,11 +279,15 @@ public:
     qint64 readData(char *data, qint64 maxlen);
     qint64 writeData(const char *data, qint64 len);
 signals:
-    void HumanReadableInformation(QString str);
     void DataCarrierDetect(bool status);
-    void isuitemsignal(ISUItem &anisuitem);
+    void ACARSsignal(ACARSItem &acarsitem);
+    void Errorsignal(QString &error);
 public slots:
     void setBitRate(double fb);
+    void SignalStatusSlot(bool signal)
+    {
+        if(!signal)LostSignal();
+    }
     void LostSignal()
     {
         cntr=1000000000;
@@ -265,10 +295,7 @@ public slots:
         datacd=false;
         emit DataCarrierDetect(false);
     }
-    void setCompactHumanReadableInformationMode(int state);
     void setDoNotDisplaySUs(QVector<int> &list){donotdisplaysus=list;}
-    void setDropNonTextMessages(bool enable){dropnontextmsgs=enable;}
-
 private:
     bool Start();
     void Stop();
@@ -293,14 +320,13 @@ private:
     QByteArray infofield;
 
     ISUData isudata;
-    ParserISU parserisu;
+    ParserISU *parserisu;
 
     int datacdcountdown;
     bool datacd;
     int cntr;
 
     QVector<int> donotdisplaysus;
-    bool dropnontextmsgs;
 
 private slots:
     void updateDCD();
