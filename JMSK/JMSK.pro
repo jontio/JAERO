@@ -7,9 +7,9 @@
 
 QT       += multimedia core gui svg
 
-greaterThan(QT_MAJOR_VERSION, 4): QT += widgets  printsupport serialport
+greaterThan(QT_MAJOR_VERSION, 4): QT += widgets  printsupport
 
-TARGET = JMSK
+TARGET = JAERO
 TEMPLATE = app
 
 #message("QT_ARCH is \"$$QT_ARCH\"");
