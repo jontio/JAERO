@@ -13,6 +13,10 @@ The software implements differential decoding hence the modulator must use diffe
 
 ![](images/screenshot-win-planelog.png)
 
+##Binaries
+
+Precompiled binaries can be downloaded from [Releases].
+
 ##Directory structure
 
 The [JAERO](JAERO) directory is where the Qt pro file is for the main application. The [udptextserver](udptextserver) directory is a small demo application for receiving data sent from JAERO.
@@ -38,3 +42,4 @@ http://jontio.zapto.org
 [Spectrum Lab]: http://www.qsl.net/dl4yhf/spectra1.html
 [JMSK]: https://github.com/jontio/JMSK
 [RTL-SDR]: http://www.rtl-sdr.com/about-rtl-sdr/
+[Releases]: https://github.com/jontio/JAERO/releases
