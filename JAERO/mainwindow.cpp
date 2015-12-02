@@ -135,7 +135,7 @@ MainWindow::MainWindow(QWidget *parent) :
 //--end modulator setup
 
     //add todays date
-    ui->inputwidget->appendHtml("<b>"+QDateTime::currentDateTime().toString("h:mmap ddd d-MMM-yyyy")+" JAREO started</b>");
+    ui->inputwidget->appendHtml("<b>"+QDateTime::currentDateTime().toString("h:mmap ddd d-MMM-yyyy")+" JAERO started</b>");
     QTimer::singleShot(100,ui->inputwidget,SLOT(scrolltoend()));
 
     ui->actionTXRX->setVisible(false);//there is a hidden audio modulator
@@ -210,8 +210,8 @@ void MainWindow::AboutSlot()
     QMessageBox::about(this,"JAERO",""
                                      "<H1>An Aero demodulator and decoder</H1>"
                                      "<H3>v1.0.0</H3>"
-                                     "<p>This is a program to demodulate and decode Aero signals. These signals contain SatCom ACARS (<em>Satelitle Comunication Aircraft Communications Addressing and Reporting System</em>) information as used by planes beyond VHF ACARS range. This protocol is used by Inmarsat's \"Classic Aero\" system and can be received using low gain L band antennas.</p>"
-                                     "<p>For more information about this application see who knows just yet<!--<a href=\"http://jontio.zapto.org/hda1/jmsk.html\">http://jontio.zapto.org/hda1/jmsk.html</a>-->.</p>"
+                                     "<p>This is a program to demodulate and decode Aero signals. These signals contain SatCom ACARS (<em>Satelitle Comunication Aircraft Communications Addressing and Reporting System</em>) messages as used by planes beyond VHF ACARS range. This protocol is used by Inmarsat's \"Classic Aero\" system and can be received using low gain L band antennas.</p>"
+                                     "<p>For more information about this application see who knows just yet<!--<a href=\"http://jontio.zapto.org/hda1/jaero.html\">http://jontio.zapto.org/hda1/jaero.html</a>-->.</p>"
                                      "<p>Jonti 2015</p>" );
 }
 

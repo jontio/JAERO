@@ -81,7 +81,7 @@ FORMS    += mainwindow.ui \
     gui_classes/planelog.ui
 
 RESOURCES += \
-    jmsk.qrc
+    jaero.qrc
 
 DISTFILES += \
     LICENSE \
@@ -91,12 +91,12 @@ DISTFILES += \
     ../kiss_fft130/README \
     ../qcustomplot/changelog.txt \
     ../qcustomplot/GPL.txt \
-    jmsk.rc \
     ../README.md \
-    ../images/screenshot-win-v1.1.0.png \
     ../viterbi-xukmin/LICENSE.md \
-    ../viterbi-xukmin/README.md
+    ../viterbi-xukmin/README.md \
+    ../images/screenshot-win-main.png \
+    ../images/screenshot-win-planelog.png
 
 win32 {
-RC_FILE = jmsk.rc
+RC_FILE = jaero.rc
 }

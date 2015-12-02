@@ -85,7 +85,7 @@
   </widget>
   <action name="actionClear">
    <property name="icon">
-    <iconset resource="../jmsk.qrc">
+    <iconset resource="../jaero.qrc">
      <normaloff>:/images/clear.png</normaloff>:/images/clear.png</iconset>
    </property>
    <property name="text">
@@ -97,7 +97,7 @@
   </action>
   <action name="actionUpDown">
    <property name="icon">
-    <iconset resource="../jmsk.qrc">
+    <iconset resource="../jaero.qrc">
      <normaloff>:/images/arrow-up-down-512px.svg</normaloff>:/images/arrow-up-down-512px.svg</iconset>
    </property>
    <property name="text">
@@ -109,7 +109,7 @@
   </action>
   <action name="actionLeftRight">
    <property name="icon">
-    <iconset resource="../jmsk.qrc">
+    <iconset resource="../jaero.qrc">
      <normaloff>:/images/arrow-right-left-512px.svg</normaloff>:/images/arrow-right-left-512px.svg</iconset>
    </property>
    <property name="text">
@@ -121,7 +121,7 @@
   </action>
   <action name="actionStopSorting">
    <property name="icon">
-    <iconset resource="../jmsk.qrc">
+    <iconset resource="../jaero.qrc">
      <normaloff>:/images/stopsort-512px.svg</normaloff>:/images/stopsort-512px.svg</iconset>
    </property>
    <property name="text">
@@ -133,7 +133,7 @@
   </action>
  </widget>
  <resources>
-  <include location="../jmsk.qrc"/>
+  <include location="../jaero.qrc"/>
  </resources>
  <connections/>
 </ui>
