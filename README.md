@@ -13,6 +13,18 @@ The software implements differential decoding hence the modulator must use diffe
 
 ![](images/screenshot-win-planelog.png)
 
+##Directory structure
+
+The [JAERO](JAERO) directory is where the Qt pro file is for the main application. The [udptextserver](udptextserver) directory is a small demo application for receiving data sent from JAERO.
+
+##Compiling JAERO
+
+Compiling JAERO requires the Qt framework which can be obtained from http://www.qt.io/download-open-source/ . Qt Creator can be used to compile JAERO and comes with the Qt framework. At least version 5 of the Qt framework is required. Currently MinGW and GCC work as compilers but VC++ does not.
+
+After installing Qt download the JAERO zip or the tar.gz source file to your computer. No other third-party downloads should be required.
+
+Open the [JAERO/JAERO.pro](JAERO/JAERO.pro) file with Qt creator where by Qt should ask you a few simple questions as to how to build JAERO. finally click build then run.
+
 Jonti 2015
 http://jontio.zapto.org
 
