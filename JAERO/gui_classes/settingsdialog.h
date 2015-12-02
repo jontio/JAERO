@@ -24,6 +24,7 @@ public:
     QString Postamble;
     AudioMskModulator::Settings audiomskmodulatorsettings;
 
+    QAudioDeviceInfo audioinputdevice;
     QVector<int> donotdisplaysus;
     bool dropnontextmsgs;
     QString msgdisplayformat;

@@ -95,6 +95,7 @@ MainWindow::MainWindow(QWidget *parent) :
     on_comboBoxdisplay_currentIndexChanged(ui->comboBoxdisplay->currentText());
     on_actionConnectToUDPPort_toggled(ui->actionConnectToUDPPort->isChecked());
 
+    audiomskdemodulatorsettings.audio_device_in=settingsdialog->audioinputdevice;
     audiomskdemodulatorsettings.freq_center=tmpfreq;
     audiomskdemodulator->setSQL(false);
     audiomskdemodulator->setSettings(audiomskdemodulatorsettings);
@@ -318,7 +319,7 @@ void MainWindow::on_action_Settings_triggered()
 
 void MainWindow::acceptsettings()
 {
-    //it a tad to tricky keeping the modulator running when settings have been changed so i'm tring out stopping the modulator when settings are changed
+
     audiomskmodulator->stop();
 
     ui->statusBar->clearMessage();
@@ -331,6 +332,15 @@ void MainWindow::acceptsettings()
     audiomskmodulator->setSettings(audiomskmodulatorsettings);
 
     aerol->setDoNotDisplaySUs(settingsdialog->donotdisplaysus);
+
+    if(audiomskdemodulatorsettings.audio_device_in!=settingsdialog->audioinputdevice)
+    {
+        audiomskdemodulator->stop();
+        audiomskdemodulatorsettings.audio_device_in=settingsdialog->audioinputdevice;
+        qDebug()<<audiomskdemodulatorsettings.audio_device_in.deviceName();
+        audiomskdemodulator->setSettings(audiomskdemodulatorsettings);
+        audiomskdemodulator->start();
+    }
 
 }
 
@@ -370,9 +380,10 @@ void MainWindow::ACARSslot(ACARSItem &acarsitem)
     {
         humantext+=QDateTime::currentDateTime().toString("hh:mm:ss dd-MM-yy ");
         if(acarsitem.TAK==0x15)TAKstr=((QString)"!").toLatin1();
-        if((uchar)acarsitem.LABEL[1]==127)acarsitem.LABEL[1]='d';
-        if(acarsitem.message.isEmpty())humantext+=((QString)"").sprintf("AES:%06X GES:%02X %c %s %s %c%c %c",acarsitem.isuitem->AESID,acarsitem.isuitem->GESID,acarsitem.MODE,acarsitem.PLANEREG.data(),TAKstr.data(),(uchar)acarsitem.LABEL[0],(uchar)acarsitem.LABEL[1],acarsitem.BI);
-        else humantext+=(((QString)"").sprintf("AES:%06X GES:%02X %c %s %s %c%c %c ",acarsitem.isuitem->AESID,acarsitem.isuitem->GESID,acarsitem.MODE,acarsitem.PLANEREG.data(),TAKstr.data(),(uchar)acarsitem.LABEL[0],(uchar)acarsitem.LABEL[1],acarsitem.BI))+acarsitem.message;
+        uchar label1=acarsitem.LABEL[1];
+        if((uchar)acarsitem.LABEL[1]==127)label1='d';
+        if(acarsitem.message.isEmpty())humantext+=((QString)"").sprintf("AES:%06X GES:%02X %c %s %s %c%c %c",acarsitem.isuitem->AESID,acarsitem.isuitem->GESID,acarsitem.MODE,acarsitem.PLANEREG.data(),TAKstr.data(),(uchar)acarsitem.LABEL[0],label1,acarsitem.BI);
+        else humantext+=(((QString)"").sprintf("AES:%06X GES:%02X %c %s %s %c%c %c ",acarsitem.isuitem->AESID,acarsitem.isuitem->GESID,acarsitem.MODE,acarsitem.PLANEREG.data(),TAKstr.data(),(uchar)acarsitem.LABEL[0],label1,acarsitem.BI))+acarsitem.message;
         if(acarsitem.moretocome)humantext+=" ...more to come... ";
         if((!settingsdialog->dropnontextmsgs)||(!acarsitem.message.isEmpty()))ui->inputwidget->appendPlainText(humantext);
     }

@@ -53,11 +53,26 @@ void SettingsDialog::poulatepublicvars()
         pos += rx.matchedLength();
     }
 
+    audioinputdevice=QAudioDeviceInfo::defaultInputDevice();
+    foreach (const QAudioDeviceInfo &deviceInfo, QAudioDeviceInfo::availableDevices(QAudio::AudioInput))
+    {
+        if(deviceInfo.deviceName()==ui->comboBoxsoundcard->currentText())
+        {
+            audioinputdevice=deviceInfo;
+            break;
+        }
+    }
+
 }
 
 
 void SettingsDialog::populatesettings()
 {
+
+    //populate soundcard
+    ui->comboBoxsoundcard->clear();
+    foreach (const QAudioDeviceInfo &deviceInfo, QAudioDeviceInfo::availableDevices(QAudio::AudioInput))
+        ui->comboBoxsoundcard->addItem(deviceInfo.deviceName());
 
     //load settings
     QSettings settings("Jontisoft", "JAEROL");
@@ -68,6 +83,7 @@ void SettingsDialog::populatesettings()
     ui->comboBoxDisplayformat->setCurrentIndex(settings.value("comboBoxDisplayformat",0).toInt());
     ui->lineEditdonotdisplaysus->setText(settings.value("lineEditdonotdisplaysus","71 18 19").toString());
     ui->checkBoxdropnontextmsgs->setChecked(settings.value("checkBoxdropnontextmsgs",true).toBool());
+    ui->comboBoxsoundcard->setCurrentText(settings.value("comboBoxsoundcard","").toString());
 
     poulatepublicvars();
 }
@@ -85,6 +101,7 @@ void SettingsDialog::accept()
     settings.setValue("comboBoxDisplayformat", ui->comboBoxDisplayformat->currentIndex());
     settings.setValue("lineEditdonotdisplaysus", ui->lineEditdonotdisplaysus->text());
     settings.setValue("checkBoxdropnontextmsgs", ui->checkBoxdropnontextmsgs->isChecked());
+    settings.setValue("comboBoxsoundcard", ui->comboBoxsoundcard->currentText());
 
     poulatepublicvars();
     QDialog::accept();

@@ -26,8 +26,8 @@ void AudioMskDemodulator::setSettings(Settings _settings)
     bool wasopen=isOpen();
     stop();
 
-    //if Fs has changed or the audio device doesnt exist then need to redo the audio device
-    if((_settings.Fs!=settings.Fs)||(!m_audioInput))
+    //if Fs has changed or the audio device doesnt exist or the input device has changed then need to redo the audio device
+    if((_settings.Fs!=settings.Fs)||(!m_audioInput)||(_settings.audio_device_in!=settings.audio_device_in))
     {
         settings=_settings;
 

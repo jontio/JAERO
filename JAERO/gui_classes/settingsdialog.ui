@@ -58,7 +58,7 @@
          <x>10</x>
          <y>90</y>
          <width>351</width>
-         <height>221</height>
+         <height>151</height>
         </rect>
        </property>
        <property name="title">
@@ -67,8 +67,8 @@
        <widget class="QCheckBox" name="checkBoxdropnontextmsgs">
         <property name="geometry">
          <rect>
-          <x>30</x>
-          <y>120</y>
+          <x>20</x>
+          <y>100</y>
           <width>201</width>
           <height>19</height>
          </rect>
@@ -133,6 +133,29 @@
           <string>2</string>
          </property>
         </item>
+       </widget>
+      </widget>
+      <widget class="QGroupBox" name="groupBox_5">
+       <property name="geometry">
+        <rect>
+         <x>10</x>
+         <y>249</y>
+         <width>351</width>
+         <height>71</height>
+        </rect>
+       </property>
+       <property name="title">
+        <string>Soundcard</string>
+       </property>
+       <widget class="QComboBox" name="comboBoxsoundcard">
+        <property name="geometry">
+         <rect>
+          <x>10</x>
+          <y>30</y>
+          <width>331</width>
+          <height>22</height>
+         </rect>
+        </property>
        </widget>
       </widget>
      </widget>

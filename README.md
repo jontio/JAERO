@@ -4,7 +4,7 @@ A SatCom ACARS demodulator and decoder for the Aero standard written in C++ Qt
 ![](images/screenshot-win-main.png)
 
 This program demodulates and decodes ACARS messages sent from satellites to Aeroplanes (SatCom ACARS) commonly used when Aeroplanes are beyond VHF range. Demodulation is performed using the soundcard.
-Such signals are typically around 1.5Ghz and can be received with simple low gain antennas that can be home brewed in a few hours.
+Such signals are typically around 1.5Ghz and can be received with simple low gain antennas that can be home brewed in a few hours in conjunction with a cheap [RTL-SDR] dongle.
 
 SatCom ACARS signals are basically MSK like so the demodulator was forked from [JMSK]. The demodulator implements a coherent MSK demodulator type as seen at http://jontio.zapto.org/hda1/msk-demodulation2.html.
 
@@ -25,3 +25,4 @@ http://jontio.zapto.org
 [Varicode]: https://en.wikipedia.org/wiki/Varicode
 [Spectrum Lab]: http://www.qsl.net/dl4yhf/spectra1.html
 [JMSK]: https://github.com/jontio/JMSK
+[RTL-SDR]: http://www.rtl-sdr.com/about-rtl-sdr/

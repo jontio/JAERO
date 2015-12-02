@@ -161,7 +161,15 @@ void PlaneLog::ACARSslot(ACARSItem &acarsitem)
     if(!acarsitem.message.isEmpty())
     {
         if(!LastMessageitem->text().isEmpty())tmp+="\n";
-        LastMessageitem->setText(tmp+"✈: "+acarsitem.message);
+
+        QByteArray TAKstr;
+        TAKstr+=acarsitem.TAK;
+        if(acarsitem.TAK==0x15)TAKstr[0]='!';
+        uchar label1=acarsitem.LABEL[1];
+        if((uchar)acarsitem.LABEL[1]==127)label1='d';
+        tmp+="✈: "+(((QString)"").sprintf("%s %c%c %c ",TAKstr.data(),(uchar)acarsitem.LABEL[0],label1,acarsitem.BI));
+        if(acarsitem.moretocome)LastMessageitem->setText(tmp+acarsitem.message+" ...more to come... ");
+         else LastMessageitem->setText(tmp+acarsitem.message);
     }
 
 
@@ -222,7 +230,7 @@ void PlaneLog::on_actionUpDown_triggered()
 void PlaneLog::on_actionLeftRight_triggered()
 {
     QFontMetrics fm(ui->tableWidget->font());
-    int big=fm.width('_')*(220+20);
+    int big=fm.width('_')*(220+50);
     int small=fm.width('_')*(10);
     if(ui->tableWidget->columnWidth(ui->tableWidget->columnCount()-1)>(big-2))
     {
