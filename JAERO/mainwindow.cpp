@@ -388,6 +388,23 @@ void MainWindow::ACARSslot(ACARSItem &acarsitem)
         if((!settingsdialog->dropnontextmsgs)||(!acarsitem.message.isEmpty()))ui->inputwidget->appendPlainText(humantext);
     }
 
+    if(settingsdialog->msgdisplayformat=="3")
+    {
+        QString message=acarsitem.message;
+        if(message.right(1)=="●")message.remove(acarsitem.message.size()-1,1);
+        if(message.right(1)!="●")message.append("\n");
+        if(message.left(1)!="●")message.prepend("\n\t");
+        message.replace("●","\n\t");
+        humantext+=QDateTime::currentDateTime().toString("hh:mm:ss dd-MM-yy ");
+        if(acarsitem.TAK==0x15)TAKstr=((QString)"!").toLatin1();
+        uchar label1=acarsitem.LABEL[1];
+        if((uchar)acarsitem.LABEL[1]==127)label1='d';
+        if(acarsitem.message.isEmpty())humantext+=((QString)"").sprintf("AES:%06X GES:%02X %c %s %s %c%c %c",acarsitem.isuitem->AESID,acarsitem.isuitem->GESID,acarsitem.MODE,acarsitem.PLANEREG.data(),TAKstr.data(),(uchar)acarsitem.LABEL[0],label1,acarsitem.BI);
+        else humantext+=(((QString)"").sprintf("AES:%06X GES:%02X %c %s %s %c%c %c\n\t",acarsitem.isuitem->AESID,acarsitem.isuitem->GESID,acarsitem.MODE,acarsitem.PLANEREG.data(),TAKstr.data(),(uchar)acarsitem.LABEL[0],label1,acarsitem.BI))+message;
+        if(acarsitem.moretocome)humantext+=" ...more to come...\n";
+        if((!settingsdialog->dropnontextmsgs)||(!acarsitem.message.isEmpty()))ui->inputwidget->appendPlainText(humantext);
+    }
+
 }
 
 void MainWindow::ERRorslot(QString &error)
