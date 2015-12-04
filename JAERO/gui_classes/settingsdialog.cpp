@@ -67,6 +67,7 @@ void SettingsDialog::poulatepublicvars()
 
     loggingdirectory=ui->lineEditlogdir->text();
     loggingenable=ui->checkBoxlogenable->isChecked();
+    widebandwidthenable=ui->checkBoxlogwidebandwidthenable->isChecked();
 
 }
 
@@ -91,6 +92,7 @@ void SettingsDialog::populatesettings()
     ui->comboBoxsoundcard->setCurrentText(settings.value("comboBoxsoundcard","").toString());
     ui->lineEditlogdir->setText(settings.value("lineEditlogdir",QStandardPaths::standardLocations(QStandardPaths::DocumentsLocation)[0]+"/JAERO").toString());
     ui->checkBoxlogenable->setChecked(settings.value("checkBoxlogenable",false).toBool());
+    ui->checkBoxlogwidebandwidthenable->setChecked(settings.value("checkBoxlogwidebandwidthenable",false).toBool());
 
     on_lineEditlogdir_editingFinished();
 
@@ -113,6 +115,7 @@ void SettingsDialog::accept()
     settings.setValue("comboBoxsoundcard", ui->comboBoxsoundcard->currentText());
     settings.setValue("lineEditlogdir", ui->lineEditlogdir->text());
     settings.setValue("checkBoxlogenable", ui->checkBoxlogenable->isChecked());
+    settings.setValue("checkBoxlogwidebandwidthenable", ui->checkBoxlogwidebandwidthenable->isChecked());
 
     poulatepublicvars();
     QDialog::accept();

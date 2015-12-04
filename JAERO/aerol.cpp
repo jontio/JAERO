@@ -656,6 +656,13 @@ QByteArray &AeroL::Decode(QVector<short> &bits)//0 bit --> oldest bit
                         quint16 crc_calc=crc16.calcusingbytes(&infofieldptr[k*12],10);
                         quint16 crc_rec=(((uchar)infofield[k*12+11])<<8)|((uchar)infofield[k*12+10]);
 
+                        if((!crc_rec)&&(crc_calc!=crc_rec))
+                        {
+                            int tsum=0;
+                            for(int ii=0; ii<10; ii++)tsum+=(uchar)infofieldptr[k*12+ii];
+                            if(tsum==0)crc_calc=0;//some sus are just zeros
+                        }
+
                         //keep track of the DCD
                         if(crc_calc==crc_rec){if(datacdcountdown<12)datacdcountdown+=2;}
                          else {if(datacdcountdown>0)datacdcountdown-=3;}

@@ -30,6 +30,7 @@ public:
     QString msgdisplayformat;
     bool loggingenable;
     QString loggingdirectory;
+    bool widebandwidthenable;
 
 private:
     Ui::SettingsDialog *ui;    

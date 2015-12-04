@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>452</width>
-    <height>444</height>
+    <height>506</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -146,7 +146,7 @@
          <x>10</x>
          <y>280</y>
          <width>401</width>
-         <height>71</height>
+         <height>111</height>
         </rect>
        </property>
        <property name="title">
@@ -160,6 +160,19 @@
           <width>381</width>
           <height>22</height>
          </rect>
+        </property>
+       </widget>
+       <widget class="QCheckBox" name="checkBoxlogwidebandwidthenable">
+        <property name="geometry">
+         <rect>
+          <x>20</x>
+          <y>70</y>
+          <width>321</width>
+          <height>19</height>
+         </rect>
+        </property>
+        <property name="text">
+         <string>Enable widebandwidth (CPU intensive)</string>
         </property>
        </widget>
       </widget>
