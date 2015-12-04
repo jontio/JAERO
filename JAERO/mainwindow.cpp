@@ -137,12 +137,12 @@ MainWindow::MainWindow(QWidget *parent) :
 
     //add todays date
     ui->inputwidget->appendHtml("<b>"+QDateTime::currentDateTime().toString("h:mmap ddd d-MMM-yyyy")+" JAERO started</b>");
+    ui->inputwidget->appendPlainText("");
     QTimer::singleShot(100,ui->inputwidget,SLOT(scrolltoend()));
 
     ui->actionTXRX->setVisible(false);//there is a hidden audio modulator
 
     acceptsettings();
-
 
 }
 
@@ -386,7 +386,11 @@ void MainWindow::ACARSslot(ACARSItem &acarsitem)
             humantext+=((QString)"").sprintf("%02X ",byte);
         }
         humantext+=" )";
-        if((!settingsdialog->dropnontextmsgs)||(!acarsitem.message.isEmpty()))ui->inputwidget->appendPlainText(humantext);
+        if((!settingsdialog->dropnontextmsgs)||(!acarsitem.message.isEmpty()))
+        {
+            ui->inputwidget->appendPlainText(humantext);
+            log(humantext);
+        }
     }
 
     if(settingsdialog->msgdisplayformat=="2")
@@ -406,7 +410,11 @@ void MainWindow::ACARSslot(ACARSItem &acarsitem)
             humantext+=(((QString)"").sprintf("AES:%06X GES:%02X %c %s %s %c%c %c ",acarsitem.isuitem.AESID,acarsitem.isuitem.GESID,acarsitem.MODE,acarsitem.PLANEREG.data(),TAKstr.data(),(uchar)acarsitem.LABEL[0],label1,acarsitem.BI))+message;
          }
         if(acarsitem.moretocome)humantext+=" ...more to come... ";
-        if((!settingsdialog->dropnontextmsgs)||(!acarsitem.message.isEmpty()))ui->inputwidget->appendPlainText(humantext);
+        if((!settingsdialog->dropnontextmsgs)||(!acarsitem.message.isEmpty()))
+        {
+            ui->inputwidget->appendPlainText(humantext);
+            log(humantext);
+        }
     }
 
     if(settingsdialog->msgdisplayformat=="3")
@@ -425,9 +433,30 @@ void MainWindow::ACARSslot(ACARSItem &acarsitem)
         if(acarsitem.message.isEmpty())humantext+=((QString)"").sprintf("AES:%06X GES:%02X %c %s %s %c%c %c",acarsitem.isuitem.AESID,acarsitem.isuitem.GESID,acarsitem.MODE,acarsitem.PLANEREG.data(),TAKstr.data(),(uchar)acarsitem.LABEL[0],label1,acarsitem.BI);
         else humantext+=(((QString)"").sprintf("AES:%06X GES:%02X %c %s %s %c%c %c\n\n\t",acarsitem.isuitem.AESID,acarsitem.isuitem.GESID,acarsitem.MODE,acarsitem.PLANEREG.data(),TAKstr.data(),(uchar)acarsitem.LABEL[0],label1,acarsitem.BI))+message+"\n";
         if(acarsitem.moretocome)humantext+=" ...more to come...\n";
-        if((!settingsdialog->dropnontextmsgs)||(!acarsitem.message.isEmpty()))ui->inputwidget->appendPlainText(humantext);
+        if((!settingsdialog->dropnontextmsgs)||(!acarsitem.message.isEmpty()))
+        {
+            ui->inputwidget->appendPlainText(humantext);
+            log(humantext);
+        }
     }
 
+}
+
+void MainWindow::log(QString &text)
+{
+    if(!settingsdialog->loggingenable)return;
+    if(text.isEmpty())return;
+    QDate now=QDate::currentDate();
+    QString nowfilename=settingsdialog->loggingdirectory+"/acars-log-"+now.toString("yy-MM-dd")+".txt";
+    if(!filelog.isOpen()||filelog.fileName()!=nowfilename)
+    {
+        QDir dir;
+        dir.mkpath(settingsdialog->loggingdirectory);
+        filelog.setFileName(nowfilename);
+        if(!filelog.open(QIODevice::Append))return;
+        outlogstream.setDevice(&filelog);
+    }
+    outlogstream << text << '\n';
 }
 
 void MainWindow::ERRorslot(QString &error)

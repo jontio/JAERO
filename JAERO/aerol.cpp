@@ -104,7 +104,7 @@ bool ISUData::update(QByteArray data)
 
 int ACARSDefragmenter::findfragment(ACARSItem &acarsitem)
 {
-    QString tmp;
+//    QString tmp;
     for(int idx=0;idx<acarsitemexts.size();idx++)
     {
         ACARSItemext *pitem=&acarsitemexts[idx];
@@ -134,7 +134,7 @@ int ACARSDefragmenter::findfragment(ACARSItem &acarsitem)
 
             if(acarsitem.TAK!=pitem->anacarsitem.TAK)
             {
-                qDebug()<<"TAK is different??";
+        //        qDebug()<<"TAK is different??";
                 continue;
             }
 
@@ -149,18 +149,19 @@ int ACARSDefragmenter::findfragment(ACARSItem &acarsitem)
             }
              else
              {
-                tmp="failed count test."+expnewbi+acarsitem.BI;
+       //         tmp="failed count test.";
+                /*+expnewbi+acarsitem.BI;
                 tmp+=acarsitem.PLANEREG+"\n";
                 tmp+=acarsitem.LABEL+"\n";
                 tmp+=acarsitem.isuitem.AESID+"\n";
                 tmp+=pitem->anacarsitem.moretocome+"\n";
-                tmp+=acarsitem.isuitem.REFNO+"\n";
+                tmp+=acarsitem.isuitem.REFNO+"\n";*/
 
              }
 
         }
     }
-if(!tmp.isEmpty())qDebug()<<tmp;
+        //if(!tmp.isEmpty())qDebug()<<tmp;
     return -1;
 }
 

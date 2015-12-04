@@ -28,6 +28,8 @@ public:
     QVector<int> donotdisplaysus;
     bool dropnontextmsgs;
     QString msgdisplayformat;
+    bool loggingenable;
+    QString loggingdirectory;
 
 private:
     Ui::SettingsDialog *ui;    
@@ -37,6 +39,7 @@ protected:
 
 private slots:
 
+    void on_lineEditlogdir_editingFinished();
 };
 
 #endif // SETTINGSDIALOG_H

@@ -11,6 +11,7 @@
 #include "gui_classes/settingsdialog.h"
 #include "aerol.h"
 #include "gui_classes/planelog.h"
+#include <QFile>
 
 namespace Ui {
 class MainWindow;
@@ -45,6 +46,10 @@ private:
     void acceptsettings();
 
     PlaneLog *planelog;
+
+    void log(QString &text);
+    QFile filelog;
+    QTextStream outlogstream;
 
 protected:
     void closeEvent(QCloseEvent *event);

@@ -3,6 +3,7 @@
 #include <QDebug>
 #include <QSettings>
 #include <QStandardPaths>
+#include <QFile>
 
 SettingsDialog::SettingsDialog(QWidget *parent) :
     QDialog(parent),
@@ -64,6 +65,9 @@ void SettingsDialog::poulatepublicvars()
         }
     }
 
+    loggingdirectory=ui->lineEditlogdir->text();
+    loggingenable=ui->checkBoxlogenable->isChecked();
+
 }
 
 
@@ -85,8 +89,10 @@ void SettingsDialog::populatesettings()
     ui->lineEditdonotdisplaysus->setText(settings.value("lineEditdonotdisplaysus","71 18 19").toString());
     ui->checkBoxdropnontextmsgs->setChecked(settings.value("checkBoxdropnontextmsgs",true).toBool());
     ui->comboBoxsoundcard->setCurrentText(settings.value("comboBoxsoundcard","").toString());
-    ui->lineEditlogdir->setText(settings.value("lineEditlogdir",QStandardPaths::standardLocations(QStandardPaths::DocumentsLocation)).toString());
+    ui->lineEditlogdir->setText(settings.value("lineEditlogdir",QStandardPaths::standardLocations(QStandardPaths::DocumentsLocation)[0]+"/JAERO").toString());
     ui->checkBoxlogenable->setChecked(settings.value("checkBoxlogenable",false).toBool());
+
+    on_lineEditlogdir_editingFinished();
 
     poulatepublicvars();
 }
@@ -105,8 +111,16 @@ void SettingsDialog::accept()
     settings.setValue("lineEditdonotdisplaysus", ui->lineEditdonotdisplaysus->text());
     settings.setValue("checkBoxdropnontextmsgs", ui->checkBoxdropnontextmsgs->isChecked());
     settings.setValue("comboBoxsoundcard", ui->comboBoxsoundcard->currentText());
+    settings.setValue("lineEditlogdir", ui->lineEditlogdir->text());
+    settings.setValue("checkBoxlogenable", ui->checkBoxlogenable->isChecked());
 
     poulatepublicvars();
     QDialog::accept();
 }
 
+
+void SettingsDialog::on_lineEditlogdir_editingFinished()
+{
+    QFile file(ui->lineEditlogdir->text());
+    ui->lineEditlogdir->setText(file.fileName());
+}
