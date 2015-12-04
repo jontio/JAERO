@@ -92,7 +92,7 @@ void PlaneLog::ACARSslot(ACARSItem &acarsitem)
 
 
     int rows = ui->tableWidget->rowCount();
-    QString AESIDstr=((QString)"").sprintf("%06X",acarsitem.isuitem->AESID);
+    QString AESIDstr=((QString)"").sprintf("%06X",acarsitem.isuitem.AESID);
     bool found = false;
     int idx=-1;
     for(int i = 0; i < rows; ++i)
@@ -162,14 +162,19 @@ void PlaneLog::ACARSslot(ACARSItem &acarsitem)
     {
         if(!LastMessageitem->text().isEmpty())tmp+="\n";
 
+        QString message=acarsitem.message;
+        message.replace('\r','\n');
+        message.replace("\n\n","\n");
+        message.replace('\n',"●");
+
         QByteArray TAKstr;
         TAKstr+=acarsitem.TAK;
         if(acarsitem.TAK==0x15)TAKstr[0]='!';
         uchar label1=acarsitem.LABEL[1];
         if((uchar)acarsitem.LABEL[1]==127)label1='d';
         tmp+="✈: "+(((QString)"").sprintf("%s %c%c %c ",TAKstr.data(),(uchar)acarsitem.LABEL[0],label1,acarsitem.BI));
-        if(acarsitem.moretocome)LastMessageitem->setText(tmp+acarsitem.message+" ...more to come... ");
-         else LastMessageitem->setText(tmp+acarsitem.message);
+        if(acarsitem.moretocome)LastMessageitem->setText(tmp+message+" ...more to come... ");
+         else LastMessageitem->setText(tmp+message);
     }
 
 

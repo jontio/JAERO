@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>396</width>
-    <height>413</height>
+    <width>452</width>
+    <height>444</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -31,7 +31,7 @@
         <rect>
          <x>10</x>
          <y>10</y>
-         <width>351</width>
+         <width>401</width>
          <height>71</height>
         </rect>
        </property>
@@ -43,7 +43,7 @@
          <rect>
           <x>10</x>
           <y>30</y>
-          <width>331</width>
+          <width>381</width>
           <height>21</height>
          </rect>
         </property>
@@ -57,8 +57,8 @@
         <rect>
          <x>10</x>
          <y>90</y>
-         <width>351</width>
-         <height>151</height>
+         <width>401</width>
+         <height>101</height>
         </rect>
        </property>
        <property name="title">
@@ -68,7 +68,7 @@
         <property name="geometry">
          <rect>
           <x>20</x>
-          <y>100</y>
+          <y>60</y>
           <width>201</width>
           <height>19</height>
          </rect>
@@ -81,7 +81,7 @@
         <property name="geometry">
          <rect>
           <x>25</x>
-          <y>48</y>
+          <y>28</y>
           <width>48</width>
           <height>25</height>
          </rect>
@@ -109,7 +109,7 @@
         <property name="geometry">
          <rect>
           <x>80</x>
-          <y>50</y>
+          <y>30</y>
           <width>38</width>
           <height>21</height>
          </rect>
@@ -144,8 +144,8 @@
        <property name="geometry">
         <rect>
          <x>10</x>
-         <y>249</y>
-         <width>351</width>
+         <y>280</y>
+         <width>401</width>
          <height>71</height>
         </rect>
        </property>
@@ -157,9 +157,73 @@
          <rect>
           <x>10</x>
           <y>30</y>
-          <width>331</width>
+          <width>381</width>
           <height>22</height>
          </rect>
+        </property>
+       </widget>
+      </widget>
+      <widget class="QGroupBox" name="groupBox_6">
+       <property name="geometry">
+        <rect>
+         <x>10</x>
+         <y>200</y>
+         <width>401</width>
+         <height>71</height>
+        </rect>
+       </property>
+       <property name="title">
+        <string>Logging</string>
+       </property>
+       <widget class="QLineEdit" name="lineEditlogdir">
+        <property name="geometry">
+         <rect>
+          <x>100</x>
+          <y>30</y>
+          <width>201</width>
+          <height>21</height>
+         </rect>
+        </property>
+       </widget>
+       <widget class="QCheckBox" name="checkBoxlogenable">
+        <property name="geometry">
+         <rect>
+          <x>320</x>
+          <y>30</y>
+          <width>71</width>
+          <height>19</height>
+         </rect>
+        </property>
+        <property name="text">
+         <string>Enable</string>
+        </property>
+       </widget>
+       <widget class="QLabel" name="label_9">
+        <property name="geometry">
+         <rect>
+          <x>10</x>
+          <y>26</y>
+          <width>81</width>
+          <height>25</height>
+         </rect>
+        </property>
+        <property name="minimumSize">
+         <size>
+          <width>0</width>
+          <height>25</height>
+         </size>
+        </property>
+        <property name="maximumSize">
+         <size>
+          <width>16777215</width>
+          <height>25</height>
+         </size>
+        </property>
+        <property name="text">
+         <string>Directory</string>
+        </property>
+        <property name="alignment">
+         <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
         </property>
        </widget>
       </widget>

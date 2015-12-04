@@ -2,6 +2,7 @@
 #include "ui_settingsdialog.h"
 #include <QDebug>
 #include <QSettings>
+#include <QStandardPaths>
 
 SettingsDialog::SettingsDialog(QWidget *parent) :
     QDialog(parent),
@@ -80,10 +81,12 @@ void SettingsDialog::populatesettings()
     ui->spinBoxTXFreq->setValue(settings.value("spinBoxTXFreq",1000).toInt());
     ui->linePreamble->setText(settings.value("linePreamble","\\r|\\aNOCALL\\a \\aNOCALL\\a \\aNOCALL\\a\\n").toString());
     ui->linePostamble->setText(settings.value("linePostamble","\\n\\a73 NOCALL\\a\\n").toString());
-    ui->comboBoxDisplayformat->setCurrentIndex(settings.value("comboBoxDisplayformat",0).toInt());
+    ui->comboBoxDisplayformat->setCurrentIndex(settings.value("comboBoxDisplayformat",2).toInt());
     ui->lineEditdonotdisplaysus->setText(settings.value("lineEditdonotdisplaysus","71 18 19").toString());
     ui->checkBoxdropnontextmsgs->setChecked(settings.value("checkBoxdropnontextmsgs",true).toBool());
     ui->comboBoxsoundcard->setCurrentText(settings.value("comboBoxsoundcard","").toString());
+    ui->lineEditlogdir->setText(settings.value("lineEditlogdir",QStandardPaths::standardLocations(QStandardPaths::DocumentsLocation)).toString());
+    ui->checkBoxlogenable->setChecked(settings.value("checkBoxlogenable",false).toBool());
 
     poulatepublicvars();
 }

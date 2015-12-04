@@ -143,6 +143,7 @@ MainWindow::MainWindow(QWidget *parent) :
 
     acceptsettings();
 
+
 }
 
 void MainWindow::closeEvent(QCloseEvent *event)
@@ -342,6 +343,10 @@ void MainWindow::acceptsettings()
         audiomskdemodulator->start();
     }
 
+    if(settingsdialog->msgdisplayformat=="3")ui->inputwidget->setLineWrapMode(QPlainTextEdit::WidgetWidth);
+    else ui->inputwidget->setLineWrapMode(QPlainTextEdit::NoWrap);
+
+
 }
 
 void MainWindow::on_action_PlaneLog_triggered()
@@ -361,14 +366,22 @@ void MainWindow::ACARSslot(ACARSItem &acarsitem)
     //this is how you can change the display format in the lowwer window
     if(settingsdialog->msgdisplayformat=="1")
     {
+        ui->inputwidget->setLineWrapMode(QPlainTextEdit::NoWrap);
         if(acarsitem.TAK==0x15)TAKstr=((QString)"<NAK>").toLatin1();
-        if(acarsitem.message.isEmpty())humantext+=((QString)"").sprintf("ISU: AESID = %06X GESID = %02X QNO = %02X REFNO = %02X MODE = %c REG = %s TAK = %s LABEL = %02X%02X BI = %c",acarsitem.isuitem->AESID,acarsitem.isuitem->GESID,acarsitem.isuitem->QNO,acarsitem.isuitem->REFNO,acarsitem.MODE,acarsitem.PLANEREG.data(),TAKstr.data(),(uchar)acarsitem.LABEL[0],(uchar)acarsitem.LABEL[1],acarsitem.BI);
-        else humantext+=(((QString)"").sprintf("ISU: AESID = %06X GESID = %02X QNO = %02X REFNO = %02X MODE = %c REG = %s TAK = %s LABEL = %02X%02X BI = %c TEXT = \"",acarsitem.isuitem->AESID,acarsitem.isuitem->GESID,acarsitem.isuitem->QNO,acarsitem.isuitem->REFNO,acarsitem.MODE,acarsitem.PLANEREG.data(),TAKstr.data(),(uchar)acarsitem.LABEL[0],(uchar)acarsitem.LABEL[1],acarsitem.BI)+acarsitem.message+"\"");
+        if(acarsitem.message.isEmpty())humantext+=((QString)"").sprintf("ISU: AESID = %06X GESID = %02X QNO = %02X REFNO = %02X MODE = %c REG = %s TAK = %s LABEL = %02X%02X BI = %c",acarsitem.isuitem.AESID,acarsitem.isuitem.GESID,acarsitem.isuitem.QNO,acarsitem.isuitem.REFNO,acarsitem.MODE,acarsitem.PLANEREG.data(),TAKstr.data(),(uchar)acarsitem.LABEL[0],(uchar)acarsitem.LABEL[1],acarsitem.BI);
+         else
+         {
+            QString message=acarsitem.message;
+            message.replace('\r','\n');
+            message.replace("\n\n","\n");
+            message.replace('\n',"●");
+            humantext+=(((QString)"").sprintf("ISU: AESID = %06X GESID = %02X QNO = %02X REFNO = %02X MODE = %c REG = %s TAK = %s LABEL = %02X%02X BI = %c TEXT = \"",acarsitem.isuitem.AESID,acarsitem.isuitem.GESID,acarsitem.isuitem.QNO,acarsitem.isuitem.REFNO,acarsitem.MODE,acarsitem.PLANEREG.data(),TAKstr.data(),(uchar)acarsitem.LABEL[0],(uchar)acarsitem.LABEL[1],acarsitem.BI)+message+"\"");
+         }
         if(acarsitem.moretocome)humantext+=" ...more to come... ";
         humantext+="\t( ";
-        for(int k=0;k<(acarsitem.isuitem->userdata.size());k++)
+        for(int k=0;k<(acarsitem.isuitem.userdata.size());k++)
         {
-            uchar byte=((uchar)acarsitem.isuitem->userdata[k]);
+            uchar byte=((uchar)acarsitem.isuitem.userdata[k]);
             //byte&=0x7F;
             humantext+=((QString)"").sprintf("%02X ",byte);
         }
@@ -378,29 +391,39 @@ void MainWindow::ACARSslot(ACARSItem &acarsitem)
 
     if(settingsdialog->msgdisplayformat=="2")
     {
+        ui->inputwidget->setLineWrapMode(QPlainTextEdit::NoWrap);
         humantext+=QDateTime::currentDateTime().toString("hh:mm:ss dd-MM-yy ");
         if(acarsitem.TAK==0x15)TAKstr=((QString)"!").toLatin1();
         uchar label1=acarsitem.LABEL[1];
         if((uchar)acarsitem.LABEL[1]==127)label1='d';
-        if(acarsitem.message.isEmpty())humantext+=((QString)"").sprintf("AES:%06X GES:%02X %c %s %s %c%c %c",acarsitem.isuitem->AESID,acarsitem.isuitem->GESID,acarsitem.MODE,acarsitem.PLANEREG.data(),TAKstr.data(),(uchar)acarsitem.LABEL[0],label1,acarsitem.BI);
-        else humantext+=(((QString)"").sprintf("AES:%06X GES:%02X %c %s %s %c%c %c ",acarsitem.isuitem->AESID,acarsitem.isuitem->GESID,acarsitem.MODE,acarsitem.PLANEREG.data(),TAKstr.data(),(uchar)acarsitem.LABEL[0],label1,acarsitem.BI))+acarsitem.message;
+        if(acarsitem.message.isEmpty())humantext+=((QString)"").sprintf("AES:%06X GES:%02X %c %s %s %c%c %c",acarsitem.isuitem.AESID,acarsitem.isuitem.GESID,acarsitem.MODE,acarsitem.PLANEREG.data(),TAKstr.data(),(uchar)acarsitem.LABEL[0],label1,acarsitem.BI);
+         else
+         {
+            QString message=acarsitem.message;
+            message.replace('\r','\n');
+            message.replace("\n\n","\n");
+            message.replace('\n',"●");
+            humantext+=(((QString)"").sprintf("AES:%06X GES:%02X %c %s %s %c%c %c ",acarsitem.isuitem.AESID,acarsitem.isuitem.GESID,acarsitem.MODE,acarsitem.PLANEREG.data(),TAKstr.data(),(uchar)acarsitem.LABEL[0],label1,acarsitem.BI))+message;
+         }
         if(acarsitem.moretocome)humantext+=" ...more to come... ";
         if((!settingsdialog->dropnontextmsgs)||(!acarsitem.message.isEmpty()))ui->inputwidget->appendPlainText(humantext);
     }
 
     if(settingsdialog->msgdisplayformat=="3")
     {
+        ui->inputwidget->setLineWrapMode(QPlainTextEdit::WidgetWidth);
         QString message=acarsitem.message;
-        if(message.right(1)=="●")message.remove(acarsitem.message.size()-1,1);
-        if(message.right(1)!="●")message.append("\n");
-        if(message.left(1)!="●")message.prepend("\n\t");
-        message.replace("●","\n\t");
+        message.replace('\r','\n');
+        message.replace("\n\n","\n");
+        if(message.right(1)=="\n")message.remove(acarsitem.message.size()-1,1);
+        if(message.left(1)!="\n")message.remove(0,1);
+        message.replace("\n","\n\t");
         humantext+=QDateTime::currentDateTime().toString("hh:mm:ss dd-MM-yy ");
         if(acarsitem.TAK==0x15)TAKstr=((QString)"!").toLatin1();
         uchar label1=acarsitem.LABEL[1];
         if((uchar)acarsitem.LABEL[1]==127)label1='d';
-        if(acarsitem.message.isEmpty())humantext+=((QString)"").sprintf("AES:%06X GES:%02X %c %s %s %c%c %c",acarsitem.isuitem->AESID,acarsitem.isuitem->GESID,acarsitem.MODE,acarsitem.PLANEREG.data(),TAKstr.data(),(uchar)acarsitem.LABEL[0],label1,acarsitem.BI);
-        else humantext+=(((QString)"").sprintf("AES:%06X GES:%02X %c %s %s %c%c %c\n\t",acarsitem.isuitem->AESID,acarsitem.isuitem->GESID,acarsitem.MODE,acarsitem.PLANEREG.data(),TAKstr.data(),(uchar)acarsitem.LABEL[0],label1,acarsitem.BI))+message;
+        if(acarsitem.message.isEmpty())humantext+=((QString)"").sprintf("AES:%06X GES:%02X %c %s %s %c%c %c",acarsitem.isuitem.AESID,acarsitem.isuitem.GESID,acarsitem.MODE,acarsitem.PLANEREG.data(),TAKstr.data(),(uchar)acarsitem.LABEL[0],label1,acarsitem.BI);
+        else humantext+=(((QString)"").sprintf("AES:%06X GES:%02X %c %s %s %c%c %c\n\n\t",acarsitem.isuitem.AESID,acarsitem.isuitem.GESID,acarsitem.MODE,acarsitem.PLANEREG.data(),TAKstr.data(),(uchar)acarsitem.LABEL[0],label1,acarsitem.BI))+message+"\n";
         if(acarsitem.moretocome)humantext+=" ...more to come...\n";
         if((!settingsdialog->dropnontextmsgs)||(!acarsitem.message.isEmpty()))ui->inputwidget->appendPlainText(humantext);
     }

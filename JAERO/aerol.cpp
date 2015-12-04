@@ -102,6 +102,116 @@ bool ISUData::update(QByteArray data)
     return false;
 }
 
+int ACARSDefragmenter::findfragment(ACARSItem &acarsitem)
+{
+    QString tmp;
+    for(int idx=0;idx<acarsitemexts.size();idx++)
+    {
+        ACARSItemext *pitem=&acarsitemexts[idx];
+        /*if(acarsitem.isuitem.AESID==pitem->anacarsitem.isuitem.AESID)
+        {
+            qDebug()<<"same AESID";
+            qDebug()<<acarsitem.PLANEREG<<pitem->anacarsitem.PLANEREG;
+            qDebug()<<acarsitem.LABEL<<pitem->anacarsitem.LABEL;
+            qDebug()<<acarsitem.MODE<<pitem->anacarsitem.MODE;
+            qDebug()<<acarsitem.TAK<<pitem->anacarsitem.TAK;
+            qDebug()<<acarsitem.isuitem.AESID<<pitem->anacarsitem.isuitem.AESID;
+            qDebug()<<acarsitem.isuitem.GESID<<pitem->anacarsitem.isuitem.GESID;
+            qDebug()<<pitem->anacarsitem.moretocome;
+            qDebug()<<acarsitem.isuitem.REFNO<<pitem->anacarsitem.isuitem.REFNO;
+            qDebug()<<acarsitem.isuitem.SEQNO<<pitem->anacarsitem.isuitem.SEQNO;
+        }*/
+        if(
+                (acarsitem.PLANEREG==pitem->anacarsitem.PLANEREG)&&
+                (acarsitem.LABEL==pitem->anacarsitem.LABEL)&&
+                (acarsitem.MODE==pitem->anacarsitem.MODE)&&
+               // (acarsitem.TAK==pitem->anacarsitem.TAK)&& //i found once time TAK did not match should we skip this check??
+                (acarsitem.isuitem.AESID==pitem->anacarsitem.isuitem.AESID)&&
+                (acarsitem.isuitem.GESID==pitem->anacarsitem.isuitem.GESID)&&
+                (pitem->anacarsitem.moretocome)
+           )
+        {
+
+            if(acarsitem.TAK!=pitem->anacarsitem.TAK)
+            {
+                qDebug()<<"TAK is different??";
+                continue;
+            }
+
+//            qDebug()<<(char)pitem->anacarsitem.BI;
+//            qDebug()<<(char)acarsitem.BI;
+
+            uchar expnewbi=(((pitem->anacarsitem.BI+1)-'A')%26)+'A';
+            if(expnewbi==acarsitem.BI)
+            {
+//                qDebug()<<"found acars fragment"<<idx;
+                return idx;
+            }
+             else
+             {
+                tmp="failed count test."+expnewbi+acarsitem.BI;
+                tmp+=acarsitem.PLANEREG+"\n";
+                tmp+=acarsitem.LABEL+"\n";
+                tmp+=acarsitem.isuitem.AESID+"\n";
+                tmp+=pitem->anacarsitem.moretocome+"\n";
+                tmp+=acarsitem.isuitem.REFNO+"\n";
+
+             }
+
+        }
+    }
+if(!tmp.isEmpty())qDebug()<<tmp;
+    return -1;
+}
+
+bool ACARSDefragmenter::defragment(ACARSItem &acarsitem)
+{
+
+    //flush old frags
+    for(int i=0;i<acarsitemexts.size();i++)
+    {
+        acarsitemexts[i].count++;
+        if(acarsitemexts[i].count>20)
+        {
+            acarsitemexts.removeAt(i);
+            i--;
+        }
+    }
+
+    //if cant find frag then do nothing else push a new frag
+    int idx=findfragment(acarsitem);
+    if(idx<0)
+    {
+        if(!acarsitem.moretocome)return true;
+        anacarsitemext.anacarsitem=acarsitem;
+        anacarsitemext.count=0;
+        acarsitemexts.push_back(anacarsitemext);
+//        qDebug()<<"pushed first acars fragment"<<anacarsitemext.anacarsitem.isuitem.AESID;
+        return false;
+    }
+
+//    qDebug()<<"adding acars fragment"<<idx;
+
+    //update frag
+    ACARSItemext *polditem=&acarsitemexts[idx];
+    polditem->count=0;
+    polditem->anacarsitem.BI=acarsitem.BI;
+    polditem->anacarsitem.message+=acarsitem.message;
+    polditem->anacarsitem.moretocome=acarsitem.moretocome;
+
+    //more to come then do nothing
+    if(acarsitem.moretocome)return false;
+
+//    qDebug()<<"last acars fragment"<<idx;
+
+    //else return defragmented item with BI equal to last acars message
+    acarsitem=polditem->anacarsitem;
+    acarsitemexts.removeAt(idx);
+    return true;
+
+
+}
+
 ParserISU::ParserISU(QObject *parent):
     QObject(parent)
 {
@@ -148,7 +258,7 @@ bool ParserISU::parse(ISUItem &isuitem)
 
         //fill in header info
         anacarsitem.clear();
-        anacarsitem.isuitem=&isuitem;
+        anacarsitem.isuitem=isuitem;
         uchar byte=((uchar)isuitem.userdata[3]);
         anacarsitem.MODE=byte&0x7F;
         anacarsitem.TAK=((uchar)textish[11]);
@@ -183,20 +293,32 @@ bool ParserISU::parse(ISUItem &isuitem)
                     emit Errorsignal(anerror);
                     return false;
                 }
-                if(byte==10||byte==13)//replace CR and LF with a circle
+                /*if(byte==10||byte==13)//replace CR and LF with a circle
                 {
                     if(anacarsitem.message.right(1)=="●")continue;
                     anacarsitem.message+="●";
                 }
-                 else anacarsitem.message+=(char)byte;
+                 else anacarsitem.message+=(char)byte;*/
+
+                anacarsitem.message+=(char)byte;
+
             }
         }
 
         //mark as valid
         anacarsitem.valid=true;
 
+
+//anacarsitem.MODE=4+'0';
+//emit ACARSsignal(anacarsitem);
+//anacarsitem.MODE=2+'0';
+
+
+        //send acars message if fully defraged
+        if(acarsdefragmenter.defragment(anacarsitem))emit ACARSsignal(anacarsitem);
+
         //send acars message
-        emit ACARSsignal(anacarsitem);
+        //emit ACARSsignal(anacarsitem);
 
         return true;
     }

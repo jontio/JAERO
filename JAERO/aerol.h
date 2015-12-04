@@ -67,10 +67,21 @@ struct ISUItem {
     uchar NOOCTLESTINLASTSSU;
     QByteArray userdata;
     int count;
+    void clear()
+    {
+        AESID=0;
+        GESID=0;
+        QNO=0;
+        SEQNO=0;
+        REFNO=0;
+        NOOCTLESTINLASTSSU=0;
+        userdata.clear();
+        count=0;
+    }
 };
 
 struct ACARSItem {
-    ISUItem *isuitem;
+    ISUItem isuitem;
 
     char MODE;
     uchar TAK;
@@ -84,7 +95,7 @@ struct ACARSItem {
     QString message;
     void clear()
     {
-        isuitem=NULL;
+        isuitem.clear();
         valid=false;
         hastext=false;
         moretocome=false;
@@ -115,6 +126,21 @@ private:
     void deleteoldisuitems();
 };
 
+class ACARSDefragmenter
+{
+public:
+    ACARSDefragmenter(){}
+    bool defragment(ACARSItem &acarsitem);
+private:
+    struct ACARSItemext{
+        ACARSItem anacarsitem;
+        int count;
+    };
+    QList<ACARSItemext> acarsitemexts;
+    ACARSItemext anacarsitemext;
+    int findfragment(ACARSItem &acarsitem);
+};
+
 class ParserISU : public QObject
 {
     Q_OBJECT
@@ -125,6 +151,7 @@ signals:
     void ACARSsignal(ACARSItem &acarsitem);
     void Errorsignal(QString &error);
 private:
+    ACARSDefragmenter acarsdefragmenter;
     ACARSItem anacarsitem;
     QString anerror;
 };
