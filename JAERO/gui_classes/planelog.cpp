@@ -221,6 +221,9 @@ void PlaneLog::ACARSslot(ACARSItem &acarsitem)
         tmp+="✈: "+QDateTime::currentDateTime().toString("hh:mm:ss dd-MM-yy ")+(((QString)"").sprintf("AES:%06X GES:%02X %c %s %s %c%c %c●●",acarsitem.isuitem.AESID,acarsitem.isuitem.GESID,acarsitem.MODE,acarsitem.PLANEREG.data(),TAKstr.data(),(uchar)acarsitem.LABEL[0],label1,acarsitem.BI));
         if(acarsitem.moretocome)LastMessageitem->setText(tmp+message+" ...more to come... \n");
          else LastMessageitem->setText(tmp+message+"\n");
+
+        if(idx==ui->tableWidget->currentRow())updateinfopain(idx);
+
     }
 
 
@@ -379,13 +382,20 @@ void PlaneLog::contextMenuEvent(QContextMenuEvent *event)
 void PlaneLog::on_actionCopy_triggered()
 {
     QClipboard *clipboard = QApplication::clipboard();
-    QString str;
-    foreach(QTableWidgetItem *item,ui->tableWidget->selectedItems())
+    //QString str;
+
+    if(ui->tableWidget->selectedItems().size())
+    {
+        clipboard->setText(ui->tableWidget->selectedItems()[0]->text());
+    }
+
+
+    /*foreach(QTableWidgetItem *item,ui->tableWidget->selectedItems())
     {
         str+=(item->text()+"\t");
     }
     str.chop(1);
-    clipboard->setText(str);
+    clipboard->setText(str);*/
 }
 
 void PlaneLog::on_plainTextEditnotes_textChanged()
