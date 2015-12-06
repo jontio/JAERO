@@ -41,7 +41,7 @@ private slots:
 
     void on_actionCopy_triggered();
 
-    void on_plainTextEditnotes_textChanged();
+    void plainTextEditnotesChanged();
 
 
 private:

@@ -254,6 +254,9 @@
          <height>21</height>
         </rect>
        </property>
+       <property name="toolTip">
+        <string>URL for plane lookup. {AES} is the plane ICAO number in hex.</string>
+       </property>
        <property name="text">
         <string>http://junzisun.com/aif/?q={AES}#</string>
        </property>
@@ -279,6 +282,9 @@
          <width>291</width>
          <height>21</height>
         </rect>
+       </property>
+       <property name="toolTip">
+        <string>Planes are stored as {AES}.png or {AES}.jpg in this folder.</string>
        </property>
       </widget>
       <widget class="QLabel" name="label_6">

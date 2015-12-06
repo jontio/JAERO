@@ -13,9 +13,11 @@ public:
     struct Settings : public MskDemodulator::Settings
     {
         QAudioDeviceInfo audio_device_in;
+        double buffersizeinsecs;
         Settings()
         {
             audio_device_in=QAudioDeviceInfo::defaultInputDevice();
+            buffersizeinsecs=1.0;
         }
     };
     explicit AudioMskDemodulator(QObject *parent = 0);

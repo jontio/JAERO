@@ -30,6 +30,7 @@ PlaneLog::PlaneLog(QWidget *parent) :
     ui->tableWidget->horizontalHeader()->setAutoScroll(true);
     ui->tableWidget->setColumnHidden(5,true);
     updateinfoplanrow=-2;
+    connect(ui->plainTextEditnotes,SIGNAL(textChanged()),this,SLOT(plainTextEditnotesChanged()));
 
     //cant i just use a qmainwindow 2 times???
     QMainWindow * mainWindow = new QMainWindow();
@@ -222,7 +223,11 @@ void PlaneLog::ACARSslot(ACARSItem &acarsitem)
         if(acarsitem.moretocome)LastMessageitem->setText(tmp+message+" ...more to come... \n");
          else LastMessageitem->setText(tmp+message+"\n");
 
-        if(idx==ui->tableWidget->currentRow())updateinfopain(idx);
+        if(idx==ui->tableWidget->currentRow())
+        {
+            updateinfoplanrow=-2;
+            updateinfopain(idx);
+        }
 
     }
 
@@ -245,7 +250,9 @@ void PlaneLog::on_actionClear_triggered()
     ui->labelREG->clear();
     ui->labelfirst->clear();
     ui->labellast->clear();
+    disconnect(ui->plainTextEditnotes,SIGNAL(textChanged()),this,SLOT(plainTextEditnotesChanged()));
     ui->plainTextEditnotes->clear();
+    connect(ui->plainTextEditnotes,SIGNAL(textChanged()),this,SLOT(plainTextEditnotesChanged()));
     ui->textEditmessages->clear();
 }
 
@@ -347,8 +354,10 @@ void PlaneLog::updateinfopain(int row)
         else ui->toolButtonimg->setIcon(QPixmap(":/images/Plane_clip_art.svg"));
     }
 
+    disconnect(ui->plainTextEditnotes,SIGNAL(textChanged()),this,SLOT(plainTextEditnotesChanged()));
     ui->plainTextEditnotes->clear();
     ui->plainTextEditnotes->setPlainText(Notesitem->text());
+    connect(ui->plainTextEditnotes,SIGNAL(textChanged()),this,SLOT(plainTextEditnotesChanged()));
 
     updateinfoplanrow=row;
 
@@ -398,7 +407,7 @@ void PlaneLog::on_actionCopy_triggered()
     clipboard->setText(str);*/
 }
 
-void PlaneLog::on_plainTextEditnotes_textChanged()
+void PlaneLog::plainTextEditnotesChanged()
 {
     if(updateinfoplanrow<0)return;
     if(updateinfoplanrow>=ui->tableWidget->rowCount())return;

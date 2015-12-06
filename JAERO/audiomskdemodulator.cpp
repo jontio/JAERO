@@ -43,7 +43,7 @@ void AudioMskDemodulator::setSettings(Settings _settings)
 
         //setup
         m_audioInput = new QAudioInput(settings.audio_device_in, m_format, this);
-        m_audioInput->setBufferSize(settings.Fs);//1 second buffer
+        m_audioInput->setBufferSize(settings.Fs*settings.buffersizeinsecs);//buffersizeinsecs seconds of buffer
     }
     settings=_settings;
 
