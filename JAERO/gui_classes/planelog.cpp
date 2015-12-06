@@ -8,6 +8,15 @@
 #include <QPlainTextEdit>
 #include <QVBoxLayout>
 #include <QToolBar>
+#include <QStandardPaths>
+#include <QFileDialog>
+#include <QImage>
+#include <QDesktopServices>
+#include <QUrl>
+#include <QMenu>
+#include <QClipboard>
+
+
 
 PlaneLog::PlaneLog(QWidget *parent) :
     QWidget(parent),
@@ -15,7 +24,12 @@ PlaneLog::PlaneLog(QWidget *parent) :
 {
     ui->setupUi(this);
     wantedheightofrow=3;
+
+    ui->actionLeftRight->setVisible(false);
+    ui->actionUpDown->setVisible(false);
     ui->tableWidget->horizontalHeader()->setAutoScroll(true);
+    ui->tableWidget->setColumnHidden(5,true);
+    updateinfoplanrow=-2;
 
     //cant i just use a qmainwindow 2 times???
     QMainWindow * mainWindow = new QMainWindow();
@@ -45,10 +59,19 @@ PlaneLog::PlaneLog(QWidget *parent) :
         {
             QString str=((QString)"tableWidget-%1-%2").arg(row).arg(column);
             QTableWidgetItem *newItem = new QTableWidgetItem(settings.value(str,"").toString());
-            if(column<5)newItem->setTextAlignment(Qt::AlignHCenter|Qt::AlignVCenter);
+            if(column<7)newItem->setTextAlignment(Qt::AlignHCenter|Qt::AlignVCenter);
+            //if(column<7)
+            newItem->setFlags((newItem->flags()&~Qt::ItemIsEditable)|Qt::ItemIsSelectable);
             ui->tableWidget->setItem(row, column, newItem);
         }
     }
+    ui->tableWidget->selectRow(0);
+    ui->splitter_2->restoreState(settings.value("splitter_2").toByteArray());
+    ui->splitter->restoreState(settings.value("splitter").toByteArray());
+    restoreGeometry(settings.value("logwindow").toByteArray());
+
+    ui->splitter_2->setStretchFactor(0, 2);
+    ui->splitter_2->setStretchFactor(1, 10);
 
 }
 
@@ -60,6 +83,8 @@ void PlaneLog::closeEvent(QCloseEvent *event)
 
 void PlaneLog::showEvent(QShowEvent *event)
 {
+    updateinfoplanrow=-2;
+    updateinfopain(ui->tableWidget->currentRow());
     toolBar->setHidden(false);
     event->accept();
 }
@@ -78,6 +103,9 @@ PlaneLog::~PlaneLog()
             if(ui->tableWidget->item(row,column))settings.setValue(str,ui->tableWidget->item(row,column)->text());
         }
     }
+    settings.setValue("splitter", ui->splitter->saveState());
+    settings.setValue("splitter_2", ui->splitter_2->saveState());
+    settings.setValue("logwindow", saveGeometry());
 
 
     delete ui;    
@@ -110,6 +138,8 @@ void PlaneLog::ACARSslot(ACARSItem &acarsitem)
     QTableWidgetItem *LastHearditem;
     QTableWidgetItem *Countitem;
     QTableWidgetItem *LastMessageitem;
+    QTableWidgetItem *MessageCountitem;
+    QTableWidgetItem *Notesitem;
     if(!found)
     {
         idx=ui->tableWidget->rowCount();
@@ -122,20 +152,33 @@ void PlaneLog::ACARSslot(ACARSItem &acarsitem)
         LastHearditem = new QTableWidgetItem;
         Countitem = new QTableWidgetItem;
         LastMessageitem = new QTableWidgetItem;
+        MessageCountitem = new QTableWidgetItem;
+        Notesitem = new QTableWidgetItem;
         ui->tableWidget->setItem(idx,0,AESitem);
         ui->tableWidget->setItem(idx,1,REGitem);
         ui->tableWidget->setItem(idx,2,FirstHearditem);
         ui->tableWidget->setItem(idx,3,LastHearditem);
         ui->tableWidget->setItem(idx,4,Countitem);
         ui->tableWidget->setItem(idx,5,LastMessageitem);
+        ui->tableWidget->setItem(idx,6,MessageCountitem);
+        ui->tableWidget->setItem(idx,7,Notesitem);
         AESitem->setText(AESIDstr);
         Countitem->setText("0");
+        MessageCountitem->setText("0");
 
         AESitem->setTextAlignment(Qt::AlignHCenter|Qt::AlignVCenter);
         REGitem->setTextAlignment(Qt::AlignHCenter|Qt::AlignVCenter);
         Countitem->setTextAlignment(Qt::AlignHCenter|Qt::AlignVCenter);
         FirstHearditem->setTextAlignment(Qt::AlignHCenter|Qt::AlignVCenter);
         LastHearditem->setTextAlignment(Qt::AlignHCenter|Qt::AlignVCenter);
+        MessageCountitem->setTextAlignment(Qt::AlignHCenter|Qt::AlignVCenter);
+
+        AESitem->setFlags(AESitem->flags()&~Qt::ItemIsEditable);
+        REGitem->setFlags(REGitem->flags()&~Qt::ItemIsEditable);
+        Countitem->setFlags(Countitem->flags()&~Qt::ItemIsEditable);
+        FirstHearditem->setFlags(FirstHearditem->flags()&~Qt::ItemIsEditable);
+        LastHearditem->setFlags(LastHearditem->flags()&~Qt::ItemIsEditable);
+        Notesitem->setFlags(Notesitem->flags()&~Qt::ItemIsEditable);
 
         FirstHearditem->setText(QDateTime::currentDateTime().toString("yy-MM-dd hh:mm:ss"));
     }
@@ -145,6 +188,7 @@ void PlaneLog::ACARSslot(ACARSItem &acarsitem)
     LastHearditem = ui->tableWidget->item(idx, 3);
     Countitem = ui->tableWidget->item(idx, 4);
     LastMessageitem = ui->tableWidget->item(idx, 5);
+    MessageCountitem = ui->tableWidget->item(idx, 6);
 
     REGitem->setText(acarsitem.PLANEREG);
     LastHearditem->setText(QDateTime::currentDateTime().toString("yy-MM-dd hh:mm:ss"));
@@ -152,7 +196,7 @@ void PlaneLog::ACARSslot(ACARSItem &acarsitem)
     Countitem->setText(QString::number(Countitem->text().toInt()+1));
 
     QString tmp=LastMessageitem->text();
-    if(tmp.count('\n')>=10)
+    if(tmp.count('\n')>=29)
     {
         int idx=tmp.indexOf("\n");
         tmp=tmp.right(tmp.size()-idx-1);
@@ -160,11 +204,13 @@ void PlaneLog::ACARSslot(ACARSItem &acarsitem)
 
     if(!acarsitem.message.isEmpty())
     {
-        if(!LastMessageitem->text().isEmpty())tmp+="\n";
 
+        MessageCountitem->setText(QString::number(MessageCountitem->text().toInt()+1));
         QString message=acarsitem.message;
         message.replace('\r','\n');
         message.replace("\n\n","\n");
+        if(message.right(1)=="\n")message.remove(acarsitem.message.size()-1,1);
+        if(message.left(1)!="\n")message.remove(0,1);
         message.replace('\n',"●");
 
         QByteArray TAKstr;
@@ -172,9 +218,9 @@ void PlaneLog::ACARSslot(ACARSItem &acarsitem)
         if(acarsitem.TAK==0x15)TAKstr[0]='!';
         uchar label1=acarsitem.LABEL[1];
         if((uchar)acarsitem.LABEL[1]==127)label1='d';
-        tmp+="✈: "+(((QString)"").sprintf("%s %c%c %c ",TAKstr.data(),(uchar)acarsitem.LABEL[0],label1,acarsitem.BI));
-        if(acarsitem.moretocome)LastMessageitem->setText(tmp+message+" ...more to come... ");
-         else LastMessageitem->setText(tmp+message);
+        tmp+="✈: "+QDateTime::currentDateTime().toString("hh:mm:ss dd-MM-yy ")+(((QString)"").sprintf("AES:%06X GES:%02X %c %s %s %c%c %c●●",acarsitem.isuitem.AESID,acarsitem.isuitem.GESID,acarsitem.MODE,acarsitem.PLANEREG.data(),TAKstr.data(),(uchar)acarsitem.LABEL[0],label1,acarsitem.BI));
+        if(acarsitem.moretocome)LastMessageitem->setText(tmp+message+" ...more to come... \n");
+         else LastMessageitem->setText(tmp+message+"\n");
     }
 
 
@@ -191,6 +237,13 @@ void PlaneLog::on_actionClear_triggered()
 {
     ui->tableWidget->clearContents();
     for(int rows = 0; ui->tableWidget->rowCount(); rows++)ui->tableWidget->removeRow(0);
+    ui->toolButtonimg->setIcon(QPixmap(":/images/Plane_clip_art.svg"));
+    ui->labelAES->clear();
+    ui->labelREG->clear();
+    ui->labelfirst->clear();
+    ui->labellast->clear();
+    ui->plainTextEditnotes->clear();
+    ui->textEditmessages->clear();
 }
 
 void PlaneLog::on_actionUpDown_triggered()
@@ -249,3 +302,98 @@ void PlaneLog::on_actionStopSorting_triggered()
 {
     ui->tableWidget->sortItems(-1);
 }
+
+
+void PlaneLog::on_tableWidget_currentCellChanged(int currentRow, int currentColumn, int previousRow, int previousColumn)
+{
+    Q_UNUSED(currentColumn);
+    Q_UNUSED(previousColumn);
+    if(currentRow==previousRow)return;
+    updateinfopain(currentRow);
+
+}
+
+void PlaneLog::updateinfopain(int row)
+{
+    if(row<0)return;
+    if(row>=ui->tableWidget->rowCount())return;
+    QTableWidgetItem *LastMessageitem=ui->tableWidget->item(row, 5);
+    QTableWidgetItem *AESitem = ui->tableWidget->item(row, 0);
+    QTableWidgetItem *REGitem = ui->tableWidget->item(row, 1);
+    QTableWidgetItem *FirstHearditem = ui->tableWidget->item(row, 2);
+    QTableWidgetItem *LastHearditem = ui->tableWidget->item(row, 3);
+    QTableWidgetItem *Notesitem = ui->tableWidget->item(row, 7);
+
+    ui->labelAES->setText(AESitem->text());
+    ui->labelREG->setText(REGitem->text());
+    ui->labelfirst->setText(FirstHearditem->text());
+    ui->labellast->setText(LastHearditem->text());
+
+    QString str=LastMessageitem->text();
+    str.replace("●","\n\t");
+    str.replace("✈: ","\n");
+    ui->textEditmessages->setText(str);
+
+
+    QString imagefilename=imagesfolder+"/"+AESitem->text()+".png";
+    if(QFileInfo(imagefilename).exists())ui->toolButtonimg->setIcon(QPixmap(imagefilename));
+    else
+    {
+        imagefilename=imagesfolder+"/"+AESitem->text()+".jpg";
+        if(QFileInfo(imagefilename).exists())ui->toolButtonimg->setIcon(QPixmap(imagefilename));
+        else ui->toolButtonimg->setIcon(QPixmap(":/images/Plane_clip_art.svg"));
+    }
+
+    ui->plainTextEditnotes->clear();
+    ui->plainTextEditnotes->setPlainText(Notesitem->text());
+
+    updateinfoplanrow=row;
+
+}
+
+void PlaneLog::on_toolButtonimg_clicked()
+{
+    if(updateinfoplanrow<0)return;
+    if(updateinfoplanrow>=ui->tableWidget->rowCount())return;
+    if(updateinfoplanrow!=ui->tableWidget->currentRow())return;
+
+    QTableWidgetItem *AESitem = ui->tableWidget->item(updateinfoplanrow, 0);
+    QString url=planelookup;
+    url.replace("{AES}",AESitem->text());
+    QDesktopServices::openUrl(QUrl(url));
+}
+
+void PlaneLog::contextMenuEvent(QContextMenuEvent *event)
+{
+    if(!ui->tableWidget->rect().contains(ui->tableWidget->mapFromGlobal(event->globalPos())))
+    {
+        event->ignore();
+        return;
+    }
+    QMenu menu(this);
+    menu.addAction(ui->actionCopy);
+    menu.exec(event->globalPos());
+    event->accept();
+}
+
+void PlaneLog::on_actionCopy_triggered()
+{
+    QClipboard *clipboard = QApplication::clipboard();
+    QString str;
+    foreach(QTableWidgetItem *item,ui->tableWidget->selectedItems())
+    {
+        str+=(item->text()+"\t");
+    }
+    str.chop(1);
+    clipboard->setText(str);
+}
+
+void PlaneLog::on_plainTextEditnotes_textChanged()
+{
+    if(updateinfoplanrow<0)return;
+    if(updateinfoplanrow>=ui->tableWidget->rowCount())return;
+    if(updateinfoplanrow!=ui->tableWidget->currentRow())return;
+    QTableWidgetItem *Notesitem = ui->tableWidget->item(updateinfoplanrow, 7);
+    Notesitem->setText(ui->plainTextEditnotes->toPlainText());
+}
+

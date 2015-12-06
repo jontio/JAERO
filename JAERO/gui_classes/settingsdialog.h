@@ -32,6 +32,9 @@ public:
     QString loggingdirectory;
     bool widebandwidthenable;
 
+    QString imagesfolder;
+    QString planelookup;
+
 private:
     Ui::SettingsDialog *ui;    
     void poulatepublicvars();
@@ -41,6 +44,7 @@ protected:
 private slots:
 
     void on_lineEditlogdir_editingFinished();
+    void on_lineEditimagesfolder_editingFinished();
 };
 
 #endif // SETTINGSDIALOG_H

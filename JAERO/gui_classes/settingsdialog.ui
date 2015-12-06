@@ -241,6 +241,60 @@
        </widget>
       </widget>
      </widget>
+     <widget class="QWidget" name="logwindowsettings">
+      <attribute name="title">
+       <string>Log Window</string>
+      </attribute>
+      <widget class="QLineEdit" name="lineEditplanelookup">
+       <property name="geometry">
+        <rect>
+         <x>120</x>
+         <y>28</y>
+         <width>291</width>
+         <height>21</height>
+        </rect>
+       </property>
+       <property name="text">
+        <string>http://junzisun.com/aif/?q={AES}#</string>
+       </property>
+      </widget>
+      <widget class="QLabel" name="label_5">
+       <property name="geometry">
+        <rect>
+         <x>10</x>
+         <y>30</y>
+         <width>101</width>
+         <height>16</height>
+        </rect>
+       </property>
+       <property name="text">
+        <string>Plane lookup</string>
+       </property>
+      </widget>
+      <widget class="QLineEdit" name="lineEditimagesfolder">
+       <property name="geometry">
+        <rect>
+         <x>120</x>
+         <y>60</y>
+         <width>291</width>
+         <height>21</height>
+        </rect>
+       </property>
+      </widget>
+      <widget class="QLabel" name="label_6">
+       <property name="geometry">
+        <rect>
+         <x>10</x>
+         <y>60</y>
+         <width>101</width>
+         <height>16</height>
+        </rect>
+       </property>
+       <property name="text">
+        <string>Image folder</string>
+       </property>
+      </widget>
+     </widget>
      <widget class="QWidget" name="Transmission">
       <attribute name="title">
        <string>Transmission</string>
