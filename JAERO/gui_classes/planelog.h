@@ -4,6 +4,7 @@
 #include <QMainWindow>
 #include <QThread>
 #include "../aerol.h"
+#include <QTextCharFormat>
 
 namespace Ui {
 class PlaneLog;
@@ -84,10 +85,13 @@ protected:
     void closeEvent(QCloseEvent *event);
     void showEvent(QShowEvent *event);
     void contextMenuEvent(QContextMenuEvent *event) Q_DECL_OVERRIDE;
+    void resizeEvent(QResizeEvent *event) Q_DECL_OVERRIDE;
 public slots:
     void ACARSslot(ACARSItem &acarsitem);
 
 private slots:
+
+    void updatescrollbar();
 
     void on_actionClear_triggered();
 
@@ -107,6 +111,8 @@ private slots:
 
     void imageUpdateslot(const QPixmap &test);
 
+    void messagesliderchsnged(int value);
+
 private:
     Ui::PlaneLog *ui;
     int wantedheightofrow;
@@ -117,6 +123,8 @@ private:
     int updateinfoplanrow;
 
     ImageController *ic;
+
+    double wantedscrollprop;
 
 
 };

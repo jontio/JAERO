@@ -15,10 +15,23 @@
 #include <QUrl>
 #include <QMenu>
 #include <QClipboard>
+#include <QScrollBar>
 
 void PlaneLog::imageUpdateslot(const QPixmap &test)
 {
     ui->toolButtonimg->setIcon(test);
+}
+
+void PlaneLog::resizeEvent(QResizeEvent *event)
+{
+    QWidget::resizeEvent(event);
+    updatescrollbar();
+}
+
+void PlaneLog::updatescrollbar()
+{
+    double dvertscrollbarval=wantedscrollprop*((double)ui->textEditmessages->verticalScrollBar()->maximum());
+    ui->textEditmessages->verticalScrollBar()->setValue(dvertscrollbarval);
 }
 
 PlaneLog::PlaneLog(QWidget *parent) :
@@ -27,6 +40,8 @@ PlaneLog::PlaneLog(QWidget *parent) :
 {
     ui->setupUi(this);
     wantedheightofrow=3;
+
+    connect(ui->textEditmessages->verticalScrollBar(),SIGNAL(valueChanged(int)),this,SLOT(messagesliderchsnged(int)));
 
     //create image lookup controller and connect result to us
     ic=new ImageController(this);
@@ -56,6 +71,9 @@ PlaneLog::PlaneLog(QWidget *parent) :
     layout->addWidget(mainWindow);
     setLayout(layout);
 
+    connect(toolBar,SIGNAL(topLevelChanged(bool)),this,SLOT(updatescrollbar()));
+    connect(toolBar,SIGNAL(visibilityChanged(bool)),this,SLOT(updatescrollbar()));
+
     //load settings
     QSettings settings("Jontisoft", "JAERO");
     QFontMetrics fm(ui->tableWidget->font());
@@ -77,6 +95,7 @@ PlaneLog::PlaneLog(QWidget *parent) :
     ui->splitter_2->restoreState(settings.value("splitter_2").toByteArray());
     ui->splitter->restoreState(settings.value("splitter").toByteArray());
     restoreGeometry(settings.value("logwindow").toByteArray());
+    wantedscrollprop=settings.value("wantedscrollprop",1.0).toDouble();
 
     ui->splitter_2->setStretchFactor(0, 2);
     ui->splitter_2->setStretchFactor(1, 10);
@@ -97,6 +116,7 @@ void PlaneLog::showEvent(QShowEvent *event)
     event->accept();
 }
 
+
 PlaneLog::~PlaneLog()
 {
 
@@ -114,6 +134,7 @@ PlaneLog::~PlaneLog()
     settings.setValue("splitter", ui->splitter->saveState());
     settings.setValue("splitter_2", ui->splitter_2->saveState());
     settings.setValue("logwindow", saveGeometry());
+    settings.setValue("wantedscrollprop",wantedscrollprop);
 
 
     delete ui;    
@@ -326,7 +347,6 @@ void PlaneLog::on_tableWidget_currentCellChanged(int currentRow, int currentColu
     Q_UNUSED(previousColumn);
     if(currentRow==previousRow)return;
     updateinfopain(currentRow);
-
 }
 
 void PlaneLog::updateinfopain(int row)
@@ -348,9 +368,13 @@ void PlaneLog::updateinfopain(int row)
     QString str=LastMessageitem->text();
     str.replace("●","\n\t");
     str.replace("✈: ","\n");
-    ui->textEditmessages->setText(str);
 
-    //Qt is great. so simple. look just one line
+    //remember scroll val
+    if(ui->textEditmessages->verticalScrollBar()->maximum()>0)wantedscrollprop=((double)ui->textEditmessages->verticalScrollBar()->value())/((double)ui->textEditmessages->verticalScrollBar()->maximum());
+    ui->textEditmessages->setText(str);
+    updatescrollbar();
+
+    //Qt is great. so simple. look, just one line
     ic->asyncImageLookupFromAES(imagesfolder,AESitem->text());
 
     //old code. blocking
@@ -372,6 +396,11 @@ void PlaneLog::updateinfopain(int row)
 
 }
 
+void PlaneLog::messagesliderchsnged(int value)
+{
+    if(ui->textEditmessages->verticalScrollBar()->maximum()>0)wantedscrollprop=((double)value)/((double)ui->textEditmessages->verticalScrollBar()->maximum());
+}
+
 void PlaneLog::on_toolButtonimg_clicked()
 {
     if(updateinfoplanrow<0)return;
@@ -386,6 +415,7 @@ void PlaneLog::on_toolButtonimg_clicked()
 
 void PlaneLog::contextMenuEvent(QContextMenuEvent *event)
 {
+    //tablewidget menu
     if(!ui->tableWidget->rect().contains(ui->tableWidget->mapFromGlobal(event->globalPos())))
     {
         event->ignore();
@@ -400,15 +430,14 @@ void PlaneLog::contextMenuEvent(QContextMenuEvent *event)
 void PlaneLog::on_actionCopy_triggered()
 {
     QClipboard *clipboard = QApplication::clipboard();
-    //QString str;
 
     if(ui->tableWidget->selectedItems().size())
     {
         clipboard->setText(ui->tableWidget->selectedItems()[0]->text());
     }
 
-
-    /*foreach(QTableWidgetItem *item,ui->tableWidget->selectedItems())
+    /*QString str;
+    foreach(QTableWidgetItem *item,ui->tableWidget->selectedItems())
     {
         str+=(item->text()+"\t");
     }
