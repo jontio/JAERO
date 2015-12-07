@@ -16,7 +16,10 @@
 #include <QMenu>
 #include <QClipboard>
 
-
+void PlaneLog::imageUpdateslot(const QPixmap &test)
+{
+    ui->toolButtonimg->setIcon(test);
+}
 
 PlaneLog::PlaneLog(QWidget *parent) :
     QWidget(parent),
@@ -24,6 +27,10 @@ PlaneLog::PlaneLog(QWidget *parent) :
 {
     ui->setupUi(this);
     wantedheightofrow=3;
+
+    //create image lookup controller and connect result to us
+    ic=new ImageController(this);
+    connect(ic,SIGNAL(result(QPixmap)),this,SLOT(imageUpdateslot(QPixmap)));
 
     ui->actionLeftRight->setVisible(false);
     ui->actionUpDown->setVisible(false);
@@ -118,7 +125,6 @@ void PlaneLog::ACARSslot(ACARSItem &acarsitem)
     if(!acarsitem.valid)return;
 
     ui->tableWidget->setSortingEnabled(false);//!!!!!
-
 
     int rows = ui->tableWidget->rowCount();
     QString AESIDstr=((QString)"").sprintf("%06X",acarsitem.isuitem.AESID);
@@ -344,15 +350,18 @@ void PlaneLog::updateinfopain(int row)
     str.replace("✈: ","\n");
     ui->textEditmessages->setText(str);
 
+    //Qt is great. so simple. look just one line
+    ic->asyncImageLookupFromAES(imagesfolder,AESitem->text());
 
-    QString imagefilename=imagesfolder+"/"+AESitem->text()+".png";
+    //old code. blocking
+    /*QString imagefilename=imagesfolder+"/"+AESitem->text()+".png";
     if(QFileInfo(imagefilename).exists())ui->toolButtonimg->setIcon(QPixmap(imagefilename));
     else
     {
         imagefilename=imagesfolder+"/"+AESitem->text()+".jpg";
         if(QFileInfo(imagefilename).exists())ui->toolButtonimg->setIcon(QPixmap(imagefilename));
         else ui->toolButtonimg->setIcon(QPixmap(":/images/Plane_clip_art.svg"));
-    }
+    }*/
 
     disconnect(ui->plainTextEditnotes,SIGNAL(textChanged()),this,SLOT(plainTextEditnotesChanged()));
     ui->plainTextEditnotes->clear();
