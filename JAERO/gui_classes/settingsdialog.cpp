@@ -69,7 +69,7 @@ void SettingsDialog::poulatepublicvars()
     loggingenable=ui->checkBoxlogenable->isChecked();
     widebandwidthenable=ui->checkBoxlogwidebandwidthenable->isChecked();
 
-    imagesfolder=ui->lineEditimagesfolder->text();
+    planesfolder=ui->lineEditplanesfolder->text();
     planelookup=ui->lineEditplanelookup->text();
 
 }
@@ -96,7 +96,7 @@ void SettingsDialog::populatesettings()
     ui->lineEditlogdir->setText(settings.value("lineEditlogdir",QStandardPaths::standardLocations(QStandardPaths::DocumentsLocation)[0]+"/JAERO").toString());
     ui->checkBoxlogenable->setChecked(settings.value("checkBoxlogenable",false).toBool());
     ui->checkBoxlogwidebandwidthenable->setChecked(settings.value("checkBoxlogwidebandwidthenable",false).toBool());
-    ui->lineEditimagesfolder->setText(settings.value("lineEditimagesfolder",QStandardPaths::standardLocations(QStandardPaths::PicturesLocation)[0]).toString());
+    ui->lineEditplanesfolder->setText(settings.value("lineEditplanesfolder",QStandardPaths::standardLocations(QStandardPaths::PicturesLocation)[0]).toString());
     ui->lineEditplanelookup->setText(settings.value("lineEditplanelookup","http://junzisun.com/aif/?q={AES}#").toString());
 
 
@@ -122,7 +122,7 @@ void SettingsDialog::accept()
     settings.setValue("lineEditlogdir", ui->lineEditlogdir->text());
     settings.setValue("checkBoxlogenable", ui->checkBoxlogenable->isChecked());
     settings.setValue("checkBoxlogwidebandwidthenable", ui->checkBoxlogwidebandwidthenable->isChecked());
-    settings.setValue("lineEditimagesfolder", ui->lineEditimagesfolder->text());
+    settings.setValue("lineEditplanesfolder", ui->lineEditplanesfolder->text());
     settings.setValue("lineEditplanelookup", ui->lineEditplanelookup->text());
 
     poulatepublicvars();
@@ -136,8 +136,8 @@ void SettingsDialog::on_lineEditlogdir_editingFinished()
     ui->lineEditlogdir->setText(file.fileName());
 }
 
-void SettingsDialog::on_lineEditimagesfolder_editingFinished()
+void SettingsDialog::on_lineEditplanesfolder_editingFinished()
 {
-    QFile file(ui->lineEditimagesfolder->text());
-    ui->lineEditimagesfolder->setText(file.fileName());
+    QFile file(ui->lineEditplanesfolder->text());
+    ui->lineEditplanesfolder->setText(file.fileName());
 }

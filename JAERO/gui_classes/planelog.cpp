@@ -16,10 +16,21 @@
 #include <QMenu>
 #include <QClipboard>
 #include <QScrollBar>
+#include <QMessageBox>
 
-void PlaneLog::imageUpdateslot(const QPixmap &test)
+void PlaneLog::imageUpdateslot(const QPixmap &image)
 {
-    ui->toolButtonimg->setIcon(test);
+    ui->toolButtonimg->setIcon(image);
+}
+
+void PlaneLog::dbUpdateslot(const QStringList &dbitem)
+{
+    ui->label_type->clear();
+    ui->label_owner->clear();
+    ui->label_type->setText(dbitem[6]);
+    ui->label_owner->setText(dbitem[7]);
+    //ui->plainTextEditnotes->setPlainText(dbitem[6]+"\n"+dbitem[7]);
+    //qDebug()<<dbitem;
 }
 
 void PlaneLog::resizeEvent(QResizeEvent *event)
@@ -41,11 +52,18 @@ PlaneLog::PlaneLog(QWidget *parent) :
     ui->setupUi(this);
     wantedheightofrow=3;
 
+    ui->label_type->clear();
+    ui->label_owner->clear();
+
     connect(ui->textEditmessages->verticalScrollBar(),SIGNAL(valueChanged(int)),this,SLOT(messagesliderchsnged(int)));
 
     //create image lookup controller and connect result to us
     ic=new ImageController(this);
     connect(ic,SIGNAL(result(QPixmap)),this,SLOT(imageUpdateslot(QPixmap)));
+
+    //create database lookup controller and connect result to us
+    dbc=new DbLookupController(this);
+    connect(dbc,SIGNAL(result(QStringList)),this,SLOT(dbUpdateslot(QStringList)));
 
     ui->actionLeftRight->setVisible(false);
     ui->actionUpDown->setVisible(false);
@@ -262,14 +280,29 @@ void PlaneLog::ACARSslot(ACARSItem &acarsitem)
     ui->tableWidget->setSortingEnabled(true);//allow sorting again
 }
 
-
-    //you can add images like this
-    //QPixmap pixmap( ":/images/clear.png" );
-    //ui->tableWidget->item(0, 0)->setData(Qt::DecorationRole, pixmap);
-
-
 void PlaneLog::on_actionClear_triggered()
 {
+
+    //confirm
+    QMessageBox msgBox;
+    msgBox.setIcon(QMessageBox::Question);
+    msgBox.setWindowIcon(QPixmap(":/images/primary-modem.svg"));
+    msgBox.setText("This will erase this window log\nAre you sure?");
+    msgBox.setStandardButtons(QMessageBox::Yes | QMessageBox::No);
+    msgBox.setDefaultButton(QMessageBox::No);
+    msgBox.setWindowTitle("Confirm log deletion");
+    switch(msgBox.exec())
+    {
+    case QMessageBox::No:
+        return;
+        break;
+    case QMessageBox::Yes:
+        break;
+    default:
+        return;
+        break;
+    }
+
     ui->tableWidget->clearContents();
     for(int rows = 0; ui->tableWidget->rowCount(); rows++)ui->tableWidget->removeRow(0);
     ui->toolButtonimg->setIcon(QPixmap(":/images/Plane_clip_art.svg"));
@@ -375,7 +408,12 @@ void PlaneLog::updateinfopain(int row)
     updatescrollbar();
 
     //Qt is great. so simple. look, just one line
-    ic->asyncImageLookupFromAES(imagesfolder,AESitem->text());
+    ic->asyncImageLookupFromAES(planesfolder,AESitem->text());
+
+    //db lookup request
+    ui->label_type->clear();
+    ui->label_owner->clear();
+    dbc->asyncDbLookupFromAES(planesfolder,AESitem->text());
 
     //old code. blocking
     /*QString imagefilename=imagesfolder+"/"+AESitem->text()+".png";

@@ -13,6 +13,10 @@
   <property name="windowTitle">
    <string>Plane Log</string>
   </property>
+  <property name="windowIcon">
+   <iconset resource="../jaero.qrc">
+    <normaloff>:/images/primary-modem.svg</normaloff>:/images/primary-modem.svg</iconset>
+  </property>
   <widget class="QWidget" name="widget" native="true">
    <property name="geometry">
     <rect>
@@ -58,7 +62,7 @@
           </property>
           <property name="icon">
            <iconset resource="../jaero.qrc">
-            <normaloff>:/images/application-exit.png</normaloff>:/images/application-exit.png</iconset>
+            <normaloff>:/images/Plane_clip_art.svg</normaloff>:/images/Plane_clip_art.svg</iconset>
           </property>
           <property name="iconSize">
            <size>
@@ -75,7 +79,7 @@
          <widget class="QWidget" name="widget_2" native="true">
           <property name="minimumSize">
            <size>
-            <width>200</width>
+            <width>220</width>
             <height>0</height>
            </size>
           </property>
@@ -89,7 +93,7 @@
            <property name="geometry">
             <rect>
              <x>20</x>
-             <y>40</y>
+             <y>30</y>
              <width>71</width>
              <height>20</height>
             </rect>
@@ -102,7 +106,7 @@
            <property name="geometry">
             <rect>
              <x>20</x>
-             <y>20</y>
+             <y>10</y>
              <width>71</width>
              <height>20</height>
             </rect>
@@ -115,7 +119,7 @@
            <property name="geometry">
             <rect>
              <x>100</x>
-             <y>20</y>
+             <y>10</y>
              <width>61</width>
              <height>20</height>
             </rect>
@@ -131,7 +135,7 @@
            <property name="geometry">
             <rect>
              <x>100</x>
-             <y>40</y>
+             <y>30</y>
              <width>71</width>
              <height>20</height>
             </rect>
@@ -147,7 +151,7 @@
            <property name="geometry">
             <rect>
              <x>100</x>
-             <y>60</y>
+             <y>50</y>
              <width>91</width>
              <height>20</height>
             </rect>
@@ -163,7 +167,7 @@
            <property name="geometry">
             <rect>
              <x>20</x>
-             <y>80</y>
+             <y>70</y>
              <width>71</width>
              <height>20</height>
             </rect>
@@ -176,7 +180,7 @@
            <property name="geometry">
             <rect>
              <x>20</x>
-             <y>60</y>
+             <y>50</y>
              <width>71</width>
              <height>20</height>
             </rect>
@@ -189,7 +193,7 @@
            <property name="geometry">
             <rect>
              <x>100</x>
-             <y>80</y>
+             <y>70</y>
              <width>91</width>
              <height>20</height>
             </rect>
@@ -199,6 +203,32 @@
            </property>
            <property name="textInteractionFlags">
             <set>Qt::LinksAccessibleByMouse|Qt::TextSelectableByKeyboard|Qt::TextSelectableByMouse</set>
+           </property>
+          </widget>
+          <widget class="QLabel" name="label_type">
+           <property name="geometry">
+            <rect>
+             <x>20</x>
+             <y>90</y>
+             <width>251</width>
+             <height>20</height>
+            </rect>
+           </property>
+           <property name="text">
+            <string>type</string>
+           </property>
+          </widget>
+          <widget class="QLabel" name="label_owner">
+           <property name="geometry">
+            <rect>
+             <x>20</x>
+             <y>110</y>
+             <width>261</width>
+             <height>20</height>
+            </rect>
+           </property>
+           <property name="text">
+            <string>owner</string>
            </property>
           </widget>
          </widget>

@@ -20,7 +20,7 @@
       <bool>true</bool>
      </property>
      <property name="currentIndex">
-      <number>0</number>
+      <number>1</number>
      </property>
      <widget class="QWidget" name="Decoding">
       <attribute name="title">
@@ -274,7 +274,7 @@
         <string>Plane lookup</string>
        </property>
       </widget>
-      <widget class="QLineEdit" name="lineEditimagesfolder">
+      <widget class="QLineEdit" name="lineEditplanesfolder">
        <property name="geometry">
         <rect>
          <x>120</x>
@@ -284,7 +284,7 @@
         </rect>
        </property>
        <property name="toolTip">
-        <string>Planes are stored as {AES}.png or {AES}.jpg in this folder.</string>
+        <string>Planes images are stored as {AES}.png or {AES}.jpg and database as aircrafts_dump.csv in this folder.</string>
        </property>
       </widget>
       <widget class="QLabel" name="label_6">
@@ -297,7 +297,7 @@
         </rect>
        </property>
        <property name="text">
-        <string>Image folder</string>
+        <string>Plane folder</string>
        </property>
       </widget>
      </widget>

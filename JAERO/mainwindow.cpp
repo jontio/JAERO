@@ -368,7 +368,7 @@ void MainWindow::acceptsettings()
     if(settingsdialog->msgdisplayformat=="3")ui->inputwidget->setLineWrapMode(QPlainTextEdit::WidgetWidth);
     else ui->inputwidget->setLineWrapMode(QPlainTextEdit::NoWrap);
 
-    planelog->imagesfolder=settingsdialog->imagesfolder;
+    planelog->planesfolder=settingsdialog->planesfolder;
     planelog->planelookup=settingsdialog->planelookup;
 
 

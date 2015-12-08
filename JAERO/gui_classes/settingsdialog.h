@@ -32,7 +32,7 @@ public:
     QString loggingdirectory;
     bool widebandwidthenable;
 
-    QString imagesfolder;
+    QString planesfolder;
     QString planelookup;
 
 private:
@@ -44,7 +44,7 @@ protected:
 private slots:
 
     void on_lineEditlogdir_editingFinished();
-    void on_lineEditimagesfolder_editingFinished();
+    void on_lineEditplanesfolder_editingFinished();
 };
 
 #endif // SETTINGSDIALOG_H
