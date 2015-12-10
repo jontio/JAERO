@@ -29,8 +29,32 @@ void PlaneLog::dbUpdateslot(const QStringList &dbitem)
     ui->label_owner->clear();
     ui->label_type->setText(dbitem[6]);
     ui->label_owner->setText(dbitem[7]);
-    //ui->plainTextEditnotes->setPlainText(dbitem[6]+"\n"+dbitem[7]);
-    //qDebug()<<dbitem;
+
+    ui->plainTextEditdatabase->clear();
+    ui->plainTextEditdatabase->appendPlainText("Reg. ID         \t"+dbitem[1]);
+    ui->plainTextEditdatabase->appendPlainText("Model           \t"+dbitem[2]);
+    ui->plainTextEditdatabase->appendPlainText("Type            \t"+dbitem[6]);
+    ui->plainTextEditdatabase->appendPlainText("Owner           \t"+dbitem[7]);
+    ui->plainTextEditdatabase->appendPlainText("Call Sign (Last)\t"+dbitem[4]);
+    ui->plainTextEditdatabase->appendPlainText("Flight (Last)   \t"+dbitem[5]);
+    QDateTime timestamp;
+    timestamp.setTime_t(((QString)dbitem[8]).toUInt());
+    ui->plainTextEditdatabase->appendPlainText("Updated (Local) \t"+timestamp.toString("yy-MM-dd hh:mm:ss"));
+
+    if(updateinfoplanrow<0)return;
+    if(updateinfoplanrow>=ui->tableWidget->rowCount())return;
+    if(updateinfoplanrow!=ui->tableWidget->currentRow())return;
+    if(!ui->plainTextEditnotes->toPlainText().isEmpty())return;
+    ui->plainTextEditnotes->setPlainText(dbitem[6]+"\n"+dbitem[7]+"\n");
+
+}
+
+void PlaneLog::dbUpdateerrorslot(const QString &error)
+{
+    ui->label_type->clear();
+    ui->label_owner->clear();
+    ui->plainTextEditdatabase->clear();
+    ui->plainTextEditdatabase->setPlainText(error);
 }
 
 void PlaneLog::resizeEvent(QResizeEvent *event)
@@ -64,6 +88,7 @@ PlaneLog::PlaneLog(QWidget *parent) :
     //create database lookup controller and connect result to us
     dbc=new DbLookupController(this);
     connect(dbc,SIGNAL(result(QStringList)),this,SLOT(dbUpdateslot(QStringList)));
+    connect(dbc,SIGNAL(error(QString)),this,SLOT(dbUpdateerrorslot(QString)));
 
     ui->actionLeftRight->setVisible(false);
     ui->actionUpDown->setVisible(false);
@@ -116,7 +141,8 @@ PlaneLog::PlaneLog(QWidget *parent) :
     wantedscrollprop=settings.value("wantedscrollprop",1.0).toDouble();
 
     ui->splitter_2->setStretchFactor(0, 2);
-    ui->splitter_2->setStretchFactor(1, 10);
+    ui->splitter_2->setStretchFactor(1, 2);
+    ui->splitter_2->setStretchFactor(2, 10);
 
 }
 
@@ -139,6 +165,9 @@ PlaneLog::~PlaneLog()
 {
 
     //save settings
+    //other options could be then easy to backup if need be
+    //QSettings settings(QSettings::IniFormat, QSettings::UserScope,"Jontisoft", "JAERO");
+    //QSettings settings(afilename,QSettings::IniFormat);
     QSettings settings("Jontisoft", "JAERO");
     settings.setValue("tableWidget-rows",ui->tableWidget->rowCount());
     for(int row=0;row<ui->tableWidget->rowCount();row++)
@@ -373,7 +402,6 @@ void PlaneLog::on_actionStopSorting_triggered()
     ui->tableWidget->sortItems(-1);
 }
 
-
 void PlaneLog::on_tableWidget_currentCellChanged(int currentRow, int currentColumn, int previousRow, int previousColumn)
 {
     Q_UNUSED(currentColumn);
@@ -413,6 +441,7 @@ void PlaneLog::updateinfopain(int row)
     //db lookup request
     ui->label_type->clear();
     ui->label_owner->clear();
+    ui->plainTextEditdatabase->clear();
     dbc->asyncDbLookupFromAES(planesfolder,AESitem->text());
 
     //old code. blocking
@@ -446,8 +475,56 @@ void PlaneLog::on_toolButtonimg_clicked()
     if(updateinfoplanrow!=ui->tableWidget->currentRow())return;
 
     QTableWidgetItem *AESitem = ui->tableWidget->item(updateinfoplanrow, 0);
+    QTableWidgetItem *REGitem = ui->tableWidget->item(updateinfoplanrow, 1);
+
+    QClipboard *clipboard = QApplication::clipboard();
+    clipboard->setText(AESitem->text());
+
+    //if found {REG} is database reg else we guess what it should be from the txed reg that maybe different
+
+    //db reg number
+    QString regstr;
+    QString str=ui->plainTextEditdatabase->toPlainText();
+    QStringList list=str.split('\n');
+    if(list.size()>3)
+    {
+        QRegExp rx("Reg. ID([\\s]*)(.+)");
+        if(rx.indexIn(list[0])!=-1)
+        {
+            regstr=rx.cap(2).toLower();
+        }
+    }
+
+    /*QString str=ui->plainTextEditdatabase->toPlainText();
+    QStringList list=str.split('\n');
+    if(list.size()>3)
+    {
+        QRegExp rx("Reg. ID([\\s]*)(.+)");
+        if(rx.indexIn(list[0])!=-1)
+        {
+            QString url="http://www.flightradar24.com/data/airplanes/"+rx.cap(2).toLower();
+            QDesktopServices::openUrl(QUrl(url));
+            return;
+        }
+    }*/
+
+    if(regstr.isEmpty())
+    {
+        regstr=REGitem->text().toLower().trimmed();
+        regstr.replace(".","");
+        QRegExp rx("([a-z_0-9]*)");
+        if((regstr.size()==7)&&(rx.indexIn(regstr)!=-1))
+        {
+            if(rx.cap(1).size()==7)
+            {
+                regstr.insert(2,'-');
+            }
+        }
+    }
+
     QString url=planelookup;
     url.replace("{AES}",AESitem->text());
+    url.replace("{REG}",regstr);
     QDesktopServices::openUrl(QUrl(url));
 }
 
@@ -491,4 +568,3 @@ void PlaneLog::plainTextEditnotesChanged()
     QTableWidgetItem *Notesitem = ui->tableWidget->item(updateinfoplanrow, 7);
     Notesitem->setText(ui->plainTextEditnotes->toPlainText());
 }
-

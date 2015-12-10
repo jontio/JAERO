@@ -4,6 +4,7 @@
 #include <QDialog>
 #include <QVector>
 #include "../audiomskmodulator.h"
+#include "../downloadmanager.h"
 
 namespace Ui {
 class SettingsDialog;
@@ -38,6 +39,7 @@ public:
 private:
     Ui::SettingsDialog *ui;    
     void poulatepublicvars();
+
 protected:
     void accept();
 
@@ -45,6 +47,7 @@ private slots:
 
     void on_lineEditlogdir_editingFinished();
     void on_lineEditplanesfolder_editingFinished();
+    void on_pushButtonDownloadDB_clicked();
 };
 
 #endif // SETTINGSDIALOG_H

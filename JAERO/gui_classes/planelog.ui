@@ -22,8 +22,8 @@
     <rect>
      <x>11</x>
      <y>11</y>
-     <width>707</width>
-     <height>604</height>
+     <width>727</width>
+     <height>818</height>
     </rect>
    </property>
    <layout class="QVBoxLayout" name="verticalLayout">
@@ -152,7 +152,7 @@
             <rect>
              <x>100</x>
              <y>50</y>
-             <width>91</width>
+             <width>71</width>
              <height>20</height>
             </rect>
            </property>
@@ -194,7 +194,7 @@
             <rect>
              <x>100</x>
              <y>70</y>
-             <width>91</width>
+             <width>71</width>
              <height>20</height>
             </rect>
            </property>
@@ -250,7 +250,7 @@
              <number>1</number>
             </property>
             <property name="topMargin">
-             <number>1</number>
+             <number>2</number>
             </property>
             <property name="rightMargin">
              <number>1</number>
@@ -260,6 +260,35 @@
             </property>
             <item>
              <widget class="QPlainTextEdit" name="plainTextEditnotes"/>
+            </item>
+           </layout>
+          </widget>
+          <widget class="QGroupBox" name="groupBox_3">
+           <property name="title">
+            <string>Database</string>
+           </property>
+           <property name="flat">
+            <bool>true</bool>
+           </property>
+           <layout class="QHBoxLayout" name="horizontalLayout_3">
+            <property name="leftMargin">
+             <number>1</number>
+            </property>
+            <property name="topMargin">
+             <number>2</number>
+            </property>
+            <property name="rightMargin">
+             <number>1</number>
+            </property>
+            <property name="bottomMargin">
+             <number>1</number>
+            </property>
+            <item>
+             <widget class="QPlainTextEdit" name="plainTextEditdatabase">
+              <property name="readOnly">
+               <bool>true</bool>
+              </property>
+             </widget>
             </item>
            </layout>
           </widget>
@@ -275,7 +304,7 @@
              <number>1</number>
             </property>
             <property name="topMargin">
-             <number>1</number>
+             <number>2</number>
             </property>
             <property name="rightMargin">
              <number>1</number>

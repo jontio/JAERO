@@ -8,6 +8,7 @@
 #include <QFile>
 #include <QTextStream>
 #include <QCache>
+#include <stdio.h>
 
 namespace Ui {
 class PlaneLog;
@@ -23,15 +24,35 @@ public slots:
 
         if(cache.maxCost()<300)cache.setMaxCost(300);
 
+        QFile filenew(dirname+"/new.aircrafts_dump.csv");
+        if(filenew.exists())
+        {
+            QFile oldfile(dirname+"/aircrafts_dump.csv");
+            oldfile.setPermissions(QFile::ReadOther | QFile::WriteOther);
+            oldfile.remove();
+            filenew.rename(dirname+"/aircrafts_dump.csv");
+            cache.clear();
+            qDebug()<<"using new db";
+        }
+
         QStringList *pvalues=cache.object(AEStext);
         if(pvalues)
         {
             QStringList values=*pvalues;
+
+            if(!values.size())
+            {
+                emit error("Not found");
+                emit finished();
+                return;
+            }
+
             emit resultReady(values);
             emit finished();
             return;
         }
 //        int k=1;
+
 
         QFile file(dirname+"/aircrafts_dump.csv");
         if(!file.open(QIODevice::ReadOnly | QIODevice::Text)){emit error("Cant open file");emit finished();return;}
@@ -60,6 +81,7 @@ public slots:
             }
         }
 
+        cache.insert(AEStext,new QStringList);
         emit error("Not found");
         emit finished();
 
@@ -144,14 +166,20 @@ public slots:
         if((!result.load(dirname+"/"+AEStext+".png"))&&(!result.load(dirname+"/"+AEStext+".jpg")))result.load(":/images/Plane_clip_art.svg");
 
         emit resultReady(result);
+        emit finished();
     }
 signals:
     void resultReady(const QPixmap &result);
+    void finished();
 };
 class ImageController : public QObject
 {
     Q_OBJECT
     QThread workerThread;
+    bool busy;
+    bool havepeding;
+    QString pedingdirname;
+    QString pedingAEStext;
 public:
     ImageController(QObject *parent = 0):QObject(parent)
     {
@@ -160,7 +188,9 @@ public:
         connect(&workerThread, &QThread::finished, worker, &QObject::deleteLater);
         connect(this, &ImageController::asyncImageLookupFromAES, worker, &ImageWorker::ImageLookupFromAES);
         connect(worker, &ImageWorker::resultReady, this, &ImageController::result);
-        workerThread.start();
+        connect(worker, SIGNAL(finished()), this, SLOT(finished_worker()));
+        connect(this,SIGNAL(asyncImageLookupFromAES(QString,QString)),this,SLOT(asyncImageLookupFromAESslot(QString,QString)));
+        workerThread.start(); 
     }
     ~ImageController()
     {
@@ -169,8 +199,35 @@ public:
     }
 public slots:
 signals:
-    void asyncImageLookupFromAES(const QString &dirname, const QString &AEStext);
+   // void asyncImageLookupFromAES(const QString &dirname, const QString &AEStext);
     void result(const QPixmap &);
+    void asyncImageLookupFromAES(const QString &dirname, const QString &AEStext);//compressed
+    void asyncImageLookupFromAES_worker(const QString &dirname, const QString &AEStext);//non compressed
+
+private slots:
+
+    void asyncImageLookupFromAESslot(const QString &dirname, const QString &AEStext)
+    {
+        if(busy)
+        {
+            havepeding=true;
+            pedingdirname=dirname;
+            pedingAEStext=AEStext;
+            return;
+        }
+        emit asyncImageLookupFromAES_worker(dirname,AEStext);
+        busy=true;
+    }
+    void finished_worker()
+    {
+        busy=false;
+        if(havepeding)
+        {
+            emit asyncImageLookupFromAES_worker(pedingdirname,pedingAEStext);
+            busy=true;
+            havepeding=false;
+        }
+    }
 };
 
 
@@ -215,6 +272,7 @@ private slots:
     void imageUpdateslot(const QPixmap &image);
 
     void dbUpdateslot(const QStringList &dbitem);
+    void dbUpdateerrorslot(const QString &error);
 
     void messagesliderchsnged(int value);
 

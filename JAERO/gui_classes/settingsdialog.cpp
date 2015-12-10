@@ -96,15 +96,16 @@ void SettingsDialog::populatesettings()
     ui->lineEditlogdir->setText(settings.value("lineEditlogdir",QStandardPaths::standardLocations(QStandardPaths::DocumentsLocation)[0]+"/JAERO").toString());
     ui->checkBoxlogenable->setChecked(settings.value("checkBoxlogenable",false).toBool());
     ui->checkBoxlogwidebandwidthenable->setChecked(settings.value("checkBoxlogwidebandwidthenable",false).toBool());
-    ui->lineEditplanesfolder->setText(settings.value("lineEditplanesfolder",QStandardPaths::standardLocations(QStandardPaths::PicturesLocation)[0]).toString());
-    ui->lineEditplanelookup->setText(settings.value("lineEditplanelookup","http://junzisun.com/aif/?q={AES}#").toString());
+    ui->lineEditplanesfolder->setText(settings.value("lineEditplanesfolder",QStandardPaths::standardLocations(QStandardPaths::DocumentsLocation)[0]+"/JAERO").toString());
+    ui->lineEditplanelookup->setText(settings.value("lineEditplanelookup","http://www.flightradar24.com/data/airplanes/{REG}").toString());
+    //ui->lineEditplanelookup->setText(settings.value("lineEditplanelookup","http://junzisun.com/aif/?q={AES}#").toString());
+    ui->lineEditDBURL->setText(settings.value("lineEditDBURL","http://junzisun.com/aif/download").toString());
 
 
     on_lineEditlogdir_editingFinished();
 
     poulatepublicvars();
 }
-
 
 void SettingsDialog::accept()
 {    
@@ -124,6 +125,7 @@ void SettingsDialog::accept()
     settings.setValue("checkBoxlogwidebandwidthenable", ui->checkBoxlogwidebandwidthenable->isChecked());
     settings.setValue("lineEditplanesfolder", ui->lineEditplanesfolder->text());
     settings.setValue("lineEditplanelookup", ui->lineEditplanelookup->text());
+    settings.setValue("lineEditDBURL", ui->lineEditDBURL->text());
 
     poulatepublicvars();
     QDialog::accept();
@@ -140,4 +142,15 @@ void SettingsDialog::on_lineEditplanesfolder_editingFinished()
 {
     QFile file(ui->lineEditplanesfolder->text());
     ui->lineEditplanesfolder->setText(file.fileName());
+}
+
+void SettingsDialog::on_pushButtonDownloadDB_clicked()
+{
+    DownloadManager::QUrlExt urlext;
+    urlext.url=QUrl::fromEncoded(ui->lineEditDBURL->text().toLocal8Bit());
+    urlext.filename=ui->lineEditplanesfolder->text()+"/new.aircrafts_dump.csv";
+    urlext.overwrite=true;
+    DownloadManager *dm=new DownloadManager(this);
+    connect(dm,SIGNAL(finished()),dm,SLOT(deleteLater()));
+    dm->append(urlext);
 }

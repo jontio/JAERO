@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>452</width>
-    <height>506</height>
+    <height>649</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -144,7 +144,7 @@
        <property name="geometry">
         <rect>
          <x>10</x>
-         <y>280</y>
+         <y>440</y>
          <width>401</width>
          <height>111</height>
         </rect>
@@ -240,6 +240,118 @@
         </property>
        </widget>
       </widget>
+      <widget class="QGroupBox" name="groupBox_7">
+       <property name="geometry">
+        <rect>
+         <x>10</x>
+         <y>280</y>
+         <width>401</width>
+         <height>151</height>
+        </rect>
+       </property>
+       <property name="title">
+        <string>Database</string>
+       </property>
+       <widget class="QLineEdit" name="lineEditplanesfolder">
+        <property name="geometry">
+         <rect>
+          <x>100</x>
+          <y>32</y>
+          <width>291</width>
+          <height>21</height>
+         </rect>
+        </property>
+        <property name="toolTip">
+         <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Planes images are stored as {AES}.png or {AES}.jpg and database as aircrafts_dump.csv in this folder.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+        </property>
+       </widget>
+       <widget class="QLabel" name="label_10">
+        <property name="geometry">
+         <rect>
+          <x>10</x>
+          <y>30</y>
+          <width>81</width>
+          <height>25</height>
+         </rect>
+        </property>
+        <property name="minimumSize">
+         <size>
+          <width>0</width>
+          <height>25</height>
+         </size>
+        </property>
+        <property name="maximumSize">
+         <size>
+          <width>16777215</width>
+          <height>25</height>
+         </size>
+        </property>
+        <property name="text">
+         <string>Directory</string>
+        </property>
+        <property name="alignment">
+         <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+        </property>
+       </widget>
+       <widget class="QLineEdit" name="lineEditDBURL">
+        <property name="geometry">
+         <rect>
+          <x>100</x>
+          <y>74</y>
+          <width>291</width>
+          <height>21</height>
+         </rect>
+        </property>
+        <property name="toolTip">
+         <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;URL where to download the latest database file dump in CSV format.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+        </property>
+       </widget>
+       <widget class="QLabel" name="label_11">
+        <property name="geometry">
+         <rect>
+          <x>10</x>
+          <y>70</y>
+          <width>81</width>
+          <height>25</height>
+         </rect>
+        </property>
+        <property name="minimumSize">
+         <size>
+          <width>0</width>
+          <height>25</height>
+         </size>
+        </property>
+        <property name="maximumSize">
+         <size>
+          <width>16777215</width>
+          <height>25</height>
+         </size>
+        </property>
+        <property name="text">
+         <string>URL</string>
+        </property>
+        <property name="alignment">
+         <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+        </property>
+       </widget>
+       <widget class="QPushButton" name="pushButtonDownloadDB">
+        <property name="geometry">
+         <rect>
+          <x>100</x>
+          <y>110</y>
+          <width>131</width>
+          <height>28</height>
+         </rect>
+        </property>
+        <property name="text">
+         <string>Download</string>
+        </property>
+        <property name="icon">
+         <iconset resource="../jaero.qrc">
+          <normaloff>:/images/globe.svg</normaloff>:/images/globe.svg</iconset>
+        </property>
+       </widget>
+      </widget>
      </widget>
      <widget class="QWidget" name="logwindowsettings">
       <attribute name="title">
@@ -255,7 +367,7 @@
         </rect>
        </property>
        <property name="toolTip">
-        <string>URL for plane lookup. {AES} is the plane ICAO number in hex.</string>
+        <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;URL for plane lookup. {AES} is the plane ICAO number in hex and {REG} is the registration.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
        </property>
        <property name="text">
         <string>http://junzisun.com/aif/?q={AES}#</string>
@@ -272,32 +384,6 @@
        </property>
        <property name="text">
         <string>Plane lookup</string>
-       </property>
-      </widget>
-      <widget class="QLineEdit" name="lineEditplanesfolder">
-       <property name="geometry">
-        <rect>
-         <x>120</x>
-         <y>60</y>
-         <width>291</width>
-         <height>21</height>
-        </rect>
-       </property>
-       <property name="toolTip">
-        <string>Planes images are stored as {AES}.png or {AES}.jpg and database as aircrafts_dump.csv in this folder.</string>
-       </property>
-      </widget>
-      <widget class="QLabel" name="label_6">
-       <property name="geometry">
-        <rect>
-         <x>10</x>
-         <y>60</y>
-         <width>101</width>
-         <height>16</height>
-        </rect>
-       </property>
-       <property name="text">
-        <string>Plane folder</string>
        </property>
       </widget>
      </widget>
@@ -454,7 +540,9 @@
    </item>
   </layout>
  </widget>
- <resources/>
+ <resources>
+  <include location="../jaero.qrc"/>
+ </resources>
  <connections>
   <connection>
    <sender>buttonBox</sender>

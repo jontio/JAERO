@@ -5,7 +5,7 @@
 #
 #-------------------------------------------------
 
-QT       += multimedia core gui svg
+QT       += multimedia core network gui svg
 
 greaterThan(QT_MAJOR_VERSION, 4): QT += widgets  printsupport
 
@@ -46,7 +46,8 @@ SOURCES += main.cpp\
     gui_classes/settingsdialog.cpp \
     aerol.cpp \
     ../viterbi-xukmin/viterbi.cpp \
-    gui_classes/planelog.cpp
+    gui_classes/planelog.cpp \
+    downloadmanager.cpp
 
 HEADERS  += mainwindow.h \
     coarsefreqestimate.h \
@@ -74,7 +75,8 @@ HEADERS  += mainwindow.h \
     gui_classes/settingsdialog.h \
     aerol.h \
     ../viterbi-xukmin/viterbi.h \
-    gui_classes/planelog.h
+    gui_classes/planelog.h \
+    downloadmanager.h
 
 FORMS    += mainwindow.ui \
     gui_classes/settingsdialog.ui \
