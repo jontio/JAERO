@@ -216,7 +216,10 @@ bool ACARSDefragmenter::defragment(ACARSItem &acarsitem)
 ParserISU::ParserISU(QObject *parent):
     QObject(parent)
 {
-    //
+    //dblookup
+    dbtu = new DataBaseTextUser(this);
+    connect(dbtu,SIGNAL(result(bool,int,QStringList)),this,SLOT(acarslookupresult(bool,int,QStringList)));
+
 }
 
 bool ParserISU::parse(ISUItem &isuitem)
@@ -315,8 +318,15 @@ bool ParserISU::parse(ISUItem &isuitem)
 //anacarsitem.MODE=2+'0';
 
 
-        //send acars message if fully defraged
-        if(acarsdefragmenter.defragment(anacarsitem))emit ACARSsignal(anacarsitem);
+        //send acars message to lookup if fully defraged
+        if(acarsdefragmenter.defragment(anacarsitem))
+        {
+            ACARSItem *pai=new ACARSItem;
+            *pai=anacarsitem;
+            QString AESIDstr=((QString)"").sprintf("%06X",anacarsitem.isuitem.AESID);
+            dbtu->request(databasedir,AESIDstr,pai);
+            //emit ACARSsignal(anacarsitem);
+        }
 
         //send acars message
         //emit ACARSsignal(anacarsitem);
@@ -326,6 +336,33 @@ bool ParserISU::parse(ISUItem &isuitem)
 
     return false;
 
+}
+
+void ParserISU::setDataBaseDir(const QString &dir)
+{
+    databasedir=dir;
+}
+
+void ParserISU::acarslookupresult(bool ok, int ref, const QStringList &result)
+{
+    Q_UNUSED(ok);
+    ACARSItem *panacarsitem=((ACARSItem*)dbtu->getuserdata(ref));
+    if(panacarsitem==NULL)return;
+    if(result.size()==9)
+    {
+        //if sat reg and lookup reg are very different then lookup is wrong
+        if(panacarsitem->PLANEREG.right(2).toLower()!=result[1].right(2).toLower())
+        {
+            panacarsitem->dblookupresult.clear();
+            panacarsitem->dblookupresult.push_back("plane lookup dont match with sat!! old database??");
+            qDebug()<<panacarsitem->dblookupresult[0];
+            emit ACARSsignal(*panacarsitem);
+            delete panacarsitem;
+        }
+    }
+    panacarsitem->dblookupresult=result;
+    emit ACARSsignal(*panacarsitem);
+    delete panacarsitem;
 }
 
 AeroLInterleaver::AeroLInterleaver()

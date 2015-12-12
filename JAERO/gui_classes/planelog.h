@@ -9,150 +9,11 @@
 #include <QTextStream>
 #include <QCache>
 #include <stdio.h>
+#include "../databasetext.h"
 
 namespace Ui {
 class PlaneLog;
 }
-
-class DbWorker : public QObject
-{
-    Q_OBJECT
-public slots:
-    void DbLookupFromAES(const QString &dirname,const QString &AEStext)
-    {
-        // ... here is the expensive or blocking operation ...
-
-        if(cache.maxCost()<300)cache.setMaxCost(300);
-
-        QFile filenew(dirname+"/new.aircrafts_dump.csv");
-        if(filenew.exists())
-        {
-            QFile oldfile(dirname+"/aircrafts_dump.csv");
-            oldfile.setPermissions(QFile::ReadOther | QFile::WriteOther);
-            oldfile.remove();
-            filenew.rename(dirname+"/aircrafts_dump.csv");
-            cache.clear();
-            qDebug()<<"using new db";
-        }
-
-        QStringList *pvalues=cache.object(AEStext);
-        if(pvalues)
-        {
-            QStringList values=*pvalues;
-
-            if(!values.size())
-            {
-                emit error("Not found");
-                emit finished();
-                return;
-            }
-
-            emit resultReady(values);
-            emit finished();
-            return;
-        }
-//        int k=1;
-
-
-        QFile file(dirname+"/aircrafts_dump.csv");
-        if(!file.open(QIODevice::ReadOnly | QIODevice::Text)){emit error("Cant open file");emit finished();return;}
-        while (!file.atEnd())
-        {
-            QString line = file.readLine().trimmed();
-            while((line[line.size()-1]=='\\')&&(!file.atEnd()))line+=file.readLine().trimmed();
-            line.replace("\\N,","\"\",");
-            QStringList values=line.split("\",\"");
-//            k++;
-            if(values.size()!=9)
-            {
-//                qDebug()<<k<<values<<values.size();
-                emit error("Database illformed");
-                emit finished();
-                return;
-            }
-            values[0].remove(0,1);
-            values[values.size()-1].chop(1);
-            if(values[0]==AEStext)
-            {
-                cache.insert(AEStext,new QStringList(values));
-                emit resultReady(values);
-                emit finished();
-                return;
-            }
-        }
-
-        cache.insert(AEStext,new QStringList);
-        emit error("Not found");
-        emit finished();
-
-    }
-signals:
-    void resultReady(const QStringList &result);
-    void error(const QString &text);
-    void finished();
-private:
-    QCache<QString, QStringList> cache;//not sure if this is right, thread problems?
-};
-class DbLookupController : public QObject
-{
-    Q_OBJECT
-    QThread workerThread;
-    bool busy;
-    bool havepeding;
-    QString pedingdirname;
-    QString pedingAEStext;
-public:
-    DbLookupController(QObject *parent = 0):QObject(parent)
-    {
-        havepeding=false;
-        busy=false;
-        DbWorker *worker = new DbWorker;
-        worker->moveToThread(&workerThread);
-        connect(&workerThread, &QThread::finished, worker, &QObject::deleteLater);
-        connect(this, &DbLookupController::asyncDbLookupFromAES_worker, worker, &DbWorker::DbLookupFromAES);
-        connect(worker, &DbWorker::resultReady, this, &DbLookupController::result);
-        connect(worker, &DbWorker::error, this, &DbLookupController::error);
-        connect(worker, SIGNAL(finished()), this, SLOT(finished_worker()));
-        connect(this,SIGNAL(asyncDbLookupFromAES(QString,QString)),this,SLOT(asyncDbLookupFromAESslot(QString,QString)));
-        workerThread.start();
-    }
-    ~DbLookupController()
-    {
-        workerThread.quit();
-        workerThread.wait();
-    }
-public slots:
-
-signals:
-    void asyncDbLookupFromAES(const QString &dirname, const QString &AEStext);//compressed
-    void asyncDbLookupFromAES_worker(const QString &dirname, const QString &AEStext);//non compressed
-    void result(const QStringList &);
-    void error(const QString &text);
-private slots:
-    void asyncDbLookupFromAESslot(const QString &dirname, const QString &AEStext)
-    {
-        if(busy)
-        {
-            havepeding=true;
-            pedingdirname=dirname;
-            pedingAEStext=AEStext;
-            return;
-        }
-        emit asyncDbLookupFromAES_worker(dirname,AEStext);
-        busy=true;
-    }
-    void finished_worker()
-    {
-        busy=false;
-        if(havepeding)
-        {
-            emit asyncDbLookupFromAES_worker(pedingdirname,pedingAEStext);
-            busy=true;
-            havepeding=false;
-        }
-    }
-};
-
 
 class ImageWorker : public QObject
 {
@@ -230,8 +91,6 @@ private slots:
     }
 };
 
-
-
 class PlaneLog : public QWidget
 {
     Q_OBJECT
@@ -271,7 +130,7 @@ private slots:
 
     void imageUpdateslot(const QPixmap &image);
 
-    void dbUpdateslot(const QStringList &dbitem);
+    void dbUpdateslot(bool ok, int ref, const QStringList &dbitem);
     void dbUpdateerrorslot(const QString &error);
 
     void messagesliderchsnged(int value);
@@ -286,7 +145,7 @@ private:
     int updateinfoplanrow;
 
     ImageController *ic;
-    DbLookupController *dbc;
+    DataBaseTextUser *dbc;
 
     double wantedscrollprop;
 

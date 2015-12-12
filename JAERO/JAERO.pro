@@ -47,7 +47,8 @@ SOURCES += main.cpp\
     aerol.cpp \
     ../viterbi-xukmin/viterbi.cpp \
     gui_classes/planelog.cpp \
-    downloadmanager.cpp
+    downloadmanager.cpp \
+    databasetext.cpp
 
 HEADERS  += mainwindow.h \
     coarsefreqestimate.h \
@@ -76,7 +77,8 @@ HEADERS  += mainwindow.h \
     aerol.h \
     ../viterbi-xukmin/viterbi.h \
     gui_classes/planelog.h \
-    downloadmanager.h
+    downloadmanager.h \
+    databasetext.h
 
 FORMS    += mainwindow.ui \
     gui_classes/settingsdialog.ui \

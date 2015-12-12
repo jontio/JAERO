@@ -10,6 +10,7 @@
 #include <QDebug>
 #include <QMessageBox>
 #include <QDir>
+#include <assert.h>
 
 DownloadManager::DownloadManager(QObject *parent)
     : QObject(parent), downloadedCount(0), totalCount(0)
@@ -43,6 +44,8 @@ void DownloadManager::append(const QUrlExt &urlext)
 
 QString DownloadManager::saveFileName(const QUrlExt &urlext)
 {
+
+
     QString path = urlext.url.path();
     QString basename = QFileInfo(path).fileName();
 
@@ -53,19 +56,36 @@ QString DownloadManager::saveFileName(const QUrlExt &urlext)
     basename=fileinfo.fileName();
     QString dirpath=fileinfo.dir().absolutePath();
 
-    if(urlext.overwrite)return dirpath+"/tmp."+basename;
+    QString filename_final=dirpath+"/"+basename;
+    QString filename_tmp=filename_final+".temp";
 
-    if (QFile::exists(dirpath+"/"+basename)) {
+    if (QFile::exists(filename_tmp)||tmptofilalfilenamemap.contains(filename_tmp)) {
         // already exists, don't overwrite
         int i = 0;
-        basename += '.';
-        while (QFile::exists(dirpath+"/"+basename + QString::number(i)))
+        filename_tmp += '.';
+        while (QFile::exists(filename_tmp + QString::number(i))||tmptofilalfilenamemap.contains(filename_tmp))
             ++i;
 
-        basename += QString::number(i);
+        filename_tmp += QString::number(i);
     }
 
-    return dirpath+"/tmp."+basename;
+    if(!urlext.overwrite)
+    {
+        if (QFile::exists(filename_final)||tmptofilalfilenamemap.values().contains(filename_final)) {
+            // already exists, don't overwrite
+            int i = 0;
+            filename_final += '.';
+            while (QFile::exists(filename_final + QString::number(i))||tmptofilalfilenamemap.values().contains(filename_final))
+                ++i;
+
+            filename_final += QString::number(i);
+        }
+    }
+
+    assert(tmptofilalfilenamemap.contains(filename_tmp)==false);
+    tmptofilalfilenamemap.insert(filename_tmp,filename_final);
+
+    return filename_tmp;
 }
 
 void DownloadManager::startNextDownload()
@@ -103,7 +123,7 @@ void DownloadManager::startNextDownload()
 
 
         QMessageBox msgBox;
-        msgBox.setText("Cant open file \""+filename+"\" for saving.");
+        msgBox.setText("Cant open file \""+tmptofilalfilenamemap.value(filename)+"\" for saving.");
         msgBox.setInformativeText(output.errorString());
         msgBox.setIcon(QMessageBox::Critical);
         msgBox.exec();
@@ -111,7 +131,7 @@ void DownloadManager::startNextDownload()
         qCritical(qPrintable(((QString)"").sprintf(
 
                                  "Problem opening save file '%s' for download '%s': %s\n",
-                                                 qPrintable(filename), url.toEncoded().constData(),
+                                                 qPrintable(tmptofilalfilenamemap.value(filename)), url.toEncoded().constData(),
                                                  qPrintable(output.errorString())
 
                                  )));
@@ -152,7 +172,11 @@ void DownloadManager::downloadFinished()
     pd.setLabelText("");
     pd.close();
 
+    QString filename_final=tmptofilalfilenamemap.take(output.fileName());
+    assert(!filename_final.isEmpty());
+
     output.close();
+
 
     if (currentDownload->error())
     {
@@ -176,21 +200,19 @@ void DownloadManager::downloadFinished()
         //download done
 
         //rename
-        QFileInfo fileinfo(output.fileName());
-        QString str=fileinfo.dir().absolutePath()+"/"+fileinfo.fileName().mid(4);
-        QFile oldfile(str);
+        QFile oldfile(filename_final);
         oldfile.setPermissions(QFile::ReadOther | QFile::WriteOther);
         if(oldfile.exists()&&(!oldfile.remove()))
         {
             QMessageBox msgBox;
-            msgBox.setText("Can't rename file file.");
+            msgBox.setText("Can't rename fial file.");
             msgBox.setInformativeText(oldfile.errorString());
             msgBox.setIcon(QMessageBox::Critical);
             msgBox.exec();
             qDebug()<<oldfile.errorString();
         }
-        output.rename(str);
-
+        if(output.rename(filename_final))emit downloadresult(currentDownload->url(),true);
+         else emit downloadresult(currentDownload->url(),false);
 
         ++downloadedCount;
     }

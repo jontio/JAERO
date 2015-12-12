@@ -23,29 +23,64 @@ void PlaneLog::imageUpdateslot(const QPixmap &image)
     ui->toolButtonimg->setIcon(image);
 }
 
-void PlaneLog::dbUpdateslot(const QStringList &dbitem)
+void PlaneLog::dbUpdateslot(bool ok, int ref, const QStringList &dbitem)
 {
+    Q_UNUSED(ref);
     ui->label_type->clear();
     ui->label_owner->clear();
-    ui->label_type->setText(dbitem[6]);
-    ui->label_owner->setText(dbitem[7]);
 
-    ui->plainTextEditdatabase->clear();
-    ui->plainTextEditdatabase->appendPlainText("Reg. ID         \t"+dbitem[1]);
-    ui->plainTextEditdatabase->appendPlainText("Model           \t"+dbitem[2]);
-    ui->plainTextEditdatabase->appendPlainText("Type            \t"+dbitem[6]);
-    ui->plainTextEditdatabase->appendPlainText("Owner           \t"+dbitem[7]);
-    ui->plainTextEditdatabase->appendPlainText("Call Sign (Last)\t"+dbitem[4]);
-    ui->plainTextEditdatabase->appendPlainText("Flight (Last)   \t"+dbitem[5]);
-    QDateTime timestamp;
-    timestamp.setTime_t(((QString)dbitem[8]).toUInt());
-    ui->plainTextEditdatabase->appendPlainText("Updated (Local) \t"+timestamp.toString("yy-MM-dd hh:mm:ss"));
+    if(!ok)
+    {
+        if(dbitem.size())
+        {
+             dbUpdateerrorslot(dbitem[0]);
+        } else dbUpdateerrorslot("Error: Unknown");
+    }
+    else
+    {
 
-    if(updateinfoplanrow<0)return;
-    if(updateinfoplanrow>=ui->tableWidget->rowCount())return;
-    if(updateinfoplanrow!=ui->tableWidget->currentRow())return;
-    if(!ui->plainTextEditnotes->toPlainText().isEmpty())return;
-    ui->plainTextEditnotes->setPlainText(dbitem[6]+"\n"+dbitem[7]+"\n");
+        if(dbitem.size()!=9)
+        {
+            dbUpdateerrorslot("Error: Database illformed");
+            return;
+        }
+
+        if(updateinfoplanrow<0)return;
+        if(updateinfoplanrow>=ui->tableWidget->rowCount())return;
+        if(updateinfoplanrow!=ui->tableWidget->currentRow())return;
+
+        //if sat reg and lookup reg are very different then lookup is wrong
+        QTableWidgetItem *Notesitem;
+        QTableWidgetItem *REGitem;
+        Notesitem = ui->tableWidget->item(updateinfoplanrow, 7);
+        REGitem = ui->tableWidget->item(updateinfoplanrow, 1);
+        if(REGitem->text().right(2).toLower()!=dbitem[1].right(2).toLower())
+        {
+            if(Notesitem->text().right(1)=="\u2063")ui->plainTextEditnotes->clear();
+            dbUpdateerrorslot("Database and sat regs differ.\nTry updating database.");
+            return;
+        }
+
+        ui->label_type->setText(dbitem[6]);
+        ui->label_owner->setText(dbitem[7]);
+
+        ui->plainTextEditdatabase->clear();
+        ui->plainTextEditdatabase->appendPlainText("Reg. ID         \t"+dbitem[1]);
+        ui->plainTextEditdatabase->appendPlainText("Model           \t"+dbitem[2]);
+        ui->plainTextEditdatabase->appendPlainText("Type            \t"+dbitem[6]);
+        ui->plainTextEditdatabase->appendPlainText("Owner           \t"+dbitem[7]);
+        ui->plainTextEditdatabase->appendPlainText("Call Sign (Last)\t"+dbitem[4]);
+        ui->plainTextEditdatabase->appendPlainText("Flight (Last)   \t"+dbitem[5]);
+        QDateTime timestamp;
+        timestamp.setTime_t(((QString)dbitem[8]).toUInt());
+        ui->plainTextEditdatabase->appendPlainText("Updated (Local) \t"+timestamp.toString("yy-MM-dd hh:mm:ss"));
+
+        if((!ui->plainTextEditnotes->toPlainText().isEmpty())&&(Notesitem->text().right(1)!="\u2063"))return;
+        ui->plainTextEditnotes->setPlainText(dbitem[6]+"\n"+dbitem[7]+"\n\u2063");
+        Notesitem->setText(dbitem[6]+"\n"+dbitem[7]+"\n\u2063");
+
+
+    }
 
 }
 
@@ -86,9 +121,9 @@ PlaneLog::PlaneLog(QWidget *parent) :
     connect(ic,SIGNAL(result(QPixmap)),this,SLOT(imageUpdateslot(QPixmap)));
 
     //create database lookup controller and connect result to us
-    dbc=new DbLookupController(this);
-    connect(dbc,SIGNAL(result(QStringList)),this,SLOT(dbUpdateslot(QStringList)));
-    connect(dbc,SIGNAL(error(QString)),this,SLOT(dbUpdateerrorslot(QString)));
+    dbc=new DataBaseTextUser(this);
+    connect(dbc,SIGNAL(result(bool,int,QStringList)),this,SLOT(dbUpdateslot(bool,int,QStringList)));
+
 
     ui->actionLeftRight->setVisible(false);
     ui->actionUpDown->setVisible(false);
@@ -312,6 +347,13 @@ void PlaneLog::ACARSslot(ACARSItem &acarsitem)
 void PlaneLog::on_actionClear_triggered()
 {
 
+    /*QTableWidgetItem *Notesitem;
+    for(int rows = 0; rows<ui->tableWidget->rowCount(); rows++)
+    {
+        Notesitem = ui->tableWidget->item(rows, 7);
+        Notesitem->setText("");
+    }*/
+
     //confirm
     QMessageBox msgBox;
     msgBox.setIcon(QMessageBox::Question);
@@ -442,7 +484,7 @@ void PlaneLog::updateinfopain(int row)
     ui->label_type->clear();
     ui->label_owner->clear();
     ui->plainTextEditdatabase->clear();
-    dbc->asyncDbLookupFromAES(planesfolder,AESitem->text());
+    dbc->request(planesfolder,AESitem->text(),NULL);
 
     //old code. blocking
     /*QString imagefilename=imagesfolder+"/"+AESitem->text()+".png";
@@ -472,7 +514,7 @@ void PlaneLog::on_toolButtonimg_clicked()
 {
     if(updateinfoplanrow<0)return;
     if(updateinfoplanrow>=ui->tableWidget->rowCount())return;
-    if(updateinfoplanrow!=ui->tableWidget->currentRow())return;
+  //  if(updateinfoplanrow!=ui->tableWidget->currentRow())return;
 
     QTableWidgetItem *AESitem = ui->tableWidget->item(updateinfoplanrow, 0);
     QTableWidgetItem *REGitem = ui->tableWidget->item(updateinfoplanrow, 1);
@@ -566,5 +608,5 @@ void PlaneLog::plainTextEditnotesChanged()
     if(updateinfoplanrow>=ui->tableWidget->rowCount())return;
     if(updateinfoplanrow!=ui->tableWidget->currentRow())return;
     QTableWidgetItem *Notesitem = ui->tableWidget->item(updateinfoplanrow, 7);
-    Notesitem->setText(ui->plainTextEditnotes->toPlainText());
+    Notesitem->setText(ui->plainTextEditnotes->toPlainText().replace("\u2063",""));
 }

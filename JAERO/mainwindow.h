@@ -12,6 +12,9 @@
 #include "aerol.h"
 #include "gui_classes/planelog.h"
 #include <QFile>
+#include <QSound>
+
+#include "databasetext.h"
 
 namespace Ui {
 class MainWindow;
@@ -51,6 +54,10 @@ private:
     QFile filelog;
     QTextStream outlogstream;
 
+    DataBaseTextUser *dbtu;
+
+
+    QSound *beep;
 protected:
     void closeEvent(QCloseEvent *event);
 
@@ -74,6 +81,8 @@ private slots:
     void on_action_PlaneLog_triggered();
     void ACARSslot(ACARSItem &acarsitem);
     void ERRorslot(QString &error);
+
+   // void result(bool ok, int ref, const QStringList &result);
 };
 
 #endif // MAINWINDOW_H

@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>452</width>
-    <height>649</height>
+    <height>650</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -67,8 +67,8 @@
        <widget class="QCheckBox" name="checkBoxdropnontextmsgs">
         <property name="geometry">
          <rect>
-          <x>20</x>
-          <y>68</y>
+          <x>160</x>
+          <y>30</y>
           <width>201</width>
           <height>19</height>
          </rect>
@@ -138,6 +138,19 @@
           <string>3</string>
          </property>
         </item>
+       </widget>
+       <widget class="QCheckBox" name="checkBoxbeepontextmessage">
+        <property name="geometry">
+         <rect>
+          <x>20</x>
+          <y>64</y>
+          <width>301</width>
+          <height>19</height>
+         </rect>
+        </property>
+        <property name="text">
+         <string>Beep on multi line text message</string>
+        </property>
        </widget>
       </widget>
       <widget class="QGroupBox" name="groupBox_5">

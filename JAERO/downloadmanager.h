@@ -37,6 +37,7 @@ public:
 
 signals:
     void finished();
+    void downloadresult(const QUrl &url,bool result);
 
 private slots:
     void startNextDownload();
@@ -55,6 +56,8 @@ private:
 
     int downloadedCount;
     int totalCount;
+
+    QMap<QString,QString> tmptofilalfilenamemap;
 };
 
 

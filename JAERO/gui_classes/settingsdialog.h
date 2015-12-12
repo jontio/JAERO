@@ -35,10 +35,13 @@ public:
 
     QString planesfolder;
     QString planelookup;
+    bool beepontextmessage;
+    void DataBaseUpdateSugestion();
 
 private:
     Ui::SettingsDialog *ui;    
     void poulatepublicvars();
+    QDate lastdbupdate;
 
 protected:
     void accept();
@@ -48,6 +51,7 @@ private slots:
     void on_lineEditlogdir_editingFinished();
     void on_lineEditplanesfolder_editingFinished();
     void on_pushButtonDownloadDB_clicked();
+    void DownloadDBResult(const QUrl &url, bool result);
 };
 
 #endif // SETTINGSDIALOG_H

@@ -1,6 +1,7 @@
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
 #include <QDebug>
+#include <QStandardPaths>
 
 #ifdef __linux__
 #include <unistd.h>
@@ -11,11 +12,47 @@
 #endif
 
 
+#include "databasetext.h"
+
+
+/*void MainWindow::result(bool ok, int ref, const QStringList &result)
+{
+    ACARSItem *pai=((ACARSItem*)dbtu->getuserdata(ref));
+    if(!ok)
+    {
+        if(result.size())
+        {
+             qDebug()<<"Error: "<<result[0];
+        } else qDebug()<<"Error: Unknowen";
+    }
+    else
+    {
+        qDebug()<<"ok"<<result;
+        qDebug()<<pai->message;
+    }
+    delete pai;
+}*/
+
+
+
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
     ui(new Ui::MainWindow)
 {
     ui->setupUi(this);
+
+    if(QFile("../JAERO/sounds/beep.wav").exists())beep=new QSound("../JAERO/sounds/beep.wav",this);//for me
+     else beep=new QSound(QStandardPaths::standardLocations(QStandardPaths::AppLocalDataLocation)[0]+"/sounds/beep.wav",this);
+
+    //example of using db
+    /*dbtu=new DataBaseTextUser(this);
+    connect(dbtu,SIGNAL(result(bool,int,QStringList)),this,SLOT(result(bool,int,QStringList)));
+    ACARSItem *pai=new ACARSItem;
+    QString dirname,aes;
+    dirname="../";
+    aes="7582F8";
+    pai->message="jhbuybuy000";
+    dbtu->request(dirname,aes,pai);*/
 
     //plane logging window
     planelog = new PlaneLog;
@@ -340,6 +377,8 @@ void MainWindow::acceptsettings()
 
     aerol->setDoNotDisplaySUs(settingsdialog->donotdisplaysus);
 
+    aerol->setDataBaseDir(settingsdialog->planesfolder);
+
     //if bandwidth setting changed then adjust
     if((settingsdialog->widebandwidthenable&&((audiomskdemodulatorsettings.fb==600&&audiomskdemodulatorsettings.Fs==12000)||(audiomskdemodulatorsettings.fb==1200&&audiomskdemodulatorsettings.Fs==24000)))||((!settingsdialog->widebandwidthenable)&&((audiomskdemodulatorsettings.fb==600&&audiomskdemodulatorsettings.Fs==48000)||(audiomskdemodulatorsettings.fb==1200&&audiomskdemodulatorsettings.Fs==48000))))
     {
@@ -387,6 +426,13 @@ void MainWindow::ACARSslot(ACARSItem &acarsitem)
     QString humantext;
     QByteArray TAKstr;
     TAKstr+=acarsitem.TAK;
+
+    if(acarsitem.hastext&&settingsdialog->beepontextmessage)
+    {
+        int linecnt=acarsitem.message.count("\n");
+        if(acarsitem.message[acarsitem.message.size()-1]=='\n'||acarsitem.message[acarsitem.message.size()-1]=='\r')linecnt--;
+        if(linecnt>0)beep->play();//QApplication::beep();
+    }
 
     //this is how you can change the display format in the lowwer window
     if(settingsdialog->msgdisplayformat=="1")
@@ -451,13 +497,32 @@ void MainWindow::ACARSslot(ACARSItem &acarsitem)
         if(message.right(1)=="\n")message.remove(acarsitem.message.size()-1,1);
         if(message.left(1)!="\n")message.remove(0,1);
         message.replace("\n","\n\t");
+
+
+
         humantext+=QDateTime::currentDateTime().toString("hh:mm:ss dd-MM-yy ");
         if(acarsitem.TAK==0x15)TAKstr=((QString)"!").toLatin1();
         uchar label1=acarsitem.LABEL[1];
         if((uchar)acarsitem.LABEL[1]==127)label1='d';
-        if(acarsitem.message.isEmpty())humantext+=((QString)"").sprintf("AES:%06X GES:%02X %c %s %s %c%c %c",acarsitem.isuitem.AESID,acarsitem.isuitem.GESID,acarsitem.MODE,acarsitem.PLANEREG.data(),TAKstr.data(),(uchar)acarsitem.LABEL[0],label1,acarsitem.BI);
-        else humantext+=(((QString)"").sprintf("AES:%06X GES:%02X %c %s %s %c%c %c\n\n\t",acarsitem.isuitem.AESID,acarsitem.isuitem.GESID,acarsitem.MODE,acarsitem.PLANEREG.data(),TAKstr.data(),(uchar)acarsitem.LABEL[0],label1,acarsitem.BI))+message+"\n";
+
+
+        humantext+=((QString)"").sprintf("AES:%06X GES:%02X %c %s %s %c%c %c",acarsitem.isuitem.AESID,acarsitem.isuitem.GESID,acarsitem.MODE,acarsitem.PLANEREG.data(),TAKstr.data(),(uchar)acarsitem.LABEL[0],label1,acarsitem.BI);
+
+        //if(acarsitem.message.isEmpty())humantext+=((QString)"").sprintf("AES:%06X GES:%02X %c %s %s %c%c %c",acarsitem.isuitem.AESID,acarsitem.isuitem.GESID,acarsitem.MODE,acarsitem.PLANEREG.data(),TAKstr.data(),(uchar)acarsitem.LABEL[0],label1,acarsitem.BI)+"\n";
+        //else humantext+=(((QString)"").sprintf("AES:%06X GES:%02X %c %s %s %c%c %c",acarsitem.isuitem.AESID,acarsitem.isuitem.GESID,acarsitem.MODE,acarsitem.PLANEREG.data(),TAKstr.data(),(uchar)acarsitem.LABEL[0],label1,acarsitem.BI))+"\n\n\t"+message+"\n";
+
+        if(acarsitem.dblookupresult.size()==9)
+        {
+            humantext+=" "+acarsitem.dblookupresult[6]+" "+acarsitem.dblookupresult[7];
+        }
+
+        if(!acarsitem.message.isEmpty())humantext+="\n\n\t"+message+"\n";
+        //humantext+="\n";
+
         if(acarsitem.moretocome)humantext+=" ...more to come...\n";
+
+
+
         if((!settingsdialog->dropnontextmsgs)||(!acarsitem.message.isEmpty()))
         {
             ui->inputwidget->appendPlainText(humantext);

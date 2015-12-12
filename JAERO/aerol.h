@@ -11,6 +11,8 @@
 #include <assert.h>
 #include "../viterbi-xukmin/viterbi.h"
 
+#include "databasetext.h"
+
 namespace AEROL {
 typedef enum MessageType
 {
@@ -80,7 +82,9 @@ struct ISUItem {
     }
 };
 
-struct ACARSItem {
+class ACARSItem : public DBase
+{
+public:
     ISUItem isuitem;
 
     char MODE;
@@ -88,6 +92,7 @@ struct ACARSItem {
     QByteArray LABEL;
     uchar BI;
     QByteArray PLANEREG;
+    QStringList dblookupresult;
 
     bool valid;
     bool hastext;
@@ -106,7 +111,7 @@ struct ACARSItem {
         LABEL.clear();
         message.clear();
     }
-    ACARSItem(){clear();}
+    explicit ACARSItem(){clear();}
 };
 
 //defragments 0x71 SUs with its SSUs
@@ -150,10 +155,16 @@ public:
 signals:
     void ACARSsignal(ACARSItem &acarsitem);
     void Errorsignal(QString &error);
+public slots:
+    void setDataBaseDir(const QString &dir);
 private:
     ACARSDefragmenter acarsdefragmenter;
     ACARSItem anacarsitem;
     QString anerror;
+    QString databasedir;
+    DataBaseTextUser *dbtu;
+private slots:
+    void acarslookupresult(bool ok, int ref, const QStringList &result);
 };
 
 class AeroLcrc16 //this seems to be called GENIBUS not CCITT
@@ -323,6 +334,7 @@ public slots:
         emit DataCarrierDetect(false);
     }
     void setDoNotDisplaySUs(QVector<int> &list){donotdisplaysus=list;}
+    void setDataBaseDir(const QString &dir){parserisu->setDataBaseDir(dir);}
 private:
     bool Start();
     void Stop();
@@ -355,8 +367,10 @@ private:
 
     QVector<int> donotdisplaysus;
 
+
 private slots:
     void updateDCD();
+
 };
 
 #endif // AEROL_H

@@ -4,6 +4,10 @@
 #include <QSettings>
 #include <QStandardPaths>
 #include <QFile>
+#include <QMessageBox>
+
+
+//todo change JAEROL to JAERO for v1.0.2
 
 SettingsDialog::SettingsDialog(QWidget *parent) :
     QDialog(parent),
@@ -12,6 +16,7 @@ SettingsDialog::SettingsDialog(QWidget *parent) :
     ui->setupUi(this);
     ui->tabWidget->removeTab(ui->tabWidget->indexOf(ui->Transmission));//these are transmission settings
     populatesettings();
+    DataBaseUpdateSugestion();
 }
 
 SettingsDialog::~SettingsDialog()
@@ -72,6 +77,8 @@ void SettingsDialog::poulatepublicvars()
     planesfolder=ui->lineEditplanesfolder->text();
     planelookup=ui->lineEditplanelookup->text();
 
+    beepontextmessage=ui->checkBoxbeepontextmessage->isChecked();
+
 }
 
 
@@ -93,14 +100,19 @@ void SettingsDialog::populatesettings()
     ui->lineEditdonotdisplaysus->setText(settings.value("lineEditdonotdisplaysus","71 18 19").toString());
     ui->checkBoxdropnontextmsgs->setChecked(settings.value("checkBoxdropnontextmsgs",true).toBool());
     ui->comboBoxsoundcard->setCurrentText(settings.value("comboBoxsoundcard","").toString());
-    ui->lineEditlogdir->setText(settings.value("lineEditlogdir",QStandardPaths::standardLocations(QStandardPaths::DocumentsLocation)[0]+"/JAERO").toString());
+    ui->lineEditlogdir->setText(settings.value("lineEditlogdir",QStandardPaths::standardLocations(QStandardPaths::AppLocalDataLocation)[0]+"/logs").toString());
     ui->checkBoxlogenable->setChecked(settings.value("checkBoxlogenable",false).toBool());
     ui->checkBoxlogwidebandwidthenable->setChecked(settings.value("checkBoxlogwidebandwidthenable",false).toBool());
-    ui->lineEditplanesfolder->setText(settings.value("lineEditplanesfolder",QStandardPaths::standardLocations(QStandardPaths::DocumentsLocation)[0]+"/JAERO").toString());
+    ui->lineEditplanesfolder->setText(settings.value("lineEditplanesfolder",QStandardPaths::standardLocations(QStandardPaths::AppLocalDataLocation)[0]+"/planes").toString());
     ui->lineEditplanelookup->setText(settings.value("lineEditplanelookup","http://www.flightradar24.com/data/airplanes/{REG}").toString());
     //ui->lineEditplanelookup->setText(settings.value("lineEditplanelookup","http://junzisun.com/aif/?q={AES}#").toString());
     ui->lineEditDBURL->setText(settings.value("lineEditDBURL","http://junzisun.com/aif/download").toString());
+    ui->checkBoxbeepontextmessage->setChecked(settings.value("checkBoxbeepontextmessage",true).toBool());
+    lastdbupdate=settings.value("lastdbupdate").toDate();
 
+//these have been tested so far as lineEditplanelookup
+//http://junzisun.com/aif/?q={AES}#
+//http://www.flightradar24.com/data/airplanes/{REG}
 
     on_lineEditlogdir_editingFinished();
 
@@ -126,6 +138,7 @@ void SettingsDialog::accept()
     settings.setValue("lineEditplanesfolder", ui->lineEditplanesfolder->text());
     settings.setValue("lineEditplanelookup", ui->lineEditplanelookup->text());
     settings.setValue("lineEditDBURL", ui->lineEditDBURL->text());
+    settings.setValue("checkBoxbeepontextmessage", ui->checkBoxbeepontextmessage->isChecked());
 
     poulatepublicvars();
     QDialog::accept();
@@ -151,6 +164,38 @@ void SettingsDialog::on_pushButtonDownloadDB_clicked()
     urlext.filename=ui->lineEditplanesfolder->text()+"/new.aircrafts_dump.csv";
     urlext.overwrite=true;
     DownloadManager *dm=new DownloadManager(this);
+    connect(dm,SIGNAL(downloadresult(QUrl,bool)),this,SLOT(DownloadDBResult(QUrl,bool)));
     connect(dm,SIGNAL(finished()),dm,SLOT(deleteLater()));
     dm->append(urlext);
+}
+
+void SettingsDialog::DownloadDBResult(const QUrl &url,bool result)
+{
+    if(QUrl::fromEncoded(ui->lineEditDBURL->text().toLocal8Bit()).url()==url.url())
+    {
+        QSettings settings("Jontisoft", "JAEROL");
+        if(result)settings.setValue("lastdbupdate", QDate::currentDate());
+        settings.setValue("updatedbinformed", false);
+    }
+}
+
+void SettingsDialog::DataBaseUpdateSugestion()
+{
+    QSettings settings("Jontisoft", "JAEROL");
+    if(settings.value("updatedbinformed",false).toBool())return;
+    if(lastdbupdate.isNull())
+    {
+        QMessageBox msgBox;
+        msgBox.setText("Suggest you download the database");
+        msgBox.setIcon(QMessageBox::Information);
+        msgBox.exec();
+    }
+    else if(lastdbupdate.daysTo(QDate::currentDate())>180)
+    {
+        QMessageBox msgBox;
+        msgBox.setText("Its been half a year since you last downloaded the database. Suggest you download the database again.");
+        msgBox.setIcon(QMessageBox::Information);
+        msgBox.exec();
+    }
+    settings.setValue("updatedbinformed", true);
 }
