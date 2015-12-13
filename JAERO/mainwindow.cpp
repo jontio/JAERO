@@ -172,8 +172,9 @@ MainWindow::MainWindow(QWidget *parent) :
 //--end modulator setup
 
     //add todays date
-    ui->inputwidget->appendHtml("<b>"+QDateTime::currentDateTime().toString("h:mmap ddd d-MMM-yyyy")+" JAERO started</b>");
-    ui->inputwidget->appendPlainText("");
+    //ui->inputwidget->appendHtml("<b>"+QDateTime::currentDateTime().toString("h:mmap ddd d-MMM-yyyy")+" JAERO started</b>");
+    //ui->inputwidget->appendPlainText("");
+    ui->inputwidget->appendPlainText("\n"+QDateTime::currentDateTime().toString("h:mmap ddd d-MMM-yyyy")+" JAERO started\n");
     QTimer::singleShot(100,ui->inputwidget,SLOT(scrolltoend()));
 
     ui->actionTXRX->setVisible(false);//there is a hidden audio modulator
@@ -494,7 +495,7 @@ void MainWindow::ACARSslot(ACARSItem &acarsitem)
         message.replace('\r','\n');
         message.replace("\n\n","\n");
         if(message.right(1)=="\n")message.remove(acarsitem.message.size()-1,1);
-        if(message.left(1)!="\n")message.remove(0,1);
+        if(message.left(1)=="\n")message.remove(0,1);
         message.replace("\n","\n\t");
 
 

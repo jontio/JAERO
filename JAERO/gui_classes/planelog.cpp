@@ -320,7 +320,7 @@ void PlaneLog::ACARSslot(ACARSItem &acarsitem)
         message.replace('\r','\n');
         message.replace("\n\n","\n");
         if(message.right(1)=="\n")message.remove(acarsitem.message.size()-1,1);
-        if(message.left(1)!="\n")message.remove(0,1);
+        if(message.left(1)=="\n")message.remove(0,1);
         message.replace('\n',"●");
 
         QByteArray TAKstr;

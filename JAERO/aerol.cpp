@@ -304,7 +304,12 @@ bool ParserISU::parse(ISUItem &isuitem)
                 }
                  else anacarsitem.message+=(char)byte;*/
 
-                anacarsitem.message+=(char)byte;
+                if((byte<0x20)&&(!(byte==10||byte==13)))
+                {
+                    qDebug()<<"This is strange. byte<0x20 byte="<<byte;
+                }
+                if(byte==0x7F)anacarsitem.message+="<DEL>";
+                 else anacarsitem.message+=(char)byte;
 
             }
         }
