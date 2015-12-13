@@ -10,6 +10,7 @@
 #include <QCache>
 #include <stdio.h>
 #include "../databasetext.h"
+#include <QTableWidgetItem>
 
 namespace Ui {
 class PlaneLog;
@@ -139,17 +140,15 @@ private:
     Ui::PlaneLog *ui;
     int wantedheightofrow;
     QToolBar * toolBar;
-    void updateinfopain(int row);
+    void updateinfopain();
     QList<int> savedsplitter2;
-
-    int updateinfoplanrow;
 
     ImageController *ic;
     DataBaseTextUser *dbc;
 
     double wantedscrollprop;
 
-
+    QTableWidgetItem *selectedAESitem;
 };
 
 #endif // PLANELOG_H

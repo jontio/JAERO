@@ -45,15 +45,18 @@ void PlaneLog::dbUpdateslot(bool ok, int ref, const QStringList &dbitem)
             return;
         }
 
-        if(updateinfoplanrow<0)return;
-        if(updateinfoplanrow>=ui->tableWidget->rowCount())return;
-        if(updateinfoplanrow!=ui->tableWidget->currentRow())return;
+
+        if(!selectedAESitem)return;
+        if(selectedAESitem->row()<0)return;
+        if(selectedAESitem->row()>=ui->tableWidget->rowCount())return;
+        if(selectedAESitem->text()!=dbitem[0])return;
+        int row=selectedAESitem->row();
 
         //if sat reg and lookup reg are very different then lookup is wrong
         QTableWidgetItem *Notesitem;
         QTableWidgetItem *REGitem;
-        Notesitem = ui->tableWidget->item(updateinfoplanrow, 7);
-        REGitem = ui->tableWidget->item(updateinfoplanrow, 1);
+        Notesitem = ui->tableWidget->item(row, 7);
+        REGitem = ui->tableWidget->item(row, 1);
         if(REGitem->text().right(2).toLower()!=dbitem[1].right(2).toLower())
         {
             if(Notesitem->text().right(1)=="\u2063")ui->plainTextEditnotes->clear();
@@ -114,6 +117,8 @@ PlaneLog::PlaneLog(QWidget *parent) :
     ui->label_type->clear();
     ui->label_owner->clear();
 
+    selectedAESitem=NULL;
+
     connect(ui->textEditmessages->verticalScrollBar(),SIGNAL(valueChanged(int)),this,SLOT(messagesliderchsnged(int)));
 
     //create image lookup controller and connect result to us
@@ -129,7 +134,6 @@ PlaneLog::PlaneLog(QWidget *parent) :
     ui->actionUpDown->setVisible(false);
     ui->tableWidget->horizontalHeader()->setAutoScroll(true);
     ui->tableWidget->setColumnHidden(5,true);
-    updateinfoplanrow=-2;
     connect(ui->plainTextEditnotes,SIGNAL(textChanged()),this,SLOT(plainTextEditnotesChanged()));
 
     //cant i just use a qmainwindow 2 times???
@@ -189,8 +193,7 @@ void PlaneLog::closeEvent(QCloseEvent *event)
 
 void PlaneLog::showEvent(QShowEvent *event)
 {
-    updateinfoplanrow=-2;
-    updateinfopain(ui->tableWidget->currentRow());
+    updateinfopain();
     toolBar->setHidden(false);
     event->accept();
 }
@@ -332,11 +335,7 @@ void PlaneLog::ACARSslot(ACARSItem &acarsitem)
         if(acarsitem.moretocome)LastMessageitem->setText(tmp+message+" ...more to come... \n");
          else LastMessageitem->setText(tmp+message+"\n");
 
-        if(idx==ui->tableWidget->currentRow())
-        {
-            updateinfoplanrow=-2;
-            updateinfopain(idx);
-        }
+        if(selectedAESitem&&(idx==selectedAESitem->row()))updateinfopain();
 
     }
 
@@ -385,6 +384,7 @@ void PlaneLog::on_actionClear_triggered()
     ui->plainTextEditnotes->clear();
     connect(ui->plainTextEditnotes,SIGNAL(textChanged()),this,SLOT(plainTextEditnotesChanged()));
     ui->textEditmessages->clear();
+    selectedAESitem=NULL;
 }
 
 void PlaneLog::on_actionUpDown_triggered()
@@ -449,13 +449,18 @@ void PlaneLog::on_tableWidget_currentCellChanged(int currentRow, int currentColu
     Q_UNUSED(currentColumn);
     Q_UNUSED(previousColumn);
     if(currentRow==previousRow)return;
-    updateinfopain(currentRow);
+    selectedAESitem=ui->tableWidget->item(currentRow, 0);
+    updateinfopain();
 }
 
-void PlaneLog::updateinfopain(int row)
+void PlaneLog::updateinfopain()
 {
-    if(row<0)return;
-    if(row>=ui->tableWidget->rowCount())return;
+
+    if(!selectedAESitem)return;
+    if(selectedAESitem->row()<0)return;
+    if(selectedAESitem->row()>=ui->tableWidget->rowCount())return;
+    int row=selectedAESitem->row();
+
     QTableWidgetItem *LastMessageitem=ui->tableWidget->item(row, 5);
     QTableWidgetItem *AESitem = ui->tableWidget->item(row, 0);
     QTableWidgetItem *REGitem = ui->tableWidget->item(row, 1);
@@ -501,8 +506,6 @@ void PlaneLog::updateinfopain(int row)
     ui->plainTextEditnotes->setPlainText(Notesitem->text());
     connect(ui->plainTextEditnotes,SIGNAL(textChanged()),this,SLOT(plainTextEditnotesChanged()));
 
-    updateinfoplanrow=row;
-
 }
 
 void PlaneLog::messagesliderchsnged(int value)
@@ -512,12 +515,14 @@ void PlaneLog::messagesliderchsnged(int value)
 
 void PlaneLog::on_toolButtonimg_clicked()
 {
-    if(updateinfoplanrow<0)return;
-    if(updateinfoplanrow>=ui->tableWidget->rowCount())return;
-  //  if(updateinfoplanrow!=ui->tableWidget->currentRow())return;
 
-    QTableWidgetItem *AESitem = ui->tableWidget->item(updateinfoplanrow, 0);
-    QTableWidgetItem *REGitem = ui->tableWidget->item(updateinfoplanrow, 1);
+    if(!selectedAESitem)return;
+    if(selectedAESitem->row()<0)return;
+    if(selectedAESitem->row()>=ui->tableWidget->rowCount())return;
+    int row=selectedAESitem->row();
+
+    QTableWidgetItem *AESitem = ui->tableWidget->item(row, 0);
+    QTableWidgetItem *REGitem = ui->tableWidget->item(row, 1);
 
     QClipboard *clipboard = QApplication::clipboard();
     clipboard->setText(AESitem->text());
@@ -604,9 +609,12 @@ void PlaneLog::on_actionCopy_triggered()
 
 void PlaneLog::plainTextEditnotesChanged()
 {
-    if(updateinfoplanrow<0)return;
-    if(updateinfoplanrow>=ui->tableWidget->rowCount())return;
-    if(updateinfoplanrow!=ui->tableWidget->currentRow())return;
-    QTableWidgetItem *Notesitem = ui->tableWidget->item(updateinfoplanrow, 7);
+    if(!selectedAESitem)return;
+    if(selectedAESitem->row()<0)return;
+    if(selectedAESitem->row()>=ui->tableWidget->rowCount())return;
+    int row=selectedAESitem->row();
+
+
+    QTableWidgetItem *Notesitem = ui->tableWidget->item(row, 7);
     Notesitem->setText(ui->plainTextEditnotes->toPlainText().replace("\u2063",""));
 }
