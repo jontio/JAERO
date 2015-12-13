@@ -1,6 +1,8 @@
 #ifndef SETTINGSDIALOG_H
 #define SETTINGSDIALOG_H
 
+#include <QtGlobal>
+
 #if defined(Q_OS_UNIX) || defined(Q_OS_LUNX)
 #define APPDATALOCATIONS QStandardPaths::AppDataLocation
 #else
