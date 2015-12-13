@@ -1,0 +1,10 @@
+[Desktop Entry]
+Type=Application
+Name=JAERO
+GenericName=ACARS demodulator and decoder
+Comment=A SatCom ACARS demodulator and decoder for the Aero standard
+Exec=JAERO
+Terminal=false
+Icon=JAERO
+Categories=Network;HamRadio;
+Keywords=SDR;Radio;HAM;
