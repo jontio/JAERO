@@ -100,10 +100,10 @@ void SettingsDialog::populatesettings()
     ui->lineEditdonotdisplaysus->setText(settings.value("lineEditdonotdisplaysus","71 18 19").toString());
     ui->checkBoxdropnontextmsgs->setChecked(settings.value("checkBoxdropnontextmsgs",true).toBool());
     ui->comboBoxsoundcard->setCurrentText(settings.value("comboBoxsoundcard","").toString());
-    ui->lineEditlogdir->setText(settings.value("lineEditlogdir",QStandardPaths::standardLocations(QStandardPaths::AppLocalDataLocation)[0]+"/logs").toString());
+    ui->lineEditlogdir->setText(settings.value("lineEditlogdir",QStandardPaths::standardLocations(APPDATALOCATIONS)[0]+"/logs").toString());
     ui->checkBoxlogenable->setChecked(settings.value("checkBoxlogenable",false).toBool());
     ui->checkBoxlogwidebandwidthenable->setChecked(settings.value("checkBoxlogwidebandwidthenable",false).toBool());
-    ui->lineEditplanesfolder->setText(settings.value("lineEditplanesfolder",QStandardPaths::standardLocations(QStandardPaths::AppLocalDataLocation)[0]+"/planes").toString());
+    ui->lineEditplanesfolder->setText(settings.value("lineEditplanesfolder",QStandardPaths::standardLocations(APPDATALOCATIONS)[0]+"/planes").toString());
     ui->lineEditplanelookup->setText(settings.value("lineEditplanelookup","http://www.flightradar24.com/data/airplanes/{REG}").toString());
     //ui->lineEditplanelookup->setText(settings.value("lineEditplanelookup","http://junzisun.com/aif/?q={AES}#").toString());
     ui->lineEditDBURL->setText(settings.value("lineEditDBURL","http://junzisun.com/aif/download").toString());

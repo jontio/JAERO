@@ -1,6 +1,12 @@
 #ifndef SETTINGSDIALOG_H
 #define SETTINGSDIALOG_H
 
+#if defined(Q_OS_UNIX) || defined(Q_OS_LUNX)
+#define APPDATALOCATIONS QStandardPaths::AppDataLocation
+#else
+#define APPDATALOCATIONS QStandardPaths::AppLocalDataLocation
+#endif
+
 #include <QDialog>
 #include <QVector>
 #include "../audiomskmodulator.h"

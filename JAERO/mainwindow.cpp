@@ -41,8 +41,7 @@ MainWindow::MainWindow(QWidget *parent) :
 {
     ui->setupUi(this);
 
-    if(QFile("../JAERO/sounds/beep.wav").exists())beep=new QSound("../JAERO/sounds/beep.wav",this);//for me
-     else beep=new QSound(QStandardPaths::standardLocations(QStandardPaths::AppLocalDataLocation)[0]+"/sounds/beep.wav",this);
+    beep=new QSound(":/sounds/beep.wav",this);
 
     //example of using db
     /*dbtu=new DataBaseTextUser(this);
