@@ -215,6 +215,15 @@ void DataBaseWorkerText::DbLookupFromAES(const QString &dirname, const QString &
     //open db
     if((!db.isOpen())||(db.databaseName()!=(dirname+"/aircrafts_dump.db")))
     {
+
+        QFile file(dirname+"/aircrafts_dump.db");
+        if(!file.exists())
+        {
+            values.push_back("Database file aircrafts_dump.db missing. Download first.");
+            QMetaObject::invokeMethod(sender,member, Qt::QueuedConnection,Q_ARG(bool, false),Q_ARG(int, userdata),Q_ARG(const QStringList&, values));
+            return;
+        }
+
         if(!db.isOpen())db = QSqlDatabase::addDatabase("QSQLITE");
         db.setDatabaseName(dirname+"/aircrafts_dump.db");
         if (!db.open())

@@ -275,7 +275,7 @@
          </rect>
         </property>
         <property name="toolTip">
-         <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Planes images are stored as {AES}.png or {AES}.jpg and database as aircrafts_dump.csv in this folder.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+         <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Plane images are stored as {AES}.png or {AES}.jpg and database as aircrafts_dump.db in this folder.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
         </property>
        </widget>
        <widget class="QLabel" name="label_10">
