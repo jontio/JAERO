@@ -7,6 +7,10 @@
 #include <QTextStream>
 #include <QCache>
 #include <QDebug>
+#include <QSqlDatabase>
+#include <QSqlQuery>
+#include <QSqlError>
+#include <QSqlRecord>
 
 #define DataBaseTextUser_MAX_PACKETS_IN_QUEUE 100
 
@@ -18,9 +22,13 @@ class DataBaseWorkerText : public QObject
 public:
 public slots:
     void DbLookupFromAES(const QString &dirname, const QString &AEStext,int userdata,QObject *sender,const char * member);
+    bool importdb(const QString &dirname);
 signals:
+    void dbimported(bool ok,const QString &stringresult);
 private:
     QCache<QString, QStringList> cache;
+    QSqlDatabase db;
+
 };
 
 class DataBaseText : public QObject
@@ -32,7 +40,10 @@ public:
     ~DataBaseText();
 signals:
     void asyncDbLookupFromAES(const QString &dirname, const QString &AEStext,int userdata,QObject *sender,const char * member);
+    void importdb(const QString &dirname);
+    void dbimported(bool ok,const QString &stringresult);
 public slots:
+private slots:
 };
 
 extern DataBaseText *dbtext;

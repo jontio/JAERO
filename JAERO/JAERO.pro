@@ -5,7 +5,7 @@
 #
 #-------------------------------------------------
 
-QT       += multimedia core network gui svg
+QT       += multimedia core network gui svg sql
 
 greaterThan(QT_MAJOR_VERSION, 4): QT += widgets  printsupport
 

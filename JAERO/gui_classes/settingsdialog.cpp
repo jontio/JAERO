@@ -5,6 +5,7 @@
 #include <QStandardPaths>
 #include <QFile>
 #include <QMessageBox>
+#include "../databasetext.h"
 
 
 //todo change JAEROL to JAERO for v1.0.2
@@ -176,6 +177,7 @@ void SettingsDialog::DownloadDBResult(const QUrl &url,bool result)
         QSettings settings("Jontisoft", "JAEROL");
         if(result)settings.setValue("lastdbupdate", QDate::currentDate());
         settings.setValue("updatedbinformed", false);
+        if(dbtext!=NULL)dbtext->importdb(ui->lineEditplanesfolder->text());
     }
 }
 

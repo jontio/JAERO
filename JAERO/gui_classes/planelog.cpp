@@ -119,6 +119,8 @@ PlaneLog::PlaneLog(QWidget *parent) :
 
     selectedAESitem=NULL;
 
+    planesfolder=((const char*) 0);
+
     connect(ui->textEditmessages->verticalScrollBar(),SIGNAL(valueChanged(int)),this,SLOT(messagesliderchsnged(int)));
 
     //create image lookup controller and connect result to us
@@ -489,7 +491,7 @@ void PlaneLog::updateinfopain()
     ui->label_type->clear();
     ui->label_owner->clear();
     ui->plainTextEditdatabase->clear();
-    dbc->request(planesfolder,AESitem->text(),NULL);
+    if(!planesfolder.isNull())dbc->request(planesfolder,AESitem->text(),NULL);
 
     //old code. blocking
     /*QString imagefilename=imagesfolder+"/"+AESitem->text()+".png";
