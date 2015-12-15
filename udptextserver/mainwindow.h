@@ -19,8 +19,10 @@ public:
 private:
     Ui::MainWindow *ui;
     QUdpSocket *udpsocket;
+    QTimer *readtimer;
 private slots:
     void readyReadSlot();
+
 };
 
 #endif // MAINWINDOW_H

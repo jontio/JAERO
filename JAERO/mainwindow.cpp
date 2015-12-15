@@ -174,7 +174,7 @@ MainWindow::MainWindow(QWidget *parent) :
     //add todays date
     //ui->inputwidget->appendHtml("<b>"+QDateTime::currentDateTime().toString("h:mmap ddd d-MMM-yyyy")+" JAERO started</b>");
     //ui->inputwidget->appendPlainText("");
-    ui->inputwidget->appendPlainText("\n"+QDateTime::currentDateTime().toString("h:mmap ddd d-MMM-yyyy")+" JAERO started\n");
+    ui->inputwidget->appendPlainText(QDateTime::currentDateTime().toString("h:mmap ddd d-MMM-yyyy")+" JAERO started\n");
     QTimer::singleShot(100,ui->inputwidget,SLOT(scrolltoend()));
 
     ui->actionTXRX->setVisible(false);//there is a hidden audio modulator
