@@ -8,8 +8,6 @@
 #include "../databasetext.h"
 
 
-//todo change JAEROL to JAERO for v1.0.2
-
 SettingsDialog::SettingsDialog(QWidget *parent) :
     QDialog(parent),
     ui(new Ui::SettingsDialog)
@@ -92,7 +90,7 @@ void SettingsDialog::populatesettings()
         ui->comboBoxsoundcard->addItem(deviceInfo.deviceName());
 
     //load settings
-    QSettings settings("Jontisoft", "JAEROL");
+    QSettings settings("Jontisoft", "JAERO");
     ui->doubleSpinboxminpreamble->setValue(settings.value("doubleSpinboxminpreamble",1.5).toDouble());
     ui->spinBoxTXFreq->setValue(settings.value("spinBoxTXFreq",1000).toInt());
     ui->linePreamble->setText(settings.value("linePreamble","\\r|\\aNOCALL\\a \\aNOCALL\\a \\aNOCALL\\a\\n").toString());
@@ -124,7 +122,7 @@ void SettingsDialog::accept()
 {    
 
     //save settings
-    QSettings settings("Jontisoft", "JAEROL");
+    QSettings settings("Jontisoft", "JAERO");
     settings.setValue("doubleSpinboxminpreamble", ui->doubleSpinboxminpreamble->value());
     settings.setValue("spinBoxTXFreq", ui->spinBoxTXFreq->value());
     settings.setValue("linePreamble", ui->linePreamble->text());
@@ -174,7 +172,7 @@ void SettingsDialog::DownloadDBResult(const QUrl &url,bool result)
 {
     if(QUrl::fromEncoded(ui->lineEditDBURL->text().toLocal8Bit()).url()==url.url())
     {
-        QSettings settings("Jontisoft", "JAEROL");
+        QSettings settings("Jontisoft", "JAERO");
         if(result)settings.setValue("lastdbupdate", QDate::currentDate());
         settings.setValue("updatedbinformed", false);
         if(dbtext!=NULL)dbtext->importdb(ui->lineEditplanesfolder->text());
@@ -183,7 +181,7 @@ void SettingsDialog::DownloadDBResult(const QUrl &url,bool result)
 
 void SettingsDialog::DataBaseUpdateSugestion()
 {
-    QSettings settings("Jontisoft", "JAEROL");
+    QSettings settings("Jontisoft", "JAERO");
     if(settings.value("updatedbinformed",false).toBool())return;
     if(lastdbupdate.isNull())
     {

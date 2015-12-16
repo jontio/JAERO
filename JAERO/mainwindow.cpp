@@ -114,7 +114,7 @@ MainWindow::MainWindow(QWidget *parent) :
 
 
     //load settings
-    QSettings settings("Jontisoft", "JAEROL");
+    QSettings settings("Jontisoft", "JAERO");
     ui->comboBoxafc->setCurrentIndex(settings.value("comboBoxafc",0).toInt());
     ui->comboBoxbps->setCurrentIndex(settings.value("comboBoxbps",0).toInt());
     ui->comboBoxlbw->setCurrentIndex(settings.value("comboBoxlbw",0).toInt());
@@ -187,7 +187,7 @@ void MainWindow::closeEvent(QCloseEvent *event)
 {
 
     //save settings
-    QSettings settings("Jontisoft", "JAEROL");
+    QSettings settings("Jontisoft", "JAERO");
     settings.setValue("comboBoxafc", ui->comboBoxafc->currentIndex());
     settings.setValue("comboBoxbps", ui->comboBoxbps->currentIndex());
     settings.setValue("comboBoxlbw", ui->comboBoxlbw->currentIndex());

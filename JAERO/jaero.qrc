@@ -21,5 +21,7 @@
         <file>images/Plane_clip_art.svg</file>
         <file>images/globe.svg</file>
         <file>sounds/beep.wav</file>
+        <file>images/export.svg</file>
+        <file>images/import.svg</file>
     </qresource>
 </RCC>

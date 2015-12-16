@@ -1,0 +1,127 @@
+<?xml version="1.0"?>
+<svg
+    xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+    xmlns="http://www.w3.org/2000/svg"
+    xmlns:cc="http://creativecommons.org/ns#"
+    xmlns:dc="http://purl.org/dc/elements/1.1/"
+    xmlns:svg="http://www.w3.org/2000/svg"
+    xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+    xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+    xmlns:ns1="http://sozi.baierouge.fr"
+    xmlns:xlink="http://www.w3.org/1999/xlink"
+    id="svg2845"
+    viewBox="0 0 48 48"
+    version="1.1"
+  >
+  <g
+      id="layer1"
+      transform="translate(0 -1004.4)"
+    >
+    <g
+        id="g2839"
+        fill="#333"
+        transform="matrix(0 -1.1084 1.1084 0 -1116.6 1001.1)"
+        fill-opacity=".66667"
+      >
+      <path
+          id="path2823"
+          d="m-17.251 1019.7c0.52244 0.044 1.499 0.8157 3.3125 2.4063 7.9322 6.9574 7.8483 7.4501 7.8438 8.0312l-0.0625 0.2813c-0.29726 0.5309-0.64434 0.7382-4.3125 3.0625-1.0232 0.6483-3.1308 2.0128-4.6875 3.0312-3.8686 2.5309-4.0626 2.5056-3.8438-0.4687 0.12949-1.7598 0.12283-1.8904-0.1875-2.25-0.28212-0.3269-0.5541-0.4059-1.8125-0.5938-3.4384-0.5136-7.1965 0.033-10.531 1.5313-1.392 0.6253-1.8228 0.8541-3.3125 1.875-0.714 0.4892-0.97917 0.6031-1.5312 0.5625-0.49958-0.036-0.67926-0.1453-0.78125-0.375-0.52901-1.1912 1.2238-3.6647 4.7188-6.6563 3.5199-3.0131 7.5039-4.8836 12.25-5.7187 2.0303-0.3573 2.0528-0.3693 2.2188-2.625 0.10523-1.4302 0.19631-2.1375 0.71875-2.0938z"
+      />
+      <path
+          id="path2825"
+          transform="translate(0 1004.4)"
+          d="m-38.188 11.625c-2.77 0-5 2.23-5 5v16.156c0 2.77 2.23 5 5 5h22.344c2.77 0 5-2.23 5-5v-2.0312c-0.72986 0.47054-1.3715 0.86413-2.1562 1.375-0.65952 1.9891-2.5028 3.4375-4.7188 3.4375h-16.844c-2.77 0-5-2.23-5-5v-11.719c0-2.77 2.23-5 5-5h16.844c2.261 0 4.1276 1.51 4.75 3.5625 0.09002 0.07848 0.15573 0.13607 0.25 0.21875 0.8149 0.71476 1.2129 1.096 1.875 1.6875v-2.6875c0-2.77-2.23-5-5-5h-22.344z"
+      />
+    </g
+    >
+  </g
+  >
+  <metadata
+    >
+    <rdf:RDF
+      >
+      <cc:Work
+        >
+        <dc:format
+          >image/svg+xml</dc:format
+        >
+        <dc:type
+            rdf:resource="http://purl.org/dc/dcmitype/StillImage"
+        />
+        <cc:license
+            rdf:resource="http://creativecommons.org/licenses/publicdomain/"
+        />
+        <dc:publisher
+          >
+          <cc:Agent
+              rdf:about="http://openclipart.org/"
+            >
+            <dc:title
+              >Openclipart</dc:title
+            >
+          </cc:Agent
+          >
+        </dc:publisher
+        >
+        <dc:title
+          >export icon</dc:title
+        >
+        <dc:date
+          >2013-07-15T19:09:27</dc:date
+        >
+        <dc:description
+          >An export icon</dc:description
+        >
+        <dc:source
+          >https://openclipart.org/detail/180890/export-icon-by-dibargatin-180890</dc:source
+        >
+        <dc:creator
+          >
+          <cc:Agent
+            >
+            <dc:title
+              >dibargatin</dc:title
+            >
+          </cc:Agent
+          >
+        </dc:creator
+        >
+        <dc:subject
+          >
+          <rdf:Bag
+            >
+            <rdf:li
+              >android</rdf:li
+            >
+            <rdf:li
+              >export</rdf:li
+            >
+            <rdf:li
+              >icon</rdf:li
+            >
+          </rdf:Bag
+          >
+        </dc:subject
+        >
+      </cc:Work
+      >
+      <cc:License
+          rdf:about="http://creativecommons.org/licenses/publicdomain/"
+        >
+        <cc:permits
+            rdf:resource="http://creativecommons.org/ns#Reproduction"
+        />
+        <cc:permits
+            rdf:resource="http://creativecommons.org/ns#Distribution"
+        />
+        <cc:permits
+            rdf:resource="http://creativecommons.org/ns#DerivativeWorks"
+        />
+      </cc:License
+      >
+    </rdf:RDF
+    >
+  </metadata
+  >
+</svg
+>

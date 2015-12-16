@@ -17,6 +17,7 @@
 #include <QClipboard>
 #include <QScrollBar>
 #include <QMessageBox>
+#include <QMenuBar>
 
 void PlaneLog::imageUpdateslot(const QPixmap &image)
 {
@@ -131,7 +132,6 @@ PlaneLog::PlaneLog(QWidget *parent) :
     dbc=new DataBaseTextUser(this);
     connect(dbc,SIGNAL(result(bool,int,QStringList)),this,SLOT(dbUpdateslot(bool,int,QStringList)));
 
-
     ui->actionLeftRight->setVisible(false);
     ui->actionUpDown->setVisible(false);
     ui->tableWidget->horizontalHeader()->setAutoScroll(true);
@@ -143,6 +143,8 @@ PlaneLog::PlaneLog(QWidget *parent) :
     mainWindow->setCentralWidget(ui->widget);
     toolBar = new QToolBar();
     toolBar->addAction(ui->actionClear);
+    toolBar->addAction(ui->actionImport_log);
+    toolBar->addAction(ui->actionExport_log);
     toolBar->addSeparator();
     toolBar->addSeparator();
     toolBar->addAction(ui->actionUpDown);
@@ -154,6 +156,14 @@ PlaneLog::PlaneLog(QWidget *parent) :
     layout->setContentsMargins(0,0,0,0);
     layout->addWidget(mainWindow);
     setLayout(layout);
+
+    QMenuBar *menubar=new QMenuBar();
+    QMenu *menu_file=new QMenu("File");
+    menu_file->addAction(ui->actionImport_log);
+    menu_file->addAction(ui->actionExport_log);
+    menu_file->addAction(ui->actionClear);
+    menubar->addMenu(menu_file);
+    mainWindow->setMenuBar(menubar);
 
     connect(toolBar,SIGNAL(topLevelChanged(bool)),this,SLOT(updatescrollbar()));
     connect(toolBar,SIGNAL(visibilityChanged(bool)),this,SLOT(updatescrollbar()));
@@ -324,7 +334,7 @@ void PlaneLog::ACARSslot(ACARSItem &acarsitem)
         QString message=acarsitem.message;
         message.replace('\r','\n');
         message.replace("\n\n","\n");
-        if(message.right(1)=="\n")message.remove(acarsitem.message.size()-1,1);
+        if(message.right(1)=="\n")message.chop(1);
         if(message.left(1)=="\n")message.remove(0,1);
         message.replace('\n',"●");
 
@@ -334,8 +344,8 @@ void PlaneLog::ACARSslot(ACARSItem &acarsitem)
         uchar label1=acarsitem.LABEL[1];
         if((uchar)acarsitem.LABEL[1]==127)label1='d';
         tmp+="✈: "+QDateTime::currentDateTime().toString("hh:mm:ss dd-MM-yy ")+(((QString)"").sprintf("AES:%06X GES:%02X %c %s %s %c%c %c●●",acarsitem.isuitem.AESID,acarsitem.isuitem.GESID,acarsitem.MODE,acarsitem.PLANEREG.data(),TAKstr.data(),(uchar)acarsitem.LABEL[0],label1,acarsitem.BI));
-        if(acarsitem.moretocome)LastMessageitem->setText(tmp+message+" ...more to come... \n");
-         else LastMessageitem->setText(tmp+message+"\n");
+        if(acarsitem.moretocome)LastMessageitem->setText(tmp+message+" ...more to come... ●");//\n");
+         else LastMessageitem->setText(tmp+message+"●");//\n");
 
         if(selectedAESitem&&(idx==selectedAESitem->row()))updateinfopain();
 
@@ -382,10 +392,13 @@ void PlaneLog::on_actionClear_triggered()
     ui->labelREG->clear();
     ui->labelfirst->clear();
     ui->labellast->clear();
+    ui->label_owner->clear();
+    ui->label_type->clear();
     disconnect(ui->plainTextEditnotes,SIGNAL(textChanged()),this,SLOT(plainTextEditnotesChanged()));
     ui->plainTextEditnotes->clear();
     connect(ui->plainTextEditnotes,SIGNAL(textChanged()),this,SLOT(plainTextEditnotesChanged()));
     ui->textEditmessages->clear();
+    ui->plainTextEditdatabase->clear();
     selectedAESitem=NULL;
 }
 
@@ -619,4 +632,195 @@ void PlaneLog::plainTextEditnotesChanged()
 
     QTableWidgetItem *Notesitem = ui->tableWidget->item(row, 7);
     Notesitem->setText(ui->plainTextEditnotes->toPlainText().replace("\u2063",""));
+}
+
+void PlaneLog::on_actionExport_log_triggered()
+{
+    //ask for name
+    QSettings settings("Jontisoft", "JAERO");
+    QString filename=QFileDialog::getSaveFileName(this,tr("Save as"), settings.value("exportimportloc",QStandardPaths::standardLocations(QStandardPaths::DocumentsLocation)[0]+"/jaerologwindow.csv").toString(), tr("CSV file (*.csv)"));
+    if(filename.isEmpty())return;
+    settings.setValue("exportimportloc",filename);
+
+    //open file
+    QFile outfile(filename);
+    if (!outfile.open(QIODevice::WriteOnly | QIODevice::Truncate | QIODevice::Text))
+    {
+        QMessageBox msgBox;
+        msgBox.setIcon(QMessageBox::Critical);
+        msgBox.setWindowIcon(QPixmap(":/images/primary-modem.svg"));
+        msgBox.setText("Cant open file for saving");
+        msgBox.setWindowTitle("Error");
+        msgBox.exec();
+        return;
+    }
+    QTextStream outtext(&outfile);
+    outtext.setCodec("UTF-8");
+
+    //write file
+    for(int row=0;row<ui->tableWidget->rowCount();row++)
+    {
+        QString line="\"";
+        for(int column=0;column<ui->tableWidget->columnCount();column++)
+        {
+            QString cell;
+            if(ui->tableWidget->item(row,column))cell=ui->tableWidget->item(row,column)->text();
+
+            //" escape
+            cell.replace("\"","\\\"");
+
+            //notes replacement
+            if(column==7)
+            {
+                cell.remove("\r");
+                cell.replace("\n","●");
+            }
+
+            line+=cell.trimmed()+"\",\"";
+        }
+        line.chop(2);
+        line+="\n";
+        outtext<<line;
+    }
+
+
+}
+
+void PlaneLog::on_actionImport_log_triggered()
+{
+
+    //ask for name
+    QSettings settings("Jontisoft", "JAERO");
+    QString filename=QFileDialog::getOpenFileName(this,tr("Open file"), settings.value("exportimportloc",QStandardPaths::standardLocations(QStandardPaths::DocumentsLocation)[0]+"/jaerologwindow.csv").toString(), tr("CSV file (*.csv)"));
+    if(filename.isEmpty())return;
+    settings.setValue("exportimportloc",filename);
+
+    //open file
+    QFile infile(filename);
+    if (!infile.open(QIODevice::ReadOnly| QIODevice::Text))
+    {
+        QMessageBox msgBox;
+        msgBox.setIcon(QMessageBox::Critical);
+        msgBox.setWindowIcon(QPixmap(":/images/primary-modem.svg"));
+        msgBox.setText("Cant open file for reading");
+        msgBox.setWindowTitle("Error");
+        msgBox.exec();
+        return;
+    }
+    QTextStream intext(&infile);
+    intext.setCodec("UTF-8");
+
+    //confirm
+    if(ui->tableWidget->rowCount())
+    {
+        QMessageBox msgBox;
+        msgBox.setIcon(QMessageBox::Question);
+        msgBox.setWindowIcon(QPixmap(":/images/primary-modem.svg"));
+        msgBox.setText("This will replace this window log\nAre you sure?");
+        msgBox.setStandardButtons(QMessageBox::Yes | QMessageBox::No);
+        msgBox.setDefaultButton(QMessageBox::No);
+        msgBox.setWindowTitle("Confirm log replacement");
+        switch(msgBox.exec())
+        {
+        case QMessageBox::No:
+            return;
+            break;
+        case QMessageBox::Yes:
+            break;
+        default:
+            return;
+            break;
+        }
+    }
+
+    //clear everything
+    ui->tableWidget->clearContents();
+    for(int rows = 0; ui->tableWidget->rowCount(); rows++)ui->tableWidget->removeRow(0);
+    ui->toolButtonimg->setIcon(QPixmap(":/images/Plane_clip_art.svg"));
+    ui->labelAES->clear();
+    ui->labelREG->clear();
+    ui->labelfirst->clear();
+    ui->labellast->clear();
+    ui->label_owner->clear();
+    ui->label_type->clear();
+    disconnect(ui->plainTextEditnotes,SIGNAL(textChanged()),this,SLOT(plainTextEditnotesChanged()));
+    ui->plainTextEditnotes->clear();
+    connect(ui->plainTextEditnotes,SIGNAL(textChanged()),this,SLOT(plainTextEditnotesChanged()));
+    ui->textEditmessages->clear();
+    ui->plainTextEditdatabase->clear();
+    selectedAESitem=NULL;
+
+    //look at all rows in the file
+    QTableWidgetItem *AESitem;
+    QTableWidgetItem *REGitem;
+    QTableWidgetItem *FirstHearditem;
+    QTableWidgetItem *LastHearditem;
+    QTableWidgetItem *Countitem;
+    QTableWidgetItem *LastMessageitem;
+    QTableWidgetItem *MessageCountitem;
+    QTableWidgetItem *Notesitem;
+    int ec=0;
+    while (!intext.atEnd())
+    {
+
+        //read row
+        QString line = intext.readLine();
+        line.chop(1);
+        line.remove(0,1);
+        line.replace("\\\"","\x10");
+        QStringList items=line.split("\",\"");
+        if(items.size()<8)
+        {
+            ec++;
+            if(ec<20)qDebug()<<"csv col count to small ("<<items.size()<<")";
+            continue;
+        }
+        for(int i=0;i<items.size();i++)items[i].replace("\x10","\"");
+
+        //insert row
+        int idx=ui->tableWidget->rowCount();
+        ui->tableWidget->insertRow(idx);
+        QFontMetrics fm(ui->tableWidget->font());
+        ui->tableWidget->setRowHeight(idx,fm.height()*wantedheightofrow);
+        AESitem = new QTableWidgetItem;
+        REGitem = new QTableWidgetItem;
+        FirstHearditem = new QTableWidgetItem;
+        LastHearditem = new QTableWidgetItem;
+        Countitem = new QTableWidgetItem;
+        LastMessageitem = new QTableWidgetItem;
+        MessageCountitem = new QTableWidgetItem;
+        Notesitem = new QTableWidgetItem;
+        ui->tableWidget->setItem(idx,0,AESitem);
+        ui->tableWidget->setItem(idx,1,REGitem);
+        ui->tableWidget->setItem(idx,2,FirstHearditem);
+        ui->tableWidget->setItem(idx,3,LastHearditem);
+        ui->tableWidget->setItem(idx,4,Countitem);
+        ui->tableWidget->setItem(idx,5,LastMessageitem);
+        ui->tableWidget->setItem(idx,6,MessageCountitem);
+        ui->tableWidget->setItem(idx,7,Notesitem);
+        AESitem->setTextAlignment(Qt::AlignHCenter|Qt::AlignVCenter);
+        REGitem->setTextAlignment(Qt::AlignHCenter|Qt::AlignVCenter);
+        Countitem->setTextAlignment(Qt::AlignHCenter|Qt::AlignVCenter);
+        FirstHearditem->setTextAlignment(Qt::AlignHCenter|Qt::AlignVCenter);
+        LastHearditem->setTextAlignment(Qt::AlignHCenter|Qt::AlignVCenter);
+        MessageCountitem->setTextAlignment(Qt::AlignHCenter|Qt::AlignVCenter);
+        AESitem->setFlags(AESitem->flags()&~Qt::ItemIsEditable);
+        REGitem->setFlags(REGitem->flags()&~Qt::ItemIsEditable);
+        Countitem->setFlags(Countitem->flags()&~Qt::ItemIsEditable);
+        FirstHearditem->setFlags(FirstHearditem->flags()&~Qt::ItemIsEditable);
+        LastHearditem->setFlags(LastHearditem->flags()&~Qt::ItemIsEditable);
+        Notesitem->setFlags(Notesitem->flags()&~Qt::ItemIsEditable);
+        AESitem->setText(items[0]);
+        REGitem->setText(items[1]);
+        FirstHearditem->setText(items[2]);
+        LastHearditem->setText(items[3]);
+        Countitem->setText(items[4]);
+        LastMessageitem->setText(items[5]);
+        MessageCountitem->setText(items[6]);
+        items[7].replace("●","\n");
+        Notesitem->setText(items[7].trimmed());
+
+    }
+
+
 }

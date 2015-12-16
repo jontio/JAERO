@@ -448,6 +448,30 @@
     <string>&amp;Copy</string>
    </property>
   </action>
+  <action name="actionExport_log">
+   <property name="icon">
+    <iconset resource="../jaero.qrc">
+     <normaloff>:/images/export.svg</normaloff>:/images/export.svg</iconset>
+   </property>
+   <property name="text">
+    <string>Export log</string>
+   </property>
+   <property name="toolTip">
+    <string>Export log to a CSV file</string>
+   </property>
+  </action>
+  <action name="actionImport_log">
+   <property name="icon">
+    <iconset resource="../jaero.qrc">
+     <normaloff>:/images/import.svg</normaloff>:/images/import.svg</iconset>
+   </property>
+   <property name="text">
+    <string>Import log</string>
+   </property>
+   <property name="toolTip">
+    <string>Inport log from a CSV file</string>
+   </property>
+  </action>
  </widget>
  <resources>
   <include location="../jaero.qrc"/>

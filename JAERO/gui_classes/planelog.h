@@ -136,6 +136,10 @@ private slots:
 
     void messagesliderchsnged(int value);
 
+    void on_actionExport_log_triggered();
+
+    void on_actionImport_log_triggered();
+
 private:
     Ui::PlaneLog *ui;
     int wantedheightofrow;
