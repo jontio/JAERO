@@ -98,6 +98,7 @@ bool DataBaseWorkerText::importdb(const QString &dirname)
     QFile file(dirname+"/aircrafts_dump.csv");
     if(!file.open(QIODevice::ReadOnly | QIODevice::Text))
     {
+        file.rename(dirname+"/new.aircrafts_dump.csv");
         emit dbimported(false,"Cant open csv file");
         return false;
     }
@@ -109,6 +110,7 @@ bool DataBaseWorkerText::importdb(const QString &dirname)
         db.setDatabaseName(dirname+"/aircrafts_dump.db");
         if (!db.open())
         {
+            file.rename(dirname+"/new.aircrafts_dump.csv");
             emit dbimported(false,"Cant open SQL database");
             return false;
         }
@@ -134,6 +136,7 @@ bool DataBaseWorkerText::importdb(const QString &dirname)
         if(values.size()!=9)
         {
             db.rollback();
+            file.rename(dirname+"/new.aircrafts_dump.csv");
             emit dbimported(false,"CSV file illformed");
             return false;
         }
@@ -144,6 +147,7 @@ bool DataBaseWorkerText::importdb(const QString &dirname)
         if(!bStatus)
         {
             db.rollback();
+            file.rename(dirname+"/new.aircrafts_dump.csv");
             emit dbimported(false,"CSV entry error");
             return false;
         }

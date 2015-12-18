@@ -115,7 +115,7 @@ MainWindow::MainWindow(QWidget *parent) :
 
     //load settings
     QSettings settings("Jontisoft", "JAERO");
-    ui->comboBoxafc->setCurrentIndex(settings.value("comboBoxafc",0).toInt());
+    ui->comboBoxafc->setCurrentIndex(settings.value("comboBoxafc",1).toInt());
     ui->comboBoxbps->setCurrentIndex(settings.value("comboBoxbps",0).toInt());
     ui->comboBoxlbw->setCurrentIndex(settings.value("comboBoxlbw",0).toInt());
     ui->comboBoxdisplay->setCurrentIndex(settings.value("comboBoxdisplay",0).toInt());

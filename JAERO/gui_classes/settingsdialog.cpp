@@ -96,7 +96,7 @@ void SettingsDialog::populatesettings()
     ui->linePreamble->setText(settings.value("linePreamble","\\r|\\aNOCALL\\a \\aNOCALL\\a \\aNOCALL\\a\\n").toString());
     ui->linePostamble->setText(settings.value("linePostamble","\\n\\a73 NOCALL\\a\\n").toString());
     ui->comboBoxDisplayformat->setCurrentIndex(settings.value("comboBoxDisplayformat",2).toInt());
-    ui->lineEditdonotdisplaysus->setText(settings.value("lineEditdonotdisplaysus","71 18 19").toString());
+    ui->lineEditdonotdisplaysus->setText(settings.value("lineEditdonotdisplaysus","26 0A C0 00 14 16").toString());
     ui->checkBoxdropnontextmsgs->setChecked(settings.value("checkBoxdropnontextmsgs",true).toBool());
     ui->comboBoxsoundcard->setCurrentText(settings.value("comboBoxsoundcard","").toString());
     ui->lineEditlogdir->setText(settings.value("lineEditlogdir",QStandardPaths::standardLocations(APPDATALOCATIONS)[0]+"/logs").toString());
