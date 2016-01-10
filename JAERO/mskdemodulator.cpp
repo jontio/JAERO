@@ -2,7 +2,6 @@
 #include <QDebug>
 #include "coarsefreqestimate.h"
 
-#include <assert.h>
 #include <iostream>
 
 #include <QTimerEvent>
@@ -126,6 +125,12 @@ double  MskDemodulator::getCurrentFreq()
     return mixer_center.GetFreqHz();
 }
 
+void MskDemodulator::invalidatesettings()
+{
+    Fs=-1;
+    fb=-1;
+}
+
 void MskDemodulator::setSettings(Settings _settings)
 {
     if(_settings.Fs!=Fs)emit SampleRateChanged(_settings.Fs);
@@ -133,12 +138,19 @@ void MskDemodulator::setSettings(Settings _settings)
     lockingbw=_settings.lockingbw;
     if(_settings.fb!=fb)emit BitRateChanged(_settings.fb);
     fb=_settings.fb;
+
+    //Since oqpsk
+    if(fb>Fs)fb=Fs;//incase
+    /*if((int(Fs/fb))!=(Fs/fb))
+    {
+        qDebug()<<"Note: These settings wont work for MSK";
+    }*/
+
     freq_center=_settings.freq_center;
     if(freq_center>((Fs/2.0)-(lockingbw/2.0)))freq_center=((Fs/2.0)-(lockingbw/2.0));
     symbolspercycle=_settings.symbolspercycle;
     signalthreshold=_settings.signalthreshold;
-
-    SamplesPerSymbol=Fs/fb;
+    SamplesPerSymbol=int(Fs/fb);
     bbnfft=pow(2,_settings.coarsefreqest_fft_power);
     bbcycbuff.resize(bbnfft);
     bbcycbuff_ptr=0;
@@ -146,7 +158,6 @@ void MskDemodulator::setSettings(Settings _settings)
     coarsefreqestimate->setSettings(_settings.coarsefreqest_fft_power,lockingbw,fb,Fs);
     mixer_center.SetFreq(freq_center,Fs);
     mixer2.SetFreq(freq_center,Fs);
-
     delete matchedfilter_re;
     delete matchedfilter_im;
     matchedfilter_re = new FIR(2*SamplesPerSymbol);

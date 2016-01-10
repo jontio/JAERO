@@ -48,7 +48,9 @@ SOURCES += main.cpp\
     ../viterbi-xukmin/viterbi.cpp \
     gui_classes/planelog.cpp \
     downloadmanager.cpp \
-    databasetext.cpp
+    databasetext.cpp \
+    oqpskdemodulator.cpp \
+    audiooqpskdemodulator.cpp
 
 HEADERS  += mainwindow.h \
     coarsefreqestimate.h \
@@ -78,7 +80,9 @@ HEADERS  += mainwindow.h \
     ../viterbi-xukmin/viterbi.h \
     gui_classes/planelog.h \
     downloadmanager.h \
-    databasetext.h
+    databasetext.h \
+    oqpskdemodulator.h \
+    audiooqpskdemodulator.h
 
 FORMS    += mainwindow.ui \
     gui_classes/settingsdialog.ui \

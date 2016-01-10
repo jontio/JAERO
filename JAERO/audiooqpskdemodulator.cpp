@@ -1,27 +1,27 @@
-#include "audiomskdemodulator.h"
+#include "audiooqpskdemodulator.h"
 
 #include <QDebug>
 
-AudioMskDemodulator::AudioMskDemodulator(QObject *parent)
-:   MskDemodulator(parent),
+AudioOqpskDemodulator::AudioOqpskDemodulator(QObject *parent)
+:   OqpskDemodulator(parent),
   m_audioInput(NULL)
 {
 //
 }
 
-void AudioMskDemodulator::start()
+void AudioOqpskDemodulator::start()
 {
-    MskDemodulator::start();
+    OqpskDemodulator::start();
     if(m_audioInput)m_audioInput->start(this);
 }
 
-void AudioMskDemodulator::stop()
+void AudioOqpskDemodulator::stop()
 {
     if(m_audioInput)m_audioInput->stop();
-    MskDemodulator::stop();
+    OqpskDemodulator::stop();
 }
 
-void AudioMskDemodulator::setSettings(Settings _settings)
+void AudioOqpskDemodulator::setSettings(Settings _settings)
 {
     bool wasopen=isOpen();
     stop();
@@ -46,14 +46,14 @@ void AudioMskDemodulator::setSettings(Settings _settings)
         m_audioInput->setBufferSize(settings.Fs*settings.buffersizeinsecs);//buffersizeinsecs seconds of buffer
     }
     settings=_settings;
-    MskDemodulator::setSettings(settings);
+
+    OqpskDemodulator::setSettings(settings);
 
     if(wasopen)start();
 
 }
 
-AudioMskDemodulator::~AudioMskDemodulator()
+AudioOqpskDemodulator::~AudioOqpskDemodulator()
 {
     stop();
 }
-

@@ -52,6 +52,7 @@ public:
     qint64 readData(char *data, qint64 maxlen);
     qint64 writeData(const char *data, qint64 len);
     void setSettings(Settings settings);
+    void invalidatesettings();
     void setAFC(bool state);
     void setSQL(bool state);
     void setScatterPointType(ScatterPointType type);

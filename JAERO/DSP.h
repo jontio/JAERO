@@ -7,9 +7,20 @@
 #include <math.h>
 #include <vector>
 #include <complex>
+#include <QObject>
+#include <assert.h>
+#include <QVector>
 //---------------------------------------------------------------------------
 
+//#define ASSERTCH(obj,idx) assert(idx>=0);assert(idx<obj.size())
+//#define JASSERT(x) assert(x)
+
+#define ASSERTCH(obj,idx)
+#define JASSERT(x)
+
 #define WTSIZE 19999
+#define WTSIZE_3_4 3.0*WTSIZE/4.0
+#define WTSIZE_1_4 1.0*WTSIZE/4.0
 
 typedef std::complex<double> cpx_type;
 
@@ -41,11 +52,12 @@ public:
         void  SetFreq(double freq, int samplerate);
         double GetFreqTest();
         void  Advance(double FractionOfSample){WTptr+=FractionOfSample*WTstep;if(((int)WTptr)>=WTSIZE) WTptr-=WTSIZE;if(((int)WTptr)<0) WTptr+=WTSIZE;}
-        void  AdvanceFractionOfWave(double FractionOfWave){WTptr+=FractionOfWave*WTSIZE;if(((int)WTptr)>=WTSIZE) WTptr-=WTSIZE;if(((int)WTptr)<0) WTptr+=WTSIZE;}
+        void  AdvanceFractionOfWave(double FractionOfWave){WTptr+=FractionOfWave*WTSIZE;while(WTptr>=WTSIZE) WTptr-=WTSIZE;while(WTptr<0) WTptr+=WTSIZE;}
         void  Retard(double FractionOfSample){WTptr-=FractionOfSample*WTstep;if(((int)WTptr)>=WTSIZE) WTptr-=WTSIZE;if(((int)WTptr)<0) WTptr+=WTSIZE;}
         bool   IfPassesPointNextTime_frames(double NumberOfFrames);
         bool   IfPassesPointNextTime(double FractionOfWave);
         bool   IfPassesPointNextTime();
+        bool   IfHavePassedPoint(double FractionOfWave);
         double FractionOfSampleItPassesBy;
         void  SetWTptr(double FractionOfWave,double PlusNumberOfFrames);
         double WTptr;
@@ -62,6 +74,7 @@ private:
         double freq;
         double samplerate;
         int tint;
+        double last_WTptr;
 
 };
 
@@ -103,6 +116,7 @@ public:
     MovingAverage(int number);
     ~MovingAverage();
     double Update(double sig);
+    double UpdateSigned(double sig);
     double Val;
 private:
     int MASz;
@@ -124,6 +138,18 @@ private:
     MovingAverage *E2;
 };
 
+class MSEcalc
+{
+public:
+    MSEcalc(int number);
+    ~MSEcalc();
+    double Update(cpx_type pt_qpsk);
+    double mse;
+private:
+    MovingAverage *pointmean;
+    MovingAverage *msema;
+};
+
 //approx ebno measurement for msk signal with a mathed filter
 class MSKEbNoMeasure
 {
@@ -139,6 +165,24 @@ private:
     MovingAverage *E2;
 };
 
+//approx ebno measurement for oqpsk signal with a mathed filter
+class OQPSKEbNoMeasure
+{
+public:
+    OQPSKEbNoMeasure(int number,double Fs,double fb);
+    ~OQPSKEbNoMeasure();
+    double Update(double sig);//requires a matched filter first
+    double EbNo;
+    double Var;
+    double Mean;
+    double Fs;
+    double fb;
+private:
+    MovingAverage *E;
+    MovingAverage *E2;
+};
+
+//for MSK
 class SymTracker
 {
 public:
@@ -192,5 +236,156 @@ private:
 
 };
 
+class RootRaisedCosine
+{
+public:
+    void design(double alpha,int firsize,double samplerate,double symbol_freq)
+    {
+        if((firsize%2)==0)firsize+=1;
+        Points.resize(firsize);
+        double T=(samplerate)/(symbol_freq);
+        double fi;
+        for(int i=0;i<firsize;i++)
+        {
+            ASSERTCH(Points,i);
+            if(i==((firsize-1)/2)) Points[i]=(4.0*alpha+M_PI-M_PI*alpha)/(M_PI*sqrt(T));
+             else
+             {
+                fi=(((double)i)-((double)(firsize-1))/2.0);
+                if(fabs(1.0-pow(4.0*alpha*fi/T,2))<0.0000000001)Points[i]=(alpha*((M_PI-2.0)*cos(M_PI/(4.0*alpha))+(M_PI+2.0)*sin(M_PI/(4.0*alpha)))/(M_PI*sqrt(2.0*T)));
+                else Points[i]=(4.0*alpha/(M_PI*sqrt(T))*(cos((1.0+alpha)*M_PI*fi/T)+T/(4.0*alpha*fi)*sin((1.0-alpha)*M_PI*fi/T))/(1.0-pow(4.0*alpha*fi/T,2)));
+             }
+        }
+    }
+    QVector<double> Points;
+};
+
+
+template <class T>
+class Delay
+{
+public:
+    Delay()
+    {
+        setdelay(1);
+    }
+    void setdelay(double fractdelay_)
+    {
+        fractdelay=fractdelay_;
+        int buffsize=std::ceil(fractdelay)+1;
+        buff.resize(buffsize);
+        buff.fill(0);
+        buffptr=0;
+    }
+    T update(T sig)
+    {
+        ASSERTCH(buff,buffptr);
+        buff[buffptr]=sig;
+        double dptr=((double)buffptr)-fractdelay;
+        buffptr++;buffptr%=buff.size();
+
+        while(std::floor(dptr)<0)dptr+=((double)buff.size());
+        int iptr=std::floor(dptr);
+
+        double weighting=dptr-((double)iptr);
+        ASSERTCH(buff,iptr);
+        T older=buff[iptr];
+        iptr++;iptr%=buff.size();
+        T newer=buff[iptr];
+
+        return (weighting*newer+(1.0-weighting)*older);
+    }
+private:
+    QVector<T> buff;
+    int buffptr;
+    double fractdelay;
+};
+
+class IIR
+{
+public:
+    IIR();
+    double  update(double sig);
+    QVector<double> a;
+    QVector<double> b;
+    void init();
+private:
+    QVector<double> buff_y;
+    QVector<double> buff_x;
+    int buff_y_ptr;
+    int buff_x_ptr;
+};
+
+template <class T>
+class Intergrator
+{
+public:
+    Intergrator()
+    {
+        setlength(1);
+    }
+    void setlength(int length)
+    {
+        MASz=length;
+        MABuffer.resize(MASz);
+        for(int i=0;i<MABuffer.size();i++)MABuffer[i]=(T)0;
+        MAPtr=0;
+        Val=0;
+    }
+    void clear()
+    {
+        for(int i=0;i<MABuffer.size();i++)MABuffer[i]=(T)0;
+        MAPtr=0;
+        Val=0;
+    }
+    T Update(T sig)
+    {
+        ASSERTCH(MABuffer,MAPtr);
+        MASum=MASum-MABuffer[MAPtr];
+        MASum=MASum+sig;
+        MABuffer[MAPtr]=sig;
+        MAPtr++;MAPtr%=MASz;
+        Val=MASum/((double)MASz);
+        return Val;
+    }
+    T Val;
+private:
+    int MASz;
+    T MASum;
+    QVector<T> MABuffer;
+    int MAPtr;
+};
+
+//-------------
+
+template <class T>
+class DelayThing
+{
+public:
+    DelayThing()
+    {
+        setLength(12);
+    }
+    void setLength(int length)
+    {
+        length++;
+        assert(length>0);
+        buffer.resize(length);
+        buffer_ptr=0;
+        buffer_sz=buffer.size();
+    }
+    void update(T &data)
+    {
+
+        buffer[buffer_ptr]=data;
+        buffer_ptr++;buffer_ptr%=buffer_sz;
+        data=buffer[buffer_ptr];
+
+    }
+private:
+    QVector<T> buffer;
+    int buffer_ptr;
+    int buffer_sz;
+};
 
 #endif

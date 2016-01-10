@@ -70,7 +70,6 @@ void CoarseFreqEstimate::ProcessBasebandData(const QVector<cpx_type> &data)
     fft->transform(in,out);
     for(int i=0;i<nfft/2;i++)std::swap(out[i+nfft/2],out[i]);
 
-
     //smooth
     for(int i=0;i<nfft;i++)y[i]=y[i]*0.9+0.1*10*log10(fmax(abs(out[i]),1));
     //for(int i=0;i<nfft;i++)y[i]=10*log10(fmax(abs(out[i]),1));

@@ -2,7 +2,6 @@
 
 
 #include "DSP.h"
-#include <assert.h>
 #include <QDebug>
 
 //---------------------------------------------------------------------------
@@ -32,6 +31,7 @@ TrigLookUp::TrigLookUp()
 
 WaveTable::WaveTable()
 {
+    last_WTptr=0;
     samplerate=48000;
     freq=1000;
     WTstep=(1000.0)*WTSIZE/(48000);//default
@@ -41,6 +41,7 @@ WaveTable::WaveTable()
 
 WaveTable::WaveTable(int _freq,int _samplerate)
 {
+    last_WTptr=0;
     freq=_freq;
     samplerate=_samplerate;
     if(freq<0)freq=0;
@@ -68,8 +69,9 @@ double  WaveTable::DistancebetweenWT(double WTptr1, double WTptr2)
 
 void  WaveTable::WTnextFrame()
 {
-    assert(WTptr>=0.0);
+    JASSERT(WTptr>=0.0);
     if(WTstep<0)WTstep=0;
+    last_WTptr=WTptr;
     WTptr+=WTstep;
     while(((int)WTptr)>=WTSIZE) WTptr-=WTSIZE;
 }
@@ -165,7 +167,7 @@ void  WaveTable::IncresePhaseDeg(double phase_deg)
 void  WaveTable::SetPhaseDeg(double phase_deg)
 {
     phase_deg=std::fmod(phase_deg,360.0);
-    if(phase_deg<0)phase_deg+=360.0;
+    while(phase_deg<0)phase_deg+=360.0;
     WTptr=(phase_deg/360.0)*((double)WTSIZE);
 }
 
@@ -199,6 +201,25 @@ bool  WaveTable::IfPassesPointNextTime(double FractionOfWave)
     return false;
 }
 
+bool  WaveTable::IfHavePassedPoint(double FractionOfWave)
+{
+    double t_last_WTptr=last_WTptr;
+    double t_WTptr=WTptr;
+    double pt=(FractionOfWave*WTSIZE);
+    t_last_WTptr-=pt;
+    t_WTptr-=pt;
+    if(t_last_WTptr<0.0)t_last_WTptr+=WTSIZE;
+    if(t_WTptr<0.0)t_WTptr+=WTSIZE;
+    if((t_last_WTptr>WTSIZE_3_4)&&(t_WTptr<WTSIZE_1_4))
+    {
+        //FractionOfSampleItPassesBy=(WTstep-t_WTptr)/WTstep;
+        FractionOfSampleItPassesBy=t_WTptr/WTstep;//WTSIZE;
+        return true;
+    }
+    return false;
+}
+
+
 bool  WaveTable::IfPassesPointNextTime_frames(double NumberOfFrames)
 {
     FractionOfSampleItPassesBy=NumberOfFrames-WTptr;
@@ -210,6 +231,10 @@ bool  WaveTable::IfPassesPointNextTime_frames(double NumberOfFrames)
     }
     return false;
 }
+
+
+
+
 
 void  WaveTable::SetWTptr(double FractionOfWave,double PlusNumberOfFrames)
 {
@@ -304,8 +329,8 @@ double  FIR::FIRUpdateAndProcess(double sig, double FractionOfSampleOffset)
 
 void  FIR::FIRSetPoint(int point, double value)
 {
-    assert(point>=0);
-    assert(point<NumberOfPoints);
+    JASSERT(point>=0);
+    JASSERT(point<NumberOfPoints);
     if((point<0)||(point>=NumberOfPoints))return;
     points[point]=value;
 }
@@ -314,7 +339,7 @@ void  FIR::FIRSetPoint(int point, double value)
 AGC::AGC(double _SecondsToAveOver,double _Fs)
 {
     AGCMASz=round(_SecondsToAveOver*_Fs);
-    assert(AGCMASz>0);
+    JASSERT(AGCMASz>0);
     AGCMASum=0;
     AGCMABuffer=new double[AGCMASz];
     for(int i=0;i<AGCMASz;i++)AGCMABuffer[i]=0;
@@ -343,7 +368,7 @@ AGC::~AGC()
 MovingAverage::MovingAverage(int number)
 {
     MASz=round(number);
-    assert(MASz>0);
+    JASSERT(MASz>0);
     MASum=0;
     MABuffer=new double[MASz];
     for(int i=0;i<MASz;i++)MABuffer[i]=0;
@@ -361,13 +386,47 @@ double MovingAverage::Update(double sig)
     return Val;
 }
 
+double MovingAverage::UpdateSigned(double sig)
+{
+    MASum=MASum-MABuffer[MAPtr];
+    MASum=MASum+(sig);
+    MABuffer[MAPtr]=(sig);
+    MAPtr++;MAPtr%=MASz;
+    Val=MASum/((double)MASz);
+    return Val;
+}
+
 MovingAverage::~MovingAverage()
 {
     if(MASz)delete [] MABuffer;
 }
 //---------------------
 
+MSEcalc::MSEcalc(int number)
+{
+    pointmean = new MovingAverage(number);
+    msema = new MovingAverage(number);
+}
+MSEcalc::~MSEcalc()
+{
+    delete pointmean;
+    delete msema;
+}
+double MSEcalc::Update(cpx_type pt_qpsk)
+{
+    double tda,tdb;
+    cpx_type tcpx;
+    pointmean->Update(std::abs(pt_qpsk));
+    double mu=pointmean->Val;
+    if(mu<0.000001)mu=0.000001;
+    tcpx=sqrt(2)*pt_qpsk/mu;
+    tda=(fabs(tcpx.real())-1.0);
+    tdb=(fabs(tcpx.imag())-1.0);
+    mse=msema->Update((tda*tda)+(tdb*tdb));
+    return mse;
+}
 
+//---------------------
 MovingVar::MovingVar(int number)
 {
     E = new MovingAverage(number);
@@ -496,5 +555,113 @@ void  BaceConverter::Reset()
         BuffPosPtr=0;
         Result=0;
         ErasurePtr=0;
+}
+
+//-----
+
+IIR::IIR()
+{
+    a.resize(3);
+    b.resize(3);
+    b[0]=0.00032714218939589035;
+    b[1]=0;
+    b[2]=0.00032714218939589035;
+    a[0]=1;
+    a[1]=-0.39005299948210803;
+    a[2]= 0.99934571562120822;
+    init();
+}
+
+void IIR::init()
+{
+    JASSERT(a.size()>=1);
+    JASSERT(b.size()>=1);
+    buff_x.resize(b.size());
+    buff_y.resize(a.size()-1);
+    buff_x_ptr=0;
+    buff_y_ptr=0;
+    buff_x.fill(0);
+    buff_y.fill(0);
+}
+
+double  IIR::update(double sig)
+{
+
+    buff_x.resize(b.size());
+    buff_y.resize(a.size()-1);
+    if(buff_x_ptr>=buff_x.size())buff_x_ptr=0;
+    if(buff_y_ptr>=buff_y.size())buff_y_ptr=0;
+
+    ASSERTCH(buff_x,buff_x_ptr);
+    buff_x[buff_x_ptr]=sig;
+    buff_x_ptr++;buff_x_ptr%=buff_x.size();
+
+    double y=0;
+
+    //int tp=buff_x_ptr;
+
+    for(int i=b.size()-1;i>=0;i--)
+    {
+        ASSERTCH(buff_x,buff_x_ptr);
+        ASSERTCH(b,i);
+        y+=buff_x[buff_x_ptr]*b[i];
+        buff_x_ptr++;buff_x_ptr%=buff_x.size();
+    }
+
+    for(int i=a.size()-1;i>=1;i--)
+    {
+        ASSERTCH(buff_y,buff_y_ptr);
+        ASSERTCH(a,i);
+        y-=buff_y[buff_y_ptr]*a[i];
+        buff_y_ptr++;buff_y_ptr%=buff_y.size();
+    }
+
+    ASSERTCH(a,0);
+    y/=a[0];
+
+    ASSERTCH(buff_y,buff_y_ptr);
+    buff_y[buff_y_ptr]=y;
+    buff_y_ptr++;buff_y_ptr%=buff_y.size();
+
+    return y;
+
+
+/*            a(1)*y(n) = b(1)*x(n) + b(2)*x(n-1) + ... + b(nb+1)*x(n-nb)
+                - a(2)*y(n-1) - ... - a(na+1)*y(n-na)*/
+}
+
+//----------------
+
+//for alpha==1
+//not sure if correct for any other Fs other than 48000 and fb 10500
+OQPSKEbNoMeasure::OQPSKEbNoMeasure(int number,double _Fs,double _fb)
+{
+    Fs=_Fs;
+    fb=_fb;
+    E = new MovingAverage(number);
+    E2 = new MovingAverage(number);
+}
+
+double OQPSKEbNoMeasure::Update(double sig)
+{
+    E2->Update(sig*sig);
+    Mean=E->Update(sig);
+    double MeanSquared=Mean*Mean;
+    Var=(E2->Val)-(E->Val*E->Val);
+    Var-=(0.024709*MeanSquared);//remove non constant of OQPSK after RRC
+    double mvr=(((Fs*MeanSquared/(2.0*fb*Var)))*0.13743);//calibrated using matlab
+    if(mvr<0.000000001)mvr=0.000000001;
+    double tebno=10.0*log10(mvr);
+    if(std::isnan(tebno))tebno=50;
+    if(tebno>50.0)tebno=50;
+    if(tebno<0.0)tebno=0;//no real reason but there is no way that less will be usful
+    EbNo=EbNo*0.8+0.2*tebno;
+    return EbNo;
+}
+
+OQPSKEbNoMeasure::~OQPSKEbNoMeasure()
+{
+    delete E;
+    delete E2;
 }
 

@@ -4,6 +4,7 @@
 #include <QMainWindow>
 #include <QUdpSocket>
 #include <QLabel>
+#include "audiooqpskdemodulator.h"
 #include "audiomskdemodulator.h"
 #include "audiomskmodulator.h"
 #include "varicodepipedecoder.h"
@@ -29,6 +30,7 @@ public:
     ~MainWindow();
 
 private:
+    enum DemodType{NoDemodType,MSK,OQPSK};
     Ui::MainWindow *ui;
     AudioMskDemodulator *audiomskdemodulator;
     AudioMskDemodulator::Settings audiomskdemodulatorsettings;
@@ -36,6 +38,11 @@ private:
     QLabel *freqlabel;
     QUdpSocket *udpsocket;
     VariCodePipeDecoder *varicodepipedecoder;
+
+    //OQPSK add
+    AudioOqpskDemodulator *audiooqpskdemodulator;
+    AudioOqpskDemodulator::Settings audiooqpskdemodulatorsettings;
+    //
 
     AeroL *aerol;
 
@@ -55,6 +62,10 @@ private:
     QTextStream outlogstream;
 
     DataBaseTextUser *dbtu;
+
+    DemodType typeofdemodtouse;
+
+    void selectdemodulatorconnections(DemodType demodtype);
 
 
     QSound *beep;

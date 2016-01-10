@@ -305,6 +305,41 @@ private:
     int buffer_ptr;
 };
 
+class PreambleDetectorPhaseInvariant
+{
+public:
+    PreambleDetectorPhaseInvariant();
+    void setPreamble(QVector<int> _preamble);
+    bool setPreamble(quint64 bitpreamble,int len);
+    int Update(int val);
+    bool inverted;
+private:
+    QVector<int> preamble;
+    QVector<int> buffer;
+    int buffer_ptr;
+};
+
+class OQPSKPreambleDetectorAndAmbiguityCorrection
+{
+public:
+    OQPSKPreambleDetectorAndAmbiguityCorrection();
+    void setPreamble(QVector<int> _preamble);
+    bool setPreamble(quint64 bitpreamble,int len);
+    bool Update(int val);
+private:
+    QVector<int> preamble;
+    QVector<int> buffer;
+    int buffer_ptr;
+/*    PreambleDetectorOQPSK();
+    void setPreamble(QVector<int> _preamble);
+    bool setPreamble(quint64 bitpreamble,int len);
+    bool Update(int val);
+private:
+    QVector<int> preamble;
+    QVector<int> buffer;
+    int buffer_ptr;*/
+};
+
 class AeroL : public QIODevice
 {
     Q_OBJECT
@@ -343,6 +378,18 @@ private:
     QVector<short> sbits;
     QByteArray decodedbytes;
     PreambleDetector preambledetector;
+
+    //OQPSK
+    PreambleDetectorPhaseInvariant preambledetectorphaseinvariantimag;
+    PreambleDetectorPhaseInvariant preambledetectorphaseinvariantreal;
+
+    bool useingOQPSK;
+    int AERO_SPEC_NumberOfBits;//info only
+    int AERO_SPEC_TotalNumberOfBits;//info and header and uw
+    int AERO_SPEC_BitsInHeader;
+    int realimag;
+
+
 
     QVector<int> block;
     AeroLInterleaver leaver;

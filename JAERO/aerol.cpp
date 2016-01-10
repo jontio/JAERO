@@ -462,6 +462,50 @@ bool PreambleDetector::Update(int val)
     return false;
 }
 
+PreambleDetectorPhaseInvariant::PreambleDetectorPhaseInvariant()
+{
+    inverted=false;
+    preamble.resize(1);
+    buffer.resize(1);
+    buffer_ptr=0;
+}
+void PreambleDetectorPhaseInvariant::setPreamble(QVector<int> _preamble)
+{
+    preamble=_preamble;
+    if(preamble.size()<1)preamble.resize(1);
+    buffer.fill(0,preamble.size());
+    buffer_ptr=0;
+}
+bool PreambleDetectorPhaseInvariant::setPreamble(quint64 bitpreamble,int len)
+{
+    if(len<1||len>64)return false;
+    preamble.clear();
+    for(int i=len-1;i>=0;i--)
+    {
+        if((bitpreamble>>i)&1)preamble.push_back(1);
+         else preamble.push_back(0);
+    }
+    if(preamble.size()<1)preamble.resize(1);
+    buffer.fill(0,preamble.size());
+    buffer_ptr=0;
+    return true;
+}
+int PreambleDetectorPhaseInvariant::Update(int val)
+{
+    assert(buffer.size()==preamble.size());
+    int xorsum=0;
+    for(int i=0;i<(buffer.size()-1);i++)
+    {
+        buffer[i]=buffer[i+1];
+        xorsum+=buffer[i]^preamble[i];
+    }
+    xorsum+=val^preamble[buffer.size()-1];
+    buffer[buffer.size()-1]=val;
+    if(xorsum==buffer.size()){buffer.fill(0);inverted=true;return -1;}
+    if(xorsum==0){buffer.fill(0);inverted=false;return 1;}
+    return false;
+}
+
 AeroL::AeroL(QObject *parent) : QIODevice(parent)
 {
 
@@ -496,6 +540,10 @@ AeroL::AeroL(QObject *parent) : QIODevice(parent)
 
     preambledetector.setPreamble(3780831379LL,32);//0x3780831379,0b11100001010110101110100010010011
 
+    //Preamble detector for OQPSK
+    preambledetectorphaseinvariantimag.setPreamble(3780831379LL,32);//0x3780831379,0b11100001010110101110100010010011
+    preambledetectorphaseinvariantreal.setPreamble(3780831379LL,32);//0x3780831379,0b11100001010110101110100010010011
+
     setBitRate(1200);
 
 }
@@ -507,14 +555,36 @@ void AeroL::setBitRate(double fb)
     case 600:
         leaver.setSize(6);//9 for 1200 bps, 6 for 600 bps
         block.resize(6*64);
+        dl2.setLength(576-6);//delay's data to next frame
+        AERO_SPEC_NumberOfBits=1152;
+        AERO_SPEC_BitsInHeader=16;
+        AERO_SPEC_TotalNumberOfBits=AERO_SPEC_BitsInHeader+AERO_SPEC_NumberOfBits+32;
+        useingOQPSK=false;
         break;
     case 1200:
         leaver.setSize(9);//9 for 1200 bps, 6 for 600 bps
         block.resize(9*64);
+        dl2.setLength(576-6);//delay's data to next frame
+        AERO_SPEC_NumberOfBits=1152;
+        AERO_SPEC_BitsInHeader=16;
+        AERO_SPEC_TotalNumberOfBits=AERO_SPEC_BitsInHeader+AERO_SPEC_NumberOfBits+32;
+        useingOQPSK=false;
+        break;
+    case 10500:
+        leaver.setSize(78);//78 for 10.5k
+        block.resize(78*64);
+        dl2.setLength(4992-6);//delay's data to next frame
+        AERO_SPEC_NumberOfBits=4992;
+        AERO_SPEC_BitsInHeader=16+178;//178 dummy bits
+        AERO_SPEC_TotalNumberOfBits=AERO_SPEC_BitsInHeader+AERO_SPEC_NumberOfBits+64;
+        useingOQPSK=true;
         break;
     default:
         leaver.setSize(9);//9 for 1200 bps, 6 for 600 bps
         block.resize(9*64);
+        AERO_SPEC_NumberOfBits=1152;
+        AERO_SPEC_BitsInHeader=16;
+        useingOQPSK=false;
         break;
     }
 }
@@ -577,10 +647,46 @@ QByteArray &AeroL::Decode(QVector<short> &bits)//0 bit --> oldest bit
     static int supfrmaker=0;
     static int framecounter1=0;
     static int framecounter2=0;
-
     for(int i=0;i<bits.size();i++)
     {
 
+
+        //Preamble detector and ambiguity corrector for OQPSK
+        static int gotsync_last=0;
+        int gotsync;
+        if(useingOQPSK)
+        {
+            realimag++;realimag%=2;
+            if(realimag)
+            {
+                gotsync=preambledetectorphaseinvariantimag.Update(bits[i]);
+                if(!gotsync_last)
+                {
+                    gotsync_last=gotsync;
+                    gotsync=0;
+                } else gotsync_last=0;
+            }
+            else
+            {
+                gotsync=preambledetectorphaseinvariantreal.Update(bits[i]);
+                if(!gotsync_last)
+                {
+                    gotsync_last=gotsync;
+                    gotsync=0;
+                } else gotsync_last=0;
+            }
+
+            if(realimag)
+            {
+                if(preambledetectorphaseinvariantimag.inverted)bits[i]=1-bits[i];
+            }
+            else
+            {
+                if(preambledetectorphaseinvariantreal.inverted)bits[i]=1-bits[i];
+            }
+
+        }
+         else gotsync=preambledetector.Update(bits[i]);
 
 
         if(cntr<1000000000)cntr++;
@@ -624,7 +730,8 @@ QByteArray &AeroL::Decode(QVector<short> &bits)//0 bit --> oldest bit
             //fill block
             static int blockcnt=-1;
             if(cntr==16)blockcnt=-1;
-            int idx=(cntr-16)%block.size();
+            int idx=(cntr-AERO_SPEC_BitsInHeader)%block.size();
+            if(idx<0)idx=0;//for dummy bits drop
             block[idx]=bits[i];
             if(idx==(block.size()-1))//block is now filled
             {
@@ -652,7 +759,7 @@ QByteArray &AeroL::Decode(QVector<short> &bits)//0 bit --> oldest bit
                     if(deleaveredblock[k]!=convol[k])diffsum++;
                 }
                 float unencoded_BER_estimate=((float)diffsum)/((float)deleaveredblock.size());
-//                decodedbytes+=((QString)"unencoded BER estimate=%1%\n").arg(QString::number( 100.0*unencoded_BER_estimate, 'f', 1));
+                //decodedbytes+=((QString)"unencoded BER estimate=%1%\n").arg(QString::number( 100.0*unencoded_BER_estimate, 'f', 1));
 
                 //delay line for frame alignment
                 dl2.update(deconvol);
@@ -678,7 +785,7 @@ QByteArray &AeroL::Decode(QVector<short> &bits)//0 bit --> oldest bit
                 //decodedbytes+='\n';
 
 
-                if((cntr-16)==(1152-1))//frame is done when this is true
+                if((cntr-AERO_SPEC_BitsInHeader)==(AERO_SPEC_NumberOfBits-1))//frame is done when this is true
                 {
 
                     //run through all bytes in info field for console
@@ -901,9 +1008,12 @@ QByteArray &AeroL::Decode(QVector<short> &bits)//0 bit --> oldest bit
 
        // if(cntr+1==1200)cntr=-1;
        // if((framecounter1!=framecounter2||cntr>1300)&&preambledetector.Update(bits[i]))
-        if(preambledetector.Update(bits[i]))
+       // if(preambledetector.Update(bits[i]))
+
+        if(gotsync)
         {
-            if(cntr+1!=1200)
+
+            if(cntr+1!=AERO_SPEC_TotalNumberOfBits)
             {
                 isudata.reset();
                 decodedbytes+="Error short frame!!! maybe the soundcard dropped some sound card buffers\n";
@@ -920,7 +1030,7 @@ QByteArray &AeroL::Decode(QVector<short> &bits)//0 bit --> oldest bit
             scrambler.reset();
         }
 
-        if(cntr+1==1200)
+        if(cntr+1==AERO_SPEC_TotalNumberOfBits)
         {
             scrambler.reset();
             cntr=-1;
@@ -939,7 +1049,6 @@ qint64 AeroL::readData(char *data, qint64 maxlen)
     Q_UNUSED(maxlen);
     return 0;
 }
-
 
 qint64 AeroL::writeData(const char *data, qint64 len)
 {

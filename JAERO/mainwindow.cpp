@@ -67,12 +67,16 @@ MainWindow::MainWindow(QWidget *parent) :
     //create the demodulator
     audiomskdemodulator = new AudioMskDemodulator(this);
 
+    //create the oqpsk demodulator
+    audiooqpskdemodulator = new AudioOqpskDemodulator(this);
+
     //create a udp socket and a varicode decoder pipe
     udpsocket = new QUdpSocket(this);
     varicodepipedecoder = new VariCodePipeDecoder(this);
 
     //default sink is the aerol device
     audiomskdemodulator->ConnectSinkDevice(aerol);
+    audiooqpskdemodulator->ConnectSinkDevice(aerol);
 
     //console setup
     ui->console->setEnabled(true);
@@ -92,26 +96,17 @@ MainWindow::MainWindow(QWidget *parent) :
     ui->ledvolume->setLED(QIcon::Off);
     ui->ledsignal->setLED(QIcon::Off);
 
-    //connections
-    connect(audiomskdemodulator, SIGNAL(Plottables(double,double,double)),              this,SLOT(PlottablesSlot(double,double,double)));
-    connect(audiomskdemodulator, SIGNAL(SignalStatus(bool)),                            this,SLOT(SignalStatusSlot(bool)));
-    connect(audiomskdemodulator, SIGNAL(WarningTextSignal(QString)),                    this,SLOT(WarningTextSlot(QString)));
-    connect(audiomskdemodulator, SIGNAL(EbNoMeasurmentSignal(double)),                  this,SLOT(EbNoSlot(double)));
-    connect(audiomskdemodulator, SIGNAL(PeakVolume(double)),                            this, SLOT(PeakVolumeSlot(double)));
-    connect(audiomskdemodulator, SIGNAL(OrgOverlapedBuffer(QVector<double>)),           ui->spectrumdisplay,SLOT(setFFTData(QVector<double>)));
-    connect(audiomskdemodulator, SIGNAL(Plottables(double,double,double)),              ui->spectrumdisplay,SLOT(setPlottables(double,double,double)));
-    connect(audiomskdemodulator, SIGNAL(SampleRateChanged(double)),                     ui->spectrumdisplay,SLOT(setSampleRate(double)));
-    connect(audiomskdemodulator, SIGNAL(ScatterPoints(QVector<cpx_type>)),              ui->scatterplot,SLOT(setData(QVector<cpx_type>)));
-    connect(ui->spectrumdisplay, SIGNAL(CenterFreqChanged(double)),                     audiomskdemodulator,SLOT(CenterFreqChangedSlot(double)));
+    //misc connections
     connect(ui->action_About,    SIGNAL(triggered()),                                   this, SLOT(AboutSlot()));
-    connect(audiomskdemodulator, SIGNAL(BitRateChanged(double)),                        aerol,SLOT(setBitRate(double)));
 
-//aeroL connections
+    //select msk or oqpsk
+    selectdemodulatorconnections(MSK);
+    typeofdemodtouse=NoDemodType;
+
+    //aeroL connections
     connect(aerol,SIGNAL(DataCarrierDetect(bool)),this,SLOT(DataCarrierDetectStatusSlot(bool)));
     connect(aerol,SIGNAL(ACARSsignal(ACARSItem&)),planelog,SLOT(ACARSslot(ACARSItem&)));
     connect(aerol,SIGNAL(ACARSsignal(ACARSItem&)),this,SLOT(ACARSslot(ACARSItem&)));
-    connect(audiomskdemodulator, SIGNAL(SignalStatus(bool)),aerol,SLOT(SignalStatusSlot(bool)));
-
 
     //load settings
     QSettings settings("Jontisoft", "JAERO");
@@ -131,11 +126,19 @@ MainWindow::MainWindow(QWidget *parent) :
     on_comboBoxdisplay_currentIndexChanged(ui->comboBoxdisplay->currentText());
     on_actionConnectToUDPPort_toggled(ui->actionConnectToUDPPort->isChecked());
 
+    //msk
     audiomskdemodulatorsettings.audio_device_in=settingsdialog->audioinputdevice;
     audiomskdemodulatorsettings.freq_center=tmpfreq;
     audiomskdemodulator->setSQL(false);
     audiomskdemodulator->setSettings(audiomskdemodulatorsettings);
-    audiomskdemodulator->start();
+    if(typeofdemodtouse==MSK)audiomskdemodulator->start();
+
+    //oqpsk
+    audiooqpskdemodulatorsettings.audio_device_in=settingsdialog->audioinputdevice;
+    audiooqpskdemodulatorsettings.freq_center=tmpfreq;
+    audiooqpskdemodulator->setSQL(false);
+    audiooqpskdemodulator->setSettings(audiooqpskdemodulatorsettings);
+    if(typeofdemodtouse==OQPSK)audiooqpskdemodulator->start();
 
 //start modulator setup. the modulator is new and is and add on.
 
@@ -183,6 +186,80 @@ MainWindow::MainWindow(QWidget *parent) :
 
 }
 
+void MainWindow::selectdemodulatorconnections(DemodType demodtype)
+{
+    static DemodType lastdemodtype=NoDemodType;
+    if(demodtype!=lastdemodtype)
+    {
+        //invalidate demods
+        audiomskdemodulator->invalidatesettings();
+        audiooqpskdemodulator->invalidatesettings();
+    }
+    lastdemodtype=demodtype;
+    switch(demodtype)
+    {
+    case MSK: //msk
+    default:
+        //some msk connections
+        connect(audiomskdemodulator, SIGNAL(Plottables(double,double,double)),              this,SLOT(PlottablesSlot(double,double,double)));
+        connect(audiomskdemodulator, SIGNAL(SignalStatus(bool)),                            this,SLOT(SignalStatusSlot(bool)));
+        connect(audiomskdemodulator, SIGNAL(WarningTextSignal(QString)),                    this,SLOT(WarningTextSlot(QString)));
+        connect(audiomskdemodulator, SIGNAL(EbNoMeasurmentSignal(double)),                  this,SLOT(EbNoSlot(double)));
+        connect(audiomskdemodulator, SIGNAL(PeakVolume(double)),                            this, SLOT(PeakVolumeSlot(double)));
+        connect(audiomskdemodulator, SIGNAL(OrgOverlapedBuffer(QVector<double>)),           ui->spectrumdisplay,SLOT(setFFTData(QVector<double>)));
+        connect(audiomskdemodulator, SIGNAL(Plottables(double,double,double)),              ui->spectrumdisplay,SLOT(setPlottables(double,double,double)));
+        connect(audiomskdemodulator, SIGNAL(SampleRateChanged(double)),                     ui->spectrumdisplay,SLOT(setSampleRate(double)));
+        connect(audiomskdemodulator, SIGNAL(ScatterPoints(QVector<cpx_type>)),              ui->scatterplot,SLOT(setData(QVector<cpx_type>)));
+        connect(ui->spectrumdisplay, SIGNAL(CenterFreqChanged(double)),                     audiomskdemodulator,SLOT(CenterFreqChangedSlot(double)));
+        connect(audiomskdemodulator, SIGNAL(BitRateChanged(double)),                        aerol,SLOT(setBitRate(double)));
+        connect(audiomskdemodulator, SIGNAL(SignalStatus(bool)),aerol,SLOT(SignalStatusSlot(bool)));
+
+        //some oqpsk connections
+        disconnect(audiooqpskdemodulator, SIGNAL(Plottables(double,double,double)),              this,SLOT(PlottablesSlot(double,double,double)));
+        disconnect(audiooqpskdemodulator, SIGNAL(SignalStatus(bool)),                            this,SLOT(SignalStatusSlot(bool)));
+        disconnect(audiooqpskdemodulator, SIGNAL(WarningTextSignal(QString)),                    this,SLOT(WarningTextSlot(QString)));
+        disconnect(audiooqpskdemodulator, SIGNAL(EbNoMeasurmentSignal(double)),                  this,SLOT(EbNoSlot(double)));
+        disconnect(audiooqpskdemodulator, SIGNAL(PeakVolume(double)),                            this, SLOT(PeakVolumeSlot(double)));
+        disconnect(audiooqpskdemodulator, SIGNAL(OrgOverlapedBuffer(QVector<double>)),           ui->spectrumdisplay,SLOT(setFFTData(QVector<double>)));
+        disconnect(audiooqpskdemodulator, SIGNAL(Plottables(double,double,double)),              ui->spectrumdisplay,SLOT(setPlottables(double,double,double)));
+        disconnect(audiooqpskdemodulator, SIGNAL(SampleRateChanged(double)),                     ui->spectrumdisplay,SLOT(setSampleRate(double)));
+        disconnect(audiooqpskdemodulator, SIGNAL(ScatterPoints(QVector<cpx_type>)),              ui->scatterplot,SLOT(setData(QVector<cpx_type>)));
+        disconnect(ui->spectrumdisplay,   SIGNAL(CenterFreqChanged(double)),                     audiooqpskdemodulator,SLOT(CenterFreqChangedSlot(double)));
+        disconnect(audiooqpskdemodulator, SIGNAL(BitRateChanged(double)),                        aerol,SLOT(setBitRate(double)));
+        disconnect(audiooqpskdemodulator, SIGNAL(SignalStatus(bool)),aerol,SLOT(SignalStatusSlot(bool)));
+        break;
+    case OQPSK: //opqsk
+        //some msk connections
+        disconnect(audiomskdemodulator, SIGNAL(Plottables(double,double,double)),              this,SLOT(PlottablesSlot(double,double,double)));
+        disconnect(audiomskdemodulator, SIGNAL(SignalStatus(bool)),                            this,SLOT(SignalStatusSlot(bool)));
+        disconnect(audiomskdemodulator, SIGNAL(WarningTextSignal(QString)),                    this,SLOT(WarningTextSlot(QString)));
+        disconnect(audiomskdemodulator, SIGNAL(EbNoMeasurmentSignal(double)),                  this,SLOT(EbNoSlot(double)));
+        disconnect(audiomskdemodulator, SIGNAL(PeakVolume(double)),                            this, SLOT(PeakVolumeSlot(double)));
+        disconnect(audiomskdemodulator, SIGNAL(OrgOverlapedBuffer(QVector<double>)),           ui->spectrumdisplay,SLOT(setFFTData(QVector<double>)));
+        disconnect(audiomskdemodulator, SIGNAL(Plottables(double,double,double)),              ui->spectrumdisplay,SLOT(setPlottables(double,double,double)));
+        disconnect(audiomskdemodulator, SIGNAL(SampleRateChanged(double)),                     ui->spectrumdisplay,SLOT(setSampleRate(double)));
+        disconnect(audiomskdemodulator, SIGNAL(ScatterPoints(QVector<cpx_type>)),              ui->scatterplot,SLOT(setData(QVector<cpx_type>)));
+        disconnect(ui->spectrumdisplay, SIGNAL(CenterFreqChanged(double)),                     audiomskdemodulator,SLOT(CenterFreqChangedSlot(double)));
+        disconnect(audiomskdemodulator, SIGNAL(BitRateChanged(double)),                        aerol,SLOT(setBitRate(double)));
+        disconnect(audiomskdemodulator, SIGNAL(SignalStatus(bool)),aerol,SLOT(SignalStatusSlot(bool)));
+
+        //some oqpsk connections
+        connect(audiooqpskdemodulator, SIGNAL(Plottables(double,double,double)),              this,SLOT(PlottablesSlot(double,double,double)));
+        connect(audiooqpskdemodulator, SIGNAL(SignalStatus(bool)),                            this,SLOT(SignalStatusSlot(bool)));
+        connect(audiooqpskdemodulator, SIGNAL(WarningTextSignal(QString)),                    this,SLOT(WarningTextSlot(QString)));
+        connect(audiooqpskdemodulator, SIGNAL(EbNoMeasurmentSignal(double)),                  this,SLOT(EbNoSlot(double)));
+        connect(audiooqpskdemodulator, SIGNAL(PeakVolume(double)),                            this, SLOT(PeakVolumeSlot(double)));
+        connect(audiooqpskdemodulator, SIGNAL(OrgOverlapedBuffer(QVector<double>)),           ui->spectrumdisplay,SLOT(setFFTData(QVector<double>)));
+        connect(audiooqpskdemodulator, SIGNAL(Plottables(double,double,double)),              ui->spectrumdisplay,SLOT(setPlottables(double,double,double)));
+        connect(audiooqpskdemodulator, SIGNAL(SampleRateChanged(double)),                     ui->spectrumdisplay,SLOT(setSampleRate(double)));
+        connect(audiooqpskdemodulator, SIGNAL(ScatterPoints(QVector<cpx_type>)),              ui->scatterplot,SLOT(setData(QVector<cpx_type>)));
+        connect(ui->spectrumdisplay,   SIGNAL(CenterFreqChanged(double)),                     audiooqpskdemodulator,SLOT(CenterFreqChangedSlot(double)));
+        connect(audiooqpskdemodulator, SIGNAL(BitRateChanged(double)),                        aerol,SLOT(setBitRate(double)));
+        connect(audiooqpskdemodulator, SIGNAL(SignalStatus(bool)),aerol,SLOT(SignalStatusSlot(bool)));
+        break;
+    }
+}
+
 void MainWindow::closeEvent(QCloseEvent *event)
 {
 
@@ -194,7 +271,8 @@ void MainWindow::closeEvent(QCloseEvent *event)
     settings.setValue("comboBoxdisplay", ui->comboBoxdisplay->currentIndex());
     settings.setValue("actionConnectToUDPPort", ui->actionConnectToUDPPort->isChecked());
     settings.setValue("actionRawOutput", ui->actionRawOutput->isChecked());
-    settings.setValue("freq_center", audiomskdemodulator->getCurrentFreq());
+    if(typeofdemodtouse==MSK)settings.setValue("freq_center", audiomskdemodulator->getCurrentFreq());
+    if(typeofdemodtouse==OQPSK)settings.setValue("freq_center", audiooqpskdemodulator->getCurrentFreq());
     settings.setValue("inputwidget", ui->inputwidget->toPlainText());
 
     planelog->close();
@@ -231,7 +309,7 @@ void MainWindow::WarningTextSlot(QString warning)
 
 void MainWindow::PeakVolumeSlot(double Volume)
 {
-    if(Volume>0.9)ui->ledvolume->setLED(QIcon::On,QIcon::Disabled);
+    if(Volume>0.9)ui->ledvolume->setLED(QIcon::On,QIcon::Active);
      else if(Volume<0.1)ui->ledvolume->setLED(QIcon::Off);
       else ui->ledvolume->setLED(QIcon::On);
 }
@@ -264,23 +342,62 @@ void MainWindow::on_comboBoxbps_currentIndexChanged(const QString &arg)
     }
 
     //demodulator settings
-    audiomskdemodulatorsettings.fb=arg1.split(" ")[0].toDouble();
+    double bitrate_tmp=arg1.split(" ")[0].toDouble();
 
-    if(!settingsdialog->widebandwidthenable)
+    DemodType lasttypeofdemodtouse=typeofdemodtouse;
+    if(bitrate_tmp>1200)typeofdemodtouse=OQPSK;
+     else typeofdemodtouse=MSK;
+
+    if(lasttypeofdemodtouse==OQPSK)
     {
-        if(audiomskdemodulatorsettings.fb==600){audiomskdemodulatorsettings.symbolspercycle=12;audiomskdemodulatorsettings.Fs=12000;}
-        if(audiomskdemodulatorsettings.fb==1200){audiomskdemodulatorsettings.symbolspercycle=12;audiomskdemodulatorsettings.Fs=24000;}
+        audiooqpskdemodulatorsettings.freq_center=audiooqpskdemodulator->getCurrentFreq();
+        audiomskdemodulatorsettings.freq_center=audiooqpskdemodulator->getCurrentFreq();
     }
-     else
-     {
-        if(audiomskdemodulatorsettings.fb==600){audiomskdemodulatorsettings.symbolspercycle=12;audiomskdemodulatorsettings.Fs=48000;}
-        if(audiomskdemodulatorsettings.fb==1200){audiomskdemodulatorsettings.symbolspercycle=12;audiomskdemodulatorsettings.Fs=48000;}
-     }
 
-    int idx=ui->comboBoxlbw->findText(((QString)"%1 Hz").arg(audiomskdemodulatorsettings.fb*1.5));
-    if(idx>=0)ui->comboBoxlbw->setCurrentIndex(idx);
-    audiomskdemodulatorsettings.freq_center=audiomskdemodulator->getCurrentFreq();
-    audiomskdemodulator->setSettings(audiomskdemodulatorsettings);
+    if(lasttypeofdemodtouse==MSK)
+    {
+        audiooqpskdemodulatorsettings.freq_center=audiomskdemodulator->getCurrentFreq();
+        audiomskdemodulatorsettings.freq_center=audiomskdemodulator->getCurrentFreq();        
+    }
+
+    audiomskdemodulatorsettings.fb=bitrate_tmp;
+    audiooqpskdemodulatorsettings.fb=bitrate_tmp;
+
+    if(typeofdemodtouse==OQPSK)
+    {
+        audiomskdemodulator->stop();
+        selectdemodulatorconnections(OQPSK);
+        audiooqpskdemodulatorsettings.Fs=48000;
+        int idx=ui->comboBoxlbw->findText(((QString)"%1 Hz").arg(audiooqpskdemodulatorsettings.fb*1.0));
+        if(idx>=0)audiooqpskdemodulatorsettings.lockingbw=ui->comboBoxlbw->itemText(idx).split(" ")[0].toDouble();
+        audiooqpskdemodulatorsettings.audio_device_in=settingsdialog->audioinputdevice;
+        audiooqpskdemodulator->setSettings(audiooqpskdemodulatorsettings);
+        if(idx>=0)ui->comboBoxlbw->setCurrentIndex(idx);
+        audiooqpskdemodulator->start();
+    }
+
+    if(typeofdemodtouse==MSK)
+    {
+        audiooqpskdemodulator->stop();
+        selectdemodulatorconnections(MSK);
+        if(!settingsdialog->widebandwidthenable)
+        {
+            if(audiomskdemodulatorsettings.fb==600){audiomskdemodulatorsettings.symbolspercycle=12;audiomskdemodulatorsettings.Fs=12000;}
+            if(audiomskdemodulatorsettings.fb==1200){audiomskdemodulatorsettings.symbolspercycle=12;audiomskdemodulatorsettings.Fs=24000;}
+        }
+        else
+         {
+            if(audiomskdemodulatorsettings.fb==600){audiomskdemodulatorsettings.symbolspercycle=12;audiomskdemodulatorsettings.Fs=48000;}
+            if(audiomskdemodulatorsettings.fb==1200){audiomskdemodulatorsettings.symbolspercycle=12;audiomskdemodulatorsettings.Fs=48000;}
+         }
+
+        int idx=ui->comboBoxlbw->findText(((QString)"%1 Hz").arg(audiomskdemodulatorsettings.fb*1.5));
+        if(idx>=0)audiomskdemodulatorsettings.lockingbw=ui->comboBoxlbw->itemText(idx).split(" ")[0].toDouble();
+        audiomskdemodulatorsettings.audio_device_in=settingsdialog->audioinputdevice;
+        audiomskdemodulator->setSettings(audiomskdemodulatorsettings);
+        if(idx>=0)ui->comboBoxlbw->setCurrentIndex(idx);
+        audiomskdemodulator->start();
+    }
 
     //audio modulator setting
     audiomskmodulatorsettings.fb=audiomskdemodulatorsettings.fb;
@@ -295,12 +412,24 @@ void MainWindow::on_comboBoxlbw_currentIndexChanged(const QString &arg1)
     audiomskdemodulatorsettings.lockingbw=arg1.split(" ")[0].toDouble();
     audiomskdemodulatorsettings.freq_center=audiomskdemodulator->getCurrentFreq();
     audiomskdemodulator->setSettings(audiomskdemodulatorsettings);
+
+    audiooqpskdemodulatorsettings.lockingbw=arg1.split(" ")[0].toDouble();
+    audiooqpskdemodulatorsettings.freq_center=audiooqpskdemodulator->getCurrentFreq();
+    audiooqpskdemodulator->setSettings(audiooqpskdemodulatorsettings);
 }
 
 void MainWindow::on_comboBoxafc_currentIndexChanged(const QString &arg1)
 {
-    if(arg1=="AFC on")audiomskdemodulator->setAFC(true);
-     else audiomskdemodulator->setAFC(false);
+    if(arg1=="AFC on")
+    {
+        audiomskdemodulator->setAFC(true);
+        audiooqpskdemodulator->setAFC(true);
+    }
+     else
+     {
+        audiomskdemodulator->setAFC(false);
+        audiooqpskdemodulator->setAFC(false);
+     }
 }
 
 void MainWindow::on_actionCleanConsole_triggered()
@@ -313,14 +442,28 @@ void MainWindow::on_comboBoxdisplay_currentIndexChanged(const QString &arg1)
     ui->scatterplot->graph(0)->clearData();
     ui->scatterplot->replot();
     ui->scatterplot->setDisksize(3);
-    if(arg1=="Constellation")audiomskdemodulator->setScatterPointType(MskDemodulator::SPT_constellation);
-    if(arg1=="Symbol phase"){audiomskdemodulator->setScatterPointType(MskDemodulator::SPT_phaseoffsetest);ui->scatterplot->setDisksize(6);}
-    if(arg1=="None")audiomskdemodulator->setScatterPointType(MskDemodulator::SPT_None);
+    if(arg1=="Constellation")
+    {
+        audiomskdemodulator->setScatterPointType(MskDemodulator::SPT_constellation);
+        audiooqpskdemodulator->setScatterPointType(OqpskDemodulator::SPT_constellation);
+    }
+    if(arg1=="Symbol phase")
+    {
+        audiomskdemodulator->setScatterPointType(MskDemodulator::SPT_phaseoffsetest);
+        audiooqpskdemodulator->setScatterPointType(OqpskDemodulator::SPT_phaseoffsetest);
+        ui->scatterplot->setDisksize(6);
+    }
+    if(arg1=="None")
+    {
+        audiomskdemodulator->setScatterPointType(MskDemodulator::SPT_None);
+        audiooqpskdemodulator->setScatterPointType(OqpskDemodulator::SPT_None);
+    }
 }
 
 void MainWindow::on_actionConnectToUDPPort_toggled(bool arg1)
 {
     audiomskdemodulator->DisconnectSinkDevice();
+    audiooqpskdemodulator->DisconnectSinkDevice();
     aerol->DisconnectSinkDevice();
     udpsocket->close();
     if(arg1)
@@ -332,11 +475,13 @@ void MainWindow::on_actionConnectToUDPPort_toggled(bool arg1)
         if(ui->actionRawOutput->isChecked())
         {
             audiomskdemodulator->ConnectSinkDevice(udpsocket);
+            audiooqpskdemodulator->ConnectSinkDevice(udpsocket);
             ui->console->setEnableUpdates(false,"Console disabled while raw demodulated data is routed to UDP port 8765 at LocalHost.");
         }
          else
          {
             audiomskdemodulator->ConnectSinkDevice(aerol);
+            audiooqpskdemodulator->ConnectSinkDevice(aerol);
             aerol->ConnectSinkDevice(udpsocket);
             ui->console->setEnableUpdates(false,"Console disabled while decoded and demodulated data is routed to UDP port 8765 at LocalHost.");
          }
@@ -345,6 +490,7 @@ void MainWindow::on_actionConnectToUDPPort_toggled(bool arg1)
      else
      {
          audiomskdemodulator->ConnectSinkDevice(aerol);
+         audiooqpskdemodulator->ConnectSinkDevice(aerol);
          aerol->ConnectSinkDevice(ui->console->consoledevice);
          ui->console->setEnableUpdates(true);
      }
@@ -376,32 +522,55 @@ void MainWindow::acceptsettings()
     audiomskmodulator->setSettings(audiomskmodulatorsettings);
 
     aerol->setDoNotDisplaySUs(settingsdialog->donotdisplaysus);
-
     aerol->setDataBaseDir(settingsdialog->planesfolder);
 
-    //if bandwidth setting changed then adjust
-    if((settingsdialog->widebandwidthenable&&((audiomskdemodulatorsettings.fb==600&&audiomskdemodulatorsettings.Fs==12000)||(audiomskdemodulatorsettings.fb==1200&&audiomskdemodulatorsettings.Fs==24000)))||((!settingsdialog->widebandwidthenable)&&((audiomskdemodulatorsettings.fb==600&&audiomskdemodulatorsettings.Fs==48000)||(audiomskdemodulatorsettings.fb==1200&&audiomskdemodulatorsettings.Fs==48000))))
+    //if soundcard rate changed
+    if(typeofdemodtouse==MSK)
     {
-        if(!settingsdialog->widebandwidthenable)
+
+        //if bandwidth setting changed then adjust
+        if((settingsdialog->widebandwidthenable&&((audiomskdemodulatorsettings.fb==600&&audiomskdemodulatorsettings.Fs==12000)||(audiomskdemodulatorsettings.fb==1200&&audiomskdemodulatorsettings.Fs==24000)))||((!settingsdialog->widebandwidthenable)&&((audiomskdemodulatorsettings.fb==600&&audiomskdemodulatorsettings.Fs==48000)||(audiomskdemodulatorsettings.fb==1200&&audiomskdemodulatorsettings.Fs==48000))))
         {
-            if(audiomskdemodulatorsettings.fb==600){audiomskdemodulatorsettings.symbolspercycle=12;audiomskdemodulatorsettings.Fs=12000;}
-            if(audiomskdemodulatorsettings.fb==1200){audiomskdemodulatorsettings.symbolspercycle=12;audiomskdemodulatorsettings.Fs=24000;}
+            if(!settingsdialog->widebandwidthenable)
+            {
+                if(audiomskdemodulatorsettings.fb==600){audiomskdemodulatorsettings.symbolspercycle=12;audiomskdemodulatorsettings.Fs=12000;}
+                if(audiomskdemodulatorsettings.fb==1200){audiomskdemodulatorsettings.symbolspercycle=12;audiomskdemodulatorsettings.Fs=24000;}
+            }
+             else
+             {
+                if(audiomskdemodulatorsettings.fb==600){audiomskdemodulatorsettings.symbolspercycle=12;audiomskdemodulatorsettings.Fs=48000;}
+                if(audiomskdemodulatorsettings.fb==1200){audiomskdemodulatorsettings.symbolspercycle=12;audiomskdemodulatorsettings.Fs=48000;}
+             }
+            audiomskdemodulator->setSettings(audiomskdemodulatorsettings);
         }
-         else
-         {
-            if(audiomskdemodulatorsettings.fb==600){audiomskdemodulatorsettings.symbolspercycle=12;audiomskdemodulatorsettings.Fs=48000;}
-            if(audiomskdemodulatorsettings.fb==1200){audiomskdemodulatorsettings.symbolspercycle=12;audiomskdemodulatorsettings.Fs=48000;}
-         }
-        audiomskdemodulator->setSettings(audiomskdemodulatorsettings);
+
+    }
+    if(typeofdemodtouse==OQPSK)//OQPSK uses 48000 all the time so not needed
+    {
+        //audiooqpskdemodulatorsettings.Fs=48000;
+        //audiooqpskdemodulator->setSettings(audiooqpskdemodulatorsettings);
     }
 
-    if(audiomskdemodulatorsettings.audio_device_in!=settingsdialog->audioinputdevice)
+    //if soundcard device changed
+    if(typeofdemodtouse==MSK)
     {
-        audiomskdemodulator->stop();
-        audiomskdemodulatorsettings.audio_device_in=settingsdialog->audioinputdevice;
-        qDebug()<<audiomskdemodulatorsettings.audio_device_in.deviceName();
-        audiomskdemodulator->setSettings(audiomskdemodulatorsettings);
-        audiomskdemodulator->start();
+        if(audiomskdemodulatorsettings.audio_device_in!=settingsdialog->audioinputdevice)
+        {
+            audiomskdemodulator->stop();
+            audiomskdemodulatorsettings.audio_device_in=settingsdialog->audioinputdevice;
+            audiomskdemodulator->setSettings(audiomskdemodulatorsettings);
+            audiomskdemodulator->start();
+        }
+    }
+    if(typeofdemodtouse==OQPSK)
+    {
+        if(audiooqpskdemodulatorsettings.audio_device_in!=settingsdialog->audioinputdevice)
+        {
+            audiooqpskdemodulator->stop();
+            audiooqpskdemodulatorsettings.audio_device_in=settingsdialog->audioinputdevice;
+            audiooqpskdemodulator->setSettings(audiooqpskdemodulatorsettings);
+            audiooqpskdemodulator->start();
+        }
     }
 
     if(settingsdialog->msgdisplayformat=="3")ui->inputwidget->setLineWrapMode(QPlainTextEdit::WidgetWidth);
