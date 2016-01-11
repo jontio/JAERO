@@ -39,10 +39,6 @@ OqpskDemodulator::OqpskDemodulator(QObject *parent)
 
     ebnomeasure = new OQPSKEbNoMeasure(2*Fs,Fs,fb);//2 second ave, Fs and fb
 
-
-    mar= new MovingAverage(400);
-    mai= new MovingAverage(400);
-
     marg= new MovingAverage(800);
     dt.setLength(400);
 
@@ -131,6 +127,9 @@ OqpskDemodulator::~OqpskDemodulator()
     delete fir_re;
     delete fir_im;
     delete msecalc;
+    delete marg;
+    delete ebnomeasure;
+    delete coarsefreqestimate;
 }
 
 ///Connects a sink devide to the modem for the demodulated data

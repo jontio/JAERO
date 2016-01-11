@@ -132,8 +132,6 @@ private:
     BaceConverter bc;
     QByteArray  RxDataBytes;//packed in bytes
 
-    MovingAverage *mar;
-    MovingAverage *mai;
     MovingAverage *marg;
     DelayThing<cpx_type> dt;
 
