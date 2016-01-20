@@ -1,4 +1,5 @@
 #include "oqpskdemodulator.h"
+#include "gui_classes/qspectrumdisplay.h"
 
 #include <QDebug>
 #include <assert.h>
@@ -25,10 +26,9 @@ OqpskDemodulator::OqpskDemodulator(QObject *parent)
 
     timer.start();
 
-    spectrumnfft=pow(2,13);
+    spectrumnfft=pow(2,SPECTRUM_FFT_POWER);
     spectrumcycbuff.resize(spectrumnfft);
     spectrumcycbuff_ptr=0;
-    spectrumtmpbuff.resize(spectrumnfft);
 
     bbnfft=pow(2,14);
     bbcycbuff.resize(bbnfft);
@@ -255,30 +255,17 @@ qint64 OqpskDemodulator::writeData(const char *data, qint64 len)
         double dval=((double)(*ptr))/32768.0;
 
         //for looks
+        static double maxval=0;
+        if(fabs(dval)>maxval)maxval=fabs(dval);
         spectrumcycbuff[spectrumcycbuff_ptr]=dval;
         spectrumcycbuff_ptr++;spectrumcycbuff_ptr%=spectrumnfft;
-        if(spectrumcycbuff_ptr%(spectrumnfft/4)==0)//75% overlap
+        if(timer.elapsed()>150)
         {
-            double maxval=0;
-            for(int j=0;j<spectrumcycbuff.size();j++)
-            {
-                ASSERTCH(spectrumcycbuff,spectrumcycbuff_ptr);
-                ASSERTCH(spectrumtmpbuff,j);
-                spectrumtmpbuff[j]=spectrumcycbuff[spectrumcycbuff_ptr];
-                spectrumcycbuff_ptr++;spectrumcycbuff_ptr%=spectrumnfft;
-                if(fabs(spectrumtmpbuff[j])>maxval)
-                {
-                    maxval=fabs(spectrumtmpbuff[j]);
-                }
-            }
-
-            if(timer.elapsed()>100)
-            {
-                sendscatterpoints=true;
-                timer.start();
-                emit OrgOverlapedBuffer(spectrumtmpbuff);
-                emit PeakVolume(maxval);
-            }
+            sendscatterpoints=true;
+            timer.start();
+            emit OrgOverlapedBuffer(spectrumcycbuff);
+            emit PeakVolume(maxval);
+            maxval=0;
         }
 
         //for coarse freq estimation

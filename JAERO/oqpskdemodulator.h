@@ -75,7 +75,6 @@ private:
     int scatterpointtype;
 
     QVector<double> spectrumcycbuff;
-    QVector<double> spectrumtmpbuff;
     int spectrumcycbuff_ptr;
     int spectrumnfft;
 

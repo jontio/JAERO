@@ -860,9 +860,28 @@ QByteArray &AeroL::Decode(QVector<short> &bits)//0 bit --> oldest bit
                                 decline+="AES_system_table_broadcast_satellite_identification_COMPLETE";
                                 {
                                     int byte3=((uchar)infofield[k*12-1+3]);
+                                    int byte4=((uchar)infofield[k*12-1+4]);
+
+                                    int byte5=((uchar)infofield[k*12-1+5]);//ra
+                                    int byte6=((uchar)infofield[k*12-1+6]);//long
+                                    double longitude=((double)byte6)*1.5;
+                                    if(longitude>180.0)longitude=longitude-360;
+
+                                    int byte7=((uchar)infofield[k*12-1+7]);
+                                    int byte8=((uchar)infofield[k*12-1+8]);
+
+                                    int byte9=((uchar)infofield[k*12-1+9]);
+                                    int byte10=((uchar)infofield[k*12-1+10]);
+
+                                    int channel1=(((byte7<<8)&0xFF00)|(byte8&0x00FF));
+                                    int channel2=(((byte9<<8)&0xFF00)|(byte10&0x00FF));
+                                    double cac_freq1=(((double)channel1)*0.0025)+1510.0;
+                                    double cac_freq2=(((double)channel2)*0.0025)+1510.0;
+
                                     int seqno=(byte3>>2)&0x3F;
-                                    int satid=byte3&0x03;
-                                    decline+=((QString)" SATELLITE ID = %1 SEQUENCE NO = %2").arg(satid).arg(seqno);
+                                    int satid=(((byte3<<4)&0x30)|((byte4>>4)&0x0F));
+                                    if(channel2!=0)decline+=((QString)" SATELLITE ID = %1 (Long %3) SEQUENCE NO = %2 Psmc1 = %4MHz Psmc2 = %5MHz").arg(satid).arg(seqno).arg(longitude).arg(cac_freq1,0, 'f', 3).arg(cac_freq2,0, 'f', 3);
+                                     else decline+=((QString)" SATELLITE ID = %1 (Long %3) SEQUENCE NO = %2  Psmc1 = %4MHz").arg(satid).arg(seqno).arg(longitude).arg(cac_freq1,0, 'f', 3);
                                 }
                                 break;
 
