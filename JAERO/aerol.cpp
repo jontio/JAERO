@@ -1009,7 +1009,10 @@ QByteArray &AeroL::Decode(QVector<short> &bits)//0 bit --> oldest bit
                          }
                          */
 
+                        //if(!decline.isEmpty())qDebug()<<decline;
+
                         decodedbytes+=decline;
+                        decline.clear();
 
                     }
 
@@ -1059,6 +1062,7 @@ QByteArray &AeroL::Decode(QVector<short> &bits)//0 bit --> oldest bit
     }
 
     if(!datacd)decodedbytes.clear();
+
     return decodedbytes;
 }
 
