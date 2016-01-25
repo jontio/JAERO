@@ -363,6 +363,7 @@ void ParserISU::acarslookupresult(bool ok, int ref, const QStringList &result)
             qDebug()<<panacarsitem->dblookupresult[0];
             emit ACARSsignal(*panacarsitem);
             delete panacarsitem;
+            return;
         }
     }
     panacarsitem->dblookupresult=result;
@@ -849,6 +850,32 @@ QByteArray &AeroL::Decode(QVector<short> &bits)//0 bit --> oldest bit
                                 break;
                             case AES_system_table_broadcast_GES_Psmc_and_Rsmc_channels_COMPLETE:
                                 decline+="AES_system_table_broadcast_GES_Psmc_and_Rsmc_channels_COMPLETE";
+                                {
+                                    int byte3=((uchar)infofield[k*12-1+3]);
+                                    int ges=((uchar)infofield[k*12-1+4]);
+
+                                    int byte5=((uchar)infofield[k*12-1+5]);
+                                    int byte6=((uchar)infofield[k*12-1+6]);
+
+                                    //int byte7=((uchar)infofield[k*12-1+7]);
+                                    //int byte8=((uchar)infofield[k*12-1+8]);
+
+                                    //int byte9=((uchar)infofield[k*12-1+9]);
+                                    //int byte10=((uchar)infofield[k*12-1+10]);
+
+                                    int channel1=(((byte5<<8)&0xFF00)|(byte6&0x00FF));
+                                    //int channel2=(((byte7<<8)&0xFF00)|(byte8&0x00FF));
+                                    //int channel3=(((byte9<<8)&0xFF00)|(byte10&0x00FF));
+                                    double freq1=(((double)channel1)*0.0025)+1510.0;
+                                    //double freq2=(((double)channel2)*0.0025)+1510.0;
+                                    //double freq3=(((double)channel3)*0.0025)+1510.0;
+
+                                    //int seqno=(byte3>>2)&0x3F;
+                                    int lsu=byte3&0x03;
+
+                                    if(lsu<=1)decline+=((" GES = "+(((QString)"%1").arg(ges, 2, 16, QChar('0')).toUpper()))+((QString)" --> Psmc = %1MHz").arg(freq1,0, 'f', 3));
+
+                                }
                                 break;
                             case AES_system_table_broadcast_GES_beam_support_COMPLETE:
                                 decline+="AES_system_table_broadcast_GES_beam_support_COMPLETE";
@@ -862,10 +889,9 @@ QByteArray &AeroL::Decode(QVector<short> &bits)//0 bit --> oldest bit
                                     int byte3=((uchar)infofield[k*12-1+3]);
                                     int byte4=((uchar)infofield[k*12-1+4]);
 
-                                    int byte5=((uchar)infofield[k*12-1+5]);//ra
+                                    //int byte5=((uchar)infofield[k*12-1+5]);//ra
                                     int byte6=((uchar)infofield[k*12-1+6]);//long
                                     double longitude=((double)byte6)*1.5;
-                                    if(longitude>180.0)longitude=longitude-360;
 
                                     int byte7=((uchar)infofield[k*12-1+7]);
                                     int byte8=((uchar)infofield[k*12-1+8]);
@@ -880,8 +906,11 @@ QByteArray &AeroL::Decode(QVector<short> &bits)//0 bit --> oldest bit
 
                                     int seqno=(byte3>>2)&0x3F;
                                     int satid=(((byte3<<4)&0x30)|((byte4>>4)&0x0F));
-                                    if(channel2!=0)decline+=((QString)" SATELLITE ID = %1 (Long %3) SEQUENCE NO = %2 Psmc1 = %4MHz Psmc2 = %5MHz").arg(satid).arg(seqno).arg(longitude).arg(cac_freq1,0, 'f', 3).arg(cac_freq2,0, 'f', 3);
-                                     else decline+=((QString)" SATELLITE ID = %1 (Long %3) SEQUENCE NO = %2  Psmc1 = %4MHz").arg(satid).arg(seqno).arg(longitude).arg(cac_freq1,0, 'f', 3);
+                                    QString longitude_qstr;
+                                    if(longitude>180.0)longitude_qstr=(QString("%1W")).arg(360.0-longitude);
+                                     else longitude_qstr=(QString("%1E")).arg(longitude);
+                                    if(channel2!=0)decline+=((QString)" SATELLITE ID = %1 (Long %3) SEQUENCE NO = %2 Psmc1 = %4MHz Psmc2 = %5MHz").arg(satid).arg(seqno).arg(longitude_qstr).arg(cac_freq1,0, 'f', 3).arg(cac_freq2,0, 'f', 3);
+                                     else decline+=((QString)" SATELLITE ID = %1 (Long %3) SEQUENCE NO = %2  Psmc1 = %4MHz").arg(satid).arg(seqno).arg(longitude_qstr).arg(cac_freq1,0, 'f', 3);
                                 }
                                 break;
 
@@ -933,6 +962,66 @@ QByteArray &AeroL::Decode(QVector<short> &bits)//0 bit --> oldest bit
                             //CHANNEL INFORMATION
                             case P_R_channel_control_ISU:
                                 decline+="P_R_channel_control_ISU";
+                                {
+                                    int byte3=((uchar)infofield[k*12-1+3]);
+                                    int byte4=((uchar)infofield[k*12-1+4]);
+
+                                    int ges=((uchar)infofield[k*12-1+5]);
+                                    //int byte6=((uchar)infofield[k*12-1+6]);
+
+                                    //int byte7=((uchar)infofield[k*12-1+7]);
+                                    int byte8=((uchar)infofield[k*12-1+8]);
+
+                                    int byte9=((uchar)infofield[k*12-1+9]);
+                                    int byte10=((uchar)infofield[k*12-1+10]);
+
+
+                                    int channel=(((byte9<<8)&0xFF00)|(byte10&0x00FF));
+                                    double freq=(((double)channel)*0.0025)+1510.0;
+
+                                    int bitrate=(byte8>>4)&0x0F;
+                                    //int nooffreqs=(byte7>>4)&0x0F;
+
+                                    switch(bitrate)
+                                    {
+                                    case 0:
+                                        bitrate=600;
+                                        break;
+                                    case 1:
+                                        bitrate=1200;
+                                        break;
+                                    case 2:
+                                        bitrate=2400;
+                                        break;
+                                    case 3:
+                                        bitrate=4800;
+                                        break;
+                                    case 4:
+                                        bitrate=6000;
+                                        break;
+                                    case 5:
+                                        bitrate=5250;
+                                        break;
+                                    case 6:
+                                        bitrate=10500;
+                                        break;
+                                    case 7:
+                                        bitrate=8400;
+                                        break;
+                                    case 9:
+                                        bitrate=21000;
+                                        break;
+                                    default:
+                                        bitrate=-1;
+                                        break;
+                                    }
+
+
+
+                                    //decline+=((" GES = "+(((QString)"%1").arg(ges, 2, 16, QChar('0')).toUpper()))+((QString)" Pd = %1MHz at %2bps with %3 frequencies assigned").arg(freq,0, 'f', 3).arg(bitrate).arg(nooffreqs));
+                                    decline+=((" GES = "+(((QString)"%1").arg(ges, 2, 16, QChar('0')).toUpper()))+((QString)" Pd = %1MHz at %2bps").arg(freq,0, 'f', 3).arg(bitrate));
+
+                            }
                                 break;
                             case T_channel_control_ISU:
                                 decline+="T_channel_control_ISU";
