@@ -889,7 +889,7 @@ QByteArray &AeroL::Decode(QVector<short> &bits)//0 bit --> oldest bit
                                     int byte3=((uchar)infofield[k*12-1+3]);
                                     int byte4=((uchar)infofield[k*12-1+4]);
 
-                                    //int byte5=((uchar)infofield[k*12-1+5]);//ra
+                                    //int ra=((uchar)infofield[k*12-1+5]);//ra
                                     int byte6=((uchar)infofield[k*12-1+6]);//long
                                     double longitude=((double)byte6)*1.5;
 
@@ -899,18 +899,28 @@ QByteArray &AeroL::Decode(QVector<short> &bits)//0 bit --> oldest bit
                                     int byte9=((uchar)infofield[k*12-1+9]);
                                     int byte10=((uchar)infofield[k*12-1+10]);
 
-                                    int channel1=(((byte7<<8)&0xFF00)|(byte8&0x00FF));
-                                    int channel2=(((byte9<<8)&0xFF00)|(byte10&0x00FF));
+                                    int channel1=((((byte7&0x7F)<<8)&0xFF00)|(byte8&0x00FF));
+                                    int channel2=((((byte9&0x7F)<<8)&0xFF00)|(byte10&0x00FF));
                                     double cac_freq1=(((double)channel1)*0.0025)+1510.0;
                                     double cac_freq2=(((double)channel2)*0.0025)+1510.0;
+
+                                    QString spotbeam1qstr;
+                                    QString spotbeam2qstr;
+                                    if(byte7&0x80)spotbeam1qstr=" (Spot beam)";
+                                    if(byte9&0x80)spotbeam2qstr=" (Spot beam)";
+
+                                    //int inc=(byte4>>1)&0x07;
+
 
                                     int seqno=(byte3>>2)&0x3F;
                                     int satid=(((byte3<<4)&0x30)|((byte4>>4)&0x0F));
                                     QString longitude_qstr;
                                     if(longitude>180.0)longitude_qstr=(QString("%1W")).arg(360.0-longitude);
                                      else longitude_qstr=(QString("%1E")).arg(longitude);
-                                    if(channel2!=0)decline+=((QString)" SATELLITE ID = %1 (Long %3) SEQUENCE NO = %2 Psmc1 = %4MHz Psmc2 = %5MHz").arg(satid).arg(seqno).arg(longitude_qstr).arg(cac_freq1,0, 'f', 3).arg(cac_freq2,0, 'f', 3);
-                                     else decline+=((QString)" SATELLITE ID = %1 (Long %3) SEQUENCE NO = %2  Psmc1 = %4MHz").arg(satid).arg(seqno).arg(longitude_qstr).arg(cac_freq1,0, 'f', 3);
+                                    if(channel2!=0)decline+=((QString)" SATELLITE ID = %1 (Long %3) SEQUENCE NO = %2 Psmc1 = %4MHz%6 Psmc2 = %5MHz%7").arg(satid).arg(seqno).arg(longitude_qstr).arg(cac_freq1,0, 'f', 3).arg(cac_freq2,0, 'f', 3).arg(spotbeam1qstr).arg(spotbeam1qstr);
+                                     else decline+=((QString)" SATELLITE ID = %1 (Long %3) SEQUENCE NO = %2  Psmc1 = %4MHz%5").arg(satid).arg(seqno).arg(longitude_qstr).arg(cac_freq1,0, 'f', 3).arg(spotbeam1qstr);
+                                    //if(channel2!=0)decline+=((QString)" SATELLITE ID = %1 (Long %3 RA %6 INC %7) SEQUENCE NO = %2 Psmc1 = %4MHz Psmc2 = %5MHz").arg(satid).arg(seqno).arg(longitude_qstr).arg(cac_freq1,0, 'f', 3).arg(cac_freq2,0, 'f', 3).arg(ra).arg(inc);
+                                    // else decline+=((QString)" SATELLITE ID = %1 (Long %3 RA %5 INC %6) SEQUENCE NO = %2  Psmc1 = %4MHz").arg(satid).arg(seqno).arg(longitude_qstr).arg(cac_freq1,0, 'f', 3).arg(ra).arg(inc);
                                 }
                                 break;
 
@@ -963,8 +973,8 @@ QByteArray &AeroL::Decode(QVector<short> &bits)//0 bit --> oldest bit
                             case P_R_channel_control_ISU:
                                 decline+="P_R_channel_control_ISU";
                                 {
-                                    int byte3=((uchar)infofield[k*12-1+3]);
-                                    int byte4=((uchar)infofield[k*12-1+4]);
+                                    //int byte3=((uchar)infofield[k*12-1+3]);
+                                    //int byte4=((uchar)infofield[k*12-1+4]);
 
                                     int ges=((uchar)infofield[k*12-1+5]);
                                     //int byte6=((uchar)infofield[k*12-1+6]);
@@ -976,8 +986,10 @@ QByteArray &AeroL::Decode(QVector<short> &bits)//0 bit --> oldest bit
                                     int byte10=((uchar)infofield[k*12-1+10]);
 
 
-                                    int channel=(((byte9<<8)&0xFF00)|(byte10&0x00FF));
+                                    int channel=((((byte9&0x7F)<<8)&0xFF00)|(byte10&0x00FF));
                                     double freq=(((double)channel)*0.0025)+1510.0;
+                                    bool spotbeam=false;
+                                    if(byte9&0x80)spotbeam=true;
 
                                     int bitrate=(byte8>>4)&0x0F;
                                     //int nooffreqs=(byte7>>4)&0x0F;
@@ -1016,10 +1028,9 @@ QByteArray &AeroL::Decode(QVector<short> &bits)//0 bit --> oldest bit
                                         break;
                                     }
 
-
-
                                     //decline+=((" GES = "+(((QString)"%1").arg(ges, 2, 16, QChar('0')).toUpper()))+((QString)" Pd = %1MHz at %2bps with %3 frequencies assigned").arg(freq,0, 'f', 3).arg(bitrate).arg(nooffreqs));
-                                    decline+=((" GES = "+(((QString)"%1").arg(ges, 2, 16, QChar('0')).toUpper()))+((QString)" Pd = %1MHz at %2bps").arg(freq,0, 'f', 3).arg(bitrate));
+                                    if(spotbeam)decline+=((" GES = "+(((QString)"%1").arg(ges, 2, 16, QChar('0')).toUpper()))+((QString)" Pd = %1MHz at %2bps (Spot beam)").arg(freq,0, 'f', 3).arg(bitrate));
+                                     else decline+=((" GES = "+(((QString)"%1").arg(ges, 2, 16, QChar('0')).toUpper()))+((QString)" Pd = %1MHz at %2bps").arg(freq,0, 'f', 3).arg(bitrate));
 
                             }
                                 break;
