@@ -10,6 +10,7 @@
 #include <QPointer>
 
 #include <QElapsedTimer>
+#include "aerol.h"
 
 class CoarseFreqEstimate;
 
@@ -148,7 +149,7 @@ signals:
     void WarningTextSignal(const QString &str);
     void EbNoMeasurmentSignal(double EbNo);
     void SampleRateChanged(double Fs);
-    void BitRateChanged(double fb);
+    void BitRateChanged(double fb,bool burstmode);
 public slots:
     void FreqOffsetEstimateSlot(double freq_offset_est);
     void CenterFreqChangedSlot(double freq_center);

@@ -13,7 +13,33 @@
 
 #include "databasetext.h"
 
-namespace AEROL {
+namespace AEROTypeR {
+typedef enum MessageType
+{
+    General_access_request_telephone=0x20,
+    Abbreviated_access_request_telephone=0x23,
+    Access_request_data_R_T_channel=0x22,
+    Request_for_acknowledgement_R_channel=0x61,
+    Acknowledgement_R_channel=0x62,
+    Log_On_Off_control_R_channel=0x12,
+    Call_progress_R_channel=0x30,
+    Log_On_Off_acknowledgement=0x15,
+    Log_control_R_channel_ready_for_reassignment=0x17,
+    Telephony_acknowledge_R_channel=0x60,
+    User_data_ISU_SSU_R_channel=-1,
+} MessageType;
+}
+
+namespace AEROTypeT {
+typedef enum MessageType
+{
+    Fill_in_signal_unit=0x01,
+    User_data_ISU_RLS_T_channel=0x71,
+    User_data_ISU_SSU_T_channel=-1,
+} MessageType;
+}
+
+namespace AEROTypeP {
 typedef enum MessageType
 {
     Reserved_0=0x00,
@@ -58,6 +84,7 @@ typedef enum MessageType
 
 
 } MessageType;
+
 }
 
 struct ISUItem {
@@ -68,7 +95,7 @@ struct ISUItem {
     uchar REFNO;
     uchar NOOCTLESTINLASTSSU;
     QByteArray userdata;
-    int count;
+    int count;    
     void clear()
     {
         AESID=0;
@@ -79,6 +106,20 @@ struct ISUItem {
         NOOCTLESTINLASTSSU=0;
         userdata.clear();
         count=0;
+    }
+};
+
+
+struct RISUItem : ISUItem{
+    int SEQINDICATOR;
+    int SUTYPE;
+    int filledarray;
+    void clear()
+    {
+        ISUItem::clear();
+        SEQINDICATOR=0;//for R
+        SUTYPE=0;//for R
+        filledarray=0;//for R
     }
 };
 
@@ -93,6 +134,7 @@ public:
     uchar BI;
     QByteArray PLANEREG;
     QStringList dblookupresult;
+    bool nonacars;
 
     bool valid;
     bool hastext;
@@ -107,6 +149,7 @@ public:
         MODE=0;
         TAK=0;
         BI=0;
+        nonacars=false;
         PLANEREG.clear();
         LABEL.clear();
         message.clear();
@@ -130,6 +173,22 @@ private:
     int findisuitem71(ISUItem &anisuitem);
     void deleteoldisuitems();
 };
+
+//defragments R channel SUs with its SSUs
+class RISUData
+{
+public:
+    RISUData(){}
+    bool update(QByteArray data);
+    RISUItem lastvalidisuitem;
+    void reset(){isuitems.clear();}
+private:
+    QList<RISUItem> isuitems;
+    RISUItem anisuitem;
+    int findisuitem(RISUItem &anisuitem);
+    void deleteoldisuitems();
+};
+
 
 class ACARSDefragmenter
 {
@@ -171,6 +230,35 @@ class AeroLcrc16 //this seems to be called GENIBUS not CCITT
 {
 public:
     AeroLcrc16(){}
+    bool calcusingbitsandcheck(int *bits,int numberofbits)
+    {
+
+        quint16 crc_rec=0;
+        for(int i=numberofbits-1;i>=numberofbits-16; i--)
+        {
+            crc_rec<<=1;
+            crc_rec|=bits[i];
+        }
+        numberofbits-=16;
+
+        quint16 crc = 0xFFFF;
+        int crc_bit;
+        for(int i=0; i<numberofbits; i++)//we are finished when all bits of the message are looked at
+        {
+            //crc_bit = (crc >> 15) & 1;//bit of crc we are working on. 15=poly order-1
+            //crc <<= 1;//shift to next crc bit (have to do this here before Gate A does its thing)
+            //if(crc_bit ^ bits[i])crc = crc ^ 0x1021;//add to the crc the poly mod2 if crc_bit + block_bit = 1 mod2 (0x1021 is the ploy with the first bit missing so this means x^16+x^12+x^5+1)
+
+            //differnt endiness
+            crc_bit = crc & 1;//bit of crc we are working on. 15=poly order-1
+            crc >>= 1;//shift to next crc bit (have to do this here before Gate A does its thing)
+            if(crc_bit ^ bits[i])crc = crc ^ 0x8408;//(0x8408 is reversed 0x1021)add to the crc the poly mod2 if crc_bit + block_bit = 1 mod2 (0x1021 is the ploy with the first bit missing so this means x^16+x^12+x^5+1)
+
+        }
+        crc=~crc;
+        if(crc_rec==crc)return true;
+        return false;
+    }
     quint16 calcusingbits(int *bits,int numberofbits)
     {
         quint16 crc = 0xFFFF;
@@ -284,6 +372,7 @@ public:
     void setSize(int N);
     QVector<int> &interleave(QVector<int> &block);
     QVector<int> &deinterleave(QVector<int> &block);
+    QVector<int> &deinterleave(QVector<int> &block,int cols);//deinterleaves with a fewer number of cols than the block has
 private:
     QVector<int> matrix;
     int M;
@@ -311,12 +400,14 @@ public:
     PreambleDetectorPhaseInvariant();
     void setPreamble(QVector<int> _preamble);
     bool setPreamble(quint64 bitpreamble,int len);
+    void setTollerence(int tollerence);
     int Update(int val);
     bool inverted;
 private:
     QVector<int> preamble;
     QVector<int> buffer;
     int buffer_ptr;
+    int tollerence;
 };
 
 class OQPSKPreambleDetectorAndAmbiguityCorrection
@@ -330,20 +421,186 @@ private:
     QVector<int> preamble;
     QVector<int> buffer;
     int buffer_ptr;
-/*    PreambleDetectorOQPSK();
-    void setPreamble(QVector<int> _preamble);
-    bool setPreamble(quint64 bitpreamble,int len);
-    bool Update(int val);
-private:
-    QVector<int> preamble;
-    QVector<int> buffer;
-    int buffer_ptr;*/
+};
+
+class RTChannelDeleaveFECScram
+{
+public:
+    typedef enum ReturnResult
+    {
+        OK_Packet=      0b00000001,
+        OK_R_Packet=    0b00000011,
+        OK_T_Packet=    0b00000101,
+        Bad_Packet=     0b00000000,
+        Test_Failed=    0b00100000,
+        Nothing=        0b00001000,
+        FULL=           0b00010000
+    } ReturnResult;
+    RTChannelDeleaveFECScram()
+    {
+        //ViterbiCodec is not Qt so needs deleting when finished
+        std::vector<int> polynomials;
+        polynomials.push_back(109);
+        polynomials.push_back(79);
+        convolcodec=new ViterbiCodec(7, polynomials);
+        convolcodec->setPaddingLength(24);
+
+        block.resize(64*95);//max rows*cols
+        leaver.setSize(95);//max cols needed
+
+        lastpacketstate=Nothing;
+
+        resetblockptr();
+    }
+    ~RTChannelDeleaveFECScram()
+    {
+        delete convolcodec;
+    }
+    ReturnResult resetblockptr()
+    {
+        blockptr=0;
+        if(lastpacketstate==Test_Failed)
+        {
+            lastpacketstate=Nothing;
+            return Bad_Packet;
+        }
+        lastpacketstate=Nothing;
+        return Nothing;
+    }
+    void packintobytes()
+    {
+        infofield.clear();
+        int charptr=0;
+        uchar ch=0;
+        //int ctt=0;
+        //QString str2;
+        for(int h=0;h<deconvol.size();h++)//take one for flushing
+        {
+            ch|=deconvol[h]*128;
+            charptr++;charptr%=8;
+            if(charptr==0)
+            {
+                infofield+=ch;
+
+               // ctt++;
+               // str2+=((QString)"0x%1 ").arg(((QString)"").sprintf("%02X", ch));
+               // if((ctt-6)%12==0)str2+="\n";
+
+                ch=0;
+            }
+             else ch>>=1;
+        }
+
+        //qDebug()<<str2.toLatin1().data();
+    }
+    ReturnResult update(int bit)
+    {
+        if(blockptr>=block.size())return FULL;
+        block[blockptr]=bit;
+        blockptr++;
+
+        //if(blockptr>=block.size())qDebug()<<"FULL";
+
+        //test if interleaver length works
+        if(((blockptr-(64*5))%(64*3))==0)//true for R and T packets
+        {
+
+            //reset scrambler
+            scrambler.reset();
+
+            //deinterleaver
+            deleaveredblock=leaver.deinterleave(block,blockptr/64);
+
+            //decode
+            deconvol=convolcodec->Decode(deleaveredblock,blockptr);
+
+            //scrambler
+            scrambler.update(deconvol);
+
+            //test for R packet
+            if(blockptr==(64*5))
+            {
+                //test crc
+                bool crcok=crc16.calcusingbitsandcheck(deconvol.data(),8*19);
+                if(!crcok)
+                {
+                    lastpacketstate=Test_Failed;
+                    return Test_Failed;
+                }
+
+                //pack into bytes
+                packintobytes();
+
+                //qDebug()<<"CRC OK R packet";
+
+                blockptr=block.size();//stop further testing
+                lastpacketstate=OK_R_Packet;
+                return OK_R_Packet;
+            }
+
+            //Test for T packet
+            //test header crc
+            bool crcok=crc16.calcusingbitsandcheck(deconvol.data(),8*6);
+            if(!crcok)
+            {
+                if(blockptr>=block.size())
+                {
+                    lastpacketstate=Bad_Packet;
+                    return Bad_Packet;
+                }
+                lastpacketstate=Test_Failed;
+                return Test_Failed;
+            }
+
+            //test all the SU crcs
+            numberofsus=1+(blockptr-(64*5))/(64*3);
+            for(int i=0;i<numberofsus;i++)
+            {
+                crcok=crc16.calcusingbitsandcheck(deconvol.data()+(8*6)+(8*12)*i,8*12);
+                if(!crcok)
+                {
+                    if(blockptr>=block.size())
+                    {
+                        lastpacketstate=Bad_Packet;
+                        return Bad_Packet;
+                    }
+                    lastpacketstate=Test_Failed;
+                    return Test_Failed;
+                }
+            }
+
+            //pack into bytes
+            packintobytes();
+            infofield.chop(1);
+
+            //qDebug()<<"CRC OK T packet with"<<numberofsus<<"SUs\n";
+
+            blockptr=block.size();//stop further testing
+            lastpacketstate=OK_T_Packet;
+            return OK_T_Packet;
+
+        }
+        return Nothing;
+    }
+
+    QVector<int> deleaveredblock;
+    QVector<int> deconvol;
+    QVector<int> block;
+    int blockptr;
+    AeroLInterleaver leaver;
+    AeroLScrambler scrambler;
+    ViterbiCodec *convolcodec;
+    QByteArray infofield;
+    AeroLcrc16 crc16;
+    ReturnResult lastpacketstate;
+    int numberofsus;
 };
 
 class AeroL : public QIODevice
 {
     Q_OBJECT
 public:
+    enum ChannelType {PChannel,RChannel,TChannel};
 
     explicit AeroL(QObject *parent = 0);
     ~AeroL();
@@ -357,6 +614,8 @@ signals:
     void Errorsignal(QString &error);
 public slots:
     void setBitRate(double fb);
+    void setBurstmode(bool burstmode);
+    void setSettings(double fb, bool burstmode);
     void SignalStatusSlot(bool signal)
     {
         if(!signal)LostSignal();
@@ -378,6 +637,14 @@ private:
     QVector<short> sbits;
     QByteArray decodedbytes;
     PreambleDetector preambledetector;
+
+    //burstmode
+    PreambleDetector preambledetectorburst;
+    int muw;
+    bool burstmode;
+    int ifb;
+    RTChannelDeleaveFECScram rtchanneldeleavefecscram;
+    //
 
     //OQPSK
     PreambleDetectorPhaseInvariant preambledetectorphaseinvariantimag;
@@ -405,6 +672,8 @@ private:
 
     QByteArray infofield;
 
+
+    RISUData risudata;
     ISUData isudata;
     ParserISU *parserisu;
 

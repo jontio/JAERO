@@ -2,8 +2,6 @@
 #include "gui_classes/qspectrumdisplay.h"
 
 #include <QDebug>
-#include <assert.h>
-
 #include <QFile>
 #include <QTextStream>
 
@@ -14,12 +12,14 @@ OqpskDemodulator::OqpskDemodulator(QObject *parent)
     sql=false;
     scatterpointtype=SPT_constellation;
 
+    mse=100;
+
     Fs=48000;
     lockingbw=10500;
     freq_center=8000;
     fb=10500;
     signalthreshold=0.5;//lower is less sensitive
-    SamplesPerSymbol=0.5*Fs/fb;
+    SamplesPerSymbol=2.0*Fs/fb;
 
     mixer_center.SetFreq(freq_center,Fs);
     mixer2.SetFreq(freq_center,Fs);
@@ -70,7 +70,7 @@ OqpskDemodulator::OqpskDemodulator(QObject *parent)
     delays.setdelay(1);
     delayt41.setdelay(T/4.0);
     delayt42.setdelay(T/4.0);
-    delayt8.setdelay(T/8.0);
+    delayt8.setdelay(T/8.0);//??? T/4.0 or T/8.0 ??? need to check
 
     //st 10500hz resonator at 48000fps
     st_iir_resonator.a.resize(3);
@@ -177,12 +177,12 @@ void OqpskDemodulator::setSettings(Settings _settings)
     if(_settings.Fs!=Fs)emit SampleRateChanged(_settings.Fs);
     Fs=_settings.Fs;
     lockingbw=_settings.lockingbw;
-    if(_settings.fb!=fb)emit BitRateChanged(_settings.fb);
+    if(_settings.fb!=fb)emit BitRateChanged(_settings.fb,false);
     fb=_settings.fb;
     freq_center=_settings.freq_center;
     if(freq_center>((Fs/2.0)-(lockingbw/2.0)))freq_center=((Fs/2.0)-(lockingbw/2.0));
     signalthreshold=_settings.signalthreshold;
-    SamplesPerSymbol=0.5*Fs/fb;
+    SamplesPerSymbol=2.0*Fs/fb;
 
     bbnfft=pow(2,_settings.coarsefreqest_fft_power);
     bbcycbuff.resize(bbnfft);

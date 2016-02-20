@@ -7,6 +7,7 @@
 #include "audiooqpskdemodulator.h"
 #include "audiomskdemodulator.h"
 #include "audiomskmodulator.h"
+#include "audioburstoqpskdemodulator.h"
 #include "varicodepipedecoder.h"
 #include "varicodepipeencoder.h"
 #include "gui_classes/settingsdialog.h"
@@ -30,7 +31,7 @@ public:
     ~MainWindow();
 
 private:
-    enum DemodType{NoDemodType,MSK,OQPSK};
+    enum DemodType{NoDemodType,MSK,OQPSK,BURSTOQPSK};
     Ui::MainWindow *ui;
     AudioMskDemodulator *audiomskdemodulator;
     AudioMskDemodulator::Settings audiomskdemodulatorsettings;
@@ -42,6 +43,11 @@ private:
     //OQPSK add
     AudioOqpskDemodulator *audiooqpskdemodulator;
     AudioOqpskDemodulator::Settings audiooqpskdemodulatorsettings;
+    //
+
+    //Burst OQPSK add
+    AudioBurstOqpskDemodulator *audioburstoqpskdemodulator;
+    AudioBurstOqpskDemodulator::Settings audioburstoqpskdemodulatorsettings;
     //
 
     AeroL *aerol;

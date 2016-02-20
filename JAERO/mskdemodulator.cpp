@@ -136,7 +136,7 @@ void MskDemodulator::setSettings(Settings _settings)
     if(_settings.Fs!=Fs)emit SampleRateChanged(_settings.Fs);
     Fs=_settings.Fs;
     lockingbw=_settings.lockingbw;
-    if(_settings.fb!=fb)emit BitRateChanged(_settings.fb);
+    if(_settings.fb!=fb)emit BitRateChanged(_settings.fb,false);
     fb=_settings.fb;
 
     //Since oqpsk

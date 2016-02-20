@@ -10,6 +10,7 @@
 #include <QObject>
 #include <assert.h>
 #include <QVector>
+#include "../kiss_fft130/kiss_fastfir.h"
 //---------------------------------------------------------------------------
 
 //#define ASSERTCH(obj,idx) assert(idx>=0);assert(idx<obj.size())
@@ -65,6 +66,7 @@ public:
         WaveTable();
         void  SetFreq(double freq);
         void  SetPhaseDeg(double phase_deg);
+        void  SetPhaseCycles(double phase_cycles);
         double GetPhaseDeg();
         double GetFreqHz();
         void  IncresePhaseDeg(double phase_deg);
@@ -96,6 +98,43 @@ public:
         double outsum;
 };
 
+//--C-band
+
+
+class QJFastFIRFilter : public QObject
+{
+    Q_OBJECT
+public:
+    QJFastFIRFilter(QObject *parent = 0);
+    int setKernel(QVector<kffsamp_t> imp_responce,int nfft);
+    int setKernel(QVector<kffsamp_t> imp_responce);
+    void Update(kffsamp_t *data,int Size);
+    void Update(QVector<kffsamp_t> &data);
+    void reset();
+    ~QJFastFIRFilter();
+private:
+    size_t nfft;
+    kiss_fastfir_cfg cfg;
+    size_t idx_inbuf;
+    QVector<kffsamp_t> inbuf;
+    QVector<kffsamp_t> outbuf;
+    QVector<kffsamp_t> remainder;
+    int remainder_ptr;
+};
+
+class QJHilbertFilter : public QJFastFIRFilter
+{
+    Q_OBJECT
+public:
+    QJHilbertFilter(QObject *parent = 0);
+    void setSize(int N);
+    QVector<kffsamp_t> getKernel();
+private:
+    QVector<kffsamp_t> kernel;
+};
+
+//--
+
 class AGC
 {
 public:
@@ -117,11 +156,68 @@ public:
     ~MovingAverage();
     double Update(double sig);
     double UpdateSigned(double sig);
+    void Zero();
     double Val;
 private:
     int MASz;
     double MASum;
     double *MABuffer;
+    int MAPtr;
+};
+
+template <class T>
+class TMovingAverage
+{
+public:
+    TMovingAverage(int number)
+    {
+        MASz=round(number);
+        JASSERT(MASz>0);
+        MASum=0;
+        MABuffer=new T[MASz];
+        for(int i=0;i<MASz;i++)MABuffer[i]=0;
+        MAPtr=0;
+        Val=0;
+    }
+    TMovingAverage()
+    {
+        MASz=10;
+        JASSERT(MASz>0);
+        MASum=0;
+        MABuffer=new T[MASz];
+        for(int i=0;i<MASz;i++)MABuffer[i]=0;
+        MAPtr=0;
+        Val=0;
+    }
+    void setLength(int number)
+    {
+        if(MASz)delete [] MABuffer;
+        MASz=round(number);
+        JASSERT(MASz>0);
+        MASum=0;
+        MABuffer=new T[MASz];
+        for(int i=0;i<MASz;i++)MABuffer[i]=0;
+        MAPtr=0;
+        Val=0;
+    }
+    ~TMovingAverage()
+    {
+        if(MASz)delete [] MABuffer;
+    }
+    T UpdateSigned(T sig)
+    {
+        MASum=MASum-MABuffer[MAPtr];
+        MASum=MASum+(sig);
+        MABuffer[MAPtr]=(sig);
+        MAPtr++;MAPtr%=MASz;
+        Val=MASum/((double)MASz);
+        return Val;
+    }
+    T Val;
+private:
+    int MASz;
+    T MASum;
+    T *MABuffer;
     int MAPtr;
 };
 
@@ -145,6 +241,7 @@ public:
     ~MSEcalc();
     double Update(cpx_type pt_qpsk);
     double mse;
+    void Zero();
 private:
     MovingAverage *pointmean;
     MovingAverage *msema;
@@ -309,6 +406,7 @@ public:
     QVector<double> a;
     QVector<double> b;
     void init();
+    double y;
 private:
     QVector<double> buff_y;
     QVector<double> buff_x;
@@ -376,16 +474,122 @@ public:
     }
     void update(T &data)
     {
-
         buffer[buffer_ptr]=data;
         buffer_ptr++;buffer_ptr%=buffer_sz;
         data=buffer[buffer_ptr];
-
+    }
+    T update_dont_touch(T data)
+    {
+        buffer[buffer_ptr]=data;
+        buffer_ptr++;buffer_ptr%=buffer_sz;
+        return buffer[buffer_ptr];
+    }
+    int findmaxpos(T &maxval)
+    {
+        int maxpos=0;
+        maxval=buffer[buffer_ptr];
+        for(int i=0;i<buffer_sz;i++)
+        {
+            if(buffer[buffer_ptr]>maxval)
+            {
+               maxval=buffer[buffer_ptr];
+               maxpos=i;
+            }
+            buffer_ptr++;buffer_ptr%=buffer_sz;
+        }
+        return maxpos;
     }
 private:
     QVector<T> buffer;
     int buffer_ptr;
     int buffer_sz;
 };
+
+//------
+#include <QDebug>
+
+class PeakDetector
+{
+public:
+   PeakDetector()
+   {
+       setSettings((int)(9.14*128.0/2.0),0.25);//not sure what the best length should be
+
+   }
+   ~PeakDetector()
+   {
+   }
+   void setSettings(int length,double _threshold)
+   {
+
+       d1.setLength(length*2);
+       d2.setLength(length);
+       lastdy=0;
+       maxcntdown=2*length;
+       cntdown=maxcntdown;
+       threshold=_threshold;
+       maxposcntdown=-1;
+       d3.setLength(2*length);
+   }
+   void setSettings(int length,double _threshold,int _maxcntdown)
+   {
+
+       d1.setLength(length*2);
+       d2.setLength(length);
+       lastdy=0;
+       maxcntdown=_maxcntdown;
+       cntdown=maxcntdown;
+       threshold=_threshold;
+       maxposcntdown=-1;
+       d3.setLength(2*length);
+   }
+   bool update(double &val)
+   {
+       double val2=d3.update_dont_touch(val);//actual value to return;
+
+       double dy=val-d1.update_dont_touch(val);//diff over 2*length
+       d2.update(val);//val we work with due to delay caused by dy
+       if((!cntdown)&&(val>threshold)&&((lastdy>=0&&dy<0)))//clear, going up and above threshold
+       {
+
+           //stop calling again to fast
+           cntdown=maxcntdown;
+
+           //abs maximum in return vals
+           maxval=0;
+           maxpos=d3.findmaxpos(maxval);
+           maxposcntdown=maxpos;
+
+       }
+       if(cntdown>0)cntdown--;
+       lastdy=dy;
+
+
+       val=val2;//set return val
+       if(!maxposcntdown)//if time to return peak then return so
+       {
+           maxposcntdown--;
+           return true;
+       }
+       if(maxposcntdown>0)maxposcntdown--;
+
+       return false;
+
+   }
+
+   DelayThing<double> d1;
+   DelayThing<double> d2;
+   DelayThing<double> d3;
+   double lastdy;
+   int cntdown;
+   int maxcntdown;
+   double threshold;
+
+   double maxval;
+   int maxpos;
+   int maxposcntdown;
+
+};
+
 
 #endif

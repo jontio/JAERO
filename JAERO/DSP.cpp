@@ -171,6 +171,16 @@ void  WaveTable::SetPhaseDeg(double phase_deg)
     WTptr=(phase_deg/360.0)*((double)WTSIZE);
 }
 
+void  WaveTable::SetPhaseCycles(double phase_cycles)//untested
+{
+    phase_cycles=std::fmod(phase_cycles,1.0);
+    while(phase_cycles<0)phase_cycles+=1.0;
+    assert(phase_cycles>=0);
+    assert(phase_cycles<1);
+    WTptr=phase_cycles*((double)WTSIZE);
+}
+
+
 double WaveTable::GetPhaseDeg()
 {
     return (360.0*WTptr/((double)WTSIZE));
@@ -338,6 +348,8 @@ void  FIR::FIRSetPoint(int point, double value)
 //-----------------
 AGC::AGC(double _SecondsToAveOver,double _Fs)
 {
+    JASSERT(_Fs>1);
+    JASSERT(_Fs<1000000);
     AGCMASz=round(_SecondsToAveOver*_Fs);
     JASSERT(AGCMASz>0);
     AGCMASum=0;
@@ -367,13 +379,22 @@ AGC::~AGC()
 
 MovingAverage::MovingAverage(int number)
 {
-    MASz=round(number);
+    //MASz=round(number);
+    MASz=number;
     JASSERT(MASz>0);
     MASum=0;
     MABuffer=new double[MASz];
     for(int i=0;i<MASz;i++)MABuffer[i]=0;
     MAPtr=0;
     Val=0;
+}
+
+void MovingAverage::Zero()
+{
+    for(int i=0;i<MASz;i++)MABuffer[i]=0;
+    MAPtr=0;
+    Val=0;
+    MASum=0;
 }
 
 double MovingAverage::Update(double sig)
@@ -406,11 +427,18 @@ MSEcalc::MSEcalc(int number)
 {
     pointmean = new MovingAverage(number);
     msema = new MovingAverage(number);
+    mse=0;
 }
 MSEcalc::~MSEcalc()
 {
     delete pointmean;
     delete msema;
+}
+void MSEcalc::Zero()
+{
+    pointmean->Zero();
+    msema->Zero();
+    mse=0;
 }
 double MSEcalc::Update(cpx_type pt_qpsk)
 {
@@ -596,7 +624,7 @@ double  IIR::update(double sig)
     buff_x[buff_x_ptr]=sig;
     buff_x_ptr++;buff_x_ptr%=buff_x.size();
 
-    double y=0;
+    y=0;
 
     //int tp=buff_x_ptr;
 
@@ -665,3 +693,169 @@ OQPSKEbNoMeasure::~OQPSKEbNoMeasure()
     delete E2;
 }
 
+
+//---fast Hilbert filter
+QJHilbertFilter::QJHilbertFilter(QObject *parent)  : QJFastFIRFilter(parent)
+{
+    setSize(2048);
+}
+
+void QJHilbertFilter::setSize(int N)
+{
+    N=pow(2.0,(ceil(log2(N))));
+    assert(N>1);
+
+    kernel.clear();
+
+    kffsamp_t asample;
+    for(int i=0;i<N;i++)
+    {
+
+        if(i==N/2)
+        {
+            asample.i=0;
+            asample.r=-1;
+            kernel.push_back(asample);
+            continue;
+        }
+
+        if((i%2)==0)
+        {
+            asample.i=0;
+            asample.r=0;
+            kernel.push_back(asample);
+            continue;
+        }
+
+        asample.r=0;
+        asample.i=(2.0/((double)N))/(std::tan(M_PI*(((double)i)/((double)N)-0.5)));
+        kernel.push_back(asample);
+
+    }
+    setKernel(kernel);
+}
+
+QVector<kffsamp_t> QJHilbertFilter::getKernel()
+{
+    return kernel;
+}
+
+
+//---
+
+//---fast FIR
+
+QJFastFIRFilter::QJFastFIRFilter(QObject *parent) : QObject(parent)
+{
+    QVector<kffsamp_t> tvect;
+    kffsamp_t asample;
+    asample.r=1;
+    asample.i=0;
+    tvect.push_back(asample);
+    nfft=2;
+    cfg=kiss_fastfir_alloc(tvect.data(),tvect.size(),&nfft,0,0);
+    reset();
+}
+
+int QJFastFIRFilter::setKernel(QVector<kffsamp_t> imp_responce)
+{
+    int _nfft=imp_responce.size()*4;//rule of thumb
+    _nfft=pow(2.0,(ceil(log2(_nfft))));
+    return setKernel(imp_responce,_nfft);
+}
+
+int QJFastFIRFilter::setKernel(QVector<kffsamp_t> imp_responce,int _nfft)
+{
+    if(!imp_responce.size())return nfft;
+    free(cfg);
+    _nfft=pow(2.0,(ceil(log2(_nfft))));
+    nfft=_nfft;
+    cfg=kiss_fastfir_alloc(imp_responce.data(),imp_responce.size(),&nfft,0,0);
+    reset();
+    return nfft;
+}
+
+
+void QJFastFIRFilter::reset()
+{
+    kffsamp_t asample;
+    asample.r=0;
+    asample.i=0;
+    remainder.fill(asample,nfft*2);
+    idx_inbuf=0;
+    remainder_ptr=nfft;
+}
+
+void QJFastFIRFilter::Update(QVector<kffsamp_t> &data)
+{
+    Update(data.data(), data.size());
+}
+
+void QJFastFIRFilter::Update(kffsamp_t *data,int Size)
+{
+
+    //ensure enough storage
+    if((inbuf.size()-idx_inbuf)<(size_t)Size)
+    {
+        inbuf.resize(Size+nfft);
+        outbuf.resize(Size+nfft);
+    }
+
+    //add data to storage
+    memcpy ( inbuf.data()+idx_inbuf, data, sizeof(kffsamp_t)*Size );
+    size_t nread=Size;
+
+    //fast fir of storage
+    size_t nwrite=kiss_fastfir(cfg, inbuf.data(), outbuf.data(),nread,&idx_inbuf);
+
+    int currentwantednum=Size;
+    int numfromremainder=std::min(currentwantednum,remainder_ptr);
+
+    //return as much as posible from remainder buffer
+    if(numfromremainder>0)
+    {
+        memcpy ( data, remainder.data(), sizeof(kffsamp_t)*numfromremainder );
+
+        currentwantednum-=numfromremainder;
+        data+=numfromremainder;
+
+        if(numfromremainder<remainder_ptr)
+        {
+            remainder_ptr-=numfromremainder;
+            memcpy ( remainder.data(), remainder.data()+numfromremainder, sizeof(kffsamp_t)*remainder_ptr );
+        } else remainder_ptr=0;
+    }
+
+    //then return stuff from output buffer
+    int numfromoutbuf=std::min(currentwantednum,(int)nwrite);
+    if(numfromoutbuf>0)
+    {
+        memcpy ( data, outbuf.data(), sizeof(kffsamp_t)*numfromoutbuf );
+        currentwantednum-=numfromoutbuf;
+        data+=numfromoutbuf;
+    }
+
+    //any left over is added to remainder buffer
+    if(((size_t)numfromoutbuf<nwrite)&&(nwrite>0))
+    {
+        memcpy ( remainder.data()+remainder_ptr, outbuf.data()+numfromoutbuf, sizeof(kffsamp_t)*(nwrite-numfromoutbuf) );
+        remainder_ptr+=(nwrite-numfromoutbuf);
+    }
+
+
+    //if currentwantednum>0 then some items were not changed, this should not happen
+    //we should anyways have enough to return but if we dont this happens. this should be avoided else a discontinuity of frames occurs. set remainder to zero and set remainder_ptr to nfft before running to avoid this
+    if(currentwantednum>0)
+    {
+        qDebug()<<"Error: user wants "<<currentwantednum<<" more items from fir filter!";
+        remainder_ptr+=currentwantednum;
+    }
+
+}
+
+QJFastFIRFilter::~QJFastFIRFilter()
+{
+    free(cfg);
+}
+
+//-----------

@@ -52,6 +52,9 @@ class ViterbiCodec {
   std::string Encode_Continuous(const std::string& bits);
   QVector<int> Decode_Continuous(const QVector<int>& bits);
   QVector<int> Encode_Continuous(const QVector<int>& bits);
+  QVector<int> Encode(const QVector<int>& bits);
+  QVector<int> Decode(const QVector<int>& bits);
+  QVector<int> Decode(const QVector<int>& bits,int numberofbits);
   void setPaddingLength(int length){paddinglength=length;}
 
  private:

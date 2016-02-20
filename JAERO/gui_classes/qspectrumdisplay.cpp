@@ -121,6 +121,9 @@ void QSpectrumDisplay::setFFTData(const QVector<double> &data)
     {
         maxval=aveval+10.0;
     }
+
+ //   spec_log_abs_vals=data;
+
     graph(0)->setData(spec_freq_vals,spec_log_abs_vals);
     //yAxis->setRange(yAxis->range().lower*0.9+0.1*(aveval*0.5), yAxis->range().upper*0.9+0.1*(maxval*1.1));
     yAxis->setRange(aveval-2, yAxis->range().upper*0.5+0.5*(maxval+1));

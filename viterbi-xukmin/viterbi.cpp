@@ -174,6 +174,34 @@ QVector<int> ViterbiCodec::Decode_Continuous(const QVector<int>& bits)
 }
 
 //jonti
+QVector<int> ViterbiCodec::Decode(const QVector<int>& bits)
+{
+    std::string decode_str;
+    decode_str.resize(bits.size());
+    for(int i=0;i<bits.size();i++)decode_str[i]=(bits[i]+'0');
+    std::string decoded=Decode(decode_str);
+    QVector<int> ret;
+    ret.resize(decoded.size());
+    for(int i=0;i<decoded.size();i++)ret[i]=(decoded[i]-'0');
+    return ret;
+}
+
+//jonti
+QVector<int> ViterbiCodec::Decode(const QVector<int>& bits,int numberofbits)
+{
+    assert(numberofbits<=bits.size());
+    assert(numberofbits>0);
+    std::string decode_str;
+    decode_str.resize(numberofbits);
+    for(int i=0;i<numberofbits;i++)decode_str[i]=(bits[i]+'0');
+    std::string decoded=Decode(decode_str);
+    QVector<int> ret;
+    ret.resize(decoded.size());
+    for(int i=0;i<decoded.size();i++)ret[i]=(decoded[i]-'0');
+    return ret;
+}
+
+//jonti
 QVector<int> ViterbiCodec::Encode_Continuous(const QVector<int>& bits)
 {
     QVector<int> encoded;
@@ -190,6 +218,29 @@ QVector<int> ViterbiCodec::Encode_Continuous(const QVector<int>& bits)
         encoded.push_back(tmp[j]-'0');
       }
       encodeingstate = NextState(encodeingstate, input);
+    }
+
+    return encoded;
+}
+
+//jonti
+QVector<int> ViterbiCodec::Encode(const QVector<int>& bits)
+{
+    QVector<int> encoded;
+    std::string tmp;
+    int state = 0;
+
+    // Encode the message bits.
+    for (int i = 0; i < bits.size(); i++)
+    {
+      int input = bits[i];
+      assert(input == 0 || input == 1);
+      tmp = Output(state, input);
+      for(int j=0;j<num_parity_bits();j++)
+      {
+        encoded.push_back(tmp[j]-'0');
+      }
+      state = NextState(state, input);
     }
 
     return encoded;

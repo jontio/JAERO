@@ -105,9 +105,9 @@ void SettingsDialog::populatesettings()
     ui->lineEditplanesfolder->setText(settings.value("lineEditplanesfolder",QStandardPaths::standardLocations(APPDATALOCATIONS)[0]+"/planes").toString());
     ui->lineEditplanelookup->setText(settings.value("lineEditplanelookup","http://www.flightradar24.com/data/airplanes/{REG}").toString());
     //ui->lineEditplanelookup->setText(settings.value("lineEditplanelookup","http://junzisun.com/aif/?q={AES}#").toString());
-    ui->lineEditDBURL->setText(settings.value("lineEditDBURL","http://junzisun.com/aif/download").toString());
+    ui->lineEditDBURL->setText(settings.value("lineEditDBURL2","http://junzisun.com/adb/download").toString());
     ui->checkBoxbeepontextmessage->setChecked(settings.value("checkBoxbeepontextmessage",true).toBool());
-    lastdbupdate=settings.value("lastdbupdate").toDate();
+    lastdbupdate=settings.value("lastdbupdate3").toDate();
 
 //these have been tested so far as lineEditplanelookup
 //http://junzisun.com/aif/?q={AES}#
@@ -136,7 +136,7 @@ void SettingsDialog::accept()
     settings.setValue("checkBoxlogwidebandwidthenable", ui->checkBoxlogwidebandwidthenable->isChecked());
     settings.setValue("lineEditplanesfolder", ui->lineEditplanesfolder->text());
     settings.setValue("lineEditplanelookup", ui->lineEditplanelookup->text());
-    settings.setValue("lineEditDBURL", ui->lineEditDBURL->text());
+    settings.setValue("lineEditDBURL2", ui->lineEditDBURL->text());
     settings.setValue("checkBoxbeepontextmessage", ui->checkBoxbeepontextmessage->isChecked());
 
     poulatepublicvars();
@@ -173,8 +173,8 @@ void SettingsDialog::DownloadDBResult(const QUrl &url,bool result)
     if(QUrl::fromEncoded(ui->lineEditDBURL->text().toLocal8Bit()).url()==url.url())
     {
         QSettings settings("Jontisoft", "JAERO");
-        if(result)settings.setValue("lastdbupdate", QDate::currentDate());
-        settings.setValue("updatedbinformed", false);
+        if(result)settings.setValue("lastdbupdate3", QDate::currentDate());
+        settings.setValue("updatedbinformed3", false);
         if(dbtext!=NULL)dbtext->importdb(ui->lineEditplanesfolder->text());
     }
 }
@@ -182,7 +182,7 @@ void SettingsDialog::DownloadDBResult(const QUrl &url,bool result)
 void SettingsDialog::DataBaseUpdateSugestion()
 {
     QSettings settings("Jontisoft", "JAERO");
-    if(settings.value("updatedbinformed",false).toBool())return;
+    if(settings.value("updatedbinformed3",false).toBool())return;
     if(lastdbupdate.isNull())
     {
         QMessageBox msgBox;
@@ -197,5 +197,5 @@ void SettingsDialog::DataBaseUpdateSugestion()
         msgBox.setIcon(QMessageBox::Information);
         msgBox.exec();
     }
-    settings.setValue("updatedbinformed", true);
+    settings.setValue("updatedbinformed3", true);
 }

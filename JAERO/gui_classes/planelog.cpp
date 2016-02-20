@@ -40,7 +40,7 @@ void PlaneLog::dbUpdateslot(bool ok, int ref, const QStringList &dbitem)
     else
     {
 
-        if(dbitem.size()!=9)
+        if(dbitem.size()!=5)
         {
             dbUpdateerrorslot("Error: Database illformed");
             return;
@@ -65,23 +65,23 @@ void PlaneLog::dbUpdateslot(bool ok, int ref, const QStringList &dbitem)
             return;
         }
 
-        ui->label_type->setText(dbitem[6]);
-        ui->label_owner->setText(dbitem[7]);
+        ui->label_type->setText(dbitem[3]);
+        ui->label_owner->setText(dbitem[4]);
 
         ui->plainTextEditdatabase->clear();
         ui->plainTextEditdatabase->appendPlainText("Reg. ID         \t"+dbitem[1]);
         ui->plainTextEditdatabase->appendPlainText("Model           \t"+dbitem[2]);
-        ui->plainTextEditdatabase->appendPlainText("Type            \t"+dbitem[6]);
-        ui->plainTextEditdatabase->appendPlainText("Owner           \t"+dbitem[7]);
-        ui->plainTextEditdatabase->appendPlainText("Call Sign (Last)\t"+dbitem[4]);
-        ui->plainTextEditdatabase->appendPlainText("Flight (Last)   \t"+dbitem[5]);
-        QDateTime timestamp;
-        timestamp.setTime_t(((QString)dbitem[8]).toUInt());
-        ui->plainTextEditdatabase->appendPlainText("Updated (Local) \t"+timestamp.toString("yy-MM-dd hh:mm:ss"));
+        ui->plainTextEditdatabase->appendPlainText("Type            \t"+dbitem[3]);
+        ui->plainTextEditdatabase->appendPlainText("Owner           \t"+dbitem[4]);
+        //ui->plainTextEditdatabase->appendPlainText("Call Sign (Last)\t"+dbitem[4]);
+        //ui->plainTextEditdatabase->appendPlainText("Flight (Last)   \t"+dbitem[5]);
+//        QDateTime timestamp;
+//        timestamp.setTime_t(((QString)dbitem[8]).toUInt());
+//        ui->plainTextEditdatabase->appendPlainText("Updated (Local) \t"+timestamp.toString("yy-MM-dd hh:mm:ss"));
 
         if((!ui->plainTextEditnotes->toPlainText().isEmpty())&&(Notesitem->text().right(1)!="\u2063"))return;
-        ui->plainTextEditnotes->setPlainText(dbitem[6]+"\n"+dbitem[7]+"\n\u2063");
-        Notesitem->setText(dbitem[6]+"\n"+dbitem[7]+"\n\u2063");
+        ui->plainTextEditnotes->setPlainText(dbitem[3]+"\n"+dbitem[4]+"\n\u2063");
+        Notesitem->setText(dbitem[3]+"\n"+dbitem[4]+"\n\u2063");
 
 
     }
@@ -343,7 +343,12 @@ void PlaneLog::ACARSslot(ACARSItem &acarsitem)
         if(acarsitem.TAK==0x15)TAKstr[0]='!';
         uchar label1=acarsitem.LABEL[1];
         if((uchar)acarsitem.LABEL[1]==127)label1='d';
-        tmp+="✈: "+QDateTime::currentDateTime().toString("hh:mm:ss dd-MM-yy ")+(((QString)"").sprintf("AES:%06X GES:%02X %c %s %s %c%c %c●●",acarsitem.isuitem.AESID,acarsitem.isuitem.GESID,acarsitem.MODE,acarsitem.PLANEREG.data(),TAKstr.data(),(uchar)acarsitem.LABEL[0],label1,acarsitem.BI));
+
+        if(acarsitem.nonacars)tmp+="✈: "+QDateTime::currentDateTime().toString("hh:mm:ss dd-MM-yy ")+(((QString)"").sprintf("AES:%06X GES:%02X   %s       ●●",acarsitem.isuitem.AESID,acarsitem.isuitem.GESID,acarsitem.PLANEREG.data()));
+         else tmp+="✈: "+QDateTime::currentDateTime().toString("hh:mm:ss dd-MM-yy ")+(((QString)"").sprintf("AES:%06X GES:%02X %c %s %s %c%c %c●●",acarsitem.isuitem.AESID,acarsitem.isuitem.GESID,acarsitem.MODE,acarsitem.PLANEREG.data(),TAKstr.data(),(uchar)acarsitem.LABEL[0],label1,acarsitem.BI));
+
+//        tmp+="✈: "+QDateTime::currentDateTime().toString("hh:mm:ss dd-MM-yy ")+(((QString)"").sprintf("AES:%06X GES:%02X %c %s %s %c%c %c●●",acarsitem.isuitem.AESID,acarsitem.isuitem.GESID,acarsitem.MODE,acarsitem.PLANEREG.data(),TAKstr.data(),(uchar)acarsitem.LABEL[0],label1,acarsitem.BI));
+
         if(acarsitem.moretocome)LastMessageitem->setText(tmp+message+" ...more to come... ●");//\n");
          else LastMessageitem->setText(tmp+message+"●");//\n");
 

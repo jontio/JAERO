@@ -1,5 +1,5 @@
-#ifndef OQPSKDEMODULATOR_H
-#define OQPSKDEMODULATOR_H
+#ifndef BURSTOQPSKDEMODULATOR_H
+#define BURSTOQPSKDEMODULATOR_H
 
 #include <QIODevice>
 #include "DSP.h"
@@ -8,11 +8,15 @@
 #include <QPointer>
 #include <QObject>
 #include <QElapsedTimer>
-#include "coarsefreqestimate.h"
 #include <assert.h>
 #include "aerol.h"
 
-class OqpskDemodulator : public QIODevice
+#include "fftrwrapper.h"
+
+typedef FFTrWrapper<double> FFTr;
+typedef std::complex<double> cpx_type;
+
+class BurstOqpskDemodulator : public QIODevice
 {
     Q_OBJECT
 public:
@@ -35,8 +39,8 @@ public:
             signalthreshold=0.5;
         }
     };
-    explicit OqpskDemodulator(QObject *parent);
-    ~OqpskDemodulator();
+    explicit BurstOqpskDemodulator(QObject *parent);
+    ~BurstOqpskDemodulator();
     void setAFC(bool state);
     void setSQL(bool state);
     void setSettings(Settings settings);
@@ -54,7 +58,7 @@ signals:
     void OrgOverlapedBuffer(const QVector<double> &buffer);
     void PeakVolume(double Volume);
     void SampleRateChanged(double Fs);
-    void BitRateChanged(double fb,bool burstmode);
+    void BitRateChanged(double fb, bool burstmode);
     void Plottables(double freq_est,double freq_center,double bandwidth);
     void BBOverlapedBuffer(const QVector<cpx_type> &buffer);
     void MSESignal(double mse);
@@ -62,10 +66,24 @@ signals:
     void WarningTextSignal(const QString &str);
     void EbNoMeasurmentSignal(double EbNo);
 private:
+
+    const cpx_type imag=cpx_type(0, 1);
+
     QPointer<QIODevice> pdatasinkdevice;
     bool afc;
     bool sql;
     int scatterpointtype;
+
+    double Fs;
+    double freq_center;
+    double lockingbw;
+    double fb;
+    double signalthreshold;
+
+    double SamplesPerSymbol;
+    bool insertpreamble;
+
+    WaveTable mixer2;
 
     QVector<double> spectrumcycbuff;
     int spectrumcycbuff_ptr;
@@ -81,13 +99,48 @@ private:
 
     QElapsedTimer timer;
 
-    double Fs;
-    double freq_center;
-    double lockingbw;
-    double fb;
-    double signalthreshold;
+//--symbol timing detection
+    AGC *agc;
 
-    double SamplesPerSymbol;
+    //hilbert
+    QJHilbertFilter *hfir;
+    QVector<kffsamp_t> hfirbuff;
+
+    //delay lines
+    Delay< std::complex<double> > bt_d1;
+    Delay< double > bt_ma_diff;
+
+    //MAs
+    TMovingAverage< std::complex<double> > bt_ma1;
+    MovingAverage *mav1;
+
+
+    //Peak detection
+    PeakDetector pdet;
+
+    //delay for peak detection alignment
+    DelayThing< std::complex<double> > d1;
+
+    //delay for trident detection
+    DelayThing<double> d2;
+
+    //trident shape thing
+    QVector<double> tridentbuffer;
+    int tridentbuffer_ptr;
+    int tridentbuffer_sz;
+
+    //fft for trident
+    FFTr *fftr;
+    QVector<cpx_type> out_base,out_top;
+    QVector<double> out_abs_diff;
+    QVector<double> in;
+
+//--
+
+//--demod
+
+    AGC *agc2;
+
 
     FIR *fir_re;
     FIR *fir_im;
@@ -100,36 +153,42 @@ private:
     IIR st_iir_resonator;
     WaveTable st_osc;
     WaveTable st_osc_ref;
+    WaveTable st_osc_quarter;
+    Delay<double> a1;
+    double ee;
+    cpx_type symboltone_averotator;
+    double carrier_rotation_est;
+
+    cpx_type rotator;
+    double rotator_freq;
 
     //ct
     IIR ct_iir_loopfilter;
 
-    WaveTable mixer_center;
-    WaveTable mixer2;
-
-    CoarseFreqEstimate *coarsefreqestimate;
-
-
-    double mse;
-    MSEcalc *msecalc;
-
-    QVector<cpx_type> phasepointbuff;
-    int phasepointbuff_ptr;
-
-    AGC *agc;
 
     OQPSKEbNoMeasure *ebnomeasure;
 
     BaceConverter bc;
     QByteArray  RxDataBytes;//packed in bytes
 
-    MovingAverage *marg;
-    DelayThing<cpx_type> dt;
+
+    double mse;
+    MovingAverage *msema;
+
+    QVector<cpx_type> phasepointbuff;
+    int phasepointbuff_ptr;
+
+//--
+
+
+    DelayThing<cpx_type> rotation_bias_delay;
+    MovingAverage *rotation_bias_ma;
+
+    int startstopstart;
 
 public slots:
-    void FreqOffsetEstimateSlot(double freq_offset_est);
     void CenterFreqChangedSlot(double freq_center);
 
 };
 
-#endif // OQPSKDEMODULATOR_H
+#endif // BURSTOQPSKDEMODULATOR_H

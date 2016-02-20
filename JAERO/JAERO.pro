@@ -50,7 +50,10 @@ SOURCES += main.cpp\
     downloadmanager.cpp \
     databasetext.cpp \
     oqpskdemodulator.cpp \
-    audiooqpskdemodulator.cpp
+    audiooqpskdemodulator.cpp \
+    ../kiss_fft130/kiss_fastfir.c \
+    burstoqpskdemodulator.cpp \
+    audioburstoqpskdemodulator.cpp
 
 HEADERS  += mainwindow.h \
     coarsefreqestimate.h \
@@ -82,7 +85,10 @@ HEADERS  += mainwindow.h \
     downloadmanager.h \
     databasetext.h \
     oqpskdemodulator.h \
-    audiooqpskdemodulator.h
+    audiooqpskdemodulator.h \
+    ../kiss_fft130/kiss_fastfir.h \
+    burstoqpskdemodulator.h \
+    audioburstoqpskdemodulator.h
 
 FORMS    += mainwindow.ui \
     gui_classes/settingsdialog.ui \
