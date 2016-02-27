@@ -39,8 +39,6 @@
 #include <QBuffer>
 #include <QIODevice>
 
-#include "varicodewrapper.h"
-
 class ConsoleDevice : public QIODevice
 {
     Q_OBJECT
@@ -86,7 +84,6 @@ public:
     void setLocalEchoEnabled(bool set);
 
     ConsoleDevice *consoledevice;
-    VariCodeWrapper *varicodeconsoledevice;
 public slots:
 
     void clear();

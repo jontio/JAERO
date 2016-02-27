@@ -6,10 +6,7 @@
 #include <QLabel>
 #include "audiooqpskdemodulator.h"
 #include "audiomskdemodulator.h"
-#include "audiomskmodulator.h"
 #include "audioburstoqpskdemodulator.h"
-#include "varicodepipedecoder.h"
-#include "varicodepipeencoder.h"
 #include "gui_classes/settingsdialog.h"
 #include "aerol.h"
 #include "gui_classes/planelog.h"
@@ -17,6 +14,8 @@
 #include <QSound>
 
 #include "databasetext.h"
+
+#include "arincparse.h"
 
 namespace Ui {
 class MainWindow;
@@ -38,7 +37,6 @@ private:
     QLabel *ebnolabel;
     QLabel *freqlabel;
     QUdpSocket *udpsocket;
-    VariCodePipeDecoder *varicodepipedecoder;
 
     //OQPSK add
     AudioOqpskDemodulator *audiooqpskdemodulator;
@@ -50,12 +48,11 @@ private:
     AudioBurstOqpskDemodulator::Settings audioburstoqpskdemodulatorsettings;
     //
 
-    AeroL *aerol;
+    //bottom textedit output
+    QUdpSocket *udpsocket_bottom_textedit;
+    //
 
-    //modulator
-    AudioMskModulator *audiomskmodulator;
-    AudioMskModulator::Settings audiomskmodulatorsettings;
-    VariCodePipeEncoder *varicodepipeencoder;
+    AeroL *aerol;
 
     SettingsDialog *settingsdialog;
 
@@ -73,6 +70,7 @@ private:
 
     void selectdemodulatorconnections(DemodType demodtype);
 
+    ArincParse arincparser;
 
     QSound *beep;
 protected:

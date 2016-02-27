@@ -56,12 +56,10 @@ MainWindow::MainWindow(QWidget *parent) :
     //plane logging window
     planelog = new PlaneLog;
 
-    //create the modulators, varicode encoder pipe, and serial ppt
-    varicodepipeencoder = new VariCodePipeEncoder(this);
-    audiomskmodulator = new AudioMskModulator(this);  
+    //create areo decoder
     aerol = new AeroL(this); //Create Aero L test sink
 
-    //create settings dialog. only some modulator settings are held atm.
+    //create settings dialog.
     settingsdialog = new SettingsDialog(this);
 
     //create the demodulator
@@ -73,9 +71,9 @@ MainWindow::MainWindow(QWidget *parent) :
     //create the burst oqpsk demodulator
     audioburstoqpskdemodulator = new AudioBurstOqpskDemodulator(this);
 
-    //create a udp socket and a varicode decoder pipe
+    //create udp sockets
     udpsocket = new QUdpSocket(this);
-    varicodepipedecoder = new VariCodePipeDecoder(this);
+    udpsocket_bottom_textedit = new QUdpSocket(this);
 
     //default sink is the aerol device
     audiomskdemodulator->ConnectSinkDevice(aerol);
@@ -151,49 +149,28 @@ MainWindow::MainWindow(QWidget *parent) :
     audioburstoqpskdemodulator->setSettings(audioburstoqpskdemodulatorsettings);
     if(typeofdemodtouse==BURSTOQPSK)audioburstoqpskdemodulator->start();
 
-//start modulator setup. the modulator is new and is and add on.
-
-    //connect the encoder to the text widget. the text encoder to the modulator gets done later
-    varicodepipeencoder->ConnectSourceDevice(ui->inputwidget->textinputdevice);
-
     //always connected
-    //connect(ui->actionTXRX,SIGNAL(triggered(bool)),ui->inputwidget,SLOT(reset()));//not needed
     connect(ui->actionClearTXWindow,SIGNAL(triggered(bool)),ui->inputwidget,SLOT(clear()));
 
-    //set modulator settings and connections
-
-    settingsdialog->populatesettings();
-
-
-    //set audio msk modulator settings
-    audiomskmodulatorsettings.freq_center=settingsdialog->audiomskmodulatorsettings.freq_center;//this is the only one that gets set
-    audiomskmodulatorsettings.secondsbeforereadysignalemited=settingsdialog->audiomskmodulatorsettings.secondsbeforereadysignalemited;//well there is two now
-    ui->inputwidget->textinputdevice->preamble1=settingsdialog->Preamble1;
-    ui->inputwidget->textinputdevice->preamble2=settingsdialog->Preamble2;
-    ui->inputwidget->textinputdevice->postamble=settingsdialog->Postamble;
-    ui->inputwidget->reset();
-    audiomskmodulator->setSettings(audiomskmodulatorsettings);
-
-    //connections for audio out
-    audiomskmodulator->ConnectSourceDevice(varicodepipeencoder);
-    connect(ui->actionTXRX,SIGNAL(triggered(bool)),audiomskmodulator,SLOT(startstop(bool)));
-    connect(ui->inputwidget->textinputdevice,SIGNAL(eof()),audiomskmodulator,SLOT(stopgraceful()));
-    connect(audiomskmodulator,SIGNAL(statechanged(bool)),ui->actionTXRX,SLOT(setChecked(bool)));
-    connect(audiomskmodulator,SIGNAL(statechanged(bool)),ui->inputwidget,SLOT(reset()));
-    connect(audiomskmodulator,SIGNAL(ReadyState(bool)),ui->inputwidget->textinputdevice,SLOT(SinkReadySlot(bool)));//connection to signal textinputdevice to go from preamble to normal operation
-
-
-//--end modulator setup
-
     //add todays date
-    //ui->inputwidget->appendHtml("<b>"+QDateTime::currentDateTime().toString("h:mmap ddd d-MMM-yyyy")+" JAERO started</b>");
-    //ui->inputwidget->appendPlainText("");
     ui->inputwidget->appendPlainText(QDateTime::currentDateTime().toString("h:mmap ddd d-MMM-yyyy")+" JAERO started\n");
     QTimer::singleShot(100,ui->inputwidget,SLOT(scrolltoend()));
 
-    ui->actionTXRX->setVisible(false);//there is a hidden audio modulator
+    ui->actionTXRX->setVisible(false);//there is a hidden audio modulator icon.
 
+    //set pop and accept settings
+    settingsdialog->populatesettings();
     acceptsettings();
+
+    /*QString teststr="F58ADL0040/AKLCDYA.ADS.N705DN07EEE19454DAC7D010D21D0DEEEC44556208024029F0588C71D7884D000E13B90F00000F12C1A280001029305F1019F4";
+    // //teststr="F61AQF0027#M1B/B6 AKLCDYA.ADS.VH-OEI14DC715BE394C80ED02D1D0DDBBBBBEEEEC80E8258D82D843333080E800F85";
+    teststr="A92AXA42FD#M1B/B6 OAKODYA.ADS..N42FD0724FE94A9BECAFC4DF01F0D24FA4CAAAACAFC802D238E3CE38E4AFC800E24B0F540040F25899FC004101420DEB82858";
+    teststr="F21AUA082/FUKJJYA.ADS.N772UA070DD5F32FBD894736B79D1602BC7B5928E04EA01600C97B8938806560171165E328E289C408AA0D0EEF9B2D8D897302AD11C88B282289C4000E7B50F780000F79F9A30000BB12";
+    //teststr="F42AUA0828/FUKJJYA.ADS.N772UA07150C231FE549470E3D1D1600DF765128E01B401601F479E128E055C01603557D7128E0B5801601DF042928E0E6C0160073043908F8F2E01600B47DC8CC69078017188A7B1E12C57D48AB0D1556AB1E84094700DA160C0B1C7A8947000E76";//5";
+    if(arincparser.parseDownlinkmessage(teststr))
+    {
+       qDebug()<<arincparser.arincmessage.info.toLatin1().data();
+    }*/
 
 }
 
@@ -414,7 +391,7 @@ void MainWindow::AboutSlot()
 {
     QMessageBox::about(this,"JAERO",""
                                      "<H1>An Aero demodulator and decoder</H1>"
-                                     "<H3>v1.0.4</H3>"
+                                     "<H3>v1.0.4.1</H3>"
                                      "<p>This is a program to demodulate and decode Aero signals. These signals contain SatCom ACARS (<em>Satelitle Comunication Aircraft Communications Addressing and Reporting System</em>) messages as used by planes beyond VHF ACARS range. This protocol is used by Inmarsat's \"Classic Aero\" system and can be received using low or medium gain L band or high gain C band antennas.</p>"
                                      "<p>For more information about this application see <a href=\"http://jontio.zapto.org/hda1/jaero.html\">http://jontio.zapto.org/hda1/jaero.html</a>.</p>"
                                      "<p>Jonti 2016</p>" );
@@ -514,11 +491,6 @@ void MainWindow::on_comboBoxbps_currentIndexChanged(const QString &arg)
         audiomskdemodulator->start();
     }
 
-    //audio modulator setting
-    audiomskmodulatorsettings.fb=audiomskdemodulatorsettings.fb;
-    audiomskmodulatorsettings.Fs=audiomskdemodulatorsettings.Fs;
-    audiomskmodulator->setSettings(audiomskmodulatorsettings);
-
 
 }
 
@@ -591,6 +563,7 @@ void MainWindow::on_actionConnectToUDPPort_toggled(bool arg1)
     audioburstoqpskdemodulator->DisconnectSinkDevice();
     aerol->DisconnectSinkDevice();
     udpsocket->close();
+    udpsocket_bottom_textedit->close();
     if(arg1)
     {
         ui->actionRawOutput->setEnabled(true);
@@ -638,16 +611,7 @@ void MainWindow::on_action_Settings_triggered()
 void MainWindow::acceptsettings()
 {
 
-    audiomskmodulator->stop();
-
     ui->statusBar->clearMessage();
-    ui->inputwidget->textinputdevice->preamble1=settingsdialog->Preamble1;
-    ui->inputwidget->textinputdevice->preamble2=settingsdialog->Preamble2;
-    ui->inputwidget->textinputdevice->postamble=settingsdialog->Postamble;
-
-    audiomskmodulatorsettings.freq_center=settingsdialog->audiomskmodulatorsettings.freq_center;//this is the only one that gets set
-    audiomskmodulatorsettings.secondsbeforereadysignalemited=settingsdialog->audiomskmodulatorsettings.secondsbeforereadysignalemited;//well there is two now
-    audiomskmodulator->setSettings(audiomskmodulatorsettings);
 
     aerol->setDoNotDisplaySUs(settingsdialog->donotdisplaysus);
     aerol->setDataBaseDir(settingsdialog->planesfolder);
@@ -721,6 +685,11 @@ void MainWindow::acceptsettings()
 
     planelog->planesfolder=settingsdialog->planesfolder;
     planelog->planelookup=settingsdialog->planelookup;
+    udpsocket_bottom_textedit->close();
+    if(settingsdialog->udp_for_decoded_messages_enabled)
+    {
+        udpsocket_bottom_textedit->connectToHost(settingsdialog->udp_for_decoded_messages_address, settingsdialog->udp_for_decoded_messages_port);
+    }
 
 
 }
@@ -839,7 +808,7 @@ void MainWindow::ACARSslot(ACARSItem &acarsitem)
         QString message=acarsitem.message;
         message.replace('\r','\n');
         message.replace("\n\n","\n");
-        if(message.right(1)=="\n")message.remove(acarsitem.message.size()-1,1);
+        if(message.right(1)=="\n")message.chop(1);//.remove(acarsitem.message.size()-1,1);
         if(message.left(1)=="\n")message.remove(0,1);
         message.replace("\n","\n\t");
 
@@ -861,15 +830,32 @@ void MainWindow::ACARSslot(ACARSItem &acarsitem)
             humantext+=" "+acarsitem.dblookupresult[3]+" "+acarsitem.dblookupresult[4];
         }
 
-        if(!acarsitem.message.isEmpty())humantext+="\n\n\t"+message+"\n";
-        //humantext+="\n";
-
-        if(acarsitem.moretocome)humantext+=" ...more to come...\n";
-
-
+        if(!acarsitem.message.isEmpty())
+        {
+            if(acarsitem.downlink&&arincparser.parseDownlinkmessage(message))//if we are on a downlink then process downlink message
+            {
+                if(!arincparser.downlinkheader.flightid.isEmpty())humantext+=" Flight "+arincparser.downlinkheader.flightid;
+                if(arincparser.arincmessage.info.size()>2)
+                {
+                    arincparser.arincmessage.info.replace("\n","\n\t");
+                    humantext+="\n\n\t"+message+"\n\n\t"+arincparser.arincmessage.info;
+                }
+                 else humantext+="\n\n\t"+message+"\n";
+            }
+             else humantext+="\n\n\t"+message+"\n";
+        }
 
         if((!settingsdialog->dropnontextmsgs)||(!acarsitem.message.isEmpty()&&(!acarsitem.nonacars)))
         {
+            if((settingsdialog->udp_for_decoded_messages_enabled))
+            {
+                if((!udpsocket_bottom_textedit->isOpen())||(!udpsocket_bottom_textedit->isWritable()))
+                {
+                    udpsocket_bottom_textedit->close();
+                    udpsocket_bottom_textedit->connectToHost(settingsdialog->udp_for_decoded_messages_address, settingsdialog->udp_for_decoded_messages_port);
+                }
+                if((udpsocket_bottom_textedit->isOpen())&&(udpsocket_bottom_textedit->isWritable()))udpsocket_bottom_textedit->write((humantext+"\n").toLatin1().data());
+            }
             ui->inputwidget->appendPlainText(humantext);
             log(humantext);
         }

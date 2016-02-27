@@ -95,7 +95,7 @@ struct ISUItem {
     uchar REFNO;
     uchar NOOCTLESTINLASTSSU;
     QByteArray userdata;
-    int count;    
+    int count;
     void clear()
     {
         AESID=0;
@@ -136,6 +136,7 @@ public:
     QStringList dblookupresult;
     bool nonacars;
 
+    bool downlink;
     bool valid;
     bool hastext;
     bool moretocome;
@@ -153,6 +154,7 @@ public:
         PLANEREG.clear();
         LABEL.clear();
         message.clear();
+        downlink=false;
     }
     explicit ACARSItem(){clear();}
 };
@@ -211,6 +213,7 @@ class ParserISU : public QObject
 public:
     explicit ParserISU(QObject *parent = 0);
     bool parse(ISUItem &isuitem);
+    bool downlink;
 signals:
     void ACARSsignal(ACARSItem &acarsitem);
     void Errorsignal(QString &error);
@@ -301,6 +304,35 @@ public:
                 crc_bit = crc & 1;//bit of crc we are working on. 15=poly order-1
                 crc >>= 1;//shift to next crc bit (have to do this here before Gate A does its thing)
                 if(crc_bit ^ message_bit)crc = crc ^ 0x8408;//(0x8408 is reversed 0x1021)add to the crc the poly mod2 if crc_bit + block_bit = 1 mod2 (0x1021 is the ploy with the first bit missing so this means x^16+x^12+x^5+1)
+
+            }
+        }
+        return ~crc;
+    }
+    quint16 calcusingbytesotherendines(char *bytes,int numberofbytes)
+    {
+        quint16 crc = 0xFFFF;
+        int crc_bit;
+        int message_bit;
+        int message_byte;
+        for(int i=0; i<numberofbytes; i++)//we are finished when all bits of the message are looked at
+        {
+            message_byte=bytes[i];
+            for(int k=0;k<8;k++)
+            {
+
+                message_bit=(message_byte>>7)&1;
+                message_byte<<=1;
+                crc_bit = (crc >> 15) & 1;//bit of crc we are working on. 15=poly order-1
+                crc <<= 1;//shift to next crc bit (have to do this here before Gate A does its thing)
+                if(crc_bit ^ message_bit)crc = crc ^ 0x1021;//add to the crc the poly mod2 if crc_bit + block_bit = 1 mod2 (0x1021 is the ploy with the first bit missing so this means x^16+x^12+x^5+1)
+
+                //differnt endiness
+                //message_bit=message_byte&1;
+                //message_byte>>=1;
+                //crc_bit = crc & 1;//bit of crc we are working on. 15=poly order-1
+                //crc >>= 1;//shift to next crc bit (have to do this here before Gate A does its thing)
+                //if(crc_bit ^ message_bit)crc = crc ^ 0x8408;//(0x8408 is reversed 0x1021)add to the crc the poly mod2 if crc_bit + block_bit = 1 mod2 (0x1021 is the ploy with the first bit missing so this means x^16+x^12+x^5+1)
 
             }
         }

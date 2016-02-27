@@ -47,10 +47,6 @@ Console::Console(QWidget *parent)
     , localEchoEnabled(false)
 {
 
-    //give console ability to understand varicode
-    varicodeconsoledevice = new VariCodeWrapper(this);
-    connect(varicodeconsoledevice,SIGNAL(DecodedBytes(QByteArray)),this,SLOT(putPlainData(QByteArray)));
-
     //or act as a console device
     consoledevice = new ConsoleDevice(this);
     connect(consoledevice,SIGNAL(PlainData(QByteArray)),this,SLOT(putPlainData(QByteArray)));

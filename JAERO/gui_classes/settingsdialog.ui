@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>452</width>
-    <height>650</height>
+    <height>672</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -58,7 +58,7 @@
          <x>10</x>
          <y>90</y>
          <width>401</width>
-         <height>101</height>
+         <height>131</height>
         </rect>
        </property>
        <property name="title">
@@ -152,12 +152,38 @@
          <string>Beep on multi line text message</string>
         </property>
        </widget>
+       <widget class="QCheckBox" name="checkOutputDecodedMessageToUDPPort">
+        <property name="geometry">
+         <rect>
+          <x>20</x>
+          <y>100</y>
+          <width>131</width>
+          <height>19</height>
+         </rect>
+        </property>
+        <property name="text">
+         <string>Output to UDP</string>
+        </property>
+       </widget>
+       <widget class="QLineEdit" name="lineEditudpoutputdecodedmessagesaddress">
+        <property name="geometry">
+         <rect>
+          <x>160</x>
+          <y>99</y>
+          <width>231</width>
+          <height>21</height>
+         </rect>
+        </property>
+        <property name="text">
+         <string>localhost:18765</string>
+        </property>
+       </widget>
       </widget>
       <widget class="QGroupBox" name="groupBox_5">
        <property name="geometry">
         <rect>
          <x>10</x>
-         <y>440</y>
+         <y>470</y>
          <width>401</width>
          <height>111</height>
         </rect>
@@ -193,7 +219,7 @@
        <property name="geometry">
         <rect>
          <x>10</x>
-         <y>200</y>
+         <y>230</y>
          <width>401</width>
          <height>71</height>
         </rect>
@@ -257,7 +283,7 @@
        <property name="geometry">
         <rect>
          <x>10</x>
-         <y>280</y>
+         <y>310</y>
          <width>401</width>
          <height>151</height>
         </rect>
@@ -399,145 +425,6 @@
         <string>Plane lookup</string>
        </property>
       </widget>
-     </widget>
-     <widget class="QWidget" name="Transmission">
-      <attribute name="title">
-       <string>Transmission</string>
-      </attribute>
-      <layout class="QVBoxLayout" name="verticalLayout_6">
-       <item>
-        <layout class="QHBoxLayout" name="horizontalLayout_2" stretch="7">
-         <item>
-          <widget class="QGroupBox" name="groupBox_3">
-           <property name="title">
-            <string>RF</string>
-           </property>
-           <layout class="QVBoxLayout" name="verticalLayout_3">
-            <item>
-             <layout class="QFormLayout" name="formLayout">
-              <item row="0" column="0">
-               <widget class="QLabel" name="label_3">
-                <property name="text">
-                 <string>Freq</string>
-                </property>
-               </widget>
-              </item>
-              <item row="0" column="1">
-               <widget class="QSpinBox" name="spinBoxTXFreq">
-                <property name="buttonSymbols">
-                 <enum>QAbstractSpinBox::NoButtons</enum>
-                </property>
-                <property name="showGroupSeparator" stdset="0">
-                 <bool>true</bool>
-                </property>
-                <property name="suffix">
-                 <string>Hz</string>
-                </property>
-                <property name="minimum">
-                 <number>100</number>
-                </property>
-                <property name="maximum">
-                 <number>100000000</number>
-                </property>
-                <property name="value">
-                 <number>1000</number>
-                </property>
-               </widget>
-              </item>
-             </layout>
-            </item>
-           </layout>
-          </widget>
-         </item>
-        </layout>
-       </item>
-       <item>
-        <widget class="QGroupBox" name="groupBox_2">
-         <property name="title">
-          <string>Ambles</string>
-         </property>
-         <layout class="QVBoxLayout" name="verticalLayout_4">
-          <item>
-           <layout class="QFormLayout" name="formLayout_2">
-            <item row="0" column="0">
-             <widget class="QLabel" name="label">
-              <property name="text">
-               <string>Pre</string>
-              </property>
-             </widget>
-            </item>
-            <item row="1" column="0">
-             <widget class="QLabel" name="label_2">
-              <property name="text">
-               <string>Post</string>
-              </property>
-             </widget>
-            </item>
-            <item row="2" column="0" colspan="2">
-             <layout class="QHBoxLayout" name="horizontalLayout">
-              <item>
-               <widget class="QLabel" name="label_4">
-                <property name="text">
-                 <string>Minimum preamble</string>
-                </property>
-               </widget>
-              </item>
-              <item>
-               <widget class="QDoubleSpinBox" name="doubleSpinboxminpreamble">
-                <property name="buttonSymbols">
-                 <enum>QAbstractSpinBox::NoButtons</enum>
-                </property>
-                <property name="suffix">
-                 <string>s</string>
-                </property>
-                <property name="maximum">
-                 <double>10.000000000000000</double>
-                </property>
-                <property name="value">
-                 <double>1.500000000000000</double>
-                </property>
-               </widget>
-              </item>
-              <item>
-               <spacer name="horizontalSpacer">
-                <property name="orientation">
-                 <enum>Qt::Horizontal</enum>
-                </property>
-                <property name="sizeHint" stdset="0">
-                 <size>
-                  <width>88</width>
-                  <height>20</height>
-                 </size>
-                </property>
-               </spacer>
-              </item>
-             </layout>
-            </item>
-            <item row="1" column="1">
-             <widget class="QLineEdit" name="linePostamble"/>
-            </item>
-            <item row="0" column="1">
-             <widget class="QLineEdit" name="linePreamble"/>
-            </item>
-           </layout>
-          </item>
-         </layout>
-        </widget>
-       </item>
-       <item>
-        <spacer name="verticalSpacer">
-         <property name="orientation">
-          <enum>Qt::Vertical</enum>
-         </property>
-         <property name="sizeHint" stdset="0">
-          <size>
-           <width>20</width>
-           <height>9</height>
-          </size>
-         </property>
-        </spacer>
-       </item>
-      </layout>
      </widget>
     </widget>
    </item>

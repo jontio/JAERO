@@ -327,6 +327,18 @@ void PlaneLog::ACARSslot(ACARSItem &acarsitem)
         tmp=tmp.right(tmp.size()-idx-1);
     }
 
+   /* if(acarsitem.downlink&&arincparser.parseDownlinkmessage(message))//if we are on a downlink then process downlink message
+    {
+        if(!arincparser.flightid.isEmpty())humantext+=" Flight "+arincparser.flightid;
+        if(arincparser.info.size()>2)
+        {
+            arincparser.info.replace("\n","\n\t");
+            humantext+="\n\n\t"+message+"\n\n\t"+arincparser.info;
+        }
+         else humantext+="\n\n\t"+message+"\n";
+    }
+     else humantext+="\n\n\t"+message+"\n";
+*/
     if(!acarsitem.message.isEmpty())
     {
 
@@ -336,21 +348,31 @@ void PlaneLog::ACARSslot(ACARSItem &acarsitem)
         message.replace("\n\n","\n");
         if(message.right(1)=="\n")message.chop(1);
         if(message.left(1)=="\n")message.remove(0,1);
-        message.replace('\n',"●");
+        if((!acarsitem.nonacars)&&(acarsitem.downlink))arincparser.parseDownlinkmessage(message);//if we are on a downlink then process downlink message
+        message.replace('\n',"●");//● instead of \n\t
 
         QByteArray TAKstr;
         TAKstr+=acarsitem.TAK;
         if(acarsitem.TAK==0x15)TAKstr[0]='!';
         uchar label1=acarsitem.LABEL[1];
-        if((uchar)acarsitem.LABEL[1]==127)label1='d';
+        if((uchar)acarsitem.LABEL[1]==127)label1='d';        
 
         if(acarsitem.nonacars)tmp+="✈: "+QDateTime::currentDateTime().toString("hh:mm:ss dd-MM-yy ")+(((QString)"").sprintf("AES:%06X GES:%02X   %s       ●●",acarsitem.isuitem.AESID,acarsitem.isuitem.GESID,acarsitem.PLANEREG.data()));
-         else tmp+="✈: "+QDateTime::currentDateTime().toString("hh:mm:ss dd-MM-yy ")+(((QString)"").sprintf("AES:%06X GES:%02X %c %s %s %c%c %c●●",acarsitem.isuitem.AESID,acarsitem.isuitem.GESID,acarsitem.MODE,acarsitem.PLANEREG.data(),TAKstr.data(),(uchar)acarsitem.LABEL[0],label1,acarsitem.BI));
+         else
+         {
+            if((acarsitem.downlink)&&!arincparser.downlinkheader.flightid.isEmpty())
+            {
+                tmp+="✈: "+QDateTime::currentDateTime().toString("hh:mm:ss dd-MM-yy ")+(((QString)"").sprintf("AES:%06X GES:%02X %c %s %s %c%c %c Flight %s●●",acarsitem.isuitem.AESID,acarsitem.isuitem.GESID,acarsitem.MODE,acarsitem.PLANEREG.data(),TAKstr.data(),(uchar)acarsitem.LABEL[0],label1,acarsitem.BI,arincparser.downlinkheader.flightid.toLatin1().data()));
+            }
+             else tmp+="✈: "+QDateTime::currentDateTime().toString("hh:mm:ss dd-MM-yy ")+(((QString)"").sprintf("AES:%06X GES:%02X %c %s %s %c%c %c●●",acarsitem.isuitem.AESID,acarsitem.isuitem.GESID,acarsitem.MODE,acarsitem.PLANEREG.data(),TAKstr.data(),(uchar)acarsitem.LABEL[0],label1,acarsitem.BI));
+         }
 
-//        tmp+="✈: "+QDateTime::currentDateTime().toString("hh:mm:ss dd-MM-yy ")+(((QString)"").sprintf("AES:%06X GES:%02X %c %s %s %c%c %c●●",acarsitem.isuitem.AESID,acarsitem.isuitem.GESID,acarsitem.MODE,acarsitem.PLANEREG.data(),TAKstr.data(),(uchar)acarsitem.LABEL[0],label1,acarsitem.BI));
-
-        if(acarsitem.moretocome)LastMessageitem->setText(tmp+message+" ...more to come... ●");//\n");
-         else LastMessageitem->setText(tmp+message+"●");//\n");
+        if((!acarsitem.nonacars)&&(acarsitem.downlink)&&arincparser.arincmessage.info.size()>2)
+        {
+            arincparser.arincmessage.info.replace("\n","●");
+            LastMessageitem->setText(tmp+message+"●●"+arincparser.arincmessage.info);
+        }
+         else LastMessageitem->setText(tmp+message+"●");
 
         if(selectedAESitem&&(idx==selectedAESitem->row()))updateinfopain();
 

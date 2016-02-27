@@ -11,6 +11,7 @@
 #include <stdio.h>
 #include "../databasetext.h"
 #include <QTableWidgetItem>
+#include "arincparse.h"
 
 namespace Ui {
 class PlaneLog;
@@ -153,6 +154,8 @@ private:
     double wantedscrollprop;
 
     QTableWidgetItem *selectedAESitem;
+
+    ArincParse arincparser;
 };
 
 #endif // PLANELOG_H

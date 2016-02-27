@@ -27,21 +27,15 @@ SOURCES += main.cpp\
     DSP.cpp \
     mskdemodulator.cpp \
     ../qcustomplot/qcustomplot.cpp \
-    ../varicode/varicode.c \
     audiomskdemodulator.cpp \
     gui_classes/console.cpp \
     gui_classes/qscatterplot.cpp \
     gui_classes/qspectrumdisplay.cpp \
     gui_classes/qled.cpp \
-    varicodepipedecoder.cpp \
-    varicodewrapper.cpp \
     ../kiss_fft130/kiss_fft.c \
     fftwrapper.cpp \
     fftrwrapper.cpp \
     ../kiss_fft130/kiss_fftr.c \
-    mskmodulator.cpp \
-    audiomskmodulator.cpp \
-    varicodepipeencoder.cpp \
     gui_classes/textinputwidget.cpp \
     gui_classes/settingsdialog.cpp \
     aerol.cpp \
@@ -53,30 +47,24 @@ SOURCES += main.cpp\
     audiooqpskdemodulator.cpp \
     ../kiss_fft130/kiss_fastfir.c \
     burstoqpskdemodulator.cpp \
-    audioburstoqpskdemodulator.cpp
+    audioburstoqpskdemodulator.cpp \
+    arincparse.cpp
 
 HEADERS  += mainwindow.h \
     coarsefreqestimate.h \
     DSP.h \
     mskdemodulator.h \
     ../qcustomplot/qcustomplot.h \
-    ../varicode/varicode.h \
-    ../varicode/varicode_table.h \
     audiomskdemodulator.h \
     gui_classes/console.h \
     gui_classes/qscatterplot.h \
     gui_classes/qspectrumdisplay.h \
     gui_classes/qled.h \
-    varicodepipedecoder.h \
-    varicodewrapper.h \
     ../kiss_fft130/_kiss_fft_guts.h \
     ../kiss_fft130/kiss_fft.h \
     fftwrapper.h \
     fftrwrapper.h \
     ../kiss_fft130/kiss_fftr.h \
-    mskmodulator.h \
-    audiomskmodulator.h \
-    varicodepipeencoder.h \
     gui_classes/textinputwidget.h \
     gui_classes/settingsdialog.h \
     aerol.h \
@@ -88,7 +76,8 @@ HEADERS  += mainwindow.h \
     audiooqpskdemodulator.h \
     ../kiss_fft130/kiss_fastfir.h \
     burstoqpskdemodulator.h \
-    audioburstoqpskdemodulator.h
+    audioburstoqpskdemodulator.h \
+    arincparse.h
 
 FORMS    += mainwindow.ui \
     gui_classes/settingsdialog.ui \

@@ -279,7 +279,7 @@ bool ACARSDefragmenter::defragment(ACARSItem &acarsitem)
     for(int i=0;i<acarsitemexts.size();i++)
     {
         acarsitemexts[i].count++;
-        if(acarsitemexts[i].count>20)
+        if(acarsitemexts[i].count>30)
         {
             acarsitemexts.removeAt(i);
             i--;
@@ -294,11 +294,11 @@ bool ACARSDefragmenter::defragment(ACARSItem &acarsitem)
         anacarsitemext.anacarsitem=acarsitem;
         anacarsitemext.count=0;
         acarsitemexts.push_back(anacarsitemext);
-//        qDebug()<<"pushed first acars fragment"<<anacarsitemext.anacarsitem.isuitem.AESID;
+        //qDebug()<<"pushed first acars fragment"<<anacarsitemext.anacarsitem.isuitem.AESID;
         return false;
     }
 
-//    qDebug()<<"adding acars fragment"<<idx;
+    //qDebug()<<"adding acars fragment"<<idx;
 
     //update frag
     ACARSItemext *polditem=&acarsitemexts[idx];
@@ -310,7 +310,7 @@ bool ACARSDefragmenter::defragment(ACARSItem &acarsitem)
     //more to come then do nothing
     if(acarsitem.moretocome)return false;
 
-//    qDebug()<<"last acars fragment"<<idx;
+    //qDebug()<<"last acars fragment"<<idx;
 
     //else return defragmented item with BI equal to last acars message
     acarsitem=polditem->anacarsitem;
@@ -323,6 +323,7 @@ bool ACARSDefragmenter::defragment(ACARSItem &acarsitem)
 ParserISU::ParserISU(QObject *parent):
     QObject(parent)
 {
+    downlink=false;
     //dblookup
     dbtu = new DataBaseTextUser(this);
     connect(dbtu,SIGNAL(result(bool,int,QStringList)),this,SLOT(acarslookupresult(bool,int,QStringList)));
@@ -377,6 +378,7 @@ bool ParserISU::parse(ISUItem &isuitem)
 
         //fill in header info
         anacarsitem.clear();
+        anacarsitem.downlink=downlink;
         anacarsitem.isuitem=isuitem;
         uchar byte=((uchar)isuitem.userdata[3]);
         anacarsitem.MODE=byte&0x7F;
@@ -412,16 +414,10 @@ bool ParserISU::parse(ISUItem &isuitem)
                     emit Errorsignal(anerror);
                     return false;
                 }
-                /*if(byte==10||byte==13)//replace CR and LF with a circle
-                {
-                    if(anacarsitem.message.right(1)=="●")continue;
-                    anacarsitem.message+="●";
-                }
-                 else anacarsitem.message+=(char)byte;*/
 
                 if((byte<0x20)&&(!(byte==10||byte==13)))
                 {
-                    qDebug()<<"This is strange. byte<0x20 byte="<<byte;
+//                    qDebug()<<"This is strange. byte<0x20 byte="<<byte;
                 }
                 if(byte==0x7F)anacarsitem.message+="<DEL>";
                  else anacarsitem.message+=(char)byte;
@@ -432,12 +428,6 @@ bool ParserISU::parse(ISUItem &isuitem)
         //mark as valid
         anacarsitem.valid=true;
 
-
-//anacarsitem.MODE=4+'0';
-//emit ACARSsignal(anacarsitem);
-//anacarsitem.MODE=2+'0';
-
-
         //send acars message to lookup if fully defraged
         if(acarsdefragmenter.defragment(anacarsitem))
         {
@@ -445,17 +435,15 @@ bool ParserISU::parse(ISUItem &isuitem)
             *pai=anacarsitem;
             QString AESIDstr=((QString)"").sprintf("%06X",anacarsitem.isuitem.AESID);
             dbtu->request(databasedir,AESIDstr,pai);
-            //emit ACARSsignal(anacarsitem);
         }
 
-        //send acars message
-        //emit ACARSsignal(anacarsitem);
 
         return true;
     }
 
     //not acars message so say so and return the plain hex data as the message
     anacarsitem.clear();
+    anacarsitem.downlink=downlink;
     anacarsitem.isuitem=isuitem;
     anacarsitem.message.clear();
     anacarsitem.nonacars=true;
@@ -913,7 +901,7 @@ QByteArray &AeroL::Decode(QVector<short> &bits)//0 bit --> oldest bit
             {
                 frameinfo=bits[i];
                 infofield.clear();
-                if(burstmode)//channeltype==RChannel)//for R channel there is no header just fill in a dummy one
+                if(burstmode)//for R and T channels there are no headers so just fill in a dummy one
                 {
                     formatid=1;
                     supfrmaker=0;
@@ -1013,6 +1001,7 @@ QByteArray &AeroL::Decode(QVector<short> &bits)//0 bit --> oldest bit
 
                         if(risudata.update(rtchanneldeleavefecscram.infofield.left(17)))
                         {
+                            parserisu->downlink=burstmode;
                             parserisu->parse(risudata.lastvalidisuitem);//emits signals if it find valid acars data or errors
                         }
 
@@ -1088,11 +1077,7 @@ QByteArray &AeroL::Decode(QVector<short> &bits)//0 bit --> oldest bit
                     if((message==User_data_ISU_SSU_R_channel)&&(donotdisplaysus.contains(0xC0)))decline.clear();
                     else if(donotdisplaysus.contains(message))decline.clear();//do not display these SUs as given to us by user
 
-
-
                     decodedbytes+=decline;
-
-
 
                 }
                     break;
@@ -1109,6 +1094,7 @@ QByteArray &AeroL::Decode(QVector<short> &bits)//0 bit --> oldest bit
                     quint32 AESID=byte1<<8*2|byte2<<8*1|byte3<<8*0;
                     int GES=byte4;
                     decline+=((QString)" T Packet from AES: %3 to GES: %4 with %5 SUs\n").arg((((QString)"%1").arg(AESID,6, 16, QChar('0'))).toUpper()).arg((((QString)"%1").arg(GES,2, 16, QChar('0'))).toUpper()).arg(rtchanneldeleavefecscram.numberofsus);
+                    decodedbytes+=decline;decline.clear();
 
                     for(int k=0;k<(rtchanneldeleavefecscram.infofield.size()-6)/12;k++)
                     {
@@ -1132,6 +1118,7 @@ QByteArray &AeroL::Decode(QVector<short> &bits)//0 bit --> oldest bit
                             decline+=" User_data_ISU_SSU_T_channel";
                             if(isudata.update(rtchanneldeleavefecscram.infofield.mid(6+k*12,10)))
                             {
+                                parserisu->downlink=burstmode;
                                 parserisu->parse(isudata.lastvalidisuitem);//emits signals if it find valid acars data or errors
                             }
                             else if(isudata.missingssu)decline+=" missing (or if unimplimented then TODO in C++)";
@@ -1140,12 +1127,13 @@ QByteArray &AeroL::Decode(QVector<short> &bits)//0 bit --> oldest bit
                         }
 
                         decline+="\n";
+
+                        if((message==User_data_ISU_SSU_T_channel)&&(donotdisplaysus.contains(0xC0)))decline.clear();
+                         else if(donotdisplaysus.contains(message))decline.clear();//do not display these SUs as given to us by user
+
+                        decodedbytes+=decline;decline.clear();
+
                     }
-
-
-
-
-                    decodedbytes+=decline;
 
                 }
                     break;
@@ -1469,6 +1457,7 @@ QByteArray &AeroL::Decode(QVector<short> &bits)//0 bit --> oldest bit
 
                                         if(isudata.update(infofield.mid(k*12,10)))
                                         {
+                                            parserisu->downlink=burstmode;
                                             parserisu->parse(isudata.lastvalidisuitem);//emits signals if it find valid acars data or errors
                                         }
                                         else if(isudata.missingssu)decline+=" missing (or if unimplimented then TODO in C++)";

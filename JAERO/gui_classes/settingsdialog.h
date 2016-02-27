@@ -2,6 +2,7 @@
 #define SETTINGSDIALOG_H
 
 #include <QtGlobal>
+#include <QHostAddress>
 
 #if defined(Q_OS_UNIX) || defined(Q_OS_LUNX)
 #define APPDATALOCATIONS QStandardPaths::AppDataLocation
@@ -11,7 +12,7 @@
 
 #include <QDialog>
 #include <QVector>
-#include "../audiomskmodulator.h"
+#include <QAudioDeviceInfo>
 #include "../downloadmanager.h"
 
 namespace Ui {
@@ -27,12 +28,6 @@ public:
     ~SettingsDialog();
     void populatesettings();
 
-    QString Preamble;
-    QString Preamble1;
-    QString Preamble2;
-    QString Postamble;
-    AudioMskModulator::Settings audiomskmodulatorsettings;
-
     QAudioDeviceInfo audioinputdevice;
     QVector<int> donotdisplaysus;
     bool dropnontextmsgs;
@@ -45,6 +40,10 @@ public:
     QString planelookup;
     bool beepontextmessage;
     void DataBaseUpdateSugestion();
+
+    QHostAddress udp_for_decoded_messages_address;
+    quint16 udp_for_decoded_messages_port;
+    bool udp_for_decoded_messages_enabled;
 
 private:
     Ui::SettingsDialog *ui;    
