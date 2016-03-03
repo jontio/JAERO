@@ -348,7 +348,7 @@ void PlaneLog::ACARSslot(ACARSItem &acarsitem)
         message.replace("\n\n","\n");
         if(message.right(1)=="\n")message.chop(1);
         if(message.left(1)=="\n")message.remove(0,1);
-        if((!acarsitem.nonacars)&&(acarsitem.downlink))arincparser.parseDownlinkmessage(message);//if we are on a downlink then process downlink message
+        arincparser.parseDownlinkmessage(acarsitem);
         message.replace('\n',"●");//● instead of \n\t
 
         QByteArray TAKstr;

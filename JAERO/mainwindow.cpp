@@ -75,6 +75,11 @@ MainWindow::MainWindow(QWidget *parent) :
     udpsocket = new QUdpSocket(this);
     udpsocket_bottom_textedit = new QUdpSocket(this);
 
+    //create sbs server and connect the ADS parser to it
+    sbs1 = new SBS1(this);
+    connect(&arincparser,SIGNAL(DownlinkBasicReportGroupSignal(DownlinkBasicReportGroup&)),sbs1,SLOT(DownlinkBasicReportGroupSlot(DownlinkBasicReportGroup&)));
+    connect(&arincparser,SIGNAL(DownlinkEarthReferenceGroupSignal(DownlinkEarthReferenceGroup&)),sbs1,SLOT(DownlinkEarthReferenceGroupSlot(DownlinkEarthReferenceGroup&)));
+
     //default sink is the aerol device
     audiomskdemodulator->ConnectSinkDevice(aerol);
     audiooqpskdemodulator->ConnectSinkDevice(aerol);
@@ -391,7 +396,7 @@ void MainWindow::AboutSlot()
 {
     QMessageBox::about(this,"JAERO",""
                                      "<H1>An Aero demodulator and decoder</H1>"
-                                     "<H3>v1.0.4.1</H3>"
+                                     "<H3>v1.0.4.2</H3>"
                                      "<p>This is a program to demodulate and decode Aero signals. These signals contain SatCom ACARS (<em>Satelitle Comunication Aircraft Communications Addressing and Reporting System</em>) messages as used by planes beyond VHF ACARS range. This protocol is used by Inmarsat's \"Classic Aero\" system and can be received using low or medium gain L band or high gain C band antennas.</p>"
                                      "<p>For more information about this application see <a href=\"http://jontio.zapto.org/hda1/jaero.html\">http://jontio.zapto.org/hda1/jaero.html</a>.</p>"
                                      "<p>Jonti 2016</p>" );
@@ -616,6 +621,10 @@ void MainWindow::acceptsettings()
     aerol->setDoNotDisplaySUs(settingsdialog->donotdisplaysus);
     aerol->setDataBaseDir(settingsdialog->planesfolder);
 
+    //start or stop tcp server
+    if(settingsdialog->tcp_for_ads_messages_enabled)sbs1->startserver(settingsdialog->tcp_for_ads_messages_address,settingsdialog->tcp_for_ads_messages_port);
+     else sbs1->stopserver();
+
     //if soundcard rate changed
     if(typeofdemodtouse==MSK)
     {
@@ -707,6 +716,8 @@ void MainWindow::ACARSslot(ACARSItem &acarsitem)
     QString humantext;
     QByteArray TAKstr;
     TAKstr+=acarsitem.TAK;
+
+    arincparser.parseDownlinkmessage(acarsitem);//parse ARINC 745-2 and header
 
     if(acarsitem.hastext&&settingsdialog->beepontextmessage)
     {
@@ -832,17 +843,13 @@ void MainWindow::ACARSslot(ACARSItem &acarsitem)
 
         if(!acarsitem.message.isEmpty())
         {
-            if(acarsitem.downlink&&arincparser.parseDownlinkmessage(message))//if we are on a downlink then process downlink message
+            if(!arincparser.downlinkheader.flightid.isEmpty())humantext+=" Flight "+arincparser.downlinkheader.flightid;
+            if(arincparser.arincmessage.info.size()>2)
             {
-                if(!arincparser.downlinkheader.flightid.isEmpty())humantext+=" Flight "+arincparser.downlinkheader.flightid;
-                if(arincparser.arincmessage.info.size()>2)
-                {
-                    arincparser.arincmessage.info.replace("\n","\n\t");
-                    humantext+="\n\n\t"+message+"\n\n\t"+arincparser.arincmessage.info;
-                }
-                 else humantext+="\n\n\t"+message+"\n";
+                arincparser.arincmessage.info.replace("\n","\n\t");
+                humantext+="\n\n\t"+message+"\n\n\t"+arincparser.arincmessage.info;
             }
-             else humantext+="\n\n\t"+message+"\n";
+            else humantext+="\n\n\t"+message+"\n";
         }
 
         if((!settingsdialog->dropnontextmsgs)||(!acarsitem.message.isEmpty()&&(!acarsitem.nonacars)))

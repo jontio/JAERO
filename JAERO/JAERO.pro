@@ -48,7 +48,9 @@ SOURCES += main.cpp\
     ../kiss_fft130/kiss_fastfir.c \
     burstoqpskdemodulator.cpp \
     audioburstoqpskdemodulator.cpp \
-    arincparse.cpp
+    arincparse.cpp \
+    tcpserver.cpp \
+    sbs1.cpp
 
 HEADERS  += mainwindow.h \
     coarsefreqestimate.h \
@@ -77,7 +79,9 @@ HEADERS  += mainwindow.h \
     ../kiss_fft130/kiss_fastfir.h \
     burstoqpskdemodulator.h \
     audioburstoqpskdemodulator.h \
-    arincparse.h
+    arincparse.h \
+    tcpserver.h \
+    sbs1.h
 
 FORMS    += mainwindow.ui \
     gui_classes/settingsdialog.ui \

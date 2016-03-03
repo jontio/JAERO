@@ -73,6 +73,28 @@ void SettingsDialog::poulatepublicvars()
     udp_for_decoded_messages_enabled=ui->checkOutputDecodedMessageToUDPPort->isChecked();
 
 
+    //ads message output using SBS1 protocol over TCP
+    hostaddr=ui->lineEdittcpoutputadsmessagesaddress->text().section(':',0,0);
+    if(!tcp_for_ads_messages_address.setAddress(hostaddr))
+    {
+        QString tstr=ui->lineEdittcpoutputadsmessagesaddress->text().section(':',1,1);
+        ui->lineEdittcpoutputadsmessagesaddress->setText("0.0.0.0:"+tstr);
+        tcp_for_ads_messages_address.clear();
+        QSettings settings("Jontisoft", "JAERO");
+        settings.setValue("lineEdittcpoutputadsmessagesaddress", "0.0.0.0:"+tstr);
+        qDebug()<<"Can't set TCP address reverting to 0.0.0.0";
+    }
+    tcp_for_ads_messages_port=ui->lineEdittcpoutputadsmessagesaddress->text().section(':',1,1).toInt();
+    if(tcp_for_ads_messages_port==0)
+    {
+        qDebug()<<"Can't set TCP port reverting to 30003";
+        ui->lineEdittcpoutputadsmessagesaddress->setText(hostaddr+":30003");
+        QSettings settings("Jontisoft", "JAERO");
+        settings.setValue("lineEdittcpoutputadsmessagesaddress", hostaddr+":30003");
+        tcp_for_ads_messages_port=30003;
+    }
+    tcp_for_ads_messages_enabled=ui->checkOutputADSMessageToTCP->isChecked();
+
 }
 
 
@@ -101,6 +123,9 @@ void SettingsDialog::populatesettings()
     lastdbupdate=settings.value("lastdbupdate3").toDate();
     ui->lineEditudpoutputdecodedmessagesaddress->setText(settings.value("lineEditudpoutputdecodedmessagesaddress","localhost:18765").toString());
     ui->checkOutputDecodedMessageToUDPPort->setChecked(settings.value("checkOutputDecodedMessageToUDPPort",false).toBool());
+    ui->lineEdittcpoutputadsmessagesaddress->setText(settings.value("lineEdittcpoutputadsmessagesaddress","0.0.0.0:30003").toString());
+    ui->checkOutputADSMessageToTCP->setChecked(settings.value("checkOutputADSMessageToTCP",false).toBool());
+
 
 //these have been tested so far as lineEditplanelookup
 //http://junzisun.com/aif/?q={AES}#
@@ -128,7 +153,9 @@ void SettingsDialog::accept()
     settings.setValue("lineEditDBURL2", ui->lineEditDBURL->text());
     settings.setValue("checkBoxbeepontextmessage", ui->checkBoxbeepontextmessage->isChecked());
     settings.setValue("lineEditudpoutputdecodedmessagesaddress", ui->lineEditudpoutputdecodedmessagesaddress->text());
-    settings.setValue("checkOutputDecodedMessageToUDPPort", ui->checkOutputDecodedMessageToUDPPort->isChecked());
+    settings.setValue("checkOutputDecodedMessageToUDPPort", ui->checkOutputDecodedMessageToUDPPort->isChecked());  
+    settings.setValue("lineEdittcpoutputadsmessagesaddress", ui->lineEdittcpoutputadsmessagesaddress->text());
+    settings.setValue("checkOutputADSMessageToTCP", ui->checkOutputADSMessageToTCP->isChecked());
 
     poulatepublicvars();
     QDialog::accept();

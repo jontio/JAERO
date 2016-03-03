@@ -45,6 +45,11 @@ public:
     quint16 udp_for_decoded_messages_port;
     bool udp_for_decoded_messages_enabled;
 
+
+    QHostAddress tcp_for_ads_messages_address;
+    quint16 tcp_for_ads_messages_port;
+    bool tcp_for_ads_messages_enabled;
+
 private:
     Ui::SettingsDialog *ui;    
     void poulatepublicvars();

@@ -12,6 +12,7 @@
 #include "gui_classes/planelog.h"
 #include <QFile>
 #include <QSound>
+#include "sbs1.h"
 
 #include "databasetext.h"
 
@@ -55,6 +56,8 @@ private:
     AeroL *aerol;
 
     SettingsDialog *settingsdialog;
+
+    SBS1 *sbs1;
 
     void acceptsettings();
 

@@ -45,14 +45,16 @@ qint32 ArincParse::extractqint32(QByteArray &ba,int lsbyteoffset,int bitoffset,i
 
 
 //returns true if something for the user to read. need to check what is valid on return
-bool ArincParse::parseDownlinkmessage(QString &msg)
+bool ArincParse::parseDownlinkmessage(ACARSItem &acarsitem)//QString &msg)
 {
-    //qDebug()<<msg;
+    //qDebug()<<acarsitem.message;
 
     arincmessage.clear();
-    arincmessage.downlink=true;
+    arincmessage.downlink=acarsitem.downlink;
     downlinkheader.clear();
 
+    if(!acarsitem.downlink)return false;
+    if(acarsitem.nonacars)return false;
 
     //ref 622. 4.3.3 and 745
 
@@ -61,25 +63,24 @@ bool ArincParse::parseDownlinkmessage(QString &msg)
 
     //deal with header stuff
     //ref 620 & 618
-    if(msg.size()<10)return false;
+    if(acarsitem.message.size()<10)return false;
     char Originator=-1;
-    Originator=msg.at(0).toLatin1();
+    Originator=acarsitem.message.at(0).toLatin1();
     downlinkheader.OriginatorString=MetaEnumMessageSourcesIDS.valueToKey(Originator);//the name of the device on the plane that sent the message if anyone is interested
     bool ok;
-    downlinkheader.MessageNumber=msg.mid(1,2).toInt(&ok);
+    downlinkheader.MessageNumber=acarsitem.message.mid(1,2).toInt(&ok);
     if(!ok)return false;
-    downlinkheader.BlockSequenceCharacter=msg.at(3).toLatin1();
-    downlinkheader.flightid=msg.mid(4,6);//unsually flight # but not allways
+    downlinkheader.BlockSequenceCharacter=acarsitem.message.at(3).toLatin1();
+    downlinkheader.flightid=acarsitem.message.mid(4,6);//unsually flight # but not allways
     //remove zero padding in flight id
     QRegExp rx("^[A-Z]*(0*)");
     int pos = rx.indexIn(downlinkheader.flightid);
     if(pos!=-1)downlinkheader.flightid.remove(rx.pos(1),rx.cap(1).size());
-    rx.setPattern("^[A-Z]*[0-9]*$");
-    if((downlinkheader.flightid.size()<2)||(!downlinkheader.flightid.contains(rx)))downlinkheader.flightid.clear();//not a flight #
+    if((downlinkheader.flightid.size()<3)||!downlinkheader.flightid[0].isLetter())downlinkheader.flightid.clear();//lets say not a flight #
     downlinkheader.valid=true;
 
     //deal with application section
-    QStringList sections=msg.split('/');
+    QStringList sections=acarsitem.message.split('/');
     if(sections.size()!=2)return true;
 
     //split up into components as strings
@@ -97,13 +98,13 @@ bool ArincParse::parseDownlinkmessage(QString &msg)
     QString ctraddr=MFI_ctraddr;
     if(MFI_ctraddr.contains(' '))//incase MFI is present (H1 label rather than the MFI label) happens when ACARS peripheral created message rather than by an ACARS [C]MU
     {
-        MFI=MFI_ctraddr.section(' ',0,0);
-        ctraddr=MFI_ctraddr.section(' ',1);
-    }
-    arincmessage.IMI=IMI_tailno_appmessage_CRC.left(3);
-    arincmessage.tailno=IMI_tailno_appmessage_CRC.mid(3,7);
-    QString appmessage=IMI_tailno_appmessage_CRC.mid(3+7,IMI_tailno_appmessage_CRC.size()-3-7-4);
-    QString CRC=IMI_tailno_appmessage_CRC.right(4);
+        MFI=MFI_ctraddr.section(' ',0,0);// eg B6 if there. its not there in this example as the ACARS header would have come with a B6 in the ACARS label
+        ctraddr=MFI_ctraddr.section(' ',1);// eg AKLCDYA
+    } else MFI=acarsitem.LABEL;// eg B6
+    arincmessage.IMI=IMI_tailno_appmessage_CRC.left(3);//eg ADS
+    arincmessage.tailno=IMI_tailno_appmessage_CRC.mid(3,7);//eg .N705DN
+    QString appmessage=IMI_tailno_appmessage_CRC.mid(3+7,IMI_tailno_appmessage_CRC.size()-3-7-4);//eg 07EEE19454DAC7D010D21D0DEEEC44556208024029F0588C71D7884D000E13B90F00000F12C1A280001029305F10
+    QString CRC=IMI_tailno_appmessage_CRC.right(4);//eg 19F4
 
     //qDebug()<<MFI;
     //qDebug()<<ctraddr;
@@ -122,16 +123,20 @@ bool ArincParse::parseDownlinkmessage(QString &msg)
     QByteArray adsmessage=arincmessage.IMI.toLatin1()+arincmessage.tailno.toLatin1()+appmessage_bytes;
     int crc_calc=crc16.calcusingbytesotherendines(adsmessage.data(),adsmessage.size());
 
+    //remove . in reg
+    arincmessage.tailno.remove('.');
+
     //fail if crc no good
     if(crc_rec!=crc_calc)
     {
-//        qDebug()<<"Application CRC failed"<<crc_rec<<crc_calc;
+        //qDebug()<<"Application CRC failed"<<crc_rec<<crc_calc;
         return false;
     }
     arincmessage.valid=true;
 
     //switch on IMI
     bool fail=false;
+
     switch(MetaEnumIMI.keysToValue(arincmessage.IMI.toLatin1()))
     {
     case ADS:
@@ -191,8 +196,8 @@ bool ArincParse::parseDownlinkmessage(QString &msg)
                 //Temperature (arcinc 745 seems to make a mistake with their egampe on this one)
                 double temperature=((double)extractqint32(appmessage_bytes,i-1+5,1,12,true))*temperature_scaller;
 
-                if(truewinddirection_isvalid)arincmessage.info+=middlespacer+((QString)"Wind speed = %1 knots. True wind direction = %2 deg. Temperature = %3 deg C.\n").arg(windspeed).arg(qRound(truewinddirection)).arg(temperature);
-                 else arincmessage.info+=middlespacer+((QString)"Wind speed = %1 knots. Temperature = %2 deg C.\n").arg(windspeed).arg(temperature);
+                if(truewinddirection_isvalid)arincmessage.info+=middlespacer+((QString)"Wind speed = %1 knots. True wind direction = %2 deg. Temperature = %3 deg C.\n").arg(qRound(windspeed)).arg(qRound(truewinddirection)).arg(temperature);
+                 else arincmessage.info+=middlespacer+((QString)"Wind speed = %1 knots. Temperature = %2 deg C.\n").arg(qRound(windspeed)).arg(temperature);
 
 
                 i+=5;//goto next message
@@ -212,8 +217,8 @@ bool ArincParse::parseDownlinkmessage(QString &msg)
                 //Vertical rate
                 double verticalrate=((double)extractqint32(appmessage_bytes,i-1+6,2,12,true))*verticalrate_scaller;
 
-                if(trueheading_isvalid)arincmessage.info+=middlespacer+((QString)"True heading = %1 deg. Mach speed = %2 Vertical rate = %3 fpm.\n").arg(qRound(trueheading)).arg(machspeed).arg(verticalrate);
-                 else arincmessage.info+=middlespacer+((QString)"Mach speed = %1 Vertical rate = %2 fpm.\n").arg(machspeed).arg(verticalrate);
+                if(trueheading_isvalid)arincmessage.info+=middlespacer+((QString)"True heading = %1 deg. Mach speed = %2 Vertical rate = %3 fpm.\n").arg(qRound(trueheading)).arg(qRound(machspeed*100.0)/100.0).arg(verticalrate);
+                 else arincmessage.info+=middlespacer+((QString)"Mach speed = %1 Vertical rate = %2 fpm.\n").arg(qRound(machspeed*100.0)/100.0).arg(verticalrate);
 
 
                 i+=6;//goto next message
@@ -234,8 +239,18 @@ bool ArincParse::parseDownlinkmessage(QString &msg)
                 //Vertical rate
                 double verticalrate=((double)extractqint32(appmessage_bytes,i-1+6,2,12,true))*verticalrate_scaller;
 
-                if(truetrack_isvalid)arincmessage.info+=middlespacer+((QString)"True Track = %1 deg. Ground speed = %2 knots. Vertical rate = %3 fpm.\n").arg(qRound(truetrack)).arg(groundspeed).arg(verticalrate);
-                 else arincmessage.info+=middlespacer+((QString)"Ground speed = %1 knots. Vertical rate = %2 fpm.\n").arg(groundspeed).arg(verticalrate);
+                if(truetrack_isvalid)arincmessage.info+=middlespacer+((QString)"True Track = %1 deg. Ground speed = %2 knots. Vertical rate = %3 fpm.\n").arg(qRound(truetrack)).arg(qRound(groundspeed)).arg(verticalrate);
+                 else arincmessage.info+=middlespacer+((QString)"Ground speed = %1 knots. Vertical rate = %2 fpm.\n").arg(qRound(groundspeed)).arg(verticalrate);
+
+                //send earth reference group to anyone who cares
+                adownlinkearthreferencegroup.AESID=acarsitem.isuitem.AESID;
+                adownlinkearthreferencegroup.downlinkheader=downlinkheader;
+                adownlinkearthreferencegroup.truetrack=truetrack;
+                adownlinkearthreferencegroup.truetrack_isvalid=truetrack_isvalid;
+                adownlinkearthreferencegroup.groundspeed=groundspeed;
+                adownlinkearthreferencegroup.verticalrate=verticalrate;
+                emit DownlinkEarthReferenceGroupSignal(adownlinkearthreferencegroup);
+
 
                 i+=6;//goto next message
                 break;
@@ -304,9 +319,18 @@ bool ArincParse::parseDownlinkmessage(QString &msg)
                 //FOM
                 int FOM=((uchar)appmessage_bytes.at(i-1+11))&0x1F;
 
-
-
                 arincmessage.info+=middlespacer+((QString)"Lat = %1 Long = %2 Alt = %3 feet. Time past the hour = %4 FOM = %5\n").arg(latitude).arg(longitude).arg(altitude).arg(ts_str).arg((((QString)"%1").arg(FOM,2, 16, QChar('0'))).toUpper());
+
+                //send a report to anyone who cares
+                adownlinkbasicreportgroup.AESID=acarsitem.isuitem.AESID;
+                adownlinkbasicreportgroup.downlinkheader=downlinkheader;
+                adownlinkbasicreportgroup.messagetype=(ADSDownlinkMessages)appmessage_bytes.at(i);
+                adownlinkbasicreportgroup.latitude=latitude;
+                adownlinkbasicreportgroup.longitude=longitude;
+                adownlinkbasicreportgroup.altitude=altitude;
+                adownlinkbasicreportgroup.time_stamp=time_stamp;
+                adownlinkbasicreportgroup.FOM=FOM;
+                emit DownlinkBasicReportGroupSignal(adownlinkbasicreportgroup);
 
                 i+=11;//goto next message
                 break;
