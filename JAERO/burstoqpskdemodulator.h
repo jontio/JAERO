@@ -29,6 +29,7 @@ public:
         double fb;
         double Fs;
         double signalthreshold;
+        bool channel_stereo;
         Settings()
         {
             coarsefreqest_fft_power=13;//2^coarsefreqest_fft_power
@@ -37,6 +38,7 @@ public:
             fb=10500;//bps
             Fs=48000;//Hz
             signalthreshold=0.5;
+            channel_stereo=false;
         }
     };
     explicit BurstOqpskDemodulator(QObject *parent);
@@ -53,6 +55,11 @@ public:
     qint64 writeData(const char *data, qint64 len);
     double getCurrentFreq();
     void setScatterPointType(ScatterPointType type);
+
+    //--L/R channel selection
+        bool channel_select_other;
+    //
+
 signals:
     void ScatterPoints(const QVector<cpx_type> &buffer);
     void OrgOverlapedBuffer(const QVector<double> &buffer);
@@ -65,6 +72,7 @@ signals:
     void SignalStatus(bool gotasignal);
     void WarningTextSignal(const QString &str);
     void EbNoMeasurmentSignal(double EbNo);
+    void writeDataSignal(const char *data, qint64 len);
 private:
 
     const cpx_type imag=cpx_type(0, 1);
@@ -181,13 +189,28 @@ private:
 //--
 
 
+
+
     DelayThing<cpx_type> rotation_bias_delay;
     MovingAverage *rotation_bias_ma;
 
     int startstopstart;
 
+    //old static stuff
+    cpx_type pt_d;
+    int yui;
+    cpx_type sig2_last;
+    cpx_type symboltone_rotator;
+    int startstop;
+    double vol_gain;
+    int cntr;
+    double maxval;
+
+    bool channel_stereo;
+
 public slots:
     void CenterFreqChangedSlot(double freq_center);
+    void writeDataSlot(const char *data, qint64 len);
 
 };
 

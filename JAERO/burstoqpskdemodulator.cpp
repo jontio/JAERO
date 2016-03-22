@@ -110,6 +110,20 @@ BurstOqpskDemodulator::BurstOqpskDemodulator(QObject *parent)
  //--
 
 
+    pt_d=0;
+    yui=0;
+    sig2_last=0;
+    symboltone_rotator=1;
+    startstop=-1;
+    vol_gain=1;
+    cntr=0;
+    maxval=0;
+    channel_select_other=false;
+
+
+ //--
+
+
     Settings _settings;
     invalidatesettings();
     setSettings(_settings);
@@ -197,6 +211,8 @@ void BurstOqpskDemodulator::setSettings(Settings _settings)
     bbcycbuff_ptr=0;
     bbtmpbuff.resize(bbnfft);
 
+    channel_stereo=_settings.channel_stereo;
+
     mixer2.SetFreq(freq_center,Fs);
 
     delete agc;
@@ -276,25 +292,46 @@ qint64 BurstOqpskDemodulator::readData(char *data, qint64 maxlen)
 
 qint64 BurstOqpskDemodulator::writeData(const char *data, qint64 len)
 {
-    if(len<1)return len;
+    if(len<sizeof(short))return len;
+    if(channel_stereo)emit writeDataSignal(data,len);
+    writeDataSlot(data,len);
+    return len;
+}
+
+
+void BurstOqpskDemodulator::writeDataSlot(const char *data, qint64 len)
+{
+
     double lastmse=mse;
     bool sendscatterpoints=false;
-    if(len<sizeof(short))return len;
 
+    int numofsamples=(len/sizeof(short));
+    if(channel_stereo)numofsamples/=2;
 
     //make analytical signal
-    hfirbuff.resize(len/sizeof(short));
+    hfirbuff.resize(numofsamples);
     kffsamp_t asample;
     asample.i=0;
-    const short *ptr = reinterpret_cast<const short *>(data);
-    for(int i=0;i<len/sizeof(short);i++)
+    const short *ptr = reinterpret_cast<const short *>(data);    
+    if(channel_stereo)
     {
-        //double dval=((double)(*ptr))/32768.0;
-        //agc->Update(dval);
-        asample.r=((double)(*ptr))/32768.0;//agc->Update(((double)(*ptr))/32768.0);
-        hfirbuff[i]=asample;
-        ptr++;
+        if(channel_select_other)ptr++;
+        for(int i=0;i<numofsamples;i++)
+        {
+            asample.r=((double)(*ptr))/32768.0;
+            hfirbuff[i]=asample;
+            ptr+=2;
+        }
     }
+     else
+     {
+        for(int i=0;i<numofsamples;i++)
+        {
+            asample.r=((double)(*ptr))/32768.0;
+            hfirbuff[i]=asample;
+            ptr++;
+        }
+     }
     hfir->Update(hfirbuff);
 
     //run through each sample of analyitical signal
@@ -307,7 +344,6 @@ qint64 BurstOqpskDemodulator::writeData(const char *data, qint64 len)
         double dval=cval.real();
 
         //spectrum display for looks
-        static double maxval=0;
         if(fabs(dval)>maxval)maxval=fabs(dval);
         spectrumcycbuff[spectrumcycbuff_ptr]=dval;
         spectrumcycbuff_ptr++;spectrumcycbuff_ptr%=spectrumnfft;
@@ -343,10 +379,6 @@ qint64 BurstOqpskDemodulator::writeData(const char *data, qint64 len)
         {
             tridentbuffer_ptr=0;
         }
-
-        static int startstop=-1;
-        static double vol_gain=1;
-        static int cntr=0;
 
         if(tridentbuffer_ptr<tridentbuffer_sz)//fill trident buffer
         {
@@ -506,7 +538,6 @@ qint64 BurstOqpskDemodulator::writeData(const char *data, qint64 len)
             double progress=(((double)cntr)-(SamplesPerSymbol*(128+10)))/(((256-10)*SamplesPerSymbol)-(SamplesPerSymbol*(128+10)));
 
             //produce symbol tone circle (symboltone_pt) and calc carrier rotation
-            static cpx_type symboltone_rotator=1;
             cpx_type symboltone_pt=sig2*symboltone_rotator*imag;
             double er=std::tanh(symboltone_pt.imag())*(symboltone_pt.real());
             symboltone_rotator=symboltone_rotator*std::exp(imag*er*0.01);
@@ -562,7 +593,6 @@ qint64 BurstOqpskDemodulator::writeData(const char *data, qint64 len)
         if(st_osc.GetFreqHz()>(st_osc_ref.GetFreqHz()+0.1))st_osc.SetFreq((st_osc_ref.GetFreqHz()+0.1));
 
         //sample times
-        static cpx_type sig2_last=sig2;
         if(st_osc.IfHavePassedPoint(ee))//?? 0.4 0.8 etc
         {
 
@@ -575,7 +605,6 @@ qint64 BurstOqpskDemodulator::writeData(const char *data, qint64 len)
             double twospeed=-4.0*((std::fmod((st_osc_quarter.GetPhaseDeg())*2.0+(360.0*ee*0.5),360.0)/360.0)-(0.34046+0.4111*ee));
             bool even=true;
             if(twospeed<0)even=false;
-            static int yui=0;
             yui++;yui%=2;
             if(cntr<((128+128)*SamplesPerSymbol))
             {
@@ -585,7 +614,6 @@ qint64 BurstOqpskDemodulator::writeData(const char *data, qint64 len)
                 }
             }
 
-            static cpx_type pt_d=0;
             if(!yui)pt_d=pt;
              else
             {
@@ -715,5 +743,5 @@ qint64 BurstOqpskDemodulator::writeData(const char *data, qint64 len)
         RxDataBytes.clear();
     }*/
 
-    return len;
+    return;
 }

@@ -57,7 +57,8 @@ MainWindow::MainWindow(QWidget *parent) :
     planelog = new PlaneLog;
 
     //create areo decoder
-    aerol = new AeroL(this); //Create Aero L test sink
+    aerol = new AeroL(this); //Create Aero sink
+    aerol2 = new AeroL(this); //Create Aero sink
 
     //create settings dialog.
     settingsdialog = new SettingsDialog(this);
@@ -77,13 +78,16 @@ MainWindow::MainWindow(QWidget *parent) :
 
     //create sbs server and connect the ADS parser to it
     sbs1 = new SBS1(this);
-    connect(&arincparser,SIGNAL(DownlinkBasicReportGroupSignal(DownlinkBasicReportGroup&)),sbs1,SLOT(DownlinkBasicReportGroupSlot(DownlinkBasicReportGroup&)));
-    connect(&arincparser,SIGNAL(DownlinkEarthReferenceGroupSignal(DownlinkEarthReferenceGroup&)),sbs1,SLOT(DownlinkEarthReferenceGroupSlot(DownlinkEarthReferenceGroup&)));
+    connect(&arincparser,SIGNAL(DownlinkGroupsSignal(DownlinkGroups&)),sbs1,SLOT(DownlinkGroupsSlot(DownlinkGroups&)));
+    //connect(&arincparser,SIGNAL(DownlinkBasicReportGroupSignal(DownlinkBasicReportGroup&)),sbs1,SLOT(DownlinkBasicReportGroupSlot(DownlinkBasicReportGroup&)));
+    //connect(&arincparser,SIGNAL(DownlinkEarthReferenceGroupSignal(DownlinkEarthReferenceGroup&)),sbs1,SLOT(DownlinkEarthReferenceGroupSlot(DownlinkEarthReferenceGroup&)));
+
 
     //default sink is the aerol device
     audiomskdemodulator->ConnectSinkDevice(aerol);
     audiooqpskdemodulator->ConnectSinkDevice(aerol);
     audioburstoqpskdemodulator->ConnectSinkDevice(aerol);
+    audioburstoqpskdemodulator->demod2->ConnectSinkDevice(aerol2);
 
     //console setup
     ui->console->setEnabled(true);
@@ -91,6 +95,7 @@ MainWindow::MainWindow(QWidget *parent) :
 
     //aerol setup
     aerol->ConnectSinkDevice(ui->console->consoledevice);
+    aerol2->ConnectSinkDevice(ui->console->consoledevice);
 
     //statusbar setup
     freqlabel = new QLabel();
@@ -114,6 +119,11 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(aerol,SIGNAL(DataCarrierDetect(bool)),this,SLOT(DataCarrierDetectStatusSlot(bool)));
     connect(aerol,SIGNAL(ACARSsignal(ACARSItem&)),planelog,SLOT(ACARSslot(ACARSItem&)));
     connect(aerol,SIGNAL(ACARSsignal(ACARSItem&)),this,SLOT(ACARSslot(ACARSItem&)));
+
+    //aeroL2 connections
+    connect(aerol2,SIGNAL(DataCarrierDetect(bool)),this,SLOT(DataCarrierDetectStatusSlot(bool)));
+    connect(aerol2,SIGNAL(ACARSsignal(ACARSItem&)),planelog,SLOT(ACARSslot(ACARSItem&)));
+    connect(aerol2,SIGNAL(ACARSsignal(ACARSItem&)),this,SLOT(ACARSslot(ACARSItem&)));
 
     //load settings
     QSettings settings("Jontisoft", "JAERO");
@@ -172,7 +182,13 @@ MainWindow::MainWindow(QWidget *parent) :
     teststr="A92AXA42FD#M1B/B6 OAKODYA.ADS..N42FD0724FE94A9BECAFC4DF01F0D24FA4CAAAACAFC802D238E3CE38E4AFC800E24B0F540040F25899FC004101420DEB82858";
     teststr="F21AUA082/FUKJJYA.ADS.N772UA070DD5F32FBD894736B79D1602BC7B5928E04EA01600C97B8938806560171165E328E289C408AA0D0EEF9B2D8D897302AD11C88B282289C4000E7B50F780000F79F9A30000BB12";
     //teststr="F42AUA0828/FUKJJYA.ADS.N772UA07150C231FE549470E3D1D1600DF765128E01B401601F479E128E055C01603557D7128E0B5801601DF042928E0E6C0160073043908F8F2E01600B47DC8CC69078017188A7B1E12C57D48AB0D1556AB1E84094700DA160C0B1C7A8947000E76";//5";
-    if(arincparser.parseDownlinkmessage(teststr))
+
+    teststr="J84ACI0017/OAKODYA.ADSB-183560301D095";
+    ACARSItem tmpitem;
+    tmpitem.message=teststr;
+    tmpitem.downlink=true;
+    tmpitem.nonacars=false;
+    if(arincparser.parseDownlinkmessage(tmpitem))
     {
        qDebug()<<arincparser.arincmessage.info.toLatin1().data();
     }*/
@@ -236,6 +252,20 @@ void MainWindow::selectdemodulatorconnections(DemodType demodtype)
         disconnect(audioburstoqpskdemodulator, SIGNAL(BitRateChanged(double,bool)),                   aerol,SLOT(setSettings(double,bool)));
         disconnect(audioburstoqpskdemodulator, SIGNAL(SignalStatus(bool)),aerol,SLOT(SignalStatusSlot(bool)));
 
+        //burstdemod demod2
+        disconnect(audioburstoqpskdemodulator->demod2, SIGNAL(Plottables(double,double,double)),              this,SLOT(PlottablesSlot(double,double,double)));
+        disconnect(audioburstoqpskdemodulator->demod2, SIGNAL(SignalStatus(bool)),                            this,SLOT(SignalStatusSlot(bool)));
+        disconnect(audioburstoqpskdemodulator->demod2, SIGNAL(WarningTextSignal(QString)),                    this,SLOT(WarningTextSlot(QString)));
+        disconnect(audioburstoqpskdemodulator->demod2, SIGNAL(EbNoMeasurmentSignal(double)),                  this,SLOT(EbNoSlot(double)));
+        disconnect(audioburstoqpskdemodulator->demod2, SIGNAL(PeakVolume(double)),                            this, SLOT(PeakVolumeSlot(double)));
+        disconnect(audioburstoqpskdemodulator->demod2, SIGNAL(OrgOverlapedBuffer(QVector<double>)),           ui->spectrumdisplay,SLOT(setFFTData(QVector<double>)));
+        disconnect(audioburstoqpskdemodulator->demod2, SIGNAL(Plottables(double,double,double)),              ui->spectrumdisplay,SLOT(setPlottables(double,double,double)));
+        disconnect(audioburstoqpskdemodulator->demod2, SIGNAL(SampleRateChanged(double)),                     ui->spectrumdisplay,SLOT(setSampleRate(double)));
+        disconnect(audioburstoqpskdemodulator->demod2, SIGNAL(ScatterPoints(QVector<cpx_type>)),              ui->scatterplot,SLOT(setData(QVector<cpx_type>)));
+        disconnect(ui->spectrumdisplay,   SIGNAL(CenterFreqChanged(double)),                          audioburstoqpskdemodulator->demod2,SLOT(CenterFreqChangedSlot(double)));
+        disconnect(audioburstoqpskdemodulator->demod2, SIGNAL(BitRateChanged(double,bool)),                   aerol2,SLOT(setSettings(double,bool)));
+        disconnect(audioburstoqpskdemodulator->demod2, SIGNAL(SignalStatus(bool)),aerol2,SLOT(SignalStatusSlot(bool)));
+
         break;
     case OQPSK: //opqsk
         //some msk connections
@@ -279,6 +309,21 @@ void MainWindow::selectdemodulatorconnections(DemodType demodtype)
         disconnect(ui->spectrumdisplay,   SIGNAL(CenterFreqChanged(double)),                          audioburstoqpskdemodulator,SLOT(CenterFreqChangedSlot(double)));
         disconnect(audioburstoqpskdemodulator, SIGNAL(BitRateChanged(double,bool)),                   aerol,SLOT(setSettings(double,bool)));
         disconnect(audioburstoqpskdemodulator, SIGNAL(SignalStatus(bool)),aerol,SLOT(SignalStatusSlot(bool)));
+
+        //burstdemod demod2
+        disconnect(audioburstoqpskdemodulator->demod2, SIGNAL(Plottables(double,double,double)),              this,SLOT(PlottablesSlot(double,double,double)));
+        disconnect(audioburstoqpskdemodulator->demod2, SIGNAL(SignalStatus(bool)),                            this,SLOT(SignalStatusSlot(bool)));
+        disconnect(audioburstoqpskdemodulator->demod2, SIGNAL(WarningTextSignal(QString)),                    this,SLOT(WarningTextSlot(QString)));
+        disconnect(audioburstoqpskdemodulator->demod2, SIGNAL(EbNoMeasurmentSignal(double)),                  this,SLOT(EbNoSlot(double)));
+        disconnect(audioburstoqpskdemodulator->demod2, SIGNAL(PeakVolume(double)),                            this, SLOT(PeakVolumeSlot(double)));
+        disconnect(audioburstoqpskdemodulator->demod2, SIGNAL(OrgOverlapedBuffer(QVector<double>)),           ui->spectrumdisplay,SLOT(setFFTData(QVector<double>)));
+        disconnect(audioburstoqpskdemodulator->demod2, SIGNAL(Plottables(double,double,double)),              ui->spectrumdisplay,SLOT(setPlottables(double,double,double)));
+        disconnect(audioburstoqpskdemodulator->demod2, SIGNAL(SampleRateChanged(double)),                     ui->spectrumdisplay,SLOT(setSampleRate(double)));
+        disconnect(audioburstoqpskdemodulator->demod2, SIGNAL(ScatterPoints(QVector<cpx_type>)),              ui->scatterplot,SLOT(setData(QVector<cpx_type>)));
+        disconnect(ui->spectrumdisplay,   SIGNAL(CenterFreqChanged(double)),                          audioburstoqpskdemodulator->demod2,SLOT(CenterFreqChangedSlot(double)));
+        disconnect(audioburstoqpskdemodulator->demod2, SIGNAL(BitRateChanged(double,bool)),                   aerol2,SLOT(setSettings(double,bool)));
+        disconnect(audioburstoqpskdemodulator->demod2, SIGNAL(SignalStatus(bool)),aerol2,SLOT(SignalStatusSlot(bool)));
+
 
         break;
     case BURSTOQPSK: //burstopqsk
@@ -324,6 +369,21 @@ void MainWindow::selectdemodulatorconnections(DemodType demodtype)
         connect(ui->spectrumdisplay,   SIGNAL(CenterFreqChanged(double)),                          audioburstoqpskdemodulator,SLOT(CenterFreqChangedSlot(double)));
         connect(audioburstoqpskdemodulator, SIGNAL(BitRateChanged(double,bool)),                   aerol,SLOT(setSettings(double,bool)));
         connect(audioburstoqpskdemodulator, SIGNAL(SignalStatus(bool)),aerol,SLOT(SignalStatusSlot(bool)));
+
+        //burstdemod demod2
+        connect(audioburstoqpskdemodulator->demod2, SIGNAL(Plottables(double,double,double)),              this,SLOT(PlottablesSlot(double,double,double)));
+        connect(audioburstoqpskdemodulator->demod2, SIGNAL(SignalStatus(bool)),                            this,SLOT(SignalStatusSlot(bool)));
+        connect(audioburstoqpskdemodulator->demod2, SIGNAL(WarningTextSignal(QString)),                    this,SLOT(WarningTextSlot(QString)));
+        connect(audioburstoqpskdemodulator->demod2, SIGNAL(EbNoMeasurmentSignal(double)),                  this,SLOT(EbNoSlot(double)));
+        connect(audioburstoqpskdemodulator->demod2, SIGNAL(PeakVolume(double)),                            this, SLOT(PeakVolumeSlot(double)));
+        connect(audioburstoqpskdemodulator->demod2, SIGNAL(OrgOverlapedBuffer(QVector<double>)),           ui->spectrumdisplay,SLOT(setFFTData(QVector<double>)));
+        connect(audioburstoqpskdemodulator->demod2, SIGNAL(Plottables(double,double,double)),              ui->spectrumdisplay,SLOT(setPlottables(double,double,double)));
+        connect(audioburstoqpskdemodulator->demod2, SIGNAL(SampleRateChanged(double)),                     ui->spectrumdisplay,SLOT(setSampleRate(double)));
+        connect(audioburstoqpskdemodulator->demod2, SIGNAL(ScatterPoints(QVector<cpx_type>)),              ui->scatterplot,SLOT(setData(QVector<cpx_type>)));
+        connect(ui->spectrumdisplay,   SIGNAL(CenterFreqChanged(double)),                          audioburstoqpskdemodulator->demod2,SLOT(CenterFreqChangedSlot(double)));
+        connect(audioburstoqpskdemodulator->demod2, SIGNAL(BitRateChanged(double,bool)),                   aerol2,SLOT(setSettings(double,bool)));
+        connect(audioburstoqpskdemodulator->demod2, SIGNAL(SignalStatus(bool)),aerol2,SLOT(SignalStatusSlot(bool)));
+
 
         break;
     }
@@ -396,7 +456,7 @@ void MainWindow::AboutSlot()
 {
     QMessageBox::about(this,"JAERO",""
                                      "<H1>An Aero demodulator and decoder</H1>"
-                                     "<H3>v1.0.4.2</H3>"
+                                     "<H3>v1.0.4.3</H3>"
                                      "<p>This is a program to demodulate and decode Aero signals. These signals contain SatCom ACARS (<em>Satelitle Comunication Aircraft Communications Addressing and Reporting System</em>) messages as used by planes beyond VHF ACARS range. This protocol is used by Inmarsat's \"Classic Aero\" system and can be received using low or medium gain L band or high gain C band antennas.</p>"
                                      "<p>For more information about this application see <a href=\"http://jontio.zapto.org/hda1/jaero.html\">http://jontio.zapto.org/hda1/jaero.html</a>.</p>"
                                      "<p>Jonti 2016</p>" );
@@ -453,6 +513,8 @@ void MainWindow::on_comboBoxbps_currentIndexChanged(const QString &arg)
         int idx=ui->comboBoxlbw->findText(((QString)"%1 Hz").arg(audioburstoqpskdemodulatorsettings.fb*1.0));
         if(idx>=0)audioburstoqpskdemodulatorsettings.lockingbw=ui->comboBoxlbw->itemText(idx).split(" ")[0].toDouble();
         audioburstoqpskdemodulatorsettings.audio_device_in=settingsdialog->audioinputdevice;
+        if(arg.contains("x2"))audioburstoqpskdemodulatorsettings.channel_stereo=true;
+         else audioburstoqpskdemodulatorsettings.channel_stereo=false;
         audioburstoqpskdemodulator->setSettings(audioburstoqpskdemodulatorsettings);
         if(idx>=0)ui->comboBoxlbw->setCurrentIndex(idx);
         audioburstoqpskdemodulator->start();
@@ -566,7 +628,9 @@ void MainWindow::on_actionConnectToUDPPort_toggled(bool arg1)
     audiomskdemodulator->DisconnectSinkDevice();
     audiooqpskdemodulator->DisconnectSinkDevice();
     audioburstoqpskdemodulator->DisconnectSinkDevice();
+    audioburstoqpskdemodulator->demod2->DisconnectSinkDevice();
     aerol->DisconnectSinkDevice();
+    aerol2->DisconnectSinkDevice();
     udpsocket->close();
     udpsocket_bottom_textedit->close();
     if(arg1)
@@ -580,7 +644,8 @@ void MainWindow::on_actionConnectToUDPPort_toggled(bool arg1)
             audiomskdemodulator->ConnectSinkDevice(udpsocket);
             audiooqpskdemodulator->ConnectSinkDevice(udpsocket);
             audioburstoqpskdemodulator->ConnectSinkDevice(udpsocket);
-            ui->console->setEnableUpdates(false,"Console disabled while raw demodulated data is routed to UDP port 8765 at LocalHost.");
+            if(audioburstoqpskdemodulatorsettings.channel_stereo)ui->console->setEnableUpdates(false,"Console disabled while raw demodulated data from the left channel is routed to UDP port 8765 at LocalHost.");
+             else ui->console->setEnableUpdates(false,"Console disabled while raw demodulated data is routed to UDP port 8765 at LocalHost.");
         }
          else
          {
@@ -588,7 +653,8 @@ void MainWindow::on_actionConnectToUDPPort_toggled(bool arg1)
             audiooqpskdemodulator->ConnectSinkDevice(aerol);
             audioburstoqpskdemodulator->ConnectSinkDevice(aerol);
             aerol->ConnectSinkDevice(udpsocket);
-            ui->console->setEnableUpdates(false,"Console disabled while decoded and demodulated data is routed to UDP port 8765 at LocalHost.");
+            if(audioburstoqpskdemodulatorsettings.channel_stereo) ui->console->setEnableUpdates(false,"Console disabled while decoded and demodulated data from the left channel is routed to UDP port 8765 at LocalHost.");
+             else ui->console->setEnableUpdates(false,"Console disabled while decoded and demodulated data is routed to UDP port 8765 at LocalHost.");
          }
 
     }
@@ -597,7 +663,9 @@ void MainWindow::on_actionConnectToUDPPort_toggled(bool arg1)
          audiomskdemodulator->ConnectSinkDevice(aerol);
          audiooqpskdemodulator->ConnectSinkDevice(aerol);
          audioburstoqpskdemodulator->ConnectSinkDevice(aerol);
+         audioburstoqpskdemodulator->demod2->ConnectSinkDevice(aerol2);
          aerol->ConnectSinkDevice(ui->console->consoledevice);
+         aerol2->ConnectSinkDevice(ui->console->consoledevice);
          ui->console->setEnableUpdates(true);
      }
 }
@@ -620,6 +688,9 @@ void MainWindow::acceptsettings()
 
     aerol->setDoNotDisplaySUs(settingsdialog->donotdisplaysus);
     aerol->setDataBaseDir(settingsdialog->planesfolder);
+
+    aerol2->setDoNotDisplaySUs(settingsdialog->donotdisplaysus);
+    aerol2->setDataBaseDir(settingsdialog->planesfolder);
 
     //start or stop tcp server
     if(settingsdialog->tcp_for_ads_messages_enabled)sbs1->startserver(settingsdialog->tcp_for_ads_messages_address,settingsdialog->tcp_for_ads_messages_port);
@@ -854,7 +925,7 @@ void MainWindow::ACARSslot(ACARSItem &acarsitem)
 
         if((!settingsdialog->dropnontextmsgs)||(!acarsitem.message.isEmpty()&&(!acarsitem.nonacars)))
         {
-            if((settingsdialog->udp_for_decoded_messages_enabled))
+            if(settingsdialog->udp_for_decoded_messages_enabled)//((settingsdialog->udp_for_decoded_messages_enabled)&&(arincparser.adownlinkbasicreportgroup.valid))
             {
                 if((!udpsocket_bottom_textedit->isOpen())||(!udpsocket_bottom_textedit->isWritable()))
                 {

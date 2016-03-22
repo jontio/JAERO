@@ -51,7 +51,7 @@ Tcpserver::~Tcpserver()
     emit quitting();
 }
 
-void Tcpserver::incomingConnection(int socketDescriptor)
+void Tcpserver::incomingConnection(qintptr socketDescriptor)
 {
     TcpSocketCustom *tcpSocket= new TcpSocketCustom(this);
     if (!tcpSocket->setSocketDescriptor(socketDescriptor))

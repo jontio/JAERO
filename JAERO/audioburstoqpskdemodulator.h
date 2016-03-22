@@ -25,10 +25,17 @@ public:
     void start();
     void stop();
     void setSettings(Settings settings);
+    BurstOqpskDemodulator *demod2;
+    void invalidatesettings(){demod2->invalidatesettings();BurstOqpskDemodulator::invalidatesettings();}
+    void setSQL(bool state){demod2->setSQL(state);BurstOqpskDemodulator::setSQL(state);}
+    void setAFC(bool state){demod2->setAFC(state);BurstOqpskDemodulator::setAFC(state);}
+    void setScatterPointType(ScatterPointType type){demod2->setScatterPointType(type);BurstOqpskDemodulator::setScatterPointType(type);}
 private:
     Settings settings;
     QAudioFormat m_format;
     QAudioInput *m_audioInput;
+
+
 };
 
 #endif // AUDIOBURSTOQPSKDEMODULATOR_H

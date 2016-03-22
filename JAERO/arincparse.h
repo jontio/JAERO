@@ -92,10 +92,12 @@ struct DownlinkBasicReportGroup
     double longitude;
     //Alt
     double altitude;
-    //Time stamp
+    //Time stamp (seconds past the hour)
     double time_stamp;
     //FOM
     int FOM;
+    //Message valid
+    bool valid;
 };
 
 struct DownlinkEarthReferenceGroup
@@ -112,6 +114,25 @@ struct DownlinkEarthReferenceGroup
     double groundspeed;
     //Vertical rate
     double verticalrate;
+    //Message valid
+    bool valid;
+};
+
+//all messages must contain a basic report group so should always be valid other groups may or maynot be valid
+struct DownlinkGroups
+{
+    DownlinkBasicReportGroup adownlinkbasicreportgroup;
+    DownlinkEarthReferenceGroup adownlinkearthreferencegroup;
+    void clear()
+    {
+        adownlinkbasicreportgroup.valid=false;
+        adownlinkearthreferencegroup.valid=false;
+    }
+    bool isValid()
+    {
+        if(adownlinkbasicreportgroup.valid)return true;
+        return false;
+    }
 };
 
 
@@ -162,8 +183,9 @@ public:
     DownlinkHeader downlinkheader;
 
 signals:
-    void DownlinkBasicReportGroupSignal(DownlinkBasicReportGroup &message);
-    void DownlinkEarthReferenceGroupSignal(DownlinkEarthReferenceGroup &message);
+    //void DownlinkBasicReportGroupSignal(DownlinkBasicReportGroup &message);
+    //void DownlinkEarthReferenceGroupSignal(DownlinkEarthReferenceGroup &message);
+    void DownlinkGroupsSignal(DownlinkGroups &groups);
 public slots:
 private:
     QBitArray &tobits(QByteArray &bytes);
@@ -174,8 +196,9 @@ private:
     QBitArray bitarray;
     qint32 extractqint32(QByteArray &ba, int lsbyteoffset, int bitoffset, int numberofbits, bool issigned);
     QString middlespacer;
-    DownlinkBasicReportGroup adownlinkbasicreportgroup;
-    DownlinkEarthReferenceGroup adownlinkearthreferencegroup;
+
+    DownlinkGroups downlinkgroups;
+
 };
 
 

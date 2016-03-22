@@ -15,6 +15,7 @@ class TextInputDevice : public QIODevice
 public:
     explicit TextInputDevice(QPlainTextEdit *parent ) : QIODevice(parent)
     {
+        lastchar=0;
         str.clear();
         charpos=0;
         preamble_ptr=0;
@@ -42,7 +43,6 @@ public:
         //idling bytes
         if(idle_on_eof&&(preamble_ptr>=preamble.size()))
         {
-            static char lastchar=0;
             if(charpos>=str.size())
             {
                 int cnt=0;
@@ -182,6 +182,8 @@ private:
     int postamble_ptr;
 
     QString preamble;
+
+    char lastchar;
 
 };
 

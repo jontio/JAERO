@@ -356,6 +356,11 @@
            <string>10500 bps burst</string>
           </property>
          </item>
+         <item>
+          <property name="text">
+           <string>10500 bps burst x2</string>
+          </property>
+         </item>
         </widget>
        </item>
        <item>

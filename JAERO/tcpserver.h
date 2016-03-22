@@ -39,7 +39,7 @@ signals:
     void SendBAToAllTCPClientsSignal(QByteArray &ba);
     void DisconnectAllClients();
 protected:
-    void incomingConnection(int socketDescriptor);
+    void incomingConnection(qintptr socketDescriptor);
 private:
     QHostAddress currentaddress;
     quint16 currentport;

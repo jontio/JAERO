@@ -15,6 +15,7 @@ signals:
 public slots:
     void DownlinkBasicReportGroupSlot(DownlinkBasicReportGroup &message);
     void DownlinkEarthReferenceGroupSlot(DownlinkEarthReferenceGroup &message);
+    void DownlinkGroupsSlot(DownlinkGroups &groups);
 private:
     Tcpserver *server;
 };

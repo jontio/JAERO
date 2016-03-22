@@ -658,6 +658,14 @@ void PreambleDetectorPhaseInvariant::setTollerence(int _tollerence)
 AeroL::AeroL(QObject *parent) : QIODevice(parent)
 {
 
+    cntr=1000000000;
+    formatid=0;
+    supfrmaker=0;
+    framecounter1=0;
+    framecounter2=0;
+    gotsync_last=0;
+    blockcnt=-1;
+
     //install parser
     parserisu = new ParserISU(this);
     connect(parserisu,SIGNAL(ACARSsignal(ACARSItem&)),this,SIGNAL(ACARSsignal(ACARSItem&)));
@@ -829,11 +837,6 @@ QByteArray &AeroL::Decode(QVector<short> &bits)//0 bit --> oldest bit
 {
     decodedbytes.clear();
 
-    //static int cntr=1000000000;
-    static int formatid=0;
-    static int supfrmaker=0;
-    static int framecounter1=0;
-    static int framecounter2=0;
     for(int i=0;i<bits.size();i++)
     {
 
@@ -847,7 +850,6 @@ QByteArray &AeroL::Decode(QVector<short> &bits)//0 bit --> oldest bit
         if(muw<100000)muw++;
 
         //Preamble detector and ambiguity corrector for OQPSK
-        static int gotsync_last=0;
         int gotsync;
         if(useingOQPSK)
         {
@@ -1149,7 +1151,6 @@ QByteArray &AeroL::Decode(QVector<short> &bits)//0 bit --> oldest bit
             else{// its a p channel
 
                 //fill block
-                static int blockcnt=-1;
                 if(cntr==16)blockcnt=-1;
                 int idx=(cntr-AERO_SPEC_BitsInHeader)%block.size();
                 if(idx<0)idx=0;//for dummy bits drop

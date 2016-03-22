@@ -715,6 +715,15 @@ private:
 
     QVector<int> donotdisplaysus;
 
+    //old static
+    //static int cntr=1000000000;
+    int formatid;
+    int supfrmaker;
+    int framecounter1;
+    int framecounter2;
+    int gotsync_last;
+    int blockcnt;
+
 
 private slots:
     void updateDCD();

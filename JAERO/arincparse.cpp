@@ -49,6 +49,7 @@ bool ArincParse::parseDownlinkmessage(ACARSItem &acarsitem)//QString &msg)
 {
     //qDebug()<<acarsitem.message;
 
+    downlinkgroups.clear();
     arincmessage.clear();
     arincmessage.downlink=acarsitem.downlink;
     downlinkheader.clear();
@@ -242,15 +243,14 @@ bool ArincParse::parseDownlinkmessage(ACARSItem &acarsitem)//QString &msg)
                 if(truetrack_isvalid)arincmessage.info+=middlespacer+((QString)"True Track = %1 deg. Ground speed = %2 knots. Vertical rate = %3 fpm.\n").arg(qRound(truetrack)).arg(qRound(groundspeed)).arg(verticalrate);
                  else arincmessage.info+=middlespacer+((QString)"Ground speed = %1 knots. Vertical rate = %2 fpm.\n").arg(qRound(groundspeed)).arg(verticalrate);
 
-                //send earth reference group to anyone who cares
-                adownlinkearthreferencegroup.AESID=acarsitem.isuitem.AESID;
-                adownlinkearthreferencegroup.downlinkheader=downlinkheader;
-                adownlinkearthreferencegroup.truetrack=truetrack;
-                adownlinkearthreferencegroup.truetrack_isvalid=truetrack_isvalid;
-                adownlinkearthreferencegroup.groundspeed=groundspeed;
-                adownlinkearthreferencegroup.verticalrate=verticalrate;
-                emit DownlinkEarthReferenceGroupSignal(adownlinkearthreferencegroup);
-
+                //populate group
+                downlinkgroups.adownlinkearthreferencegroup.AESID=acarsitem.isuitem.AESID;
+                downlinkgroups.adownlinkearthreferencegroup.downlinkheader=downlinkheader;
+                downlinkgroups.adownlinkearthreferencegroup.truetrack=truetrack;
+                downlinkgroups.adownlinkearthreferencegroup.truetrack_isvalid=truetrack_isvalid;
+                downlinkgroups.adownlinkearthreferencegroup.groundspeed=groundspeed;
+                downlinkgroups.adownlinkearthreferencegroup.verticalrate=verticalrate;
+                downlinkgroups.adownlinkearthreferencegroup.valid=true;
 
                 i+=6;//goto next message
                 break;
@@ -321,16 +321,16 @@ bool ArincParse::parseDownlinkmessage(ACARSItem &acarsitem)//QString &msg)
 
                 arincmessage.info+=middlespacer+((QString)"Lat = %1 Long = %2 Alt = %3 feet. Time past the hour = %4 FOM = %5\n").arg(latitude).arg(longitude).arg(altitude).arg(ts_str).arg((((QString)"%1").arg(FOM,2, 16, QChar('0'))).toUpper());
 
-                //send a report to anyone who cares
-                adownlinkbasicreportgroup.AESID=acarsitem.isuitem.AESID;
-                adownlinkbasicreportgroup.downlinkheader=downlinkheader;
-                adownlinkbasicreportgroup.messagetype=(ADSDownlinkMessages)appmessage_bytes.at(i);
-                adownlinkbasicreportgroup.latitude=latitude;
-                adownlinkbasicreportgroup.longitude=longitude;
-                adownlinkbasicreportgroup.altitude=altitude;
-                adownlinkbasicreportgroup.time_stamp=time_stamp;
-                adownlinkbasicreportgroup.FOM=FOM;
-                emit DownlinkBasicReportGroupSignal(adownlinkbasicreportgroup);
+                //populate group
+                downlinkgroups.adownlinkbasicreportgroup.AESID=acarsitem.isuitem.AESID;
+                downlinkgroups.adownlinkbasicreportgroup.downlinkheader=downlinkheader;
+                downlinkgroups.adownlinkbasicreportgroup.messagetype=(ADSDownlinkMessages)appmessage_bytes.at(i);
+                downlinkgroups.adownlinkbasicreportgroup.latitude=latitude;
+                downlinkgroups.adownlinkbasicreportgroup.longitude=longitude;
+                downlinkgroups.adownlinkbasicreportgroup.altitude=altitude;
+                downlinkgroups.adownlinkbasicreportgroup.time_stamp=time_stamp;
+                downlinkgroups.adownlinkbasicreportgroup.FOM=FOM;
+                downlinkgroups.adownlinkbasicreportgroup.valid=true;
 
                 i+=11;//goto next message
                 break;
@@ -401,6 +401,15 @@ bool ArincParse::parseDownlinkmessage(ACARSItem &acarsitem)//QString &msg)
             default:
                 arincmessage.info+=((QString)"Group %1 unknown. Can't continue\n").arg((uchar)appmessage_bytes.at(i));
                 fail=true;//fail cos we have no idea what to do
+
+                /* not sure what would be best. hmmm
+                //lets say we dont trust this packet. In future if they change the format we will have to either add the group or remove this
+                downlinkgroups.clear();
+                arincmessage.clear();
+                arincmessage.downlink=acarsitem.downlink;
+                */
+
+
                 break;
             }
         }
@@ -432,6 +441,32 @@ bool ArincParse::parseDownlinkmessage(ACARSItem &acarsitem)//QString &msg)
 
     //qDebug()<<" ";
     //qDebug()<<arincmessage.info.toLatin1().data();
+
+
+    //if valid send a report to anyone who cares
+    if(downlinkgroups.isValid())
+    {
+
+        //tmp time check. time check now done in sbs
+       /* double ts_min=qFloor(downlinkgroups.adownlinkbasicreportgroup.time_stamp/60.0);
+        double ts_sec=qFloor(downlinkgroups.adownlinkbasicreportgroup.time_stamp-ts_min*60.0);
+        double ts_ms=qFloor((downlinkgroups.adownlinkbasicreportgroup.time_stamp-ts_min*60.0-ts_sec)*1000.0);
+        QDateTime now=QDateTime::currentDateTimeUtc();
+        QDateTime ts=now;
+        ts.setTime(QTime(now.time().hour(),ts_min,ts_sec,ts_ms));
+        if(ts.secsTo(now)<-1800)ts=ts.addSecs(-3600);
+        if(ts.secsTo(now)>1800)ts=ts.addSecs(3600);
+        if(qAbs(ts.secsTo(now))>900)//15mins
+        {
+            qDebug()<<"Time way out.";
+            qDebug()<<acarsitem.message;
+        }*/
+
+
+        emit DownlinkGroupsSignal(downlinkgroups);
+
+
+    }
 
     return true;
 

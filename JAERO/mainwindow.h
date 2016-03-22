@@ -54,6 +54,7 @@ private:
     //
 
     AeroL *aerol;
+    AeroL *aerol2;
 
     SettingsDialog *settingsdialog;
 
