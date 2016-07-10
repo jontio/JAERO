@@ -7,6 +7,7 @@
 #include <QMessageBox>
 #include "../databasetext.h"
 
+QString settings_name="";
 
 SettingsDialog::SettingsDialog(QWidget *parent) :
     QDialog(parent),
@@ -80,7 +81,7 @@ void SettingsDialog::poulatepublicvars()
         QString tstr=ui->lineEdittcpoutputadsmessagesaddress->text().section(':',1,1);
         ui->lineEdittcpoutputadsmessagesaddress->setText("0.0.0.0:"+tstr);
         tcp_for_ads_messages_address.clear();
-        QSettings settings("Jontisoft", "JAERO");
+        QSettings settings("Jontisoft", settings_name);
         settings.setValue("lineEdittcpoutputadsmessagesaddress", "0.0.0.0:"+tstr);
         qDebug()<<"Can't set TCP address reverting to 0.0.0.0";
     }
@@ -89,7 +90,7 @@ void SettingsDialog::poulatepublicvars()
     {
         qDebug()<<"Can't set TCP port reverting to 30003";
         ui->lineEdittcpoutputadsmessagesaddress->setText(hostaddr+":30003");
-        QSettings settings("Jontisoft", "JAERO");
+        QSettings settings("Jontisoft", settings_name);
         settings.setValue("lineEdittcpoutputadsmessagesaddress", hostaddr+":30003");
         tcp_for_ads_messages_port=30003;
     }
@@ -107,7 +108,7 @@ void SettingsDialog::populatesettings()
         ui->comboBoxsoundcard->addItem(deviceInfo.deviceName());
 
     //load settings
-    QSettings settings("Jontisoft", "JAERO");
+    QSettings settings("Jontisoft", settings_name);
     ui->comboBoxDisplayformat->setCurrentIndex(settings.value("comboBoxDisplayformat",2).toInt());
     ui->lineEditdonotdisplaysus->setText(settings.value("lineEditdonotdisplaysus","26 0A C0 00 14 16").toString());
     ui->checkBoxdropnontextmsgs->setChecked(settings.value("checkBoxdropnontextmsgs",true).toBool());
@@ -140,7 +141,7 @@ void SettingsDialog::accept()
 {    
 
     //save settings
-    QSettings settings("Jontisoft", "JAERO");
+    QSettings settings("Jontisoft", settings_name);
     settings.setValue("comboBoxDisplayformat", ui->comboBoxDisplayformat->currentIndex());
     settings.setValue("lineEditdonotdisplaysus", ui->lineEditdonotdisplaysus->text());
     settings.setValue("checkBoxdropnontextmsgs", ui->checkBoxdropnontextmsgs->isChecked());

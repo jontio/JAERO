@@ -18,6 +18,7 @@
 #include <QScrollBar>
 #include <QMessageBox>
 #include <QMenuBar>
+#include "settingsdialog.h"
 
 void PlaneLog::imageUpdateslot(const QPixmap &image)
 {
@@ -169,7 +170,7 @@ PlaneLog::PlaneLog(QWidget *parent) :
     connect(toolBar,SIGNAL(visibilityChanged(bool)),this,SLOT(updatescrollbar()));
 
     //load settings
-    QSettings settings("Jontisoft", "JAERO");
+    QSettings settings("Jontisoft", settings_name);
     QFontMetrics fm(ui->tableWidget->font());
     ui->tableWidget->setRowCount(settings.value("tableWidget-rows",0).toInt());
     for(int row=0;row<ui->tableWidget->rowCount();row++)
@@ -218,7 +219,7 @@ PlaneLog::~PlaneLog()
     //other options could be then easy to backup if need be
     //QSettings settings(QSettings::IniFormat, QSettings::UserScope,"Jontisoft", "JAERO");
     //QSettings settings(afilename,QSettings::IniFormat);
-    QSettings settings("Jontisoft", "JAERO");
+    QSettings settings("Jontisoft", settings_name);
     settings.setValue("tableWidget-rows",ui->tableWidget->rowCount());
     for(int row=0;row<ui->tableWidget->rowCount();row++)
     {
@@ -664,7 +665,7 @@ void PlaneLog::plainTextEditnotesChanged()
 void PlaneLog::on_actionExport_log_triggered()
 {
     //ask for name
-    QSettings settings("Jontisoft", "JAERO");
+    QSettings settings("Jontisoft", settings_name);
     QString filename=QFileDialog::getSaveFileName(this,tr("Save as"), settings.value("exportimportloc",QStandardPaths::standardLocations(QStandardPaths::DocumentsLocation)[0]+"/jaerologwindow.csv").toString(), tr("CSV file (*.csv)"));
     if(filename.isEmpty())return;
     settings.setValue("exportimportloc",filename);
@@ -717,7 +718,7 @@ void PlaneLog::on_actionImport_log_triggered()
 {
 
     //ask for name
-    QSettings settings("Jontisoft", "JAERO");
+    QSettings settings("Jontisoft", settings_name);
     QString filename=QFileDialog::getOpenFileName(this,tr("Open file"), settings.value("exportimportloc",QStandardPaths::standardLocations(QStandardPaths::DocumentsLocation)[0]+"/jaerologwindow.csv").toString(), tr("CSV file (*.csv)"));
     if(filename.isEmpty())return;
     settings.setValue("exportimportloc",filename);

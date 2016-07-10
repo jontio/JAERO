@@ -15,6 +15,8 @@
 #include <QAudioDeviceInfo>
 #include "../downloadmanager.h"
 
+extern QString settings_name;
+
 namespace Ui {
 class SettingsDialog;
 }

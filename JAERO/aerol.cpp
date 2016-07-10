@@ -1247,23 +1247,42 @@ QByteArray &AeroL::Decode(QVector<short> &bits)//0 bit --> oldest bit
                                     int byte5=((uchar)infofield[k*12-1+5]);
                                     int byte6=((uchar)infofield[k*12-1+6]);
 
-                                    //int byte7=((uchar)infofield[k*12-1+7]);
-                                    //int byte8=((uchar)infofield[k*12-1+8]);
+                                    int byte7=((uchar)infofield[k*12-1+7]);
+                                    int byte8=((uchar)infofield[k*12-1+8]);
 
-                                    //int byte9=((uchar)infofield[k*12-1+9]);
-                                    //int byte10=((uchar)infofield[k*12-1+10]);
+                                    int byte9=((uchar)infofield[k*12-1+9]);
+                                    int byte10=((uchar)infofield[k*12-1+10]);
 
                                     int channel1=(((byte5<<8)&0xFF00)|(byte6&0x00FF));
-                                    //int channel2=(((byte7<<8)&0xFF00)|(byte8&0x00FF));
-                                    //int channel3=(((byte9<<8)&0xFF00)|(byte10&0x00FF));
+                                    int channel2=(((byte7<<8)&0xFF00)|(byte8&0x00FF));
+                                    int channel3=(((byte9<<8)&0xFF00)|(byte10&0x00FF));
                                     double freq1=(((double)channel1)*0.0025)+1510.0;
-                                    //double freq2=(((double)channel2)*0.0025)+1510.0;
-                                    //double freq3=(((double)channel3)*0.0025)+1510.0;
+                                    double freq2=(((double)channel2)*0.0025)+1510.0;
+                                    double freq3=(((double)channel3)*0.0025)+1510.0;
 
-                                    //int seqno=(byte3>>2)&0x3F;
+                                    int seqno=(byte3>>2)&0x3F;
                                     int lsu=byte3&0x03;
 
-                                    if(lsu<=1)decline+=((" GES = "+(((QString)"%1").arg(ges, 2, 16, QChar('0')).toUpper()))+((QString)" --> Psmc = %1MHz").arg(freq1,0, 'f', 4));
+                                    if(lsu<=1)
+                                    {
+                                        freq2+=101.5;
+                                        freq3+=101.5;
+                                        decline+=((QString)" Seq = %1 ").arg(seqno)+(("GES = "+(((QString)"%1").arg(ges, 2, 16, QChar('0')).toUpper()))+((QString)" --> Psmc  = %1MHz (RX), Rsmc0 = %2MHz (TX), Rsmc1 = %3MHz (TX)").arg(freq1,0, 'f', 4).arg(freq2,0, 'f', 4).arg(freq3,0, 'f', 4));
+                                    }
+                                    else if(lsu==2)
+                                    {
+                                        freq1+=101.5;
+                                        freq2+=101.5;
+                                        freq3+=101.5;
+                                        decline+=((QString)" Seq = %1 ").arg(seqno)+(("GES = "+(((QString)"%1").arg(ges, 2, 16, QChar('0')).toUpper()))+((QString)" --> Rsmc2 = %1MHz (TX), Rsmc3 = %2MHz (TX), Rsmc4 = %3MHz (TX)").arg(freq1,0, 'f', 4).arg(freq2,0, 'f', 4).arg(freq3,0, 'f', 4));
+                                    }
+                                    else if(lsu==3)
+                                    {
+                                        freq1+=101.5;
+                                        freq2+=101.5;
+                                        freq3+=101.5;
+                                        decline+=((QString)" Seq = %1 ").arg(seqno)+(("GES = "+(((QString)"%1").arg(ges, 2, 16, QChar('0')).toUpper()))+((QString)" --> Rsmc5 = %1MHz (TX), Rsmc6 = %2MHz (TX), Rsmc7 = %3MHz (TX)").arg(freq1,0, 'f', 4).arg(freq2,0, 'f', 4).arg(freq3,0, 'f', 4));
+                                    }
 
                                 }
                                     break;
@@ -1274,7 +1293,7 @@ QByteArray &AeroL::Decode(QVector<short> &bits)//0 bit --> oldest bit
                                     decline+="AES_system_table_broadcast_index";
                                     break;
                                 case AES_system_table_broadcast_satellite_identification_COMPLETE:
-                                    decline+="AES_system_table_broadcast_satellite_identification_COMPLETE";
+                                    decline+="AES_system_table_broadcast_satellite_id_COMPLETE";
                                 {
                                     int byte3=((uchar)infofield[k*12-1+3]);
                                     int byte4=((uchar)infofield[k*12-1+4]);
@@ -1307,10 +1326,10 @@ QByteArray &AeroL::Decode(QVector<short> &bits)//0 bit --> oldest bit
                                     QString longitude_qstr;
                                     if(longitude>180.0)longitude_qstr=(QString("%1W")).arg(360.0-longitude);
                                     else longitude_qstr=(QString("%1E")).arg(longitude);
-                                    if(channel2!=0)decline+=((QString)" SATELLITE ID = %1 (Long %3) SEQUENCE NO = %2 Psmc1 = %4MHz%6 Psmc2 = %5MHz%7").arg(satid).arg(seqno).arg(longitude_qstr).arg(cac_freq1,0, 'f', 4).arg(cac_freq2,0, 'f', 4).arg(spotbeam1qstr).arg(spotbeam2qstr);
-                                    else decline+=((QString)" SATELLITE ID = %1 (Long %3) SEQUENCE NO = %2  Psmc1 = %4MHz%5").arg(satid).arg(seqno).arg(longitude_qstr).arg(cac_freq1,0, 'f', 4).arg(spotbeam1qstr);
-                                    //if(channel2!=0)decline+=((QString)" SATELLITE ID = %1 (Long %3 RA %6 INC %7) SEQUENCE NO = %2 Psmc1 = %4MHz Psmc2 = %5MHz").arg(satid).arg(seqno).arg(longitude_qstr).arg(cac_freq1,0, 'f', 3).arg(cac_freq2,0, 'f', 3).arg(ra).arg(inc);
-                                    // else decline+=((QString)" SATELLITE ID = %1 (Long %3 RA %5 INC %6) SEQUENCE NO = %2  Psmc1 = %4MHz").arg(satid).arg(seqno).arg(longitude_qstr).arg(cac_freq1,0, 'f', 3).arg(ra).arg(inc);
+                                    if(channel2!=0)decline+=((QString)" SATELLITE ID = %1 (Long %3) Seq = %2 Psmc1 = %4MHz%6 Psmc2 = %5MHz%7").arg(satid).arg(seqno).arg(longitude_qstr).arg(cac_freq1,0, 'f', 4).arg(cac_freq2,0, 'f', 4).arg(spotbeam1qstr).arg(spotbeam2qstr);
+                                    else decline+=((QString)" SATELLITE ID = %1 (Long %3) Seq = %2  Psmc1 = %4MHz%5").arg(satid).arg(seqno).arg(longitude_qstr).arg(cac_freq1,0, 'f', 4).arg(spotbeam1qstr);
+                                    //if(channel2!=0)decline+=((QString)" SATELLITE ID = %1 (Long %3 RA %6 INC %7) Seq = %2 Psmc1 = %4MHz Psmc2 = %5MHz").arg(satid).arg(seqno).arg(longitude_qstr).arg(cac_freq1,0, 'f', 3).arg(cac_freq2,0, 'f', 3).arg(ra).arg(inc);
+                                    // else decline+=((QString)" SATELLITE ID = %1 (Long %3 RA %5 INC %6) Seq = %2  Psmc1 = %4MHz").arg(satid).arg(seqno).arg(longitude_qstr).arg(cac_freq1,0, 'f', 3).arg(ra).arg(inc);
                                 }
                                     break;
 
