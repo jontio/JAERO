@@ -1,15 +1,53 @@
 #include "sbs1.h"
+#include <QDebug>
 
-SBS1::SBS1(QObject *parent) : Tcpserver(parent)
+SBS1::SBS1(QObject *parent)
+        : QObject(parent)
 {
-//
+    tcpserver=new Tcpserver(this);
+    tcpclient=new Tcpclient(this);
+    lastbehaveasclient=false;
+}
+
+void SBS1::starttcpconnection(const QHostAddress &address, quint16 port, bool behaveasclient)
+{
+    if(lastbehaveasclient!=behaveasclient)
+    {
+        stoptcpconnection();
+    }
+    if(behaveasclient)
+    {
+        if(lastbehaveasclient!=behaveasclient)
+        {
+            disconnect(this, SIGNAL(SendBAViaTCP(QByteArray&)), 0, 0);
+            connect(this,SIGNAL(SendBAViaTCP(QByteArray&)),tcpclient,SLOT(SendBAToTCPServer(QByteArray&)));
+        }
+        tcpclient->startclient(address,port);
+    }
+    else
+    {
+        if(lastbehaveasclient!=behaveasclient)
+        {
+            disconnect(this, SIGNAL(SendBAViaTCP(QByteArray&)), 0, 0);
+            connect(this,SIGNAL(SendBAViaTCP(QByteArray&)),tcpserver,SLOT(SendBAToAllTCPClients(QByteArray&)));
+        }
+        tcpserver->startserver(address,port);
+    }
+    lastbehaveasclient=behaveasclient;
+}
+
+void SBS1::stoptcpconnection()
+{
+    disconnect(this, SIGNAL(SendBAViaTCP(QByteArray&)), 0, 0);
+    tcpserver->stopserver();
+    tcpclient->stopclient();
 }
 
 void SBS1::DownlinkBasicReportGroupSlot(DownlinkBasicReportGroup &message)
 {
     //MSG,3,,,AES,,,,,,Call,ALT(int),,,LAT(float),LONG(float),,,0,0,0,0
     QByteArray ba=(((QString)"").sprintf("MSG,3,,,%06X,,,,,,%s,%d,,,%f,%f,,,0,0,0,0\n",message.AESID,message.downlinkheader.flightid.toLatin1().data(),qRound(message.altitude),message.latitude,message.longitude)).toLatin1();
-    SendBAToAllTCPClients(ba);
+    SendBAViaTCP(ba);
 }
 
 void SBS1::DownlinkEarthReferenceGroupSlot(DownlinkEarthReferenceGroup &message)
@@ -17,7 +55,7 @@ void SBS1::DownlinkEarthReferenceGroupSlot(DownlinkEarthReferenceGroup &message)
     if(!message.truetrack_isvalid)return;
     //MSG,3,,,AES,,,,,,Call,,GroundSpeed(int),TrueTrack(int),,,VerticalRate(int),,0,0,0,0
     QByteArray ba=(((QString)"").sprintf("MSG,3,,,%06X,,,,,,%s,,%d,%d,,,%d,,0,0,0,0\n",message.AESID,message.downlinkheader.flightid.toLatin1().data(),qRound(message.groundspeed),qRound(message.truetrack),qRound(message.verticalrate))).toLatin1();
-    SendBAToAllTCPClients(ba);
+    SendBAViaTCP(ba);
 }
 
 
@@ -69,7 +107,7 @@ void SBS1::DownlinkGroupsSlot(DownlinkGroups &groups)
         {
             //MSG,3,,,AES,,[ts_date,ts_time,now_date,now_time],Call,ALT(int),GroundSpeed(int),TrueTrack(int),LAT(float),LONG(float),VerticalRate(int),,0,0,0,0
             QByteArray ba=(((QString)"").sprintf("MSG,3,,,%06X,,%s,%s,%d,%d,%d,%f,%f,%d,,0,0,0,0\n",groups.adownlinkearthreferencegroup.AESID,datesandtimestr.data(),groups.adownlinkearthreferencegroup.downlinkheader.flightid.toLatin1().data(),qRound(groups.adownlinkbasicreportgroup.altitude),qRound(groups.adownlinkearthreferencegroup.groundspeed),qRound(groups.adownlinkearthreferencegroup.truetrack),groups.adownlinkbasicreportgroup.latitude,groups.adownlinkbasicreportgroup.longitude,qRound(groups.adownlinkearthreferencegroup.verticalrate))).toLatin1();
-            SendBAToAllTCPClients(ba);
+            SendBAViaTCP(ba);
             //qDebug()<<ba;
         }
          else
@@ -77,7 +115,7 @@ void SBS1::DownlinkGroupsSlot(DownlinkGroups &groups)
 
             //MSG,3,,,AES,,[ts_date,ts_time,now_date,now_time],Call,ALT(int),,,LAT(float),LONG(float),,,0,0,0,0
             QByteArray ba=(((QString)"").sprintf("MSG,3,,,%06X,,%s,%s,%d,,,%f,%f,,,0,0,0,0\n",groups.adownlinkbasicreportgroup.AESID,datesandtimestr.data(),groups.adownlinkbasicreportgroup.downlinkheader.flightid.toLatin1().data(),qRound(groups.adownlinkbasicreportgroup.altitude),groups.adownlinkbasicreportgroup.latitude,groups.adownlinkbasicreportgroup.longitude)).toLatin1();
-            SendBAToAllTCPClients(ba);
+            SendBAViaTCP(ba);
             //qDebug()<<ba;
 
          }

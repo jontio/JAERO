@@ -7,19 +7,25 @@
     <x>0</x>
     <y>0</y>
     <width>451</width>
-    <height>706</height>
+    <height>720</height>
    </rect>
+  </property>
+  <property name="sizePolicy">
+   <sizepolicy hsizetype="Fixed" vsizetype="Preferred">
+    <horstretch>0</horstretch>
+    <verstretch>0</verstretch>
+   </sizepolicy>
   </property>
   <property name="minimumSize">
    <size>
     <width>451</width>
-    <height>706</height>
+    <height>720</height>
    </size>
   </property>
   <property name="maximumSize">
    <size>
     <width>451</width>
-    <height>706</height>
+    <height>720</height>
    </size>
   </property>
   <property name="windowTitle">
@@ -70,7 +76,7 @@
          <x>10</x>
          <y>80</y>
          <width>401</width>
-         <height>131</height>
+         <height>121</height>
         </rect>
        </property>
        <property name="title">
@@ -155,7 +161,7 @@
         <property name="geometry">
          <rect>
           <x>20</x>
-          <y>61</y>
+          <y>60</y>
           <width>301</width>
           <height>19</height>
          </rect>
@@ -168,7 +174,7 @@
         <property name="geometry">
          <rect>
           <x>20</x>
-          <y>94</y>
+          <y>90</y>
           <width>131</width>
           <height>19</height>
          </rect>
@@ -180,8 +186,8 @@
        <widget class="QLineEdit" name="lineEditudpoutputdecodedmessagesaddress">
         <property name="geometry">
          <rect>
-          <x>160</x>
-          <y>93</y>
+          <x>150</x>
+          <y>90</y>
           <width>231</width>
           <height>21</height>
          </rect>
@@ -195,7 +201,7 @@
        <property name="geometry">
         <rect>
          <x>10</x>
-         <y>510</y>
+         <y>520</y>
          <width>401</width>
          <height>101</height>
         </rect>
@@ -231,7 +237,7 @@
        <property name="geometry">
         <rect>
          <x>10</x>
-         <y>300</y>
+         <y>310</y>
          <width>401</width>
          <height>71</height>
         </rect>
@@ -295,7 +301,7 @@
        <property name="geometry">
         <rect>
          <x>10</x>
-         <y>380</y>
+         <y>390</y>
          <width>401</width>
          <height>121</height>
         </rect>
@@ -407,9 +413,9 @@
        <property name="geometry">
         <rect>
          <x>10</x>
-         <y>220</y>
+         <y>210</y>
          <width>401</width>
-         <height>71</height>
+         <height>91</height>
         </rect>
        </property>
        <property name="title">
@@ -439,6 +445,19 @@
         </property>
         <property name="text">
          <string>localhost:30003</string>
+        </property>
+       </widget>
+       <widget class="QCheckBox" name="checkTCPAsClient">
+        <property name="geometry">
+         <rect>
+          <x>20</x>
+          <y>60</y>
+          <width>161</width>
+          <height>19</height>
+         </rect>
+        </property>
+        <property name="text">
+         <string>Behave as client</string>
         </property>
        </widget>
       </widget>

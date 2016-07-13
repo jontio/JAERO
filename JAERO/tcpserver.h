@@ -30,10 +30,10 @@ class Tcpserver : public QTcpServer
 public:
     Tcpserver(QObject *parent = 0);
     ~Tcpserver();
-    void SendBAToAllTCPClients(QByteArray &ba);
     void startserver(const QHostAddress &address = QHostAddress::Any, quint16 port = 0);
     void stopserver();
 public slots:
+    void SendBAToAllTCPClients(QByteArray &ba);
 signals:
     void quitting();
     void SendBAToAllTCPClientsSignal(QByteArray &ba);

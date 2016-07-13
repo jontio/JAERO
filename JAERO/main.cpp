@@ -15,7 +15,7 @@ int main(int argc, char *argv[])
     cmdparser.addHelpOption();
     cmdparser.addVersionOption();
 
-    QCommandLineOption settingsnameoption(QStringList() << "s" << "settings-name",QCoreApplication::translate("main", "Run with setting name <name>."),QCoreApplication::translate("main", "name"));
+    QCommandLineOption settingsnameoption(QStringList() << "s" << "settings-name",QApplication::translate("main", "Run with setting name <name>."),QApplication::translate("main", "name"));
     settingsnameoption.setDefaultValue("");
     cmdparser.addOption(settingsnameoption);
 

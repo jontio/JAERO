@@ -456,7 +456,7 @@ void MainWindow::AboutSlot()
 {
     QMessageBox::about(this,"JAERO",""
                                      "<H1>An Aero demodulator and decoder</H1>"
-                                     "<H3>v1.0.4.3</H3>"
+                                     "<H3>v1.0.4.4</H3>"
                                      "<p>This is a program to demodulate and decode Aero signals. These signals contain SatCom ACARS (<em>Satelitle Comunication Aircraft Communications Addressing and Reporting System</em>) messages as used by planes beyond VHF ACARS range. This protocol is used by Inmarsat's \"Classic Aero\" system and can be received using low or medium gain L band or high gain C band antennas.</p>"
                                      "<p>For more information about this application see <a href=\"http://jontio.zapto.org/hda1/jaero.html\">http://jontio.zapto.org/hda1/jaero.html</a>.</p>"
                                      "<p>Jonti 2016</p>" );
@@ -692,9 +692,9 @@ void MainWindow::acceptsettings()
     aerol2->setDoNotDisplaySUs(settingsdialog->donotdisplaysus);
     aerol2->setDataBaseDir(settingsdialog->planesfolder);
 
-    //start or stop tcp server
-    if(settingsdialog->tcp_for_ads_messages_enabled)sbs1->startserver(settingsdialog->tcp_for_ads_messages_address,settingsdialog->tcp_for_ads_messages_port);
-     else sbs1->stopserver();
+    //start or stop tcp server/client
+    if(settingsdialog->tcp_for_ads_messages_enabled)sbs1->starttcpconnection(settingsdialog->tcp_for_ads_messages_address,settingsdialog->tcp_for_ads_messages_port,settingsdialog->tcp_as_client_enabled);
+     else sbs1->stoptcpconnection();
 
     //if soundcard rate changed
     if(typeofdemodtouse==MSK)

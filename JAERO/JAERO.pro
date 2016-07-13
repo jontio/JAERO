@@ -50,7 +50,8 @@ SOURCES += main.cpp\
     audioburstoqpskdemodulator.cpp \
     arincparse.cpp \
     tcpserver.cpp \
-    sbs1.cpp
+    sbs1.cpp \
+    tcpclient.cpp
 
 HEADERS  += mainwindow.h \
     coarsefreqestimate.h \
@@ -81,7 +82,8 @@ HEADERS  += mainwindow.h \
     audioburstoqpskdemodulator.h \
     arincparse.h \
     tcpserver.h \
-    sbs1.h
+    sbs1.h \
+    tcpclient.h
 
 FORMS    += mainwindow.ui \
     gui_classes/settingsdialog.ui \

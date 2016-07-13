@@ -95,6 +95,7 @@ void SettingsDialog::poulatepublicvars()
         tcp_for_ads_messages_port=30003;
     }
     tcp_for_ads_messages_enabled=ui->checkOutputADSMessageToTCP->isChecked();
+    tcp_as_client_enabled=ui->checkTCPAsClient->isChecked();
 
 }
 
@@ -126,6 +127,7 @@ void SettingsDialog::populatesettings()
     ui->checkOutputDecodedMessageToUDPPort->setChecked(settings.value("checkOutputDecodedMessageToUDPPort",false).toBool());
     ui->lineEdittcpoutputadsmessagesaddress->setText(settings.value("lineEdittcpoutputadsmessagesaddress","0.0.0.0:30003").toString());
     ui->checkOutputADSMessageToTCP->setChecked(settings.value("checkOutputADSMessageToTCP",false).toBool());
+    ui->checkTCPAsClient->setChecked(settings.value("checkTCPAsClient",false).toBool());
 
 
 //these have been tested so far as lineEditplanelookup
@@ -157,6 +159,7 @@ void SettingsDialog::accept()
     settings.setValue("checkOutputDecodedMessageToUDPPort", ui->checkOutputDecodedMessageToUDPPort->isChecked());  
     settings.setValue("lineEdittcpoutputadsmessagesaddress", ui->lineEdittcpoutputadsmessagesaddress->text());
     settings.setValue("checkOutputADSMessageToTCP", ui->checkOutputADSMessageToTCP->isChecked());
+    settings.setValue("checkTCPAsClient", ui->checkTCPAsClient->isChecked());
 
     poulatepublicvars();
     QDialog::accept();

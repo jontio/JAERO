@@ -51,6 +51,7 @@ public:
     QHostAddress tcp_for_ads_messages_address;
     quint16 tcp_for_ads_messages_port;
     bool tcp_for_ads_messages_enabled;
+    bool tcp_as_client_enabled;
 
 private:
     Ui::SettingsDialog *ui;    
