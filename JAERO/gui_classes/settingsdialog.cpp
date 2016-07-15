@@ -97,6 +97,8 @@ void SettingsDialog::poulatepublicvars()
     tcp_for_ads_messages_enabled=ui->checkOutputADSMessageToTCP->isChecked();
     tcp_as_client_enabled=ui->checkTCPAsClient->isChecked();
 
+    ui->checkTCPAsClient->setEnabled(ui->checkOutputADSMessageToTCP->isChecked());
+
 }
 
 
@@ -220,4 +222,10 @@ void SettingsDialog::DataBaseUpdateSugestion()
         msgBox.exec();
     }
     settings.setValue("updatedbinformed3", true);
+}
+
+void SettingsDialog::on_checkOutputADSMessageToTCP_stateChanged(int arg1)
+{
+    if(!arg1)ui->checkTCPAsClient->setEnabled(false);
+     else ui->checkTCPAsClient->setEnabled(true);
 }

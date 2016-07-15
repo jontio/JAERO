@@ -67,6 +67,7 @@ private slots:
     void on_lineEditplanesfolder_editingFinished();
     void on_pushButtonDownloadDB_clicked();
     void DownloadDBResult(const QUrl &url, bool result);
+    void on_checkOutputADSMessageToTCP_stateChanged(int arg1);
 };
 
 #endif // SETTINGSDIALOG_H
