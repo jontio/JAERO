@@ -6,11 +6,13 @@ SBS1::SBS1(QObject *parent)
 {
     tcpserver=new Tcpserver(this);
     tcpclient=new Tcpclient(this);
+    running=false;
 }
 
 void SBS1::starttcpconnection(const QHostAddress &address, quint16 port, bool behaveasclient)
 {
     static bool lastbehaveasclient=!behaveasclient;
+    if(!running)lastbehaveasclient=!behaveasclient;
     if(lastbehaveasclient!=behaveasclient)
     {
         stoptcpconnection();
@@ -34,6 +36,7 @@ void SBS1::starttcpconnection(const QHostAddress &address, quint16 port, bool be
         tcpserver->startserver(address,port);
     }
     lastbehaveasclient=behaveasclient;
+    running=true;
 }
 
 void SBS1::stoptcpconnection()
@@ -41,6 +44,7 @@ void SBS1::stoptcpconnection()
     disconnect(this, SIGNAL(SendBAViaTCP(QByteArray&)), 0, 0);
     tcpserver->stopserver();
     tcpclient->stopclient();
+    running=false;
 }
 
 void SBS1::DownlinkBasicReportGroupSlot(DownlinkBasicReportGroup &message)

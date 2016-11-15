@@ -22,6 +22,7 @@ public slots:
 private:
     Tcpserver *tcpserver;
     Tcpclient *tcpclient;
+    bool running;
 };
 
 #endif // SBS1_H
