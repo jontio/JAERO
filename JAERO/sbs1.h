@@ -22,7 +22,6 @@ public slots:
 private:
     Tcpserver *tcpserver;
     Tcpclient *tcpclient;
-    bool lastbehaveasclient;
 };
 
 #endif // SBS1_H

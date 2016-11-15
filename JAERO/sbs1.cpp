@@ -6,11 +6,11 @@ SBS1::SBS1(QObject *parent)
 {
     tcpserver=new Tcpserver(this);
     tcpclient=new Tcpclient(this);
-    lastbehaveasclient=false;
 }
 
 void SBS1::starttcpconnection(const QHostAddress &address, quint16 port, bool behaveasclient)
 {
+    static bool lastbehaveasclient=!behaveasclient;
     if(lastbehaveasclient!=behaveasclient)
     {
         stoptcpconnection();
