@@ -122,7 +122,7 @@ void SettingsDialog::populatesettings()
     ui->lineEditplanesfolder->setText(settings.value("lineEditplanesfolder",QStandardPaths::standardLocations(APPDATALOCATIONS)[0]+"/planes").toString());
     ui->lineEditplanelookup->setText(settings.value("lineEditplanelookup","http://www.flightradar24.com/data/airplanes/{REG}").toString());
     //ui->lineEditplanelookup->setText(settings.value("lineEditplanelookup","http://junzisun.com/aif/?q={AES}#").toString());
-    ui->lineEditDBURL->setText(settings.value("lineEditDBURL2","http://junzisun.com/adb/download").toString());
+    ui->lineEditDBURL->setText(settings.value("lineEditDBURL2","https://junzisun.com/adb/download").toString());
     ui->checkBoxbeepontextmessage->setChecked(settings.value("checkBoxbeepontextmessage",true).toBool());
     lastdbupdate=settings.value("lastdbupdate3").toDate();
     ui->lineEditudpoutputdecodedmessagesaddress->setText(settings.value("lineEditudpoutputdecodedmessagesaddress","localhost:18765").toString());
@@ -131,6 +131,10 @@ void SettingsDialog::populatesettings()
     ui->checkOutputADSMessageToTCP->setChecked(settings.value("checkOutputADSMessageToTCP",false).toBool());
     ui->checkTCPAsClient->setChecked(settings.value("checkTCPAsClient",false).toBool());
 
+    //csv url change as of December 2016. The url has gone from http to https but that seems to be the only change.
+    //this will see if anyone is using the old http address and chenage it to https.
+    //the downside is the old address can't be used with this line present
+    if(ui->lineEditDBURL->text()=="http://junzisun.com/adb/download")ui->lineEditDBURL->setText("https://junzisun.com/adb/download");
 
 //these have been tested so far as lineEditplanelookup
 //http://junzisun.com/aif/?q={AES}#
