@@ -5,6 +5,8 @@
 #include <QStandardPaths>
 #include <QFile>
 #include <QMessageBox>
+#include <QProcess>
+#include <QDir>
 #include "../databasetext.h"
 
 QString settings_name="";
@@ -203,6 +205,25 @@ void SettingsDialog::DownloadDBResult(const QUrl &url,bool result)
         QSettings settings("Jontisoft", "JAERO");
         if(result)settings.setValue("lastdbupdate3", QDate::currentDate());
         settings.setValue("updatedbinformed3", false);
+
+        //decompress
+        //why does that guy always keep changing his format??
+        //bit of a hack but I'm tired of this
+        QProcess gzip;
+        gzip.start("gzip.exe", QStringList() <<"-d"<<"-S"<<".csv"<<"-f"<< ui->lineEditplanesfolder->text()+"/new.aircrafts_dump.csv");
+        if (gzip.waitForStarted())
+        {
+            if (gzip.waitForFinished())
+            {
+                QDir adir;
+                if(adir.exists(ui->lineEditplanesfolder->text()+"/new.aircrafts_dump"))
+                {
+                    adir.rename(ui->lineEditplanesfolder->text()+"/new.aircrafts_dump",ui->lineEditplanesfolder->text()+"/new.aircrafts_dump.csv");
+                }
+            }
+        }
+
+
         if(dbtext!=NULL)dbtext->importdb(ui->lineEditplanesfolder->text());
     }
 }
