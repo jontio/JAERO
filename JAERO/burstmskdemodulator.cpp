@@ -193,10 +193,7 @@ void BurstMskDemodulator::setSettings(Settings _settings)
     agc = new AGC(1,Fs);
 
     delete agc2;
-    agc2 = new AGC(4,Fs);
-
-
-
+    agc2 = new AGC(SamplesPerSymbol*64.0/Fs,Fs);
 
     delete ebnomeasure;
     ebnomeasure = new MSKEbNoMeasure(0.25*Fs);//1 second ave //SamplesPerSymbol*125);//125 symbol averaging
@@ -232,13 +229,11 @@ void BurstMskDemodulator::setSettings(Settings _settings)
         delete mav1;
         mav1= new MovingAverage(SamplesPerSymbol*126);
         bt_ma_diff.setdelay(SamplesPerSymbol*126);//not sure whats best
-
         pdet.setSettings((int)(SamplesPerSymbol*126.0/2.0),0.1);
 
         delete fftr;
         int N=4096*4*2;
         fftr = new FFTr(N,false);
-
 
         // changed trident from 120 to 194, half of 74 + 120
         tridentbuffer_sz=qRound((200.0)*SamplesPerSymbol);//room for trident and preamble and a bit more
@@ -247,19 +242,12 @@ void BurstMskDemodulator::setSettings(Settings _settings)
 
         //set this delay so it lines up to end of the peak detector and thus starts at the start tone of the burst
         d1.setLength(((int) 289 * SamplesPerSymbol) + 20);//adjust so start of burst aligns
-
-        //d2.setLength(qRound((126.0)*SamplesPerSymbol) );//delay line for aligning demod to output of trident check and freq est, was 120
         d2.setLength(qRound((72.0)*SamplesPerSymbol) );//delay line for aligning demod to output of trident check and freq est, was 120
 
         in.resize(N);
         out_base.resize(N);
         out_top.resize(N);
         out_abs_diff.resize(N/2);
-
-        //pdet.setSettings((int)(SamplesPerSymbol*74.0/2.0),0.2);
-
-
-        startstopstart=SamplesPerSymbol*(1050);//(256+2000);//128);
 
         trackingDelay = 10*SamplesPerSymbol;
 
@@ -498,9 +486,13 @@ qint64 BurstMskDemodulator::writeData(const char *data, qint64 len)
             // ok so now we have the center bin, maxtoppos and one of the side peaks, should be to the left of the main peak, minvalbin
             int distfrompeak = std::abs(maxtoppos - minvalbin);
 
+
+
             // check if the side peak is within the expected range +/- 5%
             if(minval>500.0 && std::abs(distfrompeak-peakspacingbins) < std::abs(peakspacingbins/20))
             {
+
+                std::cout << " got peak " << minval << " dist " << distfrompeak << "\r\n" << std::flush;
 
                 //set the demodulator carrier freq and phase using estimates
                 //double carrierphase=std::arg(out_base[minvalbin])-(M_PI/4.0);
@@ -530,7 +522,7 @@ qint64 BurstMskDemodulator::writeData(const char *data, qint64 len)
                 }
 
                 //set gain given estimate
-                vol_gain=(1.4142*500.0/minval);
+                vol_gain=1.4142*500.0/minval;
 
                 pointbuff.fill(0);
                 pointmean->Zero();
@@ -575,24 +567,23 @@ qint64 BurstMskDemodulator::writeData(const char *data, qint64 len)
             cntr = 0;
         }
 
-
-        //matched filter.
-        cval= mixer2.WTCISValue()*(vol_gain*val_to_demod);
-        cpx_type sig2 = cpx_type(matchedfilter_re->FIRUpdateAndProcess(cval.real()),matchedfilter_im->FIRUpdateAndProcess(cval.imag()));
-
-
-        //Measure ebno
-        ebnomeasure->Update(std::abs(sig2));
-
-        //AGC
-        sig2*=agc2->Update(std::abs(sig2));
-
-        //clipping
-        double abval=std::abs(sig2);
-        if(abval>2.84)sig2=(2.84/abval)*sig2;
-
-
         if(startstop > 0){
+
+            //matched filter.
+            cval= mixer2.WTCISValue()*(vol_gain*val_to_demod);
+            cpx_type sig2 = cpx_type(matchedfilter_re->FIRUpdateAndProcess(cval.real()),matchedfilter_im->FIRUpdateAndProcess(cval.imag()));
+
+
+            //Measure ebno
+            ebnomeasure->Update(std::abs(sig2));
+
+            //AGC
+            sig2*=agc2->Update(std::abs(sig2));
+
+            //clipping
+            double abval=std::abs(sig2);
+            if(abval>2.84)sig2=(2.84/abval)*sig2;
+
 
             //for coarse freq estimation
             bbcycbuff[bbcycbuff_ptr]=mixer_center.WTCISValue()*val_to_demod;
@@ -851,12 +842,12 @@ qint64 BurstMskDemodulator::writeData(const char *data, qint64 len)
                 }
                 mse/=((double)pointsloaded);
 
-                /*
+
                 if(cntr < 30000){
                    std::cout << "symboltimginphaseest " << symboltimginphaseest << "rotation estimate " << rotationest << " symboltimingstartest " << symboltimingstartest << " tracker phase " << symtracker.Phase << " freq " << symtracker.Freq << " carrier error " << carriererror << " " << mse << "\r\n";
 
                 }
-                */
+
                 if(!RxDataBits.isEmpty()){
 
                     emit processDemodulatedSoftBits(RxDataBits);
