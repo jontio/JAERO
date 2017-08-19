@@ -232,17 +232,6 @@ private slots:
     void acarslookupresult(bool ok, int ref, const QStringList &result);
 };
 
-class PuncturedCode
-{
-public:
-    PuncturedCode();
-    void depunture_soft_block(QByteArray &block,int pattern, bool reset=true);
-    void punture_soft_block(QByteArray &block, int pattern, bool reset=true);
-private:
-    int punture_ptr;
-    int depunture_ptr;
-};
-
 class AeroLcrc16 //this seems to be called GENIBUS not CCITT
 {
 public:
