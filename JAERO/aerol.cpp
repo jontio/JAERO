@@ -2,6 +2,7 @@
 #include <QtEndian>
 
 //R channel
+
 int RISUData::findisuitem(RISUItem &anisuitem)
 {
     if(anisuitem.SUTYPE>11)return -1;
@@ -170,7 +171,7 @@ bool ISUData::update(QByteArray data)
 
         int idx=findisuitem71(anisuitem);
         if(idx<0)isuitems.push_back(anisuitem);
-         else isuitems[idx]=anisuitem;
+        else isuitems[idx]=anisuitem;
 
         //qDebug()<<(((QString)"71 isudata: AESID = %1 GESID = %2 QNO = %3 REFNO = %4 SEQNO = %5 NOOCTLESTINLASTSSU = %6").arg(anisuitem.AESID).arg(anisuitem.GESID).arg(anisuitem.QNO).arg(anisuitem.REFNO).arg(anisuitem.SEQNO).arg(anisuitem.NOOCTLESTINLASTSSU));
     }
@@ -186,6 +187,7 @@ bool ISUData::update(QByteArray data)
         int idx=findisuitemC0(anisuitem);
         if(idx<0)
         {
+
             //qDebug()<<"missing su/ssu";
             missingssu=true;
             return false;
@@ -201,18 +203,19 @@ bool ISUData::update(QByteArray data)
             //qDebug()<<"final ssu";
             return true;
         }
-         else for(int i=2;i<=9;i++)pisuitem->userdata+=data[i];
+        else for(int i=2;i<=9;i++)pisuitem->userdata+=data[i];
 
         //qDebug()<<((QString)"").sprintf("ssu data: SEQNO %d, QNO %d, REFNO %d",pisuitem->SEQNO,pisuitem->QNO,pisuitem->REFNO);
     }
         break;
     }
+
     return false;
 }
 
 int ACARSDefragmenter::findfragment(ACARSItem &acarsitem)
 {
-//    QString tmp;
+    //    QString tmp;
     for(int idx=0;idx<acarsitemexts.size();idx++)
     {
         ACARSItemext *pitem=&acarsitemexts[idx];
@@ -233,31 +236,31 @@ int ACARSDefragmenter::findfragment(ACARSItem &acarsitem)
                 (acarsitem.PLANEREG==pitem->anacarsitem.PLANEREG)&&
                 (acarsitem.LABEL==pitem->anacarsitem.LABEL)&&
                 (acarsitem.MODE==pitem->anacarsitem.MODE)&&
-               // (acarsitem.TAK==pitem->anacarsitem.TAK)&& //i found once time TAK did not match should we skip this check??
+                // (acarsitem.TAK==pitem->anacarsitem.TAK)&& //i found once time TAK did not match should we skip this check??
                 (acarsitem.isuitem.AESID==pitem->anacarsitem.isuitem.AESID)&&
                 (acarsitem.isuitem.GESID==pitem->anacarsitem.isuitem.GESID)&&
                 (pitem->anacarsitem.moretocome)
-           )
+                )
         {
 
             if(acarsitem.TAK!=pitem->anacarsitem.TAK)
             {
-        //        qDebug()<<"TAK is different??";
+                //        qDebug()<<"TAK is different??";
                 continue;
             }
 
-//            qDebug()<<(char)pitem->anacarsitem.BI;
-//            qDebug()<<(char)acarsitem.BI;
+            //            qDebug()<<(char)pitem->anacarsitem.BI;
+            //            qDebug()<<(char)acarsitem.BI;
 
             uchar expnewbi=(((pitem->anacarsitem.BI+1)-'A')%26)+'A';
             if(expnewbi==acarsitem.BI)
             {
-//                qDebug()<<"found acars fragment"<<idx;
+                //                qDebug()<<"found acars fragment"<<idx;
                 return idx;
             }
-             else
-             {
-       //         tmp="failed count test.";
+            else
+            {
+                //         tmp="failed count test.";
                 /*+expnewbi+acarsitem.BI;
                 tmp+=acarsitem.PLANEREG+"\n";
                 tmp+=acarsitem.LABEL+"\n";
@@ -265,11 +268,11 @@ int ACARSDefragmenter::findfragment(ACARSItem &acarsitem)
                 tmp+=pitem->anacarsitem.moretocome+"\n";
                 tmp+=acarsitem.isuitem.REFNO+"\n";*/
 
-             }
+            }
 
         }
     }
-        //if(!tmp.isEmpty())qDebug()<<tmp;
+    //if(!tmp.isEmpty())qDebug()<<tmp;
     return -1;
 }
 bool ACARSDefragmenter::defragment(ACARSItem &acarsitem)
@@ -332,12 +335,11 @@ ParserISU::ParserISU(QObject *parent):
 bool ParserISU::parse(ISUItem &isuitem)
 {
 
-    //qDebug()<<"parse. aesid="<<((((QString)"%1").arg(isuitem.AESID,4, 16, QChar('0'))).toUpper()).toLatin1();
-
     if(isuitem.AESID==0)
     {
         anerror="Error: AESID == 0";
         emit Errorsignal(anerror);
+
         return false;
     }
     QVector<int> parities;
@@ -373,8 +375,23 @@ bool ParserISU::parse(ISUItem &isuitem)
     //qDebug()<<"yes"<<risudata.lastvalidisuitem.userdata;
     qDebug()<<str;*/
 
-    if((isuitem.userdata.size()>16)&&((uchar)isuitem.userdata[0])==0xFF&&((uchar)isuitem.userdata[1])==0xFF&&((uchar)isuitem.userdata[2])==0x01&&((((uchar)isuitem.userdata[isuitem.userdata.size()-1-3])==0x83)||(((uchar)isuitem.userdata[isuitem.userdata.size()-1-3])==0x97))&&((uchar)isuitem.userdata[isuitem.userdata.size()-1])==0x7F&&( ((uchar)isuitem.userdata[15])==0x83 || ((uchar)isuitem.userdata[15])==0x02 ))
+    bool isacars = false;
+
+    if((isuitem.userdata.size()>16)
+            &&((uchar)isuitem.userdata[0])==0xFF
+            &&((uchar)isuitem.userdata[1])==0xFF
+           // &&((uchar)isuitem.userdata[2])==0x01
+
+            //&&((((uchar)isuitem.userdata[isuitem.userdata.size()-1-3])==0x83)
+            //   ||(((uchar)isuitem.userdata[isuitem.userdata.size()-1-3])==0x97))
+
+            //&&((uchar)isuitem.userdata[isuitem.userdata.size()-1])==0x7F
+            &&(((uchar)isuitem.userdata[15])==0x83 || ((uchar)isuitem.userdata[15])==0x02 ))
+        isacars = true;
+
+    if(isacars)
     {
+
 
         //fill in header info
         anacarsitem.clear();
@@ -394,9 +411,10 @@ bool ParserISU::parse(ISUItem &isuitem)
             byte&=0x7F;
             if(!parities[k])
             {
-                anerror=((QString)"").sprintf("ISU: AESID = %X GESID = %X QNO = %02X REFNO = %02X : Parity error",isuitem.AESID,isuitem.GESID,isuitem.QNO,isuitem.REFNO);
-                emit Errorsignal(anerror);
-                return false;
+               anerror=((QString)"").sprintf("ISU: AESID = %X GESID = %X QNO = %02X REFNO = %02X : Parity error",isuitem.AESID,isuitem.GESID,isuitem.QNO,isuitem.REFNO);
+               emit Errorsignal(anerror);
+
+               return false;
             }
             anacarsitem.PLANEREG+=(char)byte;
         }
@@ -412,15 +430,16 @@ bool ParserISU::parse(ISUItem &isuitem)
                 {
                     anerror=((QString)"").sprintf("ISU: AESID = %X GESID = %X QNO = %02X REFNO = %02X : Parity error",isuitem.AESID,isuitem.GESID,isuitem.QNO,isuitem.REFNO);
                     emit Errorsignal(anerror);
+
                     return false;
                 }
 
                 if((byte<0x20)&&(!(byte==10||byte==13)))
                 {
-//                    qDebug()<<"This is strange. byte<0x20 byte="<<byte;
+                    //                    qDebug()<<"This is strange. byte<0x20 byte="<<byte;
                 }
                 if(byte==0x7F)anacarsitem.message+="<DEL>";
-                 else anacarsitem.message+=(char)byte;
+                else anacarsitem.message+=(char)byte;
 
             }
         }
@@ -436,7 +455,6 @@ bool ParserISU::parse(ISUItem &isuitem)
             QString AESIDstr=((QString)"").sprintf("%06X",anacarsitem.isuitem.AESID);
             dbtu->request(databasedir,AESIDstr,pai);
         }
-
 
         return true;
     }
@@ -508,7 +526,7 @@ AeroLInterleaver::AeroLInterleaver()
     {
         interleaverowpermute[(i*27)%M]=i;
         interleaverowdepermute[i]=(i*27)%M;
-//        interleaverowdepermute[(i*19)%M]=i;
+        //        interleaverowdepermute[(i*19)%M]=i;
     }
     setSize(6);
 }
@@ -517,6 +535,10 @@ void AeroLInterleaver::setSize(int _N)
     if(_N<1)return;
     N=_N;
     matrix.resize(M*N);
+    matrix_ba.resize(M*N);
+    for(int a = 0; a < matrix_ba.length(); a++){
+        matrix_ba[a] = 0;
+    }
 }
 QVector<int> &AeroLInterleaver::interleave(QVector<int> &block)
 {
@@ -571,6 +593,115 @@ QVector<int> &AeroLInterleaver::deinterleave(QVector<int> &block,int cols)
     return matrix;
 }
 
+QByteArray &AeroLInterleaver::deinterleave_ba(QVector<int> &block,int cols)
+{
+    assert(cols<=N);
+    assert(block.size()>=(M*cols));
+    int k=0;
+    for(int j=0;j<cols;j++)
+    {
+        for(int i=0;i<M;i++)
+        {
+            int entry=interleaverowdepermute[i]*cols+j;
+            assert(entry<block.size());
+            assert(k<matrix_ba.size());
+            matrix_ba[k]=block[entry];
+            k++;
+        }
+    }
+    return matrix_ba;
+}
+
+
+QVector<int> &AeroLInterleaver::deinterleaveMSK(QVector<int> &block, int blocks)
+{
+    assert(block.size()>=(M*blocks));
+
+    // we need to first deinterleave 5 cols for the first block then 3 cols for the remaining blocks
+    int k=0;
+
+    for(int j=0;j<5;j++)
+    {
+        for(int i=0;i<M;i++)
+        {
+            int entry=interleaverowdepermute[i]*5+j;
+            assert(entry<5*M);
+            assert(k<matrix.size());
+            matrix[k]=block[entry];
+            k++;
+        }
+
+    }
+
+    int procblocks = 5;
+    while (k < blocks *M){
+
+
+        for(int j=0;j<3;j++)
+        {
+            for(int i=0;i<M;i++)
+            {
+                int entry=(M*procblocks) + (interleaverowdepermute[i]*3+j);
+                assert(entry < block.size());
+                assert(k<matrix.size());
+                matrix[k]=block[entry];
+                k++;
+
+            }
+        }
+        procblocks+=3;
+    }
+
+    return matrix;
+}
+
+
+QByteArray &AeroLInterleaver::deinterleaveMSK_ba(QVector<int> &block, int blocks)
+{
+    assert(block.size()>=(M*blocks));
+
+    // we need to first deinterleave 5 cols for the first block then 3 cols for the remaining blocks
+    int k=0;
+
+    for(int j=0;j<5;j++)
+    {
+        for(int i=0;i<M;i++)
+        {
+            int entry=interleaverowdepermute[i]*5+j;
+            assert(entry<5*M);
+            assert(k<matrix_ba.size());
+            matrix_ba[k]=(char)block[entry];
+            k++;
+        }
+
+    }
+
+
+    int procblocks = 5;
+
+    while (k < blocks *M){
+
+
+        for(int j=0;j<3;j++)
+        {
+            for(int i=0;i<M;i++)
+            {
+                int entry=(M*procblocks) + (interleaverowdepermute[i]*3+j);
+                assert(entry < block.size());
+                assert(k<matrix_ba.size());
+                matrix_ba[k]=(char)block[entry];
+                k++;
+
+            }
+        }
+        procblocks+=3;
+    }
+
+
+    return matrix_ba;
+}
+
+
 PreambleDetector::PreambleDetector()
 {
     preamble.resize(1);
@@ -591,7 +722,7 @@ bool PreambleDetector::setPreamble(quint64 bitpreamble,int len)
     for(int i=len-1;i>=0;i--)
     {
         if((bitpreamble>>i)&1)preamble.push_back(1);
-         else preamble.push_back(0);
+        else preamble.push_back(0);
     }
     if(preamble.size()<1)preamble.resize(1);
     buffer.fill(0,preamble.size());
@@ -628,7 +759,7 @@ bool PreambleDetectorPhaseInvariant::setPreamble(quint64 bitpreamble,int len)
     for(int i=len-1;i>=0;i--)
     {
         if((bitpreamble>>i)&1)preamble.push_back(1);
-         else preamble.push_back(0);
+        else preamble.push_back(0);
     }
     if(preamble.size()<1)preamble.resize(1);
     buffer.fill(0,preamble.size());
@@ -646,8 +777,18 @@ int PreambleDetectorPhaseInvariant::Update(int val)
     }
     xorsum+=val^preamble[buffer.size()-1];
     buffer[buffer.size()-1]=val;
-    if(xorsum>=(buffer.size()-tollerence)){buffer.fill(0);inverted=true;return -1;}
-    if(xorsum<=tollerence){buffer.fill(0);inverted=false;return 1;}
+    if(xorsum>=(buffer.size()-tollerence)){
+
+        std::cout << "\r\n got inverted preamble xorsum " << xorsum << " tollerance " << tollerence << "\r\n" << std::flush;
+        inverted=true;
+        return true;
+    }
+    if(xorsum<=tollerence){
+        inverted=false;
+        std::cout << "\r\n got non-inverted preamble xorsum " << xorsum << " tollerance " << tollerence << "\r\n" << std::flush;
+
+        return true;
+    }
     return false;
 }
 void PreambleDetectorPhaseInvariant::setTollerence(int _tollerence)
@@ -671,6 +812,7 @@ AeroL::AeroL(QObject *parent) : QIODevice(parent)
     connect(parserisu,SIGNAL(ACARSsignal(ACARSItem&)),this,SIGNAL(ACARSsignal(ACARSItem&)));
     connect(parserisu,SIGNAL(Errorsignal(QString&)),this,SIGNAL(Errorsignal(QString&)));
 
+
     donotdisplaysus.clear();
 
     cntr=1000000000;
@@ -692,6 +834,15 @@ AeroL::AeroL(QObject *parent) : QIODevice(parent)
     convolcodec=new ViterbiCodec(7, polynomials);
     convolcodec->setPaddingLength(24);
 
+    //new viterbi decoder
+    jconvolcodec = new JConvolutionalCodec(this);
+    QVector<quint16> polys;
+    polys.push_back(109);
+    polys.push_back(79);
+    jconvolcodec->SetCode(2,7,polys,0);
+
+
+
     dl1.setLength(12);//delay for decode encode BER check
     dl2.setLength(576-6);//delay's data to next frame
 
@@ -700,6 +851,9 @@ AeroL::AeroL(QObject *parent) : QIODevice(parent)
     //Preamble detector for OQPSK
     preambledetectorphaseinvariantimag.setPreamble(3780831379LL,32);//0x3780831379,0b11100001010110101110100010010011
     preambledetectorphaseinvariantreal.setPreamble(3780831379LL,32);//0x3780831379,0b11100001010110101110100010010011
+
+    // MSK burst preamble detector
+    mskBurstDetector.setPreamble(3780831379LL,32);//0x3780831379,0b11100001010110101110100010010011
 
     //Preamble for start of burst
     QVector<int> pre;
@@ -736,12 +890,14 @@ void AeroL::setSettings(double fb, bool _burstmode)
     {
         preambledetectorphaseinvariantimag.setTollerence(4);
         preambledetectorphaseinvariantreal.setTollerence(4);
+        mskBurstDetector.setTollerence(4);
     }
-     else
-     {
+    else
+    {
         preambledetectorphaseinvariantimag.setTollerence(0);
         preambledetectorphaseinvariantreal.setTollerence(0);
-     }
+        mskBurstDetector.setTollerence(0);
+    }
     ifb=qRound(fb);
     switch(ifb)
     {
@@ -781,12 +937,23 @@ void AeroL::setSettings(double fb, bool _burstmode)
         break;
     }
 
-    if(burstmode)AERO_SPEC_TotalNumberOfBits=ifb;//1 sec countdown for burst modes
+    if(burstmode){
+
+        if(useingOQPSK){
+            AERO_SPEC_TotalNumberOfBits=ifb;//1 sec countdown for burst modes
+        }
+        else{
+            AERO_SPEC_TotalNumberOfBits=ifb*3;//3 sec countdown for burst modes
+        }
+    }
+
 }
 
 AeroL::~AeroL()
 {
     delete convolcodec;
+
+    delete jconvolcodec;
 }
 
 bool AeroL::Start()
@@ -825,20 +992,33 @@ void AeroL::updateDCD()
 
     //keep track of the DCD
     if(datacdcountdown>0)datacdcountdown-=3;
-     else {if(datacdcountdown<0)datacdcountdown=0;}
+    else {if(datacdcountdown<0)datacdcountdown=0;}
     if(datacd&&!datacdcountdown)
     {
         datacd=false;
+
         emit DataCarrierDetect(datacd);
     }
 }
 
-QByteArray &AeroL::Decode(QVector<short> &bits)//0 bit --> oldest bit
+QByteArray &AeroL::Decode(QVector<short> &bits, bool soft)//0 bit --> oldest bit
 {
     decodedbytes.clear();
 
+    quint16 bit=0;
+    quint16 soft_bit=0;
+
     for(int i=0;i<bits.size();i++)
     {
+
+
+        if(soft){
+            if(((uchar)bits[i])>=128)bit=1;
+            else bit=0;
+        }else{
+            bit=bits[i];
+        }
+        soft_bit=bits[i];
 
         //for burst mode to allow tolerance of UW
         if(bits[i]<0)
@@ -856,7 +1036,7 @@ QByteArray &AeroL::Decode(QVector<short> &bits)//0 bit --> oldest bit
             realimag++;realimag%=2;
             if(realimag)
             {
-                gotsync=preambledetectorphaseinvariantimag.Update(bits[i]);
+                gotsync=preambledetectorphaseinvariantimag.Update(bit);
                 if(!gotsync_last)
                 {
                     gotsync_last=gotsync;
@@ -865,7 +1045,7 @@ QByteArray &AeroL::Decode(QVector<short> &bits)//0 bit --> oldest bit
             }
             else
             {
-                gotsync=preambledetectorphaseinvariantreal.Update(bits[i]);
+                gotsync=preambledetectorphaseinvariantreal.Update(bit);
                 if(!gotsync_last)
                 {
                     gotsync_last=gotsync;
@@ -885,23 +1065,64 @@ QByteArray &AeroL::Decode(QVector<short> &bits)//0 bit --> oldest bit
 
             if(realimag)
             {
-                if(preambledetectorphaseinvariantimag.inverted)bits[i]=1-bits[i];
+                if(preambledetectorphaseinvariantimag.inverted)
+                {
+                    bit=1-bit;
+
+                    if(soft_bit > 128){
+                         soft_bit = 255-soft_bit;
+                    } else if (soft_bit < 128){
+                        soft_bit = 255-soft_bit;
+                    }
+
+
+                }
+
             }
             else
             {
-                if(preambledetectorphaseinvariantreal.inverted)bits[i]=1-bits[i];
+                if(preambledetectorphaseinvariantreal.inverted)
+                {
+                    bit=1-bit;
+
+                    if(soft_bit > 128){
+                         soft_bit = 255-soft_bit;
+                    } else if (soft_bit < 128){
+                        soft_bit = 255-soft_bit;
+                    }
+                }
             }
 
-        }
-         else gotsync=preambledetector.Update(bits[i]);
+        } //non 10500 burst mode use a phase invariant preamble detector
+        else if(burstmode){
 
+            gotsync=mskBurstDetector.Update(bit);
+
+
+            if(gotsync && muw > 160){
+
+               gotsync = false;
+            }
+
+
+            if(mskBurstDetector.inverted){
+
+                bit=1-bit;
+
+                if(soft_bit > 128){
+                     soft_bit = 255-soft_bit;
+                } else if (soft_bit < 128){
+                    soft_bit = 255-soft_bit;
+                }
+            }
+        }
 
         if(cntr<1000000000)cntr++;
         if(cntr<16)
         {
             if(cntr==0)
             {
-                frameinfo=bits[i];
+                frameinfo=bit;
                 infofield.clear();
                 if(burstmode)//for R and T channels there are no headers so just fill in a dummy one
                 {
@@ -910,17 +1131,18 @@ QByteArray &AeroL::Decode(QVector<short> &bits)//0 bit --> oldest bit
                     framecounter1=0;
                     framecounter2=0;
                     cntr=16;
+
                     if(rtchanneldeleavefecscram.resetblockptr()==RTChannelDeleaveFECScram::Bad_Packet)
                     {
                         decodedbytes+=" Bad R/T Packet\n";
                     }
                 }
             }
-             else
-             {
+            else
+            {
                 frameinfo<<=1;
-                frameinfo|=bits[i];
-             }
+                frameinfo|=bit;
+            }
         }
         if(cntr==15)
         {
@@ -949,7 +1171,31 @@ QByteArray &AeroL::Decode(QVector<short> &bits)//0 bit --> oldest bit
             //do rt decoding
             if(burstmode)
             {
-                switch(rtchanneldeleavefecscram.update(bits[i]))
+
+                RTChannelDeleaveFECScram::ReturnResult result;
+
+                if(useingOQPSK){
+
+                    if(soft){
+                    result = rtchanneldeleavefecscram.update(soft_bit);
+                    }else
+                    {
+                        result = rtchanneldeleavefecscram.update(bit);
+
+                    }
+
+                }else{
+
+                    if(soft){
+                    result = rtchanneldeleavefecscram.updateMSK(soft_bit);
+                    }
+                    else{
+                        result = rtchanneldeleavefecscram.updateMSK(bit);
+                    }
+
+                }
+
+                switch(result)
                 {
                 case RTChannelDeleaveFECScram::OK_R_Packet:
                 {
@@ -1072,7 +1318,7 @@ QByteArray &AeroL::Decode(QVector<short> &bits)//0 bit --> oldest bit
                             }
                             decline+="\"";*/
 
-                        break;
+                           break;
                     }
 
                     decline+='\n';
@@ -1098,7 +1344,7 @@ QByteArray &AeroL::Decode(QVector<short> &bits)//0 bit --> oldest bit
                     decline+=((QString)" T Packet from AES: %3 to GES: %4 with %5 SUs\n").arg((((QString)"%1").arg(AESID,6, 16, QChar('0'))).toUpper()).arg((((QString)"%1").arg(GES,2, 16, QChar('0'))).toUpper()).arg(rtchanneldeleavefecscram.numberofsus);
                     decodedbytes+=decline;decline.clear();
 
-                    for(int k=0;k<(rtchanneldeleavefecscram.infofield.size()-6)/12;k++)
+                    for(int k=0;k<rtchanneldeleavefecscram.numberofsus;k++)
                     {
                         for(int j=0;j<12-2;j++)
                         {
@@ -1131,11 +1377,13 @@ QByteArray &AeroL::Decode(QVector<short> &bits)//0 bit --> oldest bit
                         decline+="\n";
 
                         if((message==User_data_ISU_SSU_T_channel)&&(donotdisplaysus.contains(0xC0)))decline.clear();
-                         else if(donotdisplaysus.contains(message))decline.clear();//do not display these SUs as given to us by user
+                        else if(donotdisplaysus.contains(message))decline.clear();//do not display these SUs as given to us by user
 
                         decodedbytes+=decline;decline.clear();
 
-                    }
+                    }// done with this burst, reset data counters
+
+
 
                 }
                     break;
@@ -1154,7 +1402,7 @@ QByteArray &AeroL::Decode(QVector<short> &bits)//0 bit --> oldest bit
                 if(cntr==16)blockcnt=-1;
                 int idx=(cntr-AERO_SPEC_BitsInHeader)%block.size();
                 if(idx<0)idx=0;//for dummy bits drop
-                block[idx]=bits[i];
+                block[idx]=bit;
                 if(idx==(block.size()-1))//block is now filled
                 {
 
@@ -1163,8 +1411,10 @@ QByteArray &AeroL::Decode(QVector<short> &bits)//0 bit --> oldest bit
                     //deinterleaver
                     QVector<int> deleaveredblock=leaver.deinterleave(block);
 
-                    //viterbi decoder
+
                     QVector<int> deconvol=convolcodec->Decode_Continuous(deleaveredblock);
+
+                    //QVector<int> deconvol=jconvolcodec->Decode_Continuous(deleaveredblock);
 
                     //delay line for frame alignment for non burst modes. This is needed for the scrambler
                     dl2.update(deconvol);
@@ -1557,9 +1807,8 @@ QByteArray &AeroL::Decode(QVector<short> &bits)//0 bit --> oldest bit
                 }
             }
 
-//            decodedbytes+=((QString)"Bits for frame = %1\n").arg(cntr+1);
+            //            decodedbytes+=((QString)"Bits for frame = %1\n").arg(cntr+1);
             cntr=-1;
-//            decodedbytes+="\nGot sync\n";
 
             //got a signal
             datacd=true;
@@ -1575,7 +1824,8 @@ QByteArray &AeroL::Decode(QVector<short> &bits)//0 bit --> oldest bit
             cntr=-1;
             if(burstmode)
             {
-                //end of signal. stop processing and send dcd low
+
+               //end of signal. stop processing and send dcd low
                 cntr=1000000000;//stop processing
                 datacd=false;
                 datacdcountdown=0;
@@ -1587,7 +1837,10 @@ QByteArray &AeroL::Decode(QVector<short> &bits)//0 bit --> oldest bit
 
     }
 
-    if((!datacd)&&(!burstmode))decodedbytes.clear();
+    if((!datacd)&&(!burstmode)){
+
+        decodedbytes.clear();
+    }
 
     return decodedbytes;
 }
@@ -1611,11 +1864,11 @@ qint64 AeroL::writeData(const char *data, qint64 len)
         {
             sbits.push_back(-1);
         }
-         else for(int j=0;j<8;j++)
-         {
+        else for(int j=0;j<8;j++)
+        {
             sbits.push_back(auchar&1);
             auchar=auchar>>1;
-         }
+        }
     }
     Decode(sbits);
 
@@ -1628,3 +1881,20 @@ qint64 AeroL::writeData(const char *data, qint64 len)
     return len;
 }
 
+void AeroL::processDemodulatedSoftBits(const QVector<short> &soft_bits){
+
+
+    sbits.clear();
+
+    sbits.append(soft_bits);
+
+    Decode(sbits, true);
+
+    if(!psinkdevice.isNull())
+    {
+        QIODevice *out=psinkdevice.data();
+        if(out->isOpen())out->write(decodedbytes);
+    }
+
+
+}

@@ -1,5 +1,6 @@
 #include "burstoqpskdemodulator.h"
 #include "gui_classes/qspectrumdisplay.h"
+#include <iostream>
 
 BurstOqpskDemodulator::BurstOqpskDemodulator(QObject *parent)
     :   QIODevice(parent)
@@ -98,6 +99,7 @@ BurstOqpskDemodulator::BurstOqpskDemodulator(QObject *parent)
 
     //rxdata
     RxDataBytes.reserve(1000);//packed in bytes
+    RxDataBits.reserve(8000); // unpacked soft bits
 
     ebnomeasure = new OQPSKEbNoMeasure(SamplesPerSymbol*(256.0),Fs,fb);//256 symbol ave, Fs and fb
 
@@ -378,7 +380,8 @@ void BurstOqpskDemodulator::writeDataSlot(const char *data, qint64 len)
         if(pdet.update(bt_sig))
         {
             tridentbuffer_ptr=0;
-        }
+
+         }
 
         if(tridentbuffer_ptr<tridentbuffer_sz)//fill trident buffer
         {
@@ -388,6 +391,7 @@ void BurstOqpskDemodulator::writeDataSlot(const char *data, qint64 len)
          else if(tridentbuffer_ptr==tridentbuffer_sz)//trident buffer is now filled so now check for trident and carrier freq and phase and amplitude
          {
             tridentbuffer_ptr++;
+
 
             //base
             in=tridentbuffer.mid(0,qRound(128.0*SamplesPerSymbol));
@@ -401,8 +405,15 @@ void BurstOqpskDemodulator::writeDataSlot(const char *data, qint64 len)
             for(int k=qRound(128.0*SamplesPerSymbol);k<in.size();k++)in[k]=0;
             fftr->transform(in,out_top);
 
-            //diff
-            for(int i=0;i<out_abs_diff.size();i++)out_abs_diff[i]=(std::abs(out_top[i])-std::abs(out_base[i]));
+                 //diff
+            for(int i=0;i<out_abs_diff.size();i++){
+
+                out_abs_diff[i]=(std::abs(out_top[i])-std::abs(out_base[i]));
+
+
+            }
+
+
 
             //find best trident loc
             double hzperbin=Fs/((double)out_base.size());
@@ -517,17 +528,12 @@ void BurstOqpskDemodulator::writeDataSlot(const char *data, qint64 len)
             emit SignalStatus(false);
         }
 
+
+
         if((cntr>((256-10)*SamplesPerSymbol))&&insertpreamble)
         {
+            RxDataBits.push_back(-1);
             insertpreamble=false;
-            RxDataBytes.push_back((uchar)0x11);
-            RxDataBytes.push_back((uchar)0x07);
-            RxDataBytes.push_back((uchar)0x42);
-            RxDataBytes.push_back((char)0x00);
-            RxDataBytes.push_back((char)0x00);
-            RxDataBytes.push_back((uchar)0x13);
-            RxDataBytes.push_back((uchar)0x09);
-//            qDebug()<<"UW almost here";
         }
 
         //symbol tone in preamble
@@ -681,35 +687,30 @@ void BurstOqpskDemodulator::writeDataSlot(const char *data, qint64 len)
                 //if(startstop>0)//if signal then may as well demodulate
                 {
 
-                    //hard BPSK demod x2
-                    bool pt_qpsk_imag_demod=0;
-                    bool pt_qpsk_real_demod=0;
-                    if(pt_qpsk.imag()>0)pt_qpsk_imag_demod=1;
-                    if(pt_qpsk.real()>0)pt_qpsk_real_demod=1;
 
-                    //if you want packed bits
-                    bc.LoadSymbol(pt_qpsk_imag_demod);
-                    bc.LoadSymbol(pt_qpsk_real_demod);
-                    while(bc.DataAvailable)
-                    {
-                        bc.GetNextSymbol();
-                        RxDataBytes.push_back((uchar)bc.Result);
-                    }
 
-                    //----
-                    //return the demodulated data (packed in bytes)
-                    //using bytes and the qiodevice class
-                    if(RxDataBytes.size()>256)
-                    {
+                   int ibit=qRound(pt_qpsk.imag()*127.0+128.0);
+                    if(ibit>255)ibit=255;
+                    if(ibit<0)ibit=0;
+
+                    RxDataBits.push_back((uchar)ibit);
+
+                    ibit=qRound(pt_qpsk.real()*127.0+128.0);
+                    if(ibit>255)ibit=255;
+                    if(ibit<0)ibit=0;
+
+                    RxDataBits.push_back((uchar)ibit);
+
+                   //return the demodulated data (soft bit)
+
+                    if(RxDataBits.size() >= 32){
                         if(!sql||mse<signalthreshold||lastmse<signalthreshold)
                         {
-                            if(!pdatasinkdevice.isNull())
-                            {
-                                QIODevice *io=pdatasinkdevice.data();
-                                if(io->isOpen())io->write(RxDataBytes);
-                            }
+
+                            emit processDemodulatedSoftBits(RxDataBits);
+
                         }
-                        RxDataBytes.clear();
+                        RxDataBits.clear();
                     }
 
                 }
@@ -728,20 +729,6 @@ void BurstOqpskDemodulator::writeDataSlot(const char *data, qint64 len)
 
     }
 
-    //return the demodulated data (packed in bytes)
-    //using bytes and the qiodevice class
-    /*if(!RxDataBytes.isEmpty())
-    {
-        if(!sql||mse<signalthreshold||lastmse<signalthreshold)
-        {
-            if(!pdatasinkdevice.isNull())
-            {
-                QIODevice *io=pdatasinkdevice.data();
-                if(io->isOpen())io->write(RxDataBytes);
-            }
-        }
-        RxDataBytes.clear();
-    }*/
 
     return;
 }

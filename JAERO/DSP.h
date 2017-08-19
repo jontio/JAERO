@@ -1,5 +1,9 @@
 //    Copyright (C) 2015  Jonti Olds
 
+#undef _MATH_DEFINES_DEFINED
+#define _USE_MATH_DEFINES
+#include <math.h>
+#include <iostream>
 
 #ifndef DSPH
 #define DSPH
@@ -302,8 +306,10 @@ class DiffDecode
 public:
     DiffDecode();
     bool Update(bool state);
+    double UpdateSoft(double soft);
 private:
     bool laststate;
+    double lastsoftstate;
 };
 
 
@@ -515,6 +521,7 @@ public:
    {
        setSettings((int)(9.14*128.0/2.0),0.25);//not sure what the best length should be
 
+       counter = 0;
    }
    ~PeakDetector()
    {
@@ -530,6 +537,7 @@ public:
        threshold=_threshold;
        maxposcntdown=-1;
        d3.setLength(2*length);
+       counter = 0;
    }
    void setSettings(int length,double _threshold,int _maxcntdown)
    {
@@ -542,6 +550,7 @@ public:
        threshold=_threshold;
        maxposcntdown=-1;
        d3.setLength(2*length);
+       counter = 0;
    }
    bool update(double &val)
    {
@@ -566,9 +575,13 @@ public:
 
 
        val=val2;//set return val
-       if(!maxposcntdown)//if time to return peak then return so
+
+      if(!maxposcntdown)//if time to return peak then return so
        {
            maxposcntdown--;
+
+
+
            return true;
        }
        if(maxposcntdown>0)maxposcntdown--;
@@ -588,6 +601,7 @@ public:
    double maxval;
    int maxpos;
    int maxposcntdown;
+   int counter;
 
 };
 
