@@ -68,8 +68,6 @@ private:
     WaveTable mixer_center;
     WaveTable mixer2;
 
-    int counter;
-
     int spectrumnfft,bbnfft;
 
     QVector<cpx_type> bbcycbuff;
@@ -193,13 +191,6 @@ private:
     double previousPhase;
     bool gotshift;
     int shiftcount;
-
-    cpx_type symboltone_rotator;
-    const cpx_type imag=cpx_type(0, 1);
-    cpx_type symboltone_averotator;
-    Delay<double> a1;
-    double carrier_rotation_est;
-
 
 
 signals:
