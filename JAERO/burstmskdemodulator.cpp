@@ -216,11 +216,6 @@ void BurstMskDemodulator::setSettings(Settings _settings)
 
     emit Plottables(mixer2.GetFreqHz(),mixer_center.GetFreqHz(),lockingbw);
 
-    a1.setdelay(SamplesPerSymbol/2.0);
-
-    symboltone_averotator=1;
-    carrier_rotation_est=0;
-
     if(fb >= 1200){
 
         bt_d1.setdelay(1.0*SamplesPerSymbol);
@@ -248,6 +243,9 @@ void BurstMskDemodulator::setSettings(Settings _settings)
         out_base.resize(N);
         out_top.resize(N);
         out_abs_diff.resize(N/2);
+
+        startstopstart=SamplesPerSymbol*(1050);
+
 
         trackingDelay = 10*SamplesPerSymbol;
 
@@ -289,10 +287,6 @@ void BurstMskDemodulator::setSettings(Settings _settings)
         trackingDelay = 20*SamplesPerSymbol;
 
     }
-
-    counter = 0;
-
-    previousPhase = 0;
 
 
 }
@@ -370,7 +364,6 @@ qint64 BurstMskDemodulator::writeData(const char *data, qint64 len)
     for(int i=0;i<hfirbuff.size();i++)
     {
 
-        counter++;
         std::complex<double> cval=std::complex<double>(hfirbuff[i].r,hfirbuff[i].i);
 
         //take orginal arm
@@ -486,8 +479,6 @@ qint64 BurstMskDemodulator::writeData(const char *data, qint64 len)
             // ok so now we have the center bin, maxtoppos and one of the side peaks, should be to the left of the main peak, minvalbin
             int distfrompeak = std::abs(maxtoppos - minvalbin);
 
-
-
             // check if the side peak is within the expected range +/- 5%
             if(minval>500.0 && std::abs(distfrompeak-peakspacingbins) < std::abs(peakspacingbins/20))
             {
@@ -531,6 +522,8 @@ qint64 BurstMskDemodulator::writeData(const char *data, qint64 len)
                 emit SignalStatus(true);
 
                 symtracker.Reset();
+                symtracker.Phase = -1.5;
+                symtracker.Freq = -0.4;
                 sig2buff_ptr = 0;
                 sigbuff_ptr = 0;
 
@@ -538,9 +531,6 @@ qint64 BurstMskDemodulator::writeData(const char *data, qint64 len)
                 // indicate start of burst
                 RxDataBits.push_back(-1);
                 RxDataBytes.clear();
-
-//                symboltone_rotator=1;
-//                symboltone_averotator=1;
                 mse=0;
 
             }
@@ -572,7 +562,6 @@ qint64 BurstMskDemodulator::writeData(const char *data, qint64 len)
             //matched filter.
             cval= mixer2.WTCISValue()*(vol_gain*val_to_demod);
             cpx_type sig2 = cpx_type(matchedfilter_re->FIRUpdateAndProcess(cval.real()),matchedfilter_im->FIRUpdateAndProcess(cval.imag()));
-
 
             //Measure ebno
             ebnomeasure->Update(std::abs(sig2));
@@ -617,13 +606,13 @@ qint64 BurstMskDemodulator::writeData(const char *data, qint64 len)
                 bool symbolfreqtoslow=false;
 
                 double expectedhalfsymbolratepeakloc=symbolspercycle/2.0;
-                const double pi = std::acos(-1);
                 const cpx_type imag(0, 1);
 
                 cpx_type testsig;
                 cpx_type val_dft;
                 double aval_dft;
                 double N=sig2buff.size();
+                const double pi = std::acos(-1);
 
                 double symboltimginphaseest;
                 double rotationest;
