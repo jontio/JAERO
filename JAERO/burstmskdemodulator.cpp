@@ -236,10 +236,13 @@ void BurstMskDemodulator::setSettings(Settings _settings)
         tridentbuffer_ptr=0;
 
         //set this delay so it lines up to end of the peak detector and thus starts at the start tone of the burst
-        d1.setLength(((int) 289 * SamplesPerSymbol) + 20);//adjust so start of burst aligns
-        d2.setLength(qRound((72.0)*SamplesPerSymbol) );//delay line for aligning demod to output of trident check and freq est, was 120
+        int d1_len = ((int) 289 * SamplesPerSymbol) + 20;
+        d1.setLength(d1_len);//adjust so start of burst aligns
+        int d2_len = qRound(72.0)*SamplesPerSymbol;
+        d2.setLength(d2_len);//delay line for aligning demod to output of trident check and freq est, was 120
 
-        in.resize(N);
+        d3.setLength(d1_len + d2_len + 4800 + (50*SamplesPerSymbol));
+                in.resize(N);
         out_base.resize(N);
         out_top.resize(N);
         out_abs_diff.resize(N/2);
@@ -382,7 +385,6 @@ qint64 BurstMskDemodulator::writeData(const char *data, qint64 len)
             maxval=0;
         }
 
-
         //agc
         agc->Update(std::abs(cval));
         cval*=agc->AGCVal;
@@ -480,16 +482,15 @@ qint64 BurstMskDemodulator::writeData(const char *data, qint64 len)
             int distfrompeak = std::abs(maxtoppos - minvalbin);
 
             // check if the side peak is within the expected range +/- 5%
-            if(minval>500.0 && std::abs(distfrompeak-peakspacingbins) < std::abs(peakspacingbins/20))
+            if(minval>500.0 && std::abs(distfrompeak-peakspacingbins) < std::abs(peakspacingbins/20) && !(mse<signalthreshold))
             {
-
-                std::cout << " got peak " << minval << " dist " << distfrompeak << "\r\n" << std::flush;
 
                 //set the demodulator carrier freq and phase using estimates
                 //double carrierphase=std::arg(out_base[minvalbin])-(M_PI/4.0);
                 double carrierphase=std::arg(val_to_demod)-(M_PI/4.0);
 
                 mixer2.SetFreq(hzperbin*minvalbin);
+
                 mixer2.SetPhaseDeg((180.0/M_PI)*carrierphase);
 
                 CenterFreqChangedSlot(hzperbin*minvalbin);
@@ -522,8 +523,6 @@ qint64 BurstMskDemodulator::writeData(const char *data, qint64 len)
                 emit SignalStatus(true);
 
                 symtracker.Reset();
-                symtracker.Phase = -1.5;
-                symtracker.Freq = -0.4;
                 sig2buff_ptr = 0;
                 sigbuff_ptr = 0;
 
@@ -542,7 +541,7 @@ qint64 BurstMskDemodulator::writeData(const char *data, qint64 len)
         {
             startstop--;
             if(cntr<1000000)cntr++;
-            if(mse<0.50)
+            if(mse<signalthreshold)
             {
                 startstop=startstopstart;
             }
@@ -557,7 +556,9 @@ qint64 BurstMskDemodulator::writeData(const char *data, qint64 len)
             cntr = 0;
         }
 
+
         if(startstop > 0){
+
 
             //matched filter.
             cval= mixer2.WTCISValue()*(vol_gain*val_to_demod);
@@ -568,7 +569,6 @@ qint64 BurstMskDemodulator::writeData(const char *data, qint64 len)
 
             //AGC
             sig2*=agc2->Update(std::abs(sig2));
-
             //clipping
             double abval=std::abs(sig2);
             if(abval>2.84)sig2=(2.84/abval)*sig2;
@@ -663,7 +663,7 @@ qint64 BurstMskDemodulator::writeData(const char *data, qint64 len)
 
                 //symbol phase tracking method 2
                 if(mse>signalthreshold)symboltrackingweight=1;
-                symboltrackingweight=symboltrackingweight*0.9+0.1*fabs(symerrordiff)/(M_PI_2);
+                else symboltrackingweight=symboltrackingweight*0.9+0.1*fabs(symerrordiff)/(M_PI_2);
                 if(symboltrackingweight<0.001)symboltrackingweight=0.001;
                 if(symboltrackingweight>1.0)symboltrackingweight=1.0;
                 symtracker.Phase+=(symerrordiff*0.333*std::max(symboltrackingweight,0.5));
@@ -681,6 +681,7 @@ qint64 BurstMskDemodulator::writeData(const char *data, qint64 len)
                     symtracker.Freq=-0.3;
                     symbolfreqtoslow=true;
                 }
+
 
 
                 //Carrier tracking
@@ -735,6 +736,7 @@ qint64 BurstMskDemodulator::writeData(const char *data, qint64 len)
                     {
                         lastindex=tval-sig2buff.size();
                         tixd.push_back((sigbuff_ptr+tval)%sigbuff.size());
+
                     }
                 }
 
@@ -831,26 +833,19 @@ qint64 BurstMskDemodulator::writeData(const char *data, qint64 len)
                 }
                 mse/=((double)pointsloaded);
 
-
-                if(cntr < 30000){
-                   std::cout << "symboltimginphaseest " << symboltimginphaseest << "rotation estimate " << rotationest << " symboltimingstartest " << symboltimingstartest << " tracker phase " << symtracker.Phase << " freq " << symtracker.Freq << " carrier error " << carriererror << " " << mse << "\r\n";
-
-                }
-
                 if(!RxDataBits.isEmpty()){
 
                     emit processDemodulatedSoftBits(RxDataBits);
                     RxDataBits.clear();
                 }
-
-            }
+          }
 
             mixer2.WTnextFrame();
             mixer_center.WTnextFrame();
-            ptr++;
 
-        }
-    }
+
+        }// end of if start stop
+    }// end od the hrbuff
 
 
 
