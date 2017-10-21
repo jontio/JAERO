@@ -15,6 +15,7 @@
 #include "fftrwrapper.h"
 
 
+
 typedef FFTrWrapper<double> FFTr;
 typedef std::complex<double> cpx_type;
 
@@ -65,6 +66,9 @@ public:
     void setScatterPointType(ScatterPointType type);
     double getCurrentFreq();
 private:
+
+    QString debug = "";
+
     WaveTable mixer_center;
     WaveTable mixer2;
 
@@ -127,6 +131,8 @@ private:
 
     double mse;
 
+    MovingAverage *msema;
+
     bool afc;
 
     double symboltrackingweight;
@@ -173,6 +179,9 @@ private:
     int tridentbuffer_ptr;
     int tridentbuffer_sz;
 
+    int maxvalbin = 0;
+    double trackfreq = 0;
+
     //fft for trident
     FFTr *fftr;
     QVector<cpx_type> out_base,out_top;
@@ -182,15 +191,42 @@ private:
     double vol_gain;
     int cntr;
 
-
     int startstopstart;
     int startstop;
     int trackingDelay;
     int numPoints;
 
-    double previousPhase;
-    bool gotshift;
-    int shiftcount;
+    const cpx_type imag=cpx_type(0, 1);
+    WaveTable st_osc;
+    WaveTable st_osc_ref;
+    WaveTable st_osc_quarter;
+
+    Delay<double> a1;
+
+    double ee;
+    cpx_type symboltone_averotator;
+    cpx_type symboltone_rotator;
+    double carrier_rotation_est;
+    cpx_type sig2_last;
+    cpx_type pt_d;
+
+    cpx_type rotator;
+    double rotator_freq;
+
+    bool even;
+    double evenval;
+    double oddval;
+
+    //st
+    Delay<double> delays;
+    Delay<double> delayt41;
+    Delay<double> delayt42;
+    Delay<double> delayt8;
+    IIR st_iir_resonator;
+    int yui;
+
+    int endRotation;
+
 
 
 signals:
