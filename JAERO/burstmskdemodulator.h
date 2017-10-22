@@ -67,8 +67,7 @@ public:
     double getCurrentFreq();
 private:
 
-    QString debug = "";
-
+    QString debug;
     WaveTable mixer_center;
     WaveTable mixer2;
 

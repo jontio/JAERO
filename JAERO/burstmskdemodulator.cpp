@@ -115,6 +115,7 @@ BurstMskDemodulator::BurstMskDemodulator(QObject *parent)
     st_iir_resonator.b.resize(3);
 
     //75hz
+    /*
     st_iir_resonator.b[0]=0.004884799551813;
     st_iir_resonator.b[1]=0;
     st_iir_resonator.b[2]=-0.004884799551813;
@@ -122,6 +123,19 @@ BurstMskDemodulator::BurstMskDemodulator(QObject *parent)
     st_iir_resonator.a[1]=-1.965727362063336;
     st_iir_resonator.a[2]=0.990230400896375;
     st_iir_resonator.init();
+
+    */
+
+    //75hz
+    st_iir_resonator.b[0]=0.0048847995518126464;
+    st_iir_resonator.b[1]=0;
+    st_iir_resonator.b[2]=-0.0048847995518126464;
+    st_iir_resonator.a[0]=1;
+    st_iir_resonator.a[1]=-0.3882746897971619;
+    st_iir_resonator.a[2]=0.99023040089637471;
+    st_iir_resonator.init();
+
+
 
     //st delays
     delays.setdelay(1);
@@ -258,7 +272,7 @@ void BurstMskDemodulator::setSettings(Settings _settings)
         out_top.resize(N);
         out_abs_diff.resize(N/2);
 
-        startstopstart=SamplesPerSymbol*(2050);
+        startstopstart=SamplesPerSymbol*(1050);
         trackingDelay = 192*SamplesPerSymbol;
 
         endRotation = (120+56)*SamplesPerSymbol;
@@ -571,8 +585,12 @@ qint64 BurstMskDemodulator::writeData(const char *data, qint64 len)
         //sample counting and signalstatus timout
         if(startstop>0)
         {
-            startstop--;
+
+            if(cntr<=(120*SamplesPerSymbol)){
+               startstop--;
+            }
             if(cntr<1000000)cntr++;
+
             if(mse<signalthreshold)
             {
                 startstop=startstopstart;
@@ -673,27 +691,18 @@ qint64 BurstMskDemodulator::writeData(const char *data, qint64 len)
                 if(st_osc.GetFreqHz()<(st_osc_ref.GetFreqHz()-0.1))st_osc.SetFreq((st_osc_ref.GetFreqHz()-0.1));
                 if(st_osc.GetFreqHz()>(st_osc_ref.GetFreqHz()+0.1))st_osc.SetFreq((st_osc_ref.GetFreqHz()+0.1));
 
-                /*
-
                 if(cntr>120*SamplesPerSymbol && cntr<240*SamplesPerSymbol){
 
+/*
                     debug.append(QString::number(cntr)+";");
                     debug.append(QString::number(st_osc.IfHavePassedPoint(0.05))+";");
 
                     debug.append(QString::number(sig2.real())+";");
                     debug.append(QString::number(sig2.imag())+";");
-                    debug.append(QString::number(org.real())+";");
-                    debug.append(QString::number(org.imag())+";");
+                    debug.append(QString::number(st_angle_error)+"\r\n");
+*/
 
-                    debug.append(QString::number(pt_d.real())+";");
-                    debug.append(QString::number(pt_d.imag())+";");
-                    debug.append(QString::number(val_to_demod)+";");
-                    debug.append(QString::number(vol_gain)+";");
-
-                    debug.append(QString::number(st_eta)+"\r\n");
-
-
-                }*/
+                }
 
 
                 //sample times
