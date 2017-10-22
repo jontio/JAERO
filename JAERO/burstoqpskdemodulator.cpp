@@ -1,6 +1,5 @@
 #include "burstoqpskdemodulator.h"
 #include "gui_classes/qspectrumdisplay.h"
-#include <iostream>
 
 BurstOqpskDemodulator::BurstOqpskDemodulator(QObject *parent)
     :   QIODevice(parent)
@@ -36,7 +35,7 @@ BurstOqpskDemodulator::BurstOqpskDemodulator(QObject *parent)
     rotation_bias_delay.setLength(256);
     rotation_bias_ma = new MovingAverage(256);
 
-  //--demod (resonators and LPF hard coded for Fs==48000 and fb==10500)
+    //--demod (resonators and LPF hard coded for Fs==48000 and fb==10500)
 
     RootRaisedCosine rrc;
     rrc.design(1,55,Fs,fb/2.0);
@@ -109,7 +108,7 @@ BurstOqpskDemodulator::BurstOqpskDemodulator(QObject *parent)
     phasepointbuff_ptr=0;
 
 
- //--
+    //--
 
 
     pt_d=0;
@@ -123,7 +122,7 @@ BurstOqpskDemodulator::BurstOqpskDemodulator(QObject *parent)
     channel_select_other=false;
 
 
- //--
+    //--
 
 
     Settings _settings;
@@ -314,7 +313,7 @@ void BurstOqpskDemodulator::writeDataSlot(const char *data, qint64 len)
     hfirbuff.resize(numofsamples);
     kffsamp_t asample;
     asample.i=0;
-    const short *ptr = reinterpret_cast<const short *>(data);    
+    const short *ptr = reinterpret_cast<const short *>(data);
     if(channel_stereo)
     {
         if(channel_select_other)ptr++;
@@ -325,15 +324,15 @@ void BurstOqpskDemodulator::writeDataSlot(const char *data, qint64 len)
             ptr+=2;
         }
     }
-     else
-     {
+    else
+    {
         for(int i=0;i<numofsamples;i++)
         {
             asample.r=((double)(*ptr))/32768.0;
             hfirbuff[i]=asample;
             ptr++;
         }
-     }
+    }
     hfir->Update(hfirbuff);
 
     //run through each sample of analyitical signal
@@ -381,15 +380,15 @@ void BurstOqpskDemodulator::writeDataSlot(const char *data, qint64 len)
         {
             tridentbuffer_ptr=0;
 
-         }
+        }
 
         if(tridentbuffer_ptr<tridentbuffer_sz)//fill trident buffer
         {
             tridentbuffer[tridentbuffer_ptr]=std::real(cval_d);
             tridentbuffer_ptr++;
         }
-         else if(tridentbuffer_ptr==tridentbuffer_sz)//trident buffer is now filled so now check for trident and carrier freq and phase and amplitude
-         {
+        else if(tridentbuffer_ptr==tridentbuffer_sz)//trident buffer is now filled so now check for trident and carrier freq and phase and amplitude
+        {
             tridentbuffer_ptr++;
 
 
@@ -405,7 +404,7 @@ void BurstOqpskDemodulator::writeDataSlot(const char *data, qint64 len)
             for(int k=qRound(128.0*SamplesPerSymbol);k<in.size();k++)in[k]=0;
             fftr->transform(in,out_top);
 
-                 //diff
+            //diff
             for(int i=0;i<out_abs_diff.size();i++){
 
                 out_abs_diff[i]=(std::abs(out_top[i])-std::abs(out_base[i]));
@@ -473,6 +472,7 @@ void BurstOqpskDemodulator::writeDataSlot(const char *data, qint64 len)
                 //set gain given estimate
                 vol_gain=1.4142*500.0/minval;
 
+
                 //set when we want to store points for display
                 //if using rotation bias correction
                 //pointbuff_ptr=-128-128-256;//-128-128;//-400;//-500;//-100;
@@ -501,7 +501,7 @@ void BurstOqpskDemodulator::writeDataSlot(const char *data, qint64 len)
             }
 
 
-         }//end of trident check
+        }//end of trident check
 
         //mix
         cpx_type cval_dd=mixer2.WTCISValue()*(vol_gain*val_to_demod);
@@ -524,11 +524,10 @@ void BurstOqpskDemodulator::writeDataSlot(const char *data, qint64 len)
         if(startstop==0)
         {
             startstop--;
-//            qDebug()<<"stop";
+            //            qDebug()<<"stop";
             emit SignalStatus(false);
+
         }
-
-
 
         if((cntr>((256-10)*SamplesPerSymbol))&&insertpreamble)
         {
@@ -536,7 +535,7 @@ void BurstOqpskDemodulator::writeDataSlot(const char *data, qint64 len)
             insertpreamble=false;
         }
 
-        //symbol tone in preamble
+         //symbol tone in preamble
         if((cntr>SamplesPerSymbol*(128+10))&&(cntr<((256-10)*SamplesPerSymbol)))
         {
 
@@ -546,6 +545,7 @@ void BurstOqpskDemodulator::writeDataSlot(const char *data, qint64 len)
             //produce symbol tone circle (symboltone_pt) and calc carrier rotation
             cpx_type symboltone_pt=sig2*symboltone_rotator*imag;
             double er=std::tanh(symboltone_pt.imag())*(symboltone_pt.real());
+
             symboltone_rotator=symboltone_rotator*std::exp(imag*er*0.01);
             symboltone_averotator=symboltone_averotator*0.95+0.05*symboltone_rotator;
             symboltone_pt=cpx_type((symboltone_pt.real()),a1.update(symboltone_pt.real()));
@@ -557,10 +557,14 @@ void BurstOqpskDemodulator::writeDataSlot(const char *data, qint64 len)
             st_osc_quarter.AdvanceFractionOfWave(-(1.0/(2.0*M_PI))*st_err*0.1);
             st_osc.SetPhaseDeg((st_osc_quarter.GetPhaseDeg())*4.0+(360.0*ee));
 
+
         }
 
         //correct carrier phase
+
+
         sig2*=symboltone_averotator;
+
         rotator=rotator*std::exp(imag*rotator_freq);
         sig2*=rotator;
 
@@ -621,7 +625,7 @@ void BurstOqpskDemodulator::writeDataSlot(const char *data, qint64 len)
             }
 
             if(!yui)pt_d=pt;
-             else
+            else
             {
 
                 cpx_type pt_qpsk=cpx_type(pt.real(),pt_d.imag());
@@ -689,7 +693,7 @@ void BurstOqpskDemodulator::writeDataSlot(const char *data, qint64 len)
 
 
 
-                   int ibit=qRound(pt_qpsk.imag()*127.0+128.0);
+                    int ibit=qRound(pt_qpsk.imag()*127.0+128.0);
                     if(ibit>255)ibit=255;
                     if(ibit<0)ibit=0;
 
@@ -701,7 +705,7 @@ void BurstOqpskDemodulator::writeDataSlot(const char *data, qint64 len)
 
                     RxDataBits.push_back((uchar)ibit);
 
-                   //return the demodulated data (soft bit)
+                    //return the demodulated data (soft bit)
 
                     if(RxDataBits.size() >= 32){
                         if(!sql||mse<signalthreshold||lastmse<signalthreshold)

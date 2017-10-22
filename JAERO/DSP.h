@@ -1,10 +1,5 @@
 //    Copyright (C) 2015  Jonti Olds
 
-#undef _MATH_DEFINES_DEFINED
-#define _USE_MATH_DEFINES
-#include <math.h>
-#include <iostream>
-
 #ifndef DSPH
 #define DSPH
 //---------------------------------------------------------------------------
