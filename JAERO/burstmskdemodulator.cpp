@@ -275,7 +275,7 @@ void BurstMskDemodulator::setSettings(Settings _settings)
         startstopstart=SamplesPerSymbol*(1050);
         trackingDelay = 192*SamplesPerSymbol;
 
-        endRotation = (120+56)*SamplesPerSymbol;
+        endRotation = (120+58)*SamplesPerSymbol;
 
 
     }else{
@@ -682,7 +682,7 @@ qint64 BurstMskDemodulator::writeData(const char *data, qint64 len)
                 double st_angle_error=std::arg(st_out);
 
                 //adjust sybol timing using normal tracking
-                if(cntr>120*SamplesPerSymbol)//???
+                if(cntr>endRotation)//???
                 {
                     st_osc.IncreseFreqHz(-st_angle_error*0.00000001);//st phase shift
                     st_osc.AdvanceFractionOfWave(-st_angle_error*0.05/360.0);

@@ -353,6 +353,11 @@
          </item>
          <item>
           <property name="text">
+           <string>1200 bps burst</string>
+          </property>
+         </item>
+         <item>
+          <property name="text">
            <string>10500 bps burst</string>
           </property>
          </item>
