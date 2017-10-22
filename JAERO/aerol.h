@@ -12,7 +12,6 @@
 #include <math.h>
 #include "../viterbi-xukmin/viterbi.h"
 #include "jconvolutionalcodec.h"
-
 #include "databasetext.h"
 
 namespace AEROTypeR {
@@ -617,11 +616,6 @@ public:
             if(!crcok)
             {
 
-                if(blockptr>=block.size())
-                {
-                    lastpacketstate=Bad_Packet;
-                    return Bad_Packet;
-                }
 
                 lastpacketstate=Bad_Packet;
                 return Bad_Packet;
@@ -640,9 +634,6 @@ public:
                     // burst
 
                     QVector<int> isu = deconvol.mid((8*6)+(8*12)*1, 8*12);
-                    for(int a = 0; a < 6 ; a++){
-
-                    }
 
                     int bin = 2;
                     bin+= ((isu[0] * 1) + (isu[1] * 2) + (isu[2] * 4) + (isu[3] * 8) + (isu[4] * 16) + (isu[5] * 32));
