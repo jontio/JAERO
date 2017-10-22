@@ -779,13 +779,11 @@ int PreambleDetectorPhaseInvariant::Update(int val)
     buffer[buffer.size()-1]=val;
     if(xorsum>=(buffer.size()-tollerence)){
 
-        std::cout << "\r\n got inverted preamble xorsum " << xorsum << " tollerance " << tollerence << "\r\n" << std::flush;
         inverted=true;
         return true;
     }
     if(xorsum<=tollerence){
         inverted=false;
-        std::cout << "\r\n got non-inverted preamble xorsum " << xorsum << " tollerance " << tollerence << "\r\n" << std::flush;
 
         return true;
     }
@@ -1015,6 +1013,7 @@ QByteArray &AeroL::Decode(QVector<short> &bits, bool soft)//0 bit --> oldest bit
         if(soft){
             if(((uchar)bits[i])>=128)bit=1;
             else bit=0;
+
         }else{
             bit=bits[i];
         }
@@ -1096,14 +1095,11 @@ QByteArray &AeroL::Decode(QVector<short> &bits, bool soft)//0 bit --> oldest bit
         } //non 10500 burst mode use a phase invariant preamble detector
         else if(burstmode){
 
-            gotsync=mskBurstDetector.Update(bit);
+          if( muw < 120){
 
+             gotsync=mskBurstDetector.Update(bit);
 
-            if(gotsync && muw > 160){
-
-               gotsync = false;
-            }
-
+          }
 
             if(mskBurstDetector.inverted){
 
@@ -1135,6 +1131,7 @@ QByteArray &AeroL::Decode(QVector<short> &bits, bool soft)//0 bit --> oldest bit
                     if(rtchanneldeleavefecscram.resetblockptr()==RTChannelDeleaveFECScram::Bad_Packet)
                     {
                         decodedbytes+=" Bad R/T Packet\n";
+
                     }
                 }
             }
@@ -1187,6 +1184,8 @@ QByteArray &AeroL::Decode(QVector<short> &bits, bool soft)//0 bit --> oldest bit
                 }else{
 
                     if(soft){
+
+
                     result = rtchanneldeleavefecscram.updateMSK(soft_bit);
                     }
                     else{

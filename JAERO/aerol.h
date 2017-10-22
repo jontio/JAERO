@@ -10,7 +10,6 @@
 #include <QDebug>
 #include <assert.h>
 #include <math.h>
-#include <iostream>
 #include "../viterbi-xukmin/viterbi.h"
 #include "jconvolutionalcodec.h"
 
@@ -495,8 +494,6 @@ public:
 
         lastpacketstate=Nothing;
 
-        //jeroen
-
         jconvolcodec = new JConvolutionalCodec(0);
         QVector<quint16> polys;
         polys.push_back(109);
@@ -515,6 +512,7 @@ public:
     ReturnResult resetblockptr()
     {
         blockptr=0;
+
         if(lastpacketstate==Test_Failed)
         {
             lastpacketstate=Nothing;
@@ -553,10 +551,12 @@ public:
 
     ReturnResult updateMSK(int bit)
     {
-        if(blockptr>=block.size())return FULL;
+        if(blockptr>=block.size()){
+
+            return FULL;
+        }
         block[blockptr]=bit;
         blockptr++;
-
 
         int ok = 0;
 
@@ -596,7 +596,6 @@ public:
             {
                 targetSUSize =0;
                 targetBlocks =0;
-
 
                 //test crc
                 bool crcok=crc16.calcusingbitsandcheck(deconvol.data(),8*19);
@@ -650,8 +649,6 @@ public:
 
                     targetSUSize = bin;
 
-                    std::cout << "target su " << bin << "\r\n" << std::flush;
-
                     if(targetSUSize >= 16){
                         targetSUSize = floor(targetSUSize/2) +1;
 
@@ -665,7 +662,7 @@ public:
                 // this should be the target blocks for this T packet
                 if(blockptr/64 == targetBlocks)
                 {
-                    for(int i=0;i<=targetSUSize;i++)
+                    for(int i=0;i<targetSUSize;i++)
                     {
                         crcok=crc16.calcusingbitsandcheck(deconvol.data()+(8*6)+(8*12)*i,8*12);
 
@@ -673,16 +670,13 @@ public:
 
                             ok++;
 
-
-                            }// end crc ok
+                         }
 
                     }// end SU loop
 
                     if(ok<=targetSUSize){
 
-                         std::cout << " \r\n num ok " << ok << " target size " << targetSUSize << "\r\n" << std::flush;
-
-                         //pack into bytes
+                        //pack into bytes
                         packintobytes();
                         infofield.chop(1);
                         numberofsus = targetSUSize;
@@ -703,7 +697,6 @@ public:
             //pack into bytes
             packintobytes();
             infofield.chop(1);
-
 
             blockptr=block.size();//stop further testing
             lastpacketstate=OK_T_Packet;

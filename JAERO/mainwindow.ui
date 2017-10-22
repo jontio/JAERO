@@ -343,17 +343,7 @@
          </item>
          <item>
           <property name="text">
-           <string>600 bps burst</string>
-          </property>
-         </item>
-         <item>
-          <property name="text">
            <string>1200 bps</string>
-          </property>
-         </item>
-         <item>
-          <property name="text">
-           <string>1200 bps burst</string>
           </property>
          </item>
          <item>
@@ -489,7 +479,7 @@
      <x>0</x>
      <y>0</y>
      <width>990</width>
-     <height>23</height>
+     <height>21</height>
     </rect>
    </property>
    <widget class="QMenu" name="menu_File">
