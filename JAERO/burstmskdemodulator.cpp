@@ -114,34 +114,21 @@ BurstMskDemodulator::BurstMskDemodulator(QObject *parent)
     st_iir_resonator.a.resize(3);
     st_iir_resonator.b.resize(3);
 
-    //75hz
-    /*
-    st_iir_resonator.b[0]=0.004884799551813;
+    //[3.271421893958904e-04 0 -3.271421893958904e-04]  [1 -1.974730452137909 0.999345715621208],
+
+    st_iir_resonator.b[0]=3.271421893958904e-04;
     st_iir_resonator.b[1]=0;
-    st_iir_resonator.b[2]=-0.004884799551813;
+    st_iir_resonator.b[2]=-3.271421893958904e-04;
     st_iir_resonator.a[0]=1;
-    st_iir_resonator.a[1]=-1.965727362063336;
-    st_iir_resonator.a[2]=0.990230400896375;
+    st_iir_resonator.a[1]=-1.974730452137909;
+    st_iir_resonator.a[2]=0.999345715621208;
     st_iir_resonator.init();
-
-    */
-
-    //75hz
-    st_iir_resonator.b[0]=0.0048847995518126464;
-    st_iir_resonator.b[1]=0;
-    st_iir_resonator.b[2]=-0.0048847995518126464;
-    st_iir_resonator.a[0]=1;
-    st_iir_resonator.a[1]=-0.3882746897971619;
-    st_iir_resonator.a[2]=0.99023040089637471;
-    st_iir_resonator.init();
-
-
 
     //st delays
     delays.setdelay(1);
-    delayt41.setdelay(SamplesPerSymbol/4.0);
-    delayt42.setdelay(SamplesPerSymbol/4.0);
-    delayt8.setdelay(SamplesPerSymbol/8.0);//??
+    delayt41.setdelay((SamplesPerSymbol)/4.0);
+    delayt42.setdelay((SamplesPerSymbol)/4.0);
+    delayt8.setdelay((SamplesPerSymbol)/4.0);//??
 
 
 }
@@ -238,8 +225,8 @@ void BurstMskDemodulator::setSettings(Settings _settings)
 
     emit Plottables(mixer2.GetFreqHz(),mixer_center.GetFreqHz(),lockingbw);
 
-    a1.setdelay(SamplesPerSymbol/2);
-    ee=0.05;//0.4;
+    a1.setdelay(SamplesPerSymbol);
+    ee=0.05;
     symboltone_averotator=1;
     rotator=1;
 
@@ -272,10 +259,10 @@ void BurstMskDemodulator::setSettings(Settings _settings)
         out_top.resize(N);
         out_abs_diff.resize(N/2);
 
-        startstopstart=SamplesPerSymbol*(1050);
+        startstopstart=SamplesPerSymbol*(2100);
         trackingDelay = 192*SamplesPerSymbol;
 
-        endRotation = (120+58)*SamplesPerSymbol;
+        endRotation = (120+56)*SamplesPerSymbol;
 
 
     }else{
@@ -576,6 +563,7 @@ qint64 BurstMskDemodulator::writeData(const char *data, qint64 len)
                 even = true;
                 evenval=0;
                 oddval=0;
+                lastcntr = 0;
 
 
             }
@@ -586,8 +574,8 @@ qint64 BurstMskDemodulator::writeData(const char *data, qint64 len)
         if(startstop>0)
         {
 
-            if(cntr<=(120*SamplesPerSymbol)){
-               startstop--;
+            if(cntr>=(120*SamplesPerSymbol)){
+                startstop--;
             }
             if(cntr<1000000)cntr++;
 
@@ -608,211 +596,217 @@ qint64 BurstMskDemodulator::writeData(const char *data, qint64 len)
 
         }
 
-        if(startstop > 0 )
+        //        if(startstop > 0 )
+        //        {
+
+        // Normal processing
+        //          if(cntr > 120*SamplesPerSymbol){
+
+        cval= mixer2.WTCISValue()*(val_to_demod*vol_gain);
+        cpx_type sig2 = cpx_type(matchedfilter_re->FIRUpdateAndProcess(cval.real()),matchedfilter_im->FIRUpdateAndProcess(cval.imag()));
+
+        cpx_type org = sig2;
+
+        if(cntr>(120*SamplesPerSymbol) && cntr<endRotation){
+
+            double progress = (double)cntr-SamplesPerSymbol*120;
+            double goal = endRotation-SamplesPerSymbol*120;
+            progress = progress/goal;
+
+            cpx_type symboltone_pt=sig2*symboltone_rotator*imag;
+            double er=std::tanh(symboltone_pt.imag())*(symboltone_pt.real());
+
+            symboltone_rotator=symboltone_rotator*std::exp(imag*er*0.1);
+            symboltone_averotator=symboltone_averotator*0.95+0.05*symboltone_rotator;
+            symboltone_pt=cpx_type((symboltone_pt.real()),a1.update(symboltone_pt.real()));
+
+            carrier_rotation_est=std::arg(symboltone_averotator);
+
+            //x4 pll
+            /*
+            double st_err=std::arg((st_osc_quarter.WTCISValue())*std::conj(symboltone_pt));
+            st_err*=1.5*(1.0-progress*progress);
+            st_osc_quarter.AdvanceFractionOfWave(-(1.0/(2.0*M_PI))*st_err*0.1);
+            st_osc.SetPhaseDeg((st_osc_quarter.GetPhaseDeg())*4.0+(360.0*ee));
+            */
+        }
+
+          sig2*=symboltone_averotator;
+
+          rotator=rotator*std::exp(imag*rotator_freq);
+          sig2*=rotator;
+
+
+        //Measure ebno
+        ebnomeasure->Update(std::abs(sig2));
+
+        //send ebno when right time
+        if(cntr==1480*SamplesPerSymbol){
+            emit EbNoMeasurmentSignal(ebnomeasure->EbNo);
+
+        }
+
+        //AGC
+        sig2*=agc2->Update(std::abs(sig2));
+
+        //clipping
+
+        double abval=std::abs(sig2);
+        if(abval>2.84)sig2=(2.84/abval)*sig2;
+
+
+        //normal symbol timer
+        double st_diff=delays.update(abval*abval)-(abval*abval);
+        double st_d1out=delayt41.update(st_diff);
+        double st_d2out=delayt42.update(st_d1out);
+        double st_eta=(st_d2out-st_diff)*st_d1out;
+
+        double reson = st_eta;
+        st_iir_resonator.update(st_eta);
+
+        if(cntr>((120)*SamplesPerSymbol))
+        {
+            st_eta=st_iir_resonator.y;
+
+        }
+        //st_eta=st_iir_resonator.update(st_eta);
+        cpx_type st_m1=cpx_type(st_eta,-delayt8.update(st_eta));
+        cpx_type st_out=st_osc.WTCISValue()*st_m1;
+        double st_angle_error=std::arg(st_out);
+
+        //adjust sybol timing using normal tracking
+        if(cntr>((120)*SamplesPerSymbol))//???
+        {
+            st_osc.IncreseFreqHz(-st_angle_error*0.00000001);//st phase shift
+            st_osc.AdvanceFractionOfWave(-st_angle_error*0.1/360.0);
+        }
+
+        if(st_osc.GetFreqHz()<(st_osc_ref.GetFreqHz()-0.1))st_osc.SetFreq((st_osc_ref.GetFreqHz()-0.1));
+        if(st_osc.GetFreqHz()>(st_osc_ref.GetFreqHz()+0.1))st_osc.SetFreq((st_osc_ref.GetFreqHz()+0.1));
+
+
+
+        if(cntr>120*SamplesPerSymbol && cntr < 1000*SamplesPerSymbol){
+
+            debug.append(QString::number(cntr)+";");
+            debug.append(QString::number(st_iir_resonator.y)+";");
+            debug.append(QString::number(sig2.real())+";");
+            debug.append(QString::number(sig2.imag())+";");
+            debug.append(QString::number(st_osc.IfHavePassedPoint(ee))+"\r\n");
+        }
+
+
+        //sample times
+        if(st_osc.IfHavePassedPoint(ee) && cntr > (120*SamplesPerSymbol))//?? 0.4 0.8 etc
         {
 
-            // Normal processing
-            if(cntr > 120*SamplesPerSymbol){
+            cpx_type pt_msk=cpx_type(sig2.real(), pt_d.imag());
 
-                cval= mixer2.WTCISValue()*(val_to_demod*vol_gain);
-                cpx_type sig2 = cpx_type(matchedfilter_re->FIRUpdateAndProcess(cval.real()),matchedfilter_im->FIRUpdateAndProcess(cval.imag()));
+            //for arm ambiguity resolution. bias calibrated for current settings
 
-                cpx_type org = sig2;
+            double last = (0.34046+0.4111*ee);
+            double first = (st_osc_quarter.GetPhaseDeg())*2.0+(360.0*ee*0.5);
+            double twospeed=-4.0*((std::fmod(first,360.0)/360.0)-last);
 
-                if(cntr<endRotation){
-
-                    double progress = (double)cntr-SamplesPerSymbol*120;
-                    double goal = endRotation-SamplesPerSymbol*120;
-                    progress = progress/goal;
-
-                    cpx_type symboltone_pt=sig2*symboltone_rotator*imag;
-                    double er=std::tanh(symboltone_pt.imag())*(symboltone_pt.real());
-
-                    symboltone_rotator=symboltone_rotator*std::exp(imag*er*0.1);
-                    symboltone_averotator=symboltone_averotator*0.95+0.05*symboltone_rotator;
-                    symboltone_pt=cpx_type((symboltone_pt.real()),a1.update(symboltone_pt.real()));
-                    carrier_rotation_est=std::arg(symboltone_averotator);
-
-                    //x4 pll
-                    double st_err=std::arg((st_osc_quarter.WTCISValue())*std::conj(symboltone_pt));
-                    st_err*=1.5*(1.0-progress*progress);
-                    st_osc_quarter.AdvanceFractionOfWave(-(1.0/(2.0*M_PI))*st_err*0.1);
-                    st_osc.SetPhaseDeg((st_osc_quarter.GetPhaseDeg())*4.0+(360.0*ee));
-                }
-
-                sig2*=symboltone_averotator;
-
-                rotator=rotator*std::exp(imag*rotator_freq);
-                sig2*=rotator;
-
-
-                //Measure ebno
-                ebnomeasure->Update(std::abs(sig2));
-
-                //send ebno when right time
-                if(cntr==1480*SamplesPerSymbol){
-                    emit EbNoMeasurmentSignal(ebnomeasure->EbNo);
-
-               }
-
-                //AGC
-                sig2*=agc2->Update(std::abs(sig2));
-
-                //clipping
-
-                double abval=std::abs(sig2);
-                if(abval>2.84)sig2=(2.84/abval)*sig2;
-
-
-                //normal symbol timer
-                double st_diff=delays.update(abval*abval)-(abval*abval);
-                double st_d1out=delayt41.update(st_diff);
-                double st_d2out=delayt42.update(st_d1out);
-                double st_eta=(st_d2out-st_diff)*st_d1out;
-                st_iir_resonator.update(st_eta);
-
-                if(cntr>endRotation)
+            bool even=true;
+            if(twospeed<0)even=false;
+            yui++;yui%=2;
+            if(cntr<((188)*SamplesPerSymbol))
+            {
+                if((even&&yui==1)||(!even&&yui==0))
                 {
-                    st_eta=st_iir_resonator.y;
-
-                }
-                //st_eta=st_iir_resonator.update(st_eta);
-                cpx_type st_m1=cpx_type(st_eta,-delayt8.update(st_eta));
-                cpx_type st_out=st_osc.WTCISValue()*st_m1;
-                double st_angle_error=std::arg(st_out);
-
-                //adjust sybol timing using normal tracking
-                if(cntr>endRotation)//???
-                {
-                    st_osc.IncreseFreqHz(-st_angle_error*0.00000001);//st phase shift
-                    st_osc.AdvanceFractionOfWave(-st_angle_error*0.05/360.0);
-                }
-
-                if(st_osc.GetFreqHz()<(st_osc_ref.GetFreqHz()-0.1))st_osc.SetFreq((st_osc_ref.GetFreqHz()-0.1));
-                if(st_osc.GetFreqHz()>(st_osc_ref.GetFreqHz()+0.1))st_osc.SetFreq((st_osc_ref.GetFreqHz()+0.1));
-
-                if(cntr>120*SamplesPerSymbol && cntr<240*SamplesPerSymbol){
-
-/*
-                    debug.append(QString::number(cntr)+";");
-                    debug.append(QString::number(st_osc.IfHavePassedPoint(0.05))+";");
-
-                    debug.append(QString::number(sig2.real())+";");
-                    debug.append(QString::number(sig2.imag())+";");
-                    debug.append(QString::number(st_angle_error)+"\r\n");
-*/
-
-                }
-
-
-                //sample times
-                if(st_osc.IfHavePassedPoint(ee))//?? 0.4 0.8 etc
-                {
-
-                    cpx_type pt_msk=cpx_type(sig2.real(), pt_d.imag());
-
-                    //for arm ambiguity resolution. bias calibrated for current settings
-                    double twospeed=-4.0*((std::fmod((st_osc_quarter.GetPhaseDeg())*2.0+(360.0*ee*0.5),360.0)/360.0)-(0.34046+0.4111*ee));
-                    bool even=true;
-                    if(twospeed<0)even=false;
                     yui++;yui%=2;
-                    if(cntr<((190)*SamplesPerSymbol))
-                    {
-                        if((even&&yui==1)||(!even&&yui==0))
-                        {
-                            yui++;yui%=2;
-                        }
-                    }
-
-
-
-                    if(!yui){pt_d=sig2;}
-
-                    else
-                    {
-                        //carrier tracking
-                        double ct_xt=tanh(sig2.imag())*sig2.real();
-                        double ct_xt_d=tanh(pt_d.real())*pt_d.imag();
-                        double ct_ec=ct_xt_d-ct_xt;
-                        if(ct_ec>M_PI)ct_ec=M_PI;
-                        if(ct_ec<-M_PI)ct_ec=-M_PI;
-                        if(ct_ec>M_PI_2)ct_ec=M_PI_2;
-                        if(ct_ec<-M_PI_2)ct_ec=-M_PI_2;
-                        if(cntr>((120)*SamplesPerSymbol))
-                        {
-                            rotator=rotator*std::exp(imag*ct_ec*0.1);//correct carrier phase
-                            if(cntr>((120)*SamplesPerSymbol))rotator_freq=rotator_freq+ct_ec*0.0001;//correct carrier frequency
-                        }
-
-                        //gui feedback
-
-                        if(cntr >= 1480*SamplesPerSymbol && pointbuff_ptr<pointbuff.size()){
-                            if(pointbuff_ptr<pointbuff.size())
-                            {
-                                ASSERTCH(pointbuff,pointbuff_ptr);
-                                pointbuff[pointbuff_ptr]=pt_msk*0.75;
-                                if(pointbuff_ptr<pointbuff.size())pointbuff_ptr++;
-                            }
-                            if(scatterpointtype==SPT_constellation&&(pointbuff_ptr==pointbuff.size())){
-                                pointbuff_ptr++;
-                                emit ScatterPoints(pointbuff);
-                            }
-                        }
-
-
-                        //calc MSE of the points
-                        if(cntr>((120)*SamplesPerSymbol))
-                        {
-                            double tda=(fabs(pt_msk.real())-1.0);
-                            double tdb=(fabs(pt_msk.imag())-1.0);
-                            mse=msema->Update((tda*tda)+(tdb*tdb));
-                        }
-
-                        //soft bits
-                        //-1 --> 0 , 1 --> 255 (-1 means 0 and 1 means 1) sort of
-                        //there is no packed bits in each byte
-                        //convert to the strange range for soft
-
-                        double imagin = diffdecode.UpdateSoft(pt_msk.imag());
-
-                        int ibit=qRound((imagin)*127.0+128.0);
-                        if(ibit>255)ibit=255;
-                        if(ibit<0)ibit=0;
-
-                        RxDataBits.push_back((uchar)ibit);
-
-                        double real = diffdecode.UpdateSoft(pt_msk.real());
-                        real =- real;
-
-                        ibit=qRound((real)*127.0+128.0);
-
-                        if(ibit>255)ibit=255;
-                        if(ibit<0)ibit=0;
-
-                        RxDataBits.push_back((uchar)ibit);
-
-                        // push them out to decode
-                        if(RxDataBits.size() >= 12){
-                            emit processDemodulatedSoftBits(RxDataBits);
-                            RxDataBits.clear();
-                        }
-                        even = false;
-                    }
                 }
-
-                sig2_last=sig2;
-
             }
 
+            if(!yui){pt_d=sig2;}
 
-            st_osc.WTnextFrame();
-            st_osc_ref.WTnextFrame();
-            st_osc_quarter.WTnextFrame();
+            else
+            {
+                lastcntr = cntr;
 
-            mixer2.WTnextFrame();
-            mixer_center.WTnextFrame();
+                //carrier tracking
+                double ct_xt=tanh(sig2.imag())*sig2.real();
+                double ct_xt_d=tanh(pt_d.real())*pt_d.imag();
+                double ct_ec=ct_xt_d-ct_xt;
+                if(ct_ec>M_PI)ct_ec=M_PI;
+                if(ct_ec<-M_PI)ct_ec=-M_PI;
+                if(ct_ec>M_PI_2)ct_ec=M_PI_2;
+                if(ct_ec<-M_PI_2)ct_ec=-M_PI_2;
+                if(cntr>(endRotation))
+                {
+                  rotator=rotator*std::exp(imag*ct_ec*0.1);//correct carrier phase
+                  if(cntr>(endRotation))rotator_freq=rotator_freq+ct_ec*0.0001;//correct carrier frequency
+                }
 
-        }// end of if start stop
+                //gui feedback
+
+                if(cntr >= 1480*SamplesPerSymbol && pointbuff_ptr<pointbuff.size()){
+                    if(pointbuff_ptr<pointbuff.size())
+                    {
+                        ASSERTCH(pointbuff,pointbuff_ptr);
+                        pointbuff[pointbuff_ptr]=pt_msk*0.75;
+                        if(pointbuff_ptr<pointbuff.size())pointbuff_ptr++;
+                    }
+                    if(scatterpointtype==SPT_constellation&&(pointbuff_ptr==pointbuff.size())){
+                        pointbuff_ptr++;
+                        emit ScatterPoints(pointbuff);
+                    }
+                }
+
+
+                //calc MSE of the points
+                if(cntr>((120)*SamplesPerSymbol))
+                {
+                    double tda=(fabs(pt_msk.real())-1.0);
+                    double tdb=(fabs(pt_msk.imag())-1.0);
+                    mse=msema->Update((tda*tda)+(tdb*tdb));
+                }
+
+                //soft bits
+                //-1 --> 0 , 1 --> 255 (-1 means 0 and 1 means 1) sort of
+                //there is no packed bits in each byte
+                //convert to the strange range for soft
+
+                double imagin = diffdecode.UpdateSoft(pt_msk.imag());
+
+                int ibit=qRound((imagin)*127.0+128.0);
+                if(ibit>255)ibit=255;
+                if(ibit<0)ibit=0;
+
+                RxDataBits.push_back((uchar)ibit);
+
+                double real = diffdecode.UpdateSoft(pt_msk.real());
+                real =- real;
+
+                ibit=qRound((real)*127.0+128.0);
+
+                if(ibit>255)ibit=255;
+                if(ibit<0)ibit=0;
+
+                RxDataBits.push_back((uchar)ibit);
+
+                // push them out to decode
+                if(RxDataBits.size() >= 12){
+                    emit processDemodulatedSoftBits(RxDataBits);
+                    RxDataBits.clear();
+                }
+                even = false;
+            }
+        }
+
+        sig2_last=sig2;
+
+
+
+        st_osc.WTnextFrame();
+        st_osc_ref.WTnextFrame();
+        st_osc_quarter.WTnextFrame();
+
+        mixer2.WTnextFrame();
+        mixer_center.WTnextFrame();
+
+        // }// end of if start stop
     }// end of the hrbuff
 
 

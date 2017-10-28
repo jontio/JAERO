@@ -189,6 +189,7 @@ private:
     double maxval;
     double vol_gain;
     int cntr;
+    int lastcntr;
 
     int startstopstart;
     int startstop;
@@ -225,6 +226,7 @@ private:
     int yui;
 
     int endRotation;
+
 
 
 
