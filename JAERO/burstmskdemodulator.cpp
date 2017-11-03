@@ -226,7 +226,7 @@ void BurstMskDemodulator::setSettings(Settings _settings)
 
     emit Plottables(mixer2.GetFreqHz(),mixer_center.GetFreqHz(),lockingbw);
 
-    a1.setdelay(SamplesPerSymbol/2);
+    a1.setdelay(SamplesPerSymbol/4);
     ee=0.8;
     symboltone_averotator=1;
     rotator=1;
@@ -263,7 +263,7 @@ void BurstMskDemodulator::setSettings(Settings _settings)
         startstopstart=SamplesPerSymbol*(500);
         trackingDelay = 192*SamplesPerSymbol;
 
-        endRotation = (120+72)*SamplesPerSymbol;
+        endRotation = (120+66)*SamplesPerSymbol;
 
 
     }else{
@@ -602,6 +602,8 @@ qint64 BurstMskDemodulator::writeData(const char *data, qint64 len)
             cval= mixer2.WTCISValue()*(val_to_demod*vol_gain);
             cpx_type sig2 = cpx_type(matchedfilter_re->FIRUpdateAndProcess(cval.real()),matchedfilter_im->FIRUpdateAndProcess(cval.imag()));
 
+            cpx_type orgdata = sig2;
+
             double st_err=0;
             double sphase=0;
 
@@ -629,13 +631,32 @@ qint64 BurstMskDemodulator::writeData(const char *data, qint64 len)
                 //x4 pll
 
                 st_err=std::arg((st_osc_quarter.WTCISValue())*std::conj(symboltone_pt));
-                st_err*=1.5*(1.0-progress*progress);
+                st_err*=0.5*(1.0-progress*progress);
                 st_osc_quarter.AdvanceFractionOfWave(-(1.0/(2.0*M_PI))*st_err*0.1);
                 st_osc.SetPhaseDeg((st_osc_quarter.GetPhaseDeg())*2.0+(360.0*ee));
 
             }
 
             sig2*=symboltone_averotator;
+
+
+            if(cntr>120*SamplesPerSymbol && cntr < 240*SamplesPerSymbol){
+
+                debug.append(QString::number(cntr)+";");
+                debug.append(QString::number(sphase)+";");
+                debug.append(QString::number(st_osc_quarter.WTCISValue().real())+";");
+                debug.append(QString::number(st_osc.WTCISValue().real())+";");
+                debug.append(QString::number(sig2.real())+";");
+                debug.append(QString::number(sig2.imag())+";");
+                debug.append(QString::number(orgdata.real())+";");
+                debug.append(QString::number(orgdata.imag())+";");
+                debug.append(QString::number(std::arg(symboltone_averotator))+";");
+
+
+
+            }
+
+
 
             rotator=rotator*std::exp(imag*rotator_freq);
             sig2*=rotator;
@@ -687,23 +708,15 @@ qint64 BurstMskDemodulator::writeData(const char *data, qint64 len)
             if(st_osc.GetFreqHz()<(st_osc_ref.GetFreqHz()-0.1))st_osc.SetFreq((st_osc_ref.GetFreqHz()-0.1));
             if(st_osc.GetFreqHz()>(st_osc_ref.GetFreqHz()+0.1))st_osc.SetFreq((st_osc_ref.GetFreqHz()+0.1));
 
-            if(cntr>120*SamplesPerSymbol && cntr < 240*SamplesPerSymbol){
+            int sample = 0;
 
-                debug.append(QString::number(cntr)+";");
-                debug.append(QString::number(sphase)+";");
-                debug.append(QString::number(st_osc_quarter.WTCISValue().real())+";");
-                debug.append(QString::number(st_osc.WTCISValue().real())+";");
-                debug.append(QString::number(symboltone_pt.real())+";");
-                debug.append(QString::number(symboltone_pt.imag())+";");
-                debug.append(QString::number(progress)+"\r\n");
-
-
-            }
-
-
+             double twospeed = 0;
             //sample times
             if(st_osc.IfHavePassedPoint(ee))//?? 0.4 0.8 etc
             {
+
+                sample = 1;
+
 
                 cpx_type pt_msk=cpx_type(sig2.real(), pt_d.imag());
 
@@ -711,7 +724,7 @@ qint64 BurstMskDemodulator::writeData(const char *data, qint64 len)
 
                 double last = (0.34046+0.4111*ee);
                 double first = (st_osc_quarter.GetPhaseDeg())*2.0+(360.0*ee*0.5);
-                double twospeed=-4.0*((std::fmod(first,360.0)/360.0)-last);
+                twospeed=-4.0*((std::fmod(first,360.0)/360.0)-last);
 
                 bool even=true;
                 if(twospeed<0)even=false;
@@ -728,7 +741,8 @@ qint64 BurstMskDemodulator::writeData(const char *data, qint64 len)
 
                 else
                 {
-                    lastcntr = cntr;
+                      lastcntr = cntr;
+
 
                     //carrier tracking
                     double ct_xt=tanh(sig2.imag())*sig2.real();
@@ -796,13 +810,16 @@ qint64 BurstMskDemodulator::writeData(const char *data, qint64 len)
                         emit processDemodulatedSoftBits(RxDataBits);
                         RxDataBits.clear();
                     }
-                    even = false;
+
                 }
             }
 
+            if(cntr>120*SamplesPerSymbol && cntr < 240*SamplesPerSymbol){
+
+               debug.append(QString::number(sample)+";");
+               debug.append(QString::number(twospeed)+"\r\n");
+            }
             sig2_last=sig2;
-
-
 
             st_osc.WTnextFrame();
             st_osc_ref.WTnextFrame();
