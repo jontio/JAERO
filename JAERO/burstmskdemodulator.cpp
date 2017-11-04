@@ -226,7 +226,7 @@ void BurstMskDemodulator::setSettings(Settings _settings)
 
     emit Plottables(mixer2.GetFreqHz(),mixer_center.GetFreqHz(),lockingbw);
 
-    a1.setdelay(SamplesPerSymbol/4);
+    a1.setdelay(SamplesPerSymbol/2);
     ee=0.8;
     symboltone_averotator=1;
     rotator=1;
@@ -564,6 +564,9 @@ qint64 BurstMskDemodulator::writeData(const char *data, qint64 len)
                 oddval=0;
                 lastcntr = 0;
 
+                std::cout << " lets go" << "\r\n" << std::flush;
+
+
 
             }
         }//end of trident check
@@ -591,7 +594,7 @@ qint64 BurstMskDemodulator::writeData(const char *data, qint64 len)
 
             emit SignalStatus(false);
             cntr = 0;
-            std::cout << debug.toStdString()<< std::flush;
+       //    std::cout << debug.toStdString()<< std::flush;
 
         }
 
@@ -641,6 +644,7 @@ qint64 BurstMskDemodulator::writeData(const char *data, qint64 len)
 
 
             if(cntr>120*SamplesPerSymbol && cntr < 240*SamplesPerSymbol){
+
 
                 debug.append(QString::number(cntr)+";");
                 debug.append(QString::number(sphase)+";");
@@ -715,21 +719,18 @@ qint64 BurstMskDemodulator::writeData(const char *data, qint64 len)
             if(st_osc.IfHavePassedPoint(ee))//?? 0.4 0.8 etc
             {
 
-                sample = 1;
-
-
-                cpx_type pt_msk=cpx_type(sig2.real(), pt_d.imag());
+                 cpx_type pt_msk=cpx_type(sig2.real(), pt_d.imag());
 
                 //for arm ambiguity resolution. bias calibrated for current settings
 
                 double last = (0.34046+0.4111*ee);
-                double first = (st_osc_quarter.GetPhaseDeg())*2.0+(360.0*ee*0.5);
-                twospeed=-4.0*((std::fmod(first,360.0)/360.0)-last);
+                double first = (st_osc_quarter.GetPhaseDeg())*1.0+(360.0*ee*0.5);
+                twospeed=-2.0*((std::fmod(first,360.0)/360.0)-last);
 
                 bool even=true;
                 if(twospeed<0)even=false;
                 yui++;yui%=2;
-                if(cntr<((188)*SamplesPerSymbol))
+                if(cntr<((190)*SamplesPerSymbol))
                 {
                     if((even&&yui==1)||(!even&&yui==0))
                     {
@@ -737,13 +738,16 @@ qint64 BurstMskDemodulator::writeData(const char *data, qint64 len)
                     }
                 }
 
-                if(!yui){pt_d=sig2;}
+ //               std::cout << cntr << " twospeed " << twospeed << " yui " << yui << "\r\n";
 
+
+                if(!yui){pt_d=sig2;}
                 else
                 {
                       lastcntr = cntr;
 
 
+                    sample = 1;
                     //carrier tracking
                     double ct_xt=tanh(sig2.imag())*sig2.real();
                     double ct_xt_d=tanh(pt_d.real())*pt_d.imag();
@@ -795,7 +799,19 @@ qint64 BurstMskDemodulator::writeData(const char *data, qint64 len)
 
                     RxDataBits.push_back((uchar)ibit);
 
+                    if(cntr>120*SamplesPerSymbol && cntr < 640*SamplesPerSymbol){
+
+
+                        if(ibit <= 128) {
+                        std::cout << 0 ;
+                        }
+                        else{
+                        std::cout << 1 ;
+                        }
+                    }
+
                     double real = diffdecode.UpdateSoft(pt_msk.real());
+
                     real =- real;
 
                     ibit=qRound((real)*127.0+128.0);
@@ -805,6 +821,16 @@ qint64 BurstMskDemodulator::writeData(const char *data, qint64 len)
 
                     RxDataBits.push_back((uchar)ibit);
 
+                    if(cntr>120*SamplesPerSymbol && cntr < 640*SamplesPerSymbol){
+
+
+                        if(ibit <= 128) {
+                        std::cout << 0 ;}
+                        else{
+                        std::cout << 1 ;}
+
+
+                    }
                     // push them out to decode
                     if(RxDataBits.size() >= 12){
                         emit processDemodulatedSoftBits(RxDataBits);
