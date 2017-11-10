@@ -198,6 +198,8 @@ private:
 
     const cpx_type imag=cpx_type(0, 1);
     WaveTable st_osc;
+    WaveTable st_osc_filter;
+
     WaveTable st_osc_ref;
     WaveTable st_osc_quarter;
 
@@ -212,6 +214,9 @@ private:
 
     cpx_type rotator;
     double rotator_freq;
+
+    double phaseerror;
+      int rotatecount;
 
     bool even;
     double evenval;

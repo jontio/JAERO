@@ -103,6 +103,8 @@ BurstMskDemodulator::BurstMskDemodulator(QObject *parent)
     numPoints = 0;
 
     st_osc.SetFreq(fb,Fs);
+    st_osc_filter.SetFreq(fb,Fs);
+
     st_osc_ref.SetFreq(fb,Fs);
     st_osc_quarter.SetFreq(fb/2.0,Fs);
 
@@ -227,7 +229,8 @@ void BurstMskDemodulator::setSettings(Settings _settings)
     emit Plottables(mixer2.GetFreqHz(),mixer_center.GetFreqHz(),lockingbw);
 
     a1.setdelay(SamplesPerSymbol/2);
-    ee=0.8;
+    ee=0.05;
+
     symboltone_averotator=1;
     rotator=1;
 
@@ -260,7 +263,7 @@ void BurstMskDemodulator::setSettings(Settings _settings)
         out_top.resize(N);
         out_abs_diff.resize(N/2);
 
-        startstopstart=SamplesPerSymbol*(500);
+        startstopstart=SamplesPerSymbol*(1050);
         trackingDelay = 192*SamplesPerSymbol;
 
         endRotation = (120+66)*SamplesPerSymbol;
@@ -306,6 +309,8 @@ void BurstMskDemodulator::setSettings(Settings _settings)
 
 
     st_osc.SetFreq(fb,Fs);
+    st_osc_filter.SetFreq(fb,Fs);
+
     st_osc_ref.SetFreq(fb,Fs);
     st_osc_quarter.SetFreq(fb/2.0,Fs);
 }
@@ -517,11 +522,14 @@ qint64 BurstMskDemodulator::writeData(const char *data, qint64 len)
             {
 
                 //set gain given estimate
-                vol_gain=1.4142*(500.0/(minval));
+                vol_gain=1.4142*(500.0/(minval/2));
+
+               std::cout <<"vol gain " << vol_gain << " minval " << minval << " 500 / minval " << 500/minval << "\r\n";
 
                 double carrierphase=std::arg(out_base[minvalbin])-(M_PI/4.0);
                 mixer2.SetPhaseDeg((180.0/M_PI)*carrierphase);
 
+//                mixer2.IncresePhaseDeg(-150);
                 CenterFreqChangedSlot(((maxtopposhigh+maxtoppos)/2)*hzperbin);
 
                 coarsefreqestimate->bigchange();
@@ -553,20 +561,25 @@ qint64 BurstMskDemodulator::writeData(const char *data, qint64 len)
                 rotator=1;
                 rotator_freq=0;
                 carrier_rotation_est=0;
+
+                phaseerror =0;
+                rotatecount = 0;
+
                 st_iir_resonator.init();
 
                 maxvalbin = 0;
                 st_osc.SetFreq(st_osc_ref.GetFreqHz());
                 st_osc.SetPhaseDeg(0);
+
+                st_osc_filter.SetFreq(st_osc_ref.GetFreqHz());
+                st_osc_filter.SetPhaseDeg(0);
+
+
                 st_osc_ref.SetPhaseDeg(0);
                 even = true;
                 evenval=0;
                 oddval=0;
                 lastcntr = 0;
-
-                std::cout << " lets go" << "\r\n" << std::flush;
-
-
 
             }
         }//end of trident check
@@ -594,7 +607,10 @@ qint64 BurstMskDemodulator::writeData(const char *data, qint64 len)
 
             emit SignalStatus(false);
             cntr = 0;
-       //    std::cout << debug.toStdString()<< std::flush;
+
+      //      std::cout << debug.toStdString() << "\r\n";
+            std::cout << flush;
+
 
         }
 
@@ -624,43 +640,41 @@ qint64 BurstMskDemodulator::writeData(const char *data, qint64 len)
                 double er=std::tanh(symboltone_pt.imag())*(symboltone_pt.real());
 
                 symboltone_rotator=symboltone_rotator*std::exp(imag*er*1.0);
-                symboltone_averotator=symboltone_averotator*0.95+0.5*symboltone_rotator;
-                symboltone_pt=cpx_type((symboltone_pt.real()),a1.update(symboltone_pt.real()));
 
+                symboltone_averotator=symboltone_averotator*0.95+0.05*symboltone_rotator;
+                symboltone_pt=cpx_type((symboltone_pt.real()),a1.update(symboltone_pt.real()));
                 sphase = std::arg(symboltone_pt);
 
-                carrier_rotation_est=std::arg(symboltone_averotator);
+                if(cntr> (120+3)*SamplesPerSymbol && cntr%40==0){
+                    phaseerror+=std::arg(symboltone_rotator)*(180/M_PI);
+
+                    rotatecount++;
+                }
+
+                if(cntr == (120+22)*SamplesPerSymbol){
+
+                    mixer2.IncresePhaseDeg(phaseerror/rotatecount);
+                }
 
                 //x4 pll
-
                 st_err=std::arg((st_osc_quarter.WTCISValue())*std::conj(symboltone_pt));
-                st_err*=0.5*(1.0-progress*progress);
-                st_osc_quarter.AdvanceFractionOfWave(-(1.0/(2.0*M_PI))*st_err*0.1);
-                st_osc.SetPhaseDeg((st_osc_quarter.GetPhaseDeg())*2.0+(360.0*ee));
+                st_err*=0.75*(1.0-progress*progress);
+                st_osc_quarter.AdvanceFractionOfWave(-(1.0/(2.0*M_PI))*st_err*0.05);
+                st_osc.SetPhaseDeg((st_osc_quarter.GetPhaseDeg())*2.0+(360.0*ee)) ;
 
             }
+
 
             sig2*=symboltone_averotator;
 
 
-            if(cntr>120*SamplesPerSymbol && cntr < 240*SamplesPerSymbol){
+            if(cntr>120*SamplesPerSymbol && cntr < 340*SamplesPerSymbol){
 
-
-                debug.append(QString::number(cntr)+";");
-                debug.append(QString::number(sphase)+";");
                 debug.append(QString::number(st_osc_quarter.WTCISValue().real())+";");
                 debug.append(QString::number(st_osc.WTCISValue().real())+";");
                 debug.append(QString::number(sig2.real())+";");
-                debug.append(QString::number(sig2.imag())+";");
-                debug.append(QString::number(orgdata.real())+";");
-                debug.append(QString::number(orgdata.imag())+";");
-                debug.append(QString::number(std::arg(symboltone_averotator))+";");
-
-
 
             }
-
-
 
             rotator=rotator*std::exp(imag*rotator_freq);
             sig2*=rotator;
@@ -689,24 +703,18 @@ qint64 BurstMskDemodulator::writeData(const char *data, qint64 len)
             double st_d1out=delayt41.update(st_diff);
             double st_d2out=delayt42.update(st_d1out);
             double st_eta=(st_d2out-st_diff)*st_d1out;
-
             st_iir_resonator.update(st_eta);
+            if(cntr>endRotation)st_eta=st_iir_resonator.y;
 
-            if(cntr>endRotation)
-            {
-                st_eta=st_iir_resonator.y;
-
-            }
-            //st_eta=st_iir_resonator.update(st_eta);
             cpx_type st_m1=cpx_type(st_eta,-delayt8.update(st_eta));
-            cpx_type st_out=st_osc.WTCISValue()*st_m1;
+            cpx_type st_out=st_osc_filter.WTCISValue()*st_m1;
             double st_angle_error=std::arg(st_out);
 
             //adjust sybol timing using normal tracking
-            if(cntr>endRotation)//???
+            if(cntr> 120*SamplesPerSymbol && cntr<endRotation)//???
             {
-                st_osc.IncreseFreqHz(-st_angle_error*0.00000001);//st phase shift
-                st_osc.AdvanceFractionOfWave(-st_angle_error*0.1/360.0);
+                st_osc_filter.IncreseFreqHz(-st_angle_error*0.00000001);//st phase shift
+                st_osc_filter.AdvanceFractionOfWave(-st_angle_error*0.1/360.0);
             }
 
             if(st_osc.GetFreqHz()<(st_osc_ref.GetFreqHz()-0.1))st_osc.SetFreq((st_osc_ref.GetFreqHz()-0.1));
@@ -714,12 +722,20 @@ qint64 BurstMskDemodulator::writeData(const char *data, qint64 len)
 
             int sample = 0;
 
-             double twospeed = 0;
+            if(cntr%40==0 && cntr < endRotation && cntr > 120*SamplesPerSymbol){
+            //                    std::cout << " phase st " << st_osc.GetPhaseDeg() << " " << st_osc_filter.GetPhaseDeg() << " " << std::arg(symboltone_rotator)*(180/M_PI) << " " <<
+            //                    std::arg(symboltone_averotator)*(180/M_PI) <<  " " << st_err << "\r\n";
+            }
+
+
+
+            double twospeed = 0;
             //sample times
             if(st_osc.IfHavePassedPoint(ee))//?? 0.4 0.8 etc
             {
 
-                 cpx_type pt_msk=cpx_type(sig2.real(), pt_d.imag());
+
+                cpx_type pt_msk=cpx_type(sig2.real(), pt_d.imag());
 
                 //for arm ambiguity resolution. bias calibrated for current settings
 
@@ -728,9 +744,11 @@ qint64 BurstMskDemodulator::writeData(const char *data, qint64 len)
                 twospeed=-2.0*((std::fmod(first,360.0)/360.0)-last);
 
                 bool even=true;
+
                 if(twospeed<0)even=false;
+
                 yui++;yui%=2;
-                if(cntr<((190)*SamplesPerSymbol))
+                if(cntr<(endRotation))
                 {
                     if((even&&yui==1)||(!even&&yui==0))
                     {
@@ -738,14 +756,17 @@ qint64 BurstMskDemodulator::writeData(const char *data, qint64 len)
                     }
                 }
 
- //               std::cout << cntr << " twospeed " << twospeed << " yui " << yui << "\r\n";
-
-
                 if(!yui){pt_d=sig2;}
                 else
                 {
-                      lastcntr = cntr;
 
+
+                    if(cntr > endRotation && cntr < endRotation+(4*SamplesPerSymbol))
+                    {
+
+                         std::cout << "ambiguity last" << twospeed << " " << st_osc_quarter.GetPhaseDeg() << "\r\n";
+                    }
+                    lastcntr = cntr;
 
                     sample = 1;
                     //carrier tracking
@@ -764,10 +785,11 @@ qint64 BurstMskDemodulator::writeData(const char *data, qint64 len)
 
                     //gui feedback
 
-                    if(cntr >= 120*SamplesPerSymbol && pointbuff_ptr<pointbuff.size()){
+                    if(cntr >= 1450*SamplesPerSymbol && pointbuff_ptr<pointbuff.size()){
                         if(pointbuff_ptr<pointbuff.size())
                         {
                             ASSERTCH(pointbuff,pointbuff_ptr);
+
                             pointbuff[pointbuff_ptr]=pt_msk*0.75;
                             if(pointbuff_ptr<pointbuff.size())pointbuff_ptr++;
                         }
@@ -775,16 +797,20 @@ qint64 BurstMskDemodulator::writeData(const char *data, qint64 len)
                             pointbuff_ptr++;
                             emit ScatterPoints(pointbuff);
                         }
+
+
                     }
 
 
                     //calc MSE of the points
                     if(cntr>((120)*SamplesPerSymbol))
                     {
-                        double tda=(fabs(pt_msk.real())-1.0);
-                        double tdb=(fabs(pt_msk.imag())-1.0);
+
+                        double tda=(fabs((pt_msk*0.75).real())-1.0);
+                        double tdb=(fabs((pt_msk*0.75).imag())-1.0);
                         mse=msema->Update((tda*tda)+(tdb*tdb));
                     }
+
 
                     //soft bits
                     //-1 --> 0 , 1 --> 255 (-1 means 0 and 1 means 1) sort of
@@ -799,17 +825,6 @@ qint64 BurstMskDemodulator::writeData(const char *data, qint64 len)
 
                     RxDataBits.push_back((uchar)ibit);
 
-                    if(cntr>120*SamplesPerSymbol && cntr < 640*SamplesPerSymbol){
-
-
-                        if(ibit <= 128) {
-                        std::cout << 0 ;
-                        }
-                        else{
-                        std::cout << 1 ;
-                        }
-                    }
-
                     double real = diffdecode.UpdateSoft(pt_msk.real());
 
                     real =- real;
@@ -821,16 +836,6 @@ qint64 BurstMskDemodulator::writeData(const char *data, qint64 len)
 
                     RxDataBits.push_back((uchar)ibit);
 
-                    if(cntr>120*SamplesPerSymbol && cntr < 640*SamplesPerSymbol){
-
-
-                        if(ibit <= 128) {
-                        std::cout << 0 ;}
-                        else{
-                        std::cout << 1 ;}
-
-
-                    }
                     // push them out to decode
                     if(RxDataBits.size() >= 12){
                         emit processDemodulatedSoftBits(RxDataBits);
@@ -840,14 +845,17 @@ qint64 BurstMskDemodulator::writeData(const char *data, qint64 len)
                 }
             }
 
-            if(cntr>120*SamplesPerSymbol && cntr < 240*SamplesPerSymbol){
 
-               debug.append(QString::number(sample)+";");
-               debug.append(QString::number(twospeed)+"\r\n");
+            if(cntr>120*SamplesPerSymbol && cntr < 340*SamplesPerSymbol){
+
+                debug.append(QString::number(sample)+"\r\n");
+
             }
+
             sig2_last=sig2;
 
             st_osc.WTnextFrame();
+            st_osc_filter.WTnextFrame();
             st_osc_ref.WTnextFrame();
             st_osc_quarter.WTnextFrame();
 
