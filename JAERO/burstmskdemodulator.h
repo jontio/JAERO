@@ -232,6 +232,7 @@ private:
 
     int endRotation;
 
+    double getPhaseError(QVector<double>);
 
 
 

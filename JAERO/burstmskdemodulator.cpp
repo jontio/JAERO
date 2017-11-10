@@ -524,18 +524,16 @@ qint64 BurstMskDemodulator::writeData(const char *data, qint64 len)
                 //set gain given estimate
                 vol_gain=1.4142*(500.0/(minval/2));
 
-               std::cout <<"vol gain " << vol_gain << " minval " << minval << " 500 / minval " << 500/minval << "\r\n";
-
                 double carrierphase=std::arg(out_base[minvalbin])-(M_PI/4.0);
                 mixer2.SetPhaseDeg((180.0/M_PI)*carrierphase);
 
-//                mixer2.IncresePhaseDeg(-150);
                 CenterFreqChangedSlot(((maxtopposhigh+maxtoppos)/2)*hzperbin);
 
                 coarsefreqestimate->bigchange();
 
                 emit Plottables(mixer2.GetFreqHz(),mixer2.GetFreqHz(),lockingbw);
 
+                mixer2.IncresePhaseDeg(getPhaseError(in));
 
                 pointbuff.fill(0);
                 pointmean->Zero();
@@ -562,9 +560,6 @@ qint64 BurstMskDemodulator::writeData(const char *data, qint64 len)
                 rotator_freq=0;
                 carrier_rotation_est=0;
 
-                phaseerror =0;
-                rotatecount = 0;
-
                 st_iir_resonator.init();
 
                 maxvalbin = 0;
@@ -574,12 +569,13 @@ qint64 BurstMskDemodulator::writeData(const char *data, qint64 len)
                 st_osc_filter.SetFreq(st_osc_ref.GetFreqHz());
                 st_osc_filter.SetPhaseDeg(0);
 
-
                 st_osc_ref.SetPhaseDeg(0);
                 even = true;
                 evenval=0;
                 oddval=0;
                 lastcntr = 0;
+
+
 
             }
         }//end of trident check
@@ -607,8 +603,7 @@ qint64 BurstMskDemodulator::writeData(const char *data, qint64 len)
 
             emit SignalStatus(false);
             cntr = 0;
-
-      //      std::cout << debug.toStdString() << "\r\n";
+     //     std::cout << debug.toStdString() << "\r\n";
             std::cout << flush;
 
 
@@ -621,45 +616,29 @@ qint64 BurstMskDemodulator::writeData(const char *data, qint64 len)
             cval= mixer2.WTCISValue()*(val_to_demod*vol_gain);
             cpx_type sig2 = cpx_type(matchedfilter_re->FIRUpdateAndProcess(cval.real()),matchedfilter_im->FIRUpdateAndProcess(cval.imag()));
 
-            cpx_type orgdata = sig2;
-
             double st_err=0;
             double sphase=0;
 
             cpx_type symboltone_pt;
 
-            double progress = (double)cntr-SamplesPerSymbol*120;
-
-
             if(cntr>(120*SamplesPerSymbol) && cntr<endRotation){
 
-                double goal = endRotation-SamplesPerSymbol*120;
-                progress = progress/goal;
 
                 symboltone_pt=sig2*symboltone_rotator*imag;
                 double er=std::tanh(symboltone_pt.imag())*(symboltone_pt.real());
-
                 symboltone_rotator=symboltone_rotator*std::exp(imag*er*1.0);
-
                 symboltone_averotator=symboltone_averotator*0.95+0.05*symboltone_rotator;
                 symboltone_pt=cpx_type((symboltone_pt.real()),a1.update(symboltone_pt.real()));
                 sphase = std::arg(symboltone_pt);
 
-                if(cntr> (120+3)*SamplesPerSymbol && cntr%40==0){
-                    phaseerror+=std::arg(symboltone_rotator)*(180/M_PI);
-
-                    rotatecount++;
-                }
-
-                if(cntr == (120+22)*SamplesPerSymbol){
-
-                    mixer2.IncresePhaseDeg(phaseerror/rotatecount);
-                }
+                double progress = (double)cntr-(SamplesPerSymbol*(123+22));
+                double goal = endRotation-(SamplesPerSymbol*123);
+                progress = progress/goal;
 
                 //x4 pll
                 st_err=std::arg((st_osc_quarter.WTCISValue())*std::conj(symboltone_pt));
                 st_err*=0.75*(1.0-progress*progress);
-                st_osc_quarter.AdvanceFractionOfWave(-(1.0/(2.0*M_PI))*st_err*0.05);
+                st_osc_quarter.AdvanceFractionOfWave(-(1.0/(2.0*M_PI))*st_err*0.1);
                 st_osc.SetPhaseDeg((st_osc_quarter.GetPhaseDeg())*2.0+(360.0*ee)) ;
 
             }
@@ -723,10 +702,10 @@ qint64 BurstMskDemodulator::writeData(const char *data, qint64 len)
             int sample = 0;
 
             if(cntr%40==0 && cntr < endRotation && cntr > 120*SamplesPerSymbol){
-            //                    std::cout << " phase st " << st_osc.GetPhaseDeg() << " " << st_osc_filter.GetPhaseDeg() << " " << std::arg(symboltone_rotator)*(180/M_PI) << " " <<
-            //                    std::arg(symboltone_averotator)*(180/M_PI) <<  " " << st_err << "\r\n";
-            }
+             //  std::cout << " phase st " << st_osc.GetPhaseDeg() << " " << st_osc_filter.GetPhaseDeg() << " " << std::arg(symboltone_rotator)*(180/M_PI) << " " <<
+             //   std::arg(symboltone_averotator)*(180/M_PI) <<  " " << st_err << "\r\n";
 
+             }
 
 
             double twospeed = 0;
@@ -898,8 +877,40 @@ void BurstMskDemodulator::FreqOffsetEstimateSlot(double freq_offset_est)//coarse
 
     emit MSESignal(mse);
 
-    //if(mse>signalthreshold)emit SignalStatus(false);
-    //else emit SignalStatus(true);
+}
+
+double BurstMskDemodulator::getPhaseError(QVector<double> input){
+
+
+    double result = 0;
+
+    symboltone_rotator = 1;
+
+    cpx_type symboltone_pt;
+
+
+    for(int a = 0; a<72*SamplesPerSymbol; a++){
+
+
+            cpx_type signal = mixer2.WTCISValue()*(input.at(a)*vol_gain);
+            signal = cpx_type(matchedfilter_re->FIRUpdateAndProcess(signal.real()),matchedfilter_im->FIRUpdateAndProcess(signal.imag()));
+
+            symboltone_pt=signal*symboltone_rotator*imag;
+            double er=std::tanh(symboltone_pt.imag())*(symboltone_pt.real());
+            symboltone_rotator=symboltone_rotator*std::exp(imag*er*1.0);
+            if(a>80){
+                result+=std::arg(symboltone_rotator)*(180/M_PI);
+
+            }
+
+        mixer2.WTnextFrame();
+    }
+
+
+//    std::cout << "setting phase error " << result/((72*SamplesPerSymbol)-80) << "\r\n";
+
+    return result/((72*SamplesPerSymbol)-80);
+
 
 }
 
