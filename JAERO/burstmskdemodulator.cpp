@@ -640,7 +640,7 @@ qint64 BurstMskDemodulator::writeData(const char *data, qint64 len)
 
                 //x4 pll
                 st_err=std::arg((st_osc_quarter.WTCISValue())*std::conj(symboltone_pt));
-                st_err*=0.75*(1.0-progress*progress);
+                st_err*=.75*(1.0-progress*progress);
                 st_osc_quarter.AdvanceFractionOfWave(-(1.0/(2.0*M_PI))*st_err*0.1);
                 st_osc.SetPhaseDeg((st_osc_quarter.GetPhaseDeg())*2.0+(360.0*ee)) ;
 
@@ -659,8 +659,8 @@ qint64 BurstMskDemodulator::writeData(const char *data, qint64 len)
                 debug.append(QString::number(st_osc_filter.WTCISValue().real())+";");
                 debug.append(QString::number(sig2.real())+";");
                 debug.append(QString::number(sig2.imag())+";");
+                debug.append(QString::number(st_osc_quarter.GetPhaseDeg())+";");
             }
-
 
 
             //Measure ebno
@@ -688,13 +688,9 @@ qint64 BurstMskDemodulator::writeData(const char *data, qint64 len)
             double st_eta=(st_d2out-st_diff)*st_d1out;
             st_iir_resonator.update(st_eta);
             if(cntr>156*SamplesPerSymbol)st_eta=st_iir_resonator.y;
-
             cpx_type st_m1=cpx_type(st_eta,-delayt8.update(st_eta));
             cpx_type st_out=st_osc.WTCISValue()*st_m1;
             double st_angle_error=std::arg(st_out);
-
-
-
 
             //acquire the symbol oscillation
             if(cntr> 120*SamplesPerSymbol && cntr < endRotation)//???
@@ -705,11 +701,6 @@ qint64 BurstMskDemodulator::writeData(const char *data, qint64 len)
             else{
                 st_osc.IncreseFreqHz(-st_angle_error*0.00000001);//st phase shift
                 st_osc.AdvanceFractionOfWave(-st_angle_error*0.001/360.0);
-            }
-
-            if(cntr%240==0){
-
-                std::cout << cntr << " " <<  st_osc.GetPhaseDeg() << " " << st_angle_error*(180/M_PI) << "\r\n";
             }
 
             if(st_osc.GetFreqHz()<(st_osc_ref.GetFreqHz()-0.1))st_osc.SetFreq((st_osc_ref.GetFreqHz()-0.1));

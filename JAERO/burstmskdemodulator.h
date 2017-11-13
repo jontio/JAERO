@@ -71,6 +71,10 @@ private:
     WaveTable mixer_center;
     WaveTable mixer2;
 
+    WaveTable testreal;
+    WaveTable testimag;
+
+
     int spectrumnfft,bbnfft;
 
     QVector<cpx_type> bbcycbuff;
