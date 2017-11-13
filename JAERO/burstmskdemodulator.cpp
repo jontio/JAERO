@@ -270,7 +270,7 @@ void BurstMskDemodulator::setSettings(Settings _settings)
         startstopstart=SamplesPerSymbol*(500);
         trackingDelay = 192*SamplesPerSymbol;
 
-        endRotation = (120+72)*SamplesPerSymbol;
+        endRotation = (120+52)*SamplesPerSymbol;
 
 
     }else{
@@ -528,8 +528,6 @@ qint64 BurstMskDemodulator::writeData(const char *data, qint64 len)
                 //set gain given estimate
                 vol_gain=1.4142*(500.0/(minval/2));
 
-                std::cout << "starting , vol_gain " << vol_gain << "\r\n";
-
                 double carrierphase=std::arg(out_base[minvalbin])-(M_PI/4.0);
                 mixer2.SetPhaseDeg((180.0/M_PI)*carrierphase);
 
@@ -606,40 +604,29 @@ qint64 BurstMskDemodulator::writeData(const char *data, qint64 len)
 
             emit SignalStatus(false);
             cntr = 0;
-    //        std::cout << debug.toStdString() << "\r\n";
-            std::cout << flush;
-
-
         }
 
         if(startstop > 0 )
         {
 
-
             cval= mixer2.WTCISValue()*(val_to_demod*vol_gain);
             cpx_type sig2 = cpx_type(matchedfilter_re->FIRUpdateAndProcess(cval.real()),matchedfilter_im->FIRUpdateAndProcess(cval.imag()));
-
-            double st_err=0;
-            double sphase=0;
-
-            cpx_type symboltone_pt;
 
             if(cntr>(120*SamplesPerSymbol) && cntr<endRotation){
 
 
-                symboltone_pt=sig2*symboltone_rotator*imag;
+                cpx_type symboltone_pt=sig2*symboltone_rotator*imag;
                 double er=std::tanh(symboltone_pt.imag())*(symboltone_pt.real());
                 symboltone_rotator=symboltone_rotator*std::exp(imag*er*1.0);
                 symboltone_averotator=symboltone_averotator*0.995+0.005*symboltone_rotator;
                 symboltone_pt=cpx_type((symboltone_pt.real()),a1.update(symboltone_pt.real()));
-                sphase = std::arg(symboltone_pt);
 
                 double progress = (double)cntr-(SamplesPerSymbol*(120));
                 double goal = endRotation-(SamplesPerSymbol*120);
                 progress = progress/goal;
 
                 //x4 pll
-                st_err=std::arg((st_osc_quarter.WTCISValue())*std::conj(symboltone_pt));
+                double st_err=std::arg((st_osc_quarter.WTCISValue())*std::conj(symboltone_pt));
                 st_err*=.75*(1.0-progress*progress);
                 st_osc_quarter.AdvanceFractionOfWave(-(1.0/(2.0*M_PI))*st_err*0.1);
                 st_osc.SetPhaseDeg((st_osc_quarter.GetPhaseDeg())*2.0+(360.0*ee)) ;
@@ -651,17 +638,6 @@ qint64 BurstMskDemodulator::writeData(const char *data, qint64 len)
 
             rotator=rotator*std::exp(imag*rotator_freq);
             sig2*=rotator;
-
-            if(cntr>120*SamplesPerSymbol && cntr < 340*SamplesPerSymbol){
-
-                debug.append(QString::number(st_osc_quarter.WTCISValue().real())+";");
-                debug.append(QString::number(st_osc.WTCISValue().real())+";");
-                debug.append(QString::number(st_osc_filter.WTCISValue().real())+";");
-                debug.append(QString::number(sig2.real())+";");
-                debug.append(QString::number(sig2.imag())+";");
-                debug.append(QString::number(st_osc_quarter.GetPhaseDeg())+";");
-            }
-
 
             //Measure ebno
             ebnomeasure->Update(std::abs(sig2));
@@ -687,7 +663,7 @@ qint64 BurstMskDemodulator::writeData(const char *data, qint64 len)
             double st_d2out=delayt42.update(st_d1out);
             double st_eta=(st_d2out-st_diff)*st_d1out;
             st_iir_resonator.update(st_eta);
-            if(cntr>156*SamplesPerSymbol)st_eta=st_iir_resonator.y;
+            if(cntr>126*SamplesPerSymbol)st_eta=st_iir_resonator.y;
             cpx_type st_m1=cpx_type(st_eta,-delayt8.update(st_eta));
             cpx_type st_out=st_osc.WTCISValue()*st_m1;
             double st_angle_error=std::arg(st_out);
@@ -832,9 +808,6 @@ qint64 BurstMskDemodulator::writeData(const char *data, qint64 len)
             mixer2.WTnextFrame();
             mixer_center.WTnextFrame();
 
-
-            testreal.WTnextFrame();
-            testimag.WTnextFrame();
             // }// end of if start stop
         }// end of the hrbuff
 
@@ -847,10 +820,14 @@ qint64 BurstMskDemodulator::writeData(const char *data, qint64 len)
 void BurstMskDemodulator::FreqOffsetEstimateSlot(double freq_offset_est)//coarse est class calls this with current est
 {
 
-    static int countdown=0;
+
+   // std::cout << "coarse freq est " << freq_offset_est << "\r\n";
+  // static int countdown=4;
+
+    /*
+
     if((mse>signalthreshold)&&(fabs(mixer2.GetFreqHz()-(mixer_center.GetFreqHz()+freq_offset_est))>1.0))//no sig, prob cant track carrier phase
     {
-
 
         mixer2.SetFreq(mixer_center.GetFreqHz()+freq_offset_est);
 
@@ -869,6 +846,13 @@ void BurstMskDemodulator::FreqOffsetEstimateSlot(double freq_offset_est)//coarse
         }
     } else countdown=4;
 
+    */
+
+  //
+
+    mixer2.SetFreq(mixer_center.GetFreqHz()+freq_offset_est);
+
+   // std::cout << "mixer 2 after " << mixer_center.GetFreqHz() <<" " <<  mixer2.GetFreqHz() << "\r\n";
     emit MSESignal(mse);
 
 }
@@ -899,9 +883,6 @@ double BurstMskDemodulator::getPhaseError(QVector<double> input){
 
         mixer2.WTnextFrame();
     }
-
-
-//    std::cout << "setting phase error " << result/((72*SamplesPerSymbol)-80) << "\r\n";
 
     return result/((72*SamplesPerSymbol)-80);
 

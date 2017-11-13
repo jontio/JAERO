@@ -12,6 +12,8 @@
 #include <math.h>
 #include "../viterbi-xukmin/viterbi.h"
 #include "jconvolutionalcodec.h"
+#include "iostream"
+
 #include "databasetext.h"
 
 namespace AEROTypeR {
@@ -616,6 +618,8 @@ public:
             if(!crcok)
             {
 
+                std::cout << " bad  T packet " << blockptr/64 << "\r\n" << std::flush;
+
 
                 lastpacketstate=Bad_Packet;
                 return Bad_Packet;
@@ -624,7 +628,7 @@ public:
             else
             {
 
-                if(blockptr/64 ==5){
+                  if(blockptr/64 ==5){
                     return Nothing;
                 }
 
@@ -661,9 +665,17 @@ public:
 
                             ok++;
 
-                         }
+                            std::cout << "SU  "<< i << " ok" << "\r\n";
+
+                         }else{
+                            std::cout << "SU  "<< i << " not ok " << "\r\n";
+
+                        }
 
                     }// end SU loop
+
+
+                    std::cout << "Number of OK SU's " << ok << " out of total SU's " << targetSUSize << "\r\n" << std::flush;
 
                     if(ok<=targetSUSize){
 

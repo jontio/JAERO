@@ -389,7 +389,7 @@ bool ParserISU::parse(ISUItem &isuitem)
             &&(((uchar)isuitem.userdata[15])==0x83 || ((uchar)isuitem.userdata[15])==0x02 ))
         isacars = true;
 
-    if(isacars)
+      if(isacars)
     {
 
 
@@ -413,7 +413,6 @@ bool ParserISU::parse(ISUItem &isuitem)
             {
                anerror=((QString)"").sprintf("ISU: AESID = %X GESID = %X QNO = %02X REFNO = %02X : Parity error",isuitem.AESID,isuitem.GESID,isuitem.QNO,isuitem.REFNO);
                emit Errorsignal(anerror);
-
                return false;
             }
             anacarsitem.PLANEREG+=(char)byte;
@@ -431,7 +430,7 @@ bool ParserISU::parse(ISUItem &isuitem)
                     anerror=((QString)"").sprintf("ISU: AESID = %X GESID = %X QNO = %02X REFNO = %02X : Parity error",isuitem.AESID,isuitem.GESID,isuitem.QNO,isuitem.REFNO);
                     emit Errorsignal(anerror);
 
-                    return false;
+                   return false;
                 }
 
                 if((byte<0x20)&&(!(byte==10||byte==13)))
@@ -779,6 +778,8 @@ int PreambleDetectorPhaseInvariant::Update(int val)
     buffer[buffer.size()-1]=val;
     if(xorsum>=(buffer.size()-tollerence)){
 
+
+        std::cout << "got inverted preamble " << xorsum << "\r\n";
         inverted=true;
         return true;
     }
@@ -1095,11 +1096,15 @@ QByteArray &AeroL::Decode(QVector<short> &bits, bool soft)//0 bit --> oldest bit
         } //non 10500 burst mode use a phase invariant preamble detector
         else if(burstmode){
 
-          if( muw < 120){
 
-             gotsync=mskBurstDetector.Update(bit);
 
-          }
+          gotsync=mskBurstDetector.Update(bit);
+
+          if( muw > 250 && gotsync){
+
+               gotsync = false;
+
+         }
 
             if(mskBurstDetector.inverted){
 
@@ -1821,6 +1826,7 @@ QByteArray &AeroL::Decode(QVector<short> &bits, bool soft)//0 bit --> oldest bit
         {
             scrambler.reset();
             cntr=-1;
+
             if(burstmode)
             {
 
