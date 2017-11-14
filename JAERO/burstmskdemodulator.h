@@ -71,10 +71,6 @@ private:
     WaveTable mixer_center;
     WaveTable mixer2;
 
-    WaveTable testreal;
-    WaveTable testimag;
-
-
     int spectrumnfft,bbnfft;
 
     QVector<cpx_type> bbcycbuff;
@@ -106,16 +102,6 @@ private:
     MSKEbNoMeasure *ebnomeasure;
 
     MovingAverage *pointmean;
-
-    QVector<cpx_type> sig2buff;
-    int sig2buff_ptr;
-
-    QVector<cpx_type> delaybuff;
-
-    QVector<cpx_type> sigbuff;
-    int sigbuff_ptr;
-
-    int lastindex;
 
     QVector<cpx_type> pointbuff;
     int pointbuff_ptr;
@@ -197,7 +183,6 @@ private:
 
     int startstopstart;
     int startstop;
-    int trackingDelay;
     int numPoints;
 
     const cpx_type imag=cpx_type(0, 1);
@@ -213,18 +198,11 @@ private:
     cpx_type symboltone_averotator;
     cpx_type symboltone_rotator;
     double carrier_rotation_est;
-    cpx_type sig2_last;
     cpx_type pt_d;
 
     cpx_type rotator;
     double rotator_freq;
-
-    double phaseerror;
-      int rotatecount;
-
     bool even;
-    double evenval;
-    double oddval;
 
     //st
     Delay<double> delays;
@@ -235,9 +213,6 @@ private:
     int yui;
 
     int endRotation;
-
-    double getPhaseError(QVector<double>);
-
 
 
 signals:
