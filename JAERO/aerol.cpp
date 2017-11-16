@@ -594,6 +594,11 @@ QVector<int> &AeroLInterleaver::deinterleave(QVector<int> &block,int cols)
 
 QByteArray &AeroLInterleaver::deinterleave_ba(QVector<int> &block,int cols)
 {
+
+    // default to MSK settings if zero
+    if(cols==0){
+        cols = N;
+    }
     assert(cols<=N);
     assert(block.size()>=(M*cols));
     int k=0;
@@ -838,7 +843,7 @@ AeroL::AeroL(QObject *parent) : QIODevice(parent)
     QVector<quint16> polys;
     polys.push_back(109);
     polys.push_back(79);
-    jconvolcodec->SetCode(2,7,polys,0);
+    jconvolcodec->SetCode(2,7,polys,24);
 
 
 
@@ -1007,7 +1012,7 @@ QByteArray &AeroL::Decode(QVector<short> &bits, bool soft)//0 bit --> oldest bit
     quint16 bit=0;
     quint16 soft_bit=0;
 
-    for(int i=0;i<bits.size();i++)
+      for(int i=0;i<bits.size();i++)
     {
 
 
@@ -1104,9 +1109,9 @@ QByteArray &AeroL::Decode(QVector<short> &bits, bool soft)//0 bit --> oldest bit
 
                gotsync = false;
 
-         }
+           }
 
-            if(mskBurstDetector.inverted){
+           if(mskBurstDetector.inverted){
 
                 bit=1-bit;
 
@@ -1116,6 +1121,10 @@ QByteArray &AeroL::Decode(QVector<short> &bits, bool soft)//0 bit --> oldest bit
                     soft_bit = 255-soft_bit;
                 }
             }
+        }
+        else{
+
+            gotsync=preambledetector.Update(bit);
         }
 
         if(cntr<1000000000)cntr++;
@@ -1400,27 +1409,27 @@ QByteArray &AeroL::Decode(QVector<short> &bits, bool soft)//0 bit --> oldest bit
 
             }
 
-            else{// its a p channel
+            else{
+
+                // its a p channel
 
                 //fill block
                 if(cntr==16)blockcnt=-1;
                 int idx=(cntr-AERO_SPEC_BitsInHeader)%block.size();
                 if(idx<0)idx=0;//for dummy bits drop
-                block[idx]=bit;
+                block[idx]=soft_bit;
+
                 if(idx==(block.size()-1))//block is now filled
                 {
 
                     blockcnt++;
 
                     //deinterleaver
-                    QVector<int> deleaveredblock=leaver.deinterleave(block);
+                    QByteArray deleaveredblockBA=leaver.deinterleave_ba(block, 0);
 
+                    QVector<int> deconvol=jconvolcodec->Decode_Continuous(deleaveredblockBA);
 
-                    QVector<int> deconvol=convolcodec->Decode_Continuous(deleaveredblock);
-
-                    //QVector<int> deconvol=jconvolcodec->Decode_Continuous(deleaveredblock);
-
-                    //delay line for frame alignment for non burst modes. This is needed for the scrambler
+                   //delay line for frame alignment for non burst modes. This is needed for the scrambler
                     dl2.update(deconvol);
 
                     //scrambler

@@ -114,7 +114,7 @@ private:
 
     DiffDecode diffdecode;
 
-    //QVector<short> RxDataBits;//unpacked
+    QVector<short> RxDataBits;//unpacked
     QByteArray  RxDataBytes;//packed in bytes
 
     double mse;
@@ -142,7 +142,7 @@ signals:
     void OrgOverlapedBuffer(const QVector<double> &buffer);
     void Plottables(double freq_est,double freq_center,double bandwidth);
     void PeakVolume(double Volume);
-    //void RxData(QVector<short> &data);//unpacked
+    void processDemodulatedSoftBits(const QVector<short> &soft_bits);
     void RxData(const QByteArray &data);//packed in bytes
     void MSESignal(double mse);
     void SignalStatus(bool gotasignal);

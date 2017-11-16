@@ -2,6 +2,8 @@
 
 #include <QDebug>
 #include <assert.h>
+#include <math.h>
+#include <iostream>
 
 JConvolutionalCodec::JConvolutionalCodec(QObject *parent) : QObject(parent)
 {  
@@ -144,26 +146,39 @@ QByteArray& JConvolutionalCodec::Hard_To_Soft_Convert(QByteArray& hard_bits_in)
     return hard_bits_in;
 }
 
-
 QVector<int> &JConvolutionalCodec::Decode_Continuous(QByteArray& soft_bits_in)//0-->-1 128-->0 255-->1
 {
-    int k=(2*nparitybits*paddinglength);//msg is padded frount and back both times by paddinglength
-    if(soft_bits_overlap_buffer_uchar.size()!=k)soft_bits_overlap_buffer_uchar.fill(128,k);
+    int k=62;// polys.size()*(paddinglength+constraint_));
+
     soft_bits_overlap_buffer_uchar.append(soft_bits_in);
 
-    //decoce
-    decoded.resize((soft_bits_overlap_buffer_uchar.size()/nparitybits)/8+1);
+    // add some padding on the back
+    QByteArray filldata;
+    filldata.fill(128,paddinglength);
+    soft_bits_overlap_buffer_uchar.append(filldata);
+
+
+    //decode
+    double bt_size = soft_bits_overlap_buffer_uchar.size();
+    bt_size=(bt_size/nparitybits)/8+1;
+
+    decoded.resize((soft_bits_overlap_buffer_uchar.size()/nparitybits)+1);
+
     size_t dbits=correct_convolutional_decode_soft(convol,(uchar*)soft_bits_overlap_buffer_uchar.data(),soft_bits_overlap_buffer_uchar.size(),(uchar*)decoded.data());
     assert(dbits>0);
+
     dbits=soft_bits_overlap_buffer_uchar.size()/nparitybits;
 
     //unpack bytes
     decoded_bits.resize(dbits);
+
     int bit_ptr=0;
+
     for(int i=0;i<decoded.size()&&bit_ptr<((int)dbits);i++)
     {
         uchar uch=decoded[i];
-        for(int k=0;k<8;k++)
+
+        for(int k=0;k<8&&bit_ptr<((int)dbits);k++)
         {
             if(uch&128)decoded_bits[bit_ptr]=1;
              else decoded_bits[bit_ptr]=0;
@@ -172,13 +187,13 @@ QVector<int> &JConvolutionalCodec::Decode_Continuous(QByteArray& soft_bits_in)//
         }
     }
 
+
     //remove the padding bits from the return data
-    decoded_bits=decoded_bits.mid(paddinglength);//(paddinglength/nparitybits);//-(constraint-1)+1);
-    decoded_bits=decoded_bits.mid(0,decoded_bits.size()-paddinglength);
+    decoded_bits=decoded_bits.mid(paddinglength+1, soft_bits_in.size()/nparitybits );
 
     //remove the used data from the padding buffer
-    soft_bits_overlap_buffer_uchar=soft_bits_overlap_buffer_uchar.right(k);
-
+    soft_bits_overlap_buffer_uchar=soft_bits_in.right(k);
+    soft_bits_overlap_buffer_uchar.resize(k);
 
     return decoded_bits;
 }

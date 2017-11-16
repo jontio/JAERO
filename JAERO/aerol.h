@@ -499,7 +499,7 @@ public:
         QVector<quint16> polys;
         polys.push_back(109);
         polys.push_back(79);
-        jconvolcodec->SetCode(2,7,polys,0);
+        jconvolcodec->SetCode(2,7,polys,24);
 
 
 
@@ -608,7 +608,13 @@ public:
 
                     blockptr=block.size();//stop further testing
                     lastpacketstate=OK_R_Packet;
+
+                    std::cout << " good R packet " << "\r\n" << std::flush;
+
                     return OK_R_Packet;
+                }else{
+                    std::cout << " bad R packet " << "\r\n" << std::flush;
+
                 }
             }
 

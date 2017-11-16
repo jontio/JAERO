@@ -102,7 +102,7 @@ BurstMskDemodulator::BurstMskDemodulator(QObject *parent)
     pt_d=0;
     msema = new MovingAverage(128);
 
-    //st 1200hz resonator at 48000fps
+    //st 1200hz resonator at 48000fps 10hz bw
     st_iir_resonator.a.resize(3);
     st_iir_resonator.b.resize(3);
 
@@ -287,7 +287,7 @@ void BurstMskDemodulator::setSettings(Settings _settings)
 
         startstopstart=SamplesPerSymbol*(500);
 
-        endRotation = (120+52)*SamplesPerSymbol;
+        endRotation = (120+56)*SamplesPerSymbol;
 
 
     }else{
@@ -444,7 +444,7 @@ qint64 BurstMskDemodulator::writeData(const char *data, qint64 len)
         if(bt_sig>500)bt_sig=500;
 
         //peak detection to start filling trident buffer and flash signal LED
-        if(pdet.update(bt_sig) && !(mse < signalthreshold))
+        if(pdet.update(bt_sig))
         {
 
             tridentbuffer_ptr=0;
@@ -536,8 +536,9 @@ qint64 BurstMskDemodulator::writeData(const char *data, qint64 len)
             // ok so now we have the center bin, maxtoppos and one of the side peaks, should be to the left of the main peak, minvalbin
             int distfrompeak = std::abs(maxtoppos - minvalbin);
 
+
             // check if the side peak is within the expected range +/- 5%
-            if(minval>500.0 && std::abs(distfrompeak-peakspacingbins) < std::abs(peakspacingbins/20) && !(mse<signalthreshold))
+            if(minval>500.0 && std::abs(distfrompeak-peakspacingbins) < std::abs(peakspacingbins/20))
 
             {
 
@@ -612,6 +613,7 @@ qint64 BurstMskDemodulator::writeData(const char *data, qint64 len)
 
             emit SignalStatus(false);
             cntr = 0;
+
         }
 
         if(startstop > 0 )
@@ -696,6 +698,8 @@ qint64 BurstMskDemodulator::writeData(const char *data, qint64 len)
             {
 
 
+
+
                 cpx_type pt_msk=cpx_type(sig2.real(), pt_d.imag());
 
                 //for arm ambiguity resolution. bias calibrated for current settings
@@ -737,7 +741,7 @@ qint64 BurstMskDemodulator::writeData(const char *data, qint64 len)
 
                    //gui feedback
 
-                    if(cntr >= 1450*SamplesPerSymbol && pointbuff_ptr<pointbuff.size()){
+                    if(cntr >= endRotation && pointbuff_ptr<pointbuff.size()){
                         if(pointbuff_ptr<pointbuff.size())
                         {
                             ASSERTCH(pointbuff,pointbuff_ptr);
@@ -764,6 +768,12 @@ qint64 BurstMskDemodulator::writeData(const char *data, qint64 len)
                     }
 
 
+                    if(cntr < 300*SamplesPerSymbol){
+                    debug.append(QString::number(cntr) + ";");
+                    debug.append(QString::number(mse) + "\r\n");
+
+                    }
+
                     //soft bits
                     //-1 --> 0 , 1 --> 255 (-1 means 0 and 1 means 1) sort of
                     //there is no packed bits in each byte
@@ -785,6 +795,7 @@ qint64 BurstMskDemodulator::writeData(const char *data, qint64 len)
 
                     if(ibit>255)ibit=255;
                     if(ibit<0)ibit=0;
+
 
                     RxDataBits.push_back((uchar)ibit);
 

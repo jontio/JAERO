@@ -30,6 +30,7 @@ public:
     QVector<int> &Soft_To_Hard_Convert(const QByteArray& soft_bits_in);//0-->-1 128-->0 255-->1
 
     QByteArray &Hard_To_Soft_Convert(QByteArray& hard_bits_in);//0-->-1 128-->0 255-->1
+
     void printbits(QByteArray msg,int nbits=-1);
     int getPaddinglength(){return paddinglength;}
 signals:
