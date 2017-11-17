@@ -256,6 +256,8 @@ void BurstMskDemodulator::setSettings(Settings _settings)
     symboltone_averotator=1;
     rotator=1;
 
+    cntr = 0;
+
 
     if(fb >= 1200){
 
@@ -536,9 +538,8 @@ qint64 BurstMskDemodulator::writeData(const char *data, qint64 len)
             // ok so now we have the center bin, maxtoppos and one of the side peaks, should be to the left of the main peak, minvalbin
             int distfrompeak = std::abs(maxtoppos - minvalbin);
 
-
             // check if the side peak is within the expected range +/- 5%
-            if(minval>500.0 && std::abs(distfrompeak-peakspacingbins) < std::abs(peakspacingbins/20))
+            if(minval>500.0 && std::abs(distfrompeak-peakspacingbins) < std::abs(peakspacingbins/20) && cntr<=0)
 
             {
 
@@ -613,7 +614,6 @@ qint64 BurstMskDemodulator::writeData(const char *data, qint64 len)
 
             emit SignalStatus(false);
             cntr = 0;
-
         }
 
         if(startstop > 0 )
@@ -629,6 +629,7 @@ qint64 BurstMskDemodulator::writeData(const char *data, qint64 len)
                 double er=std::tanh(symboltone_pt.imag())*(symboltone_pt.real());
                 symboltone_rotator=symboltone_rotator*std::exp(imag*er*1.0);
                 symboltone_averotator=symboltone_averotator*0.995+0.005*symboltone_rotator;
+
                 symboltone_pt=cpx_type((symboltone_pt.real()),a1.update(symboltone_pt.real()));
 
                 double progress = (double)cntr-(SamplesPerSymbol*(120));
@@ -640,6 +641,8 @@ qint64 BurstMskDemodulator::writeData(const char *data, qint64 len)
                 st_err*=.75*(1.0-progress*progress);
                 st_osc_quarter.AdvanceFractionOfWave(-(1.0/(2.0*M_PI))*st_err*0.1);
                 st_osc.SetPhaseDeg((st_osc_quarter.GetPhaseDeg())*2.0+(360.0*ee)) ;
+
+
 
 
             }
@@ -696,10 +699,6 @@ qint64 BurstMskDemodulator::writeData(const char *data, qint64 len)
             //sample times
             if(st_osc.IfHavePassedPoint(ee))//?? 0.4 0.8 etc
             {
-
-
-
-
                 cpx_type pt_msk=cpx_type(sig2.real(), pt_d.imag());
 
                 //for arm ambiguity resolution. bias calibrated for current settings
@@ -735,13 +734,13 @@ qint64 BurstMskDemodulator::writeData(const char *data, qint64 len)
                     if(ct_ec<-M_PI_2)ct_ec=-M_PI_2;
                     if(cntr>(120*SamplesPerSymbol))
                     {
-                        rotator=rotator*std::exp(imag*ct_ec*0.1);//correct carrier phase
-                        if(cntr>(120*SamplesPerSymbol))rotator_freq=rotator_freq+ct_ec*0.0001;//correct carrier frequency
+                        rotator=rotator*std::exp(imag*ct_ec*0.25);//correct carrier phase
+                        rotator_freq=rotator_freq+ct_ec*0.0001;//correct carrier frequency
                     }
 
                    //gui feedback
 
-                    if(cntr >= endRotation && pointbuff_ptr<pointbuff.size()){
+                    if(cntr >= 1200*SamplesPerSymbol && pointbuff_ptr<pointbuff.size()){
                         if(pointbuff_ptr<pointbuff.size())
                         {
                             ASSERTCH(pointbuff,pointbuff_ptr);
@@ -757,9 +756,8 @@ qint64 BurstMskDemodulator::writeData(const char *data, qint64 len)
 
                     }
 
-
                     //calc MSE of the points
-                    if(cntr>((120)*SamplesPerSymbol))
+                    if(cntr>((1200)*SamplesPerSymbol))
                     {
 
                         double tda=(fabs((pt_msk*0.75).real())-1.0);
@@ -767,12 +765,6 @@ qint64 BurstMskDemodulator::writeData(const char *data, qint64 len)
                         mse=msema->Update((tda*tda)+(tdb*tdb));
                     }
 
-
-                    if(cntr < 300*SamplesPerSymbol){
-                    debug.append(QString::number(cntr) + ";");
-                    debug.append(QString::number(mse) + "\r\n");
-
-                    }
 
                     //soft bits
                     //-1 --> 0 , 1 --> 255 (-1 means 0 and 1 means 1) sort of
@@ -827,7 +819,7 @@ qint64 BurstMskDemodulator::writeData(const char *data, qint64 len)
 void BurstMskDemodulator::FreqOffsetEstimateSlot(double freq_offset_est)//coarse est class calls this with current est
 {
 
- //   mixer2.SetFreq(mixer_center.GetFreqHz()+freq_offset_est);
+  //  mixer2.SetFreq(mixer_center.GetFreqHz()+freq_offset_est);
 
 
 }

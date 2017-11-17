@@ -377,6 +377,7 @@ bool ParserISU::parse(ISUItem &isuitem)
 
     bool isacars = false;
 
+    // not sure about some of these conditions, certainly missing some messages with all of them on
     if((isuitem.userdata.size()>16)
             &&((uchar)isuitem.userdata[0])==0xFF
             &&((uchar)isuitem.userdata[1])==0xFF
@@ -446,7 +447,7 @@ bool ParserISU::parse(ISUItem &isuitem)
         //mark as valid
         anacarsitem.valid=true;
 
-        //send acars message to lookup if fully defraged
+       //send acars message to lookup if fully defraged
         if(acarsdefragmenter.defragment(anacarsitem))
         {
             ACARSItem *pai=new ACARSItem;
@@ -472,7 +473,7 @@ bool ParserISU::parse(ISUItem &isuitem)
     QString AESIDstr=((QString)"").sprintf("%06X",anacarsitem.isuitem.AESID);
     dbtu->request(databasedir,AESIDstr,pai);
 
-    return true;
+     return true;
 
 }
 void ParserISU::setDataBaseDir(const QString &dir)

@@ -199,6 +199,7 @@ private:
     cpx_type symboltone_rotator;
     double carrier_rotation_est;
     cpx_type pt_d;
+    cpx_type pt_last;
 
     cpx_type rotator;
     double rotator_freq;
