@@ -106,43 +106,12 @@ BurstMskDemodulator::BurstMskDemodulator(QObject *parent)
     st_iir_resonator.a.resize(3);
     st_iir_resonator.b.resize(3);
 
-    /*
-
-    .05
-    1200 5hz [3.271421893958904e-04 0 -3.271421893958904e-04], [1 -1.974730452137909 0.999345715621208]
 
 
-   1200 10hz [1 -1.974084645626565 0.998691859050465], [6.540704747675097e-04 0 -6.540704747675097e-04]
-
-    1200 20hz [1 -1.972794298017954 0.997385427096603], [0.001307286451699 0 -0.001307286451699]
-    1200 40hz [1 -1.970218649044569 0.994777672334778], [0.002611163832611 0 -0.002611163832611]
-    1200 50hz [1 -1.968933338904949 0.993476340642592], [0.003261829678704 0 -0.003261829678704]
-    1200 75hz [1 -1.965727362063336 0.990230400896375], [0.004884799551813 0 -0.004884799551813]
-    1200 100hz [1 -1.962531757461839 0.986994962681552], [0.006502518659224 0 -0.006502518659224]
-    1200 120hz [0.007792936291952 0 -0.007792936291952], [1 -1.959982696561153 0.984414127416097]
-    1200 160hz [0.010363824637108 0 -0.010363824637108], [1 -1.954904223674187 0.979272350725784]
-
-
-    .025
-    600 50hz [0.003261829678704 0 -0.003261829678704], [1 -1.987331118373485 0.993476340642592]
-    600 75hz [0.004884799551813 0 -0.004884799551813], [1 -1.984095184776228 0.990230400896375]
-    600 100hz [0.006502518659224 0 -0.006502518659224], [1 -1.980869720337648 0.986994962681552]
-
-    */
-    /*
-    st_iir_resonator.b[0]=0.001307286451699;
-    st_iir_resonator.b[1]=0;
-    st_iir_resonator.b[2]=-0.001307286451699;
-    st_iir_resonator.a[0]=1;
-    st_iir_resonator.a[1]=-1.972794298017954;
-    st_iir_resonator.a[2]=0.997385427096603;
-
-  */
-
+    //1200hz 10hz bw peak filter
     st_iir_resonator.a[0]=1;
     st_iir_resonator.a[1]= -1.974084645626565;
     st_iir_resonator.a[2]=0.998691859050465;
-
     st_iir_resonator.b[0]=6.540704747675097e-04;
     st_iir_resonator.b[1]=0;
     st_iir_resonator.b[2]=-6.540704747675097e-04;
@@ -628,7 +597,7 @@ qint64 BurstMskDemodulator::writeData(const char *data, qint64 len)
                 cpx_type symboltone_pt=sig2*symboltone_rotator*imag;
                 double er=std::tanh(symboltone_pt.imag())*(symboltone_pt.real());
                 symboltone_rotator=symboltone_rotator*std::exp(imag*er*1.0);
-                symboltone_averotator=symboltone_averotator*0.995+0.005*symboltone_rotator;
+                symboltone_averotator=symboltone_averotator*0.999+0.001*symboltone_rotator;
 
                 symboltone_pt=cpx_type((symboltone_pt.real()),a1.update(symboltone_pt.real()));
 
@@ -641,9 +610,6 @@ qint64 BurstMskDemodulator::writeData(const char *data, qint64 len)
                 st_err*=.75*(1.0-progress*progress);
                 st_osc_quarter.AdvanceFractionOfWave(-(1.0/(2.0*M_PI))*st_err*0.1);
                 st_osc.SetPhaseDeg((st_osc_quarter.GetPhaseDeg())*2.0+(360.0*ee)) ;
-
-
-
 
             }
 

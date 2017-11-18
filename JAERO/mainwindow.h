@@ -108,6 +108,7 @@ private slots:
     void ERRorslot(QString &error);
 
    // void result(bool ok, int ref, const QStringList &result);
+
 };
 
 #endif // MAINWINDOW_H

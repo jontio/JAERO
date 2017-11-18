@@ -103,6 +103,7 @@ MainWindow::MainWindow(QWidget *parent) :
     aerol2->ConnectSinkDevice(ui->console->consoledevice);
 
     connect(audiomskdemodulator,SIGNAL(processDemodulatedSoftBits(QVector<short>)),aerol,SLOT(processDemodulatedSoftBits(QVector<short>)));
+    connect(audiooqpskdemodulator,SIGNAL(processDemodulatedSoftBits(QVector<short>)),aerol,SLOT(processDemodulatedSoftBits(QVector<short>)));
     connect(audioburstmskdemodulator,SIGNAL(processDemodulatedSoftBits(QVector<short>)),aerol,SLOT(processDemodulatedSoftBits(QVector<short>)));
     connect(audioburstoqpskdemodulator,SIGNAL(processDemodulatedSoftBits(QVector<short>)),aerol,SLOT(processDemodulatedSoftBits(QVector<short>)));
     connect(audioburstoqpskdemodulator->demod2,SIGNAL(processDemodulatedSoftBits(QVector<short>)),aerol2,SLOT(processDemodulatedSoftBits(QVector<short>)));
@@ -1216,3 +1217,5 @@ void MainWindow::ERRorslot(QString &error)
 {
     ui->inputwidget->appendHtml("<font color=\"red\">"+error+"</font>");
 }
+
+
