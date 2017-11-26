@@ -405,7 +405,9 @@ bool ParserISU::parse(ISUItem &isuitem)
         anacarsitem.LABEL+=((uchar)textish[13]);
         anacarsitem.BI=((uchar)textish[14]);
         if(((uchar)isuitem.userdata[15])==0x02)anacarsitem.hastext=true;
-        if(((uchar)isuitem.userdata[isuitem.userdata.size()-1-3])==0x97)anacarsitem.moretocome=true;
+        if(((uchar)isuitem.userdata[isuitem.userdata.size()-1-3])==0x97){
+            anacarsitem.moretocome=true;
+        }
         for(int k=4;k<4+7;k++)
         {
             byte=((uchar)isuitem.userdata[k]);
@@ -417,7 +419,10 @@ bool ParserISU::parse(ISUItem &isuitem)
                return false;
             }
             anacarsitem.PLANEREG+=(char)byte;
+
+
         }
+
 
         //fill in message
         if(anacarsitem.hastext)
@@ -785,7 +790,7 @@ int PreambleDetectorPhaseInvariant::Update(int val)
     if(xorsum>=(buffer.size()-tollerence)){
 
 
-        std::cout << "got inverted preamble " << xorsum << "\r\n";
+  //      std::cout << "got inverted preamble " << xorsum << "\r\n";
         inverted=true;
         return true;
     }
@@ -1104,10 +1109,20 @@ QByteArray &AeroL::Decode(QVector<short> &bits, bool soft)//0 bit --> oldest bit
 
 
 
+          bool inverted = mskBurstDetector.inverted;
+
           gotsync=mskBurstDetector.Update(bit);
+
+          if(gotsync){
+
+      //        std::cout << "got sync muw " << muw << "\r\n" << std::flush;
+          }
 
           if( muw > 250 && gotsync){
 
+              if(inverted != mskBurstDetector.inverted){
+                  mskBurstDetector.inverted = inverted;
+              }
                gotsync = false;
 
            }
@@ -1341,7 +1356,7 @@ QByteArray &AeroL::Decode(QVector<short> &bits, bool soft)//0 bit --> oldest bit
 
                     decodedbytes+=decline;
 
-                }
+                   }
                     break;
                 case RTChannelDeleaveFECScram::OK_T_Packet:
                 {

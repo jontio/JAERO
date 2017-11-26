@@ -609,11 +609,11 @@ public:
                     blockptr=block.size();//stop further testing
                     lastpacketstate=OK_R_Packet;
 
-                    std::cout << " good R packet " << "\r\n" << std::flush;
+        //            std::cout << " good R packet " << "\r\n" << std::flush;
 
                     return OK_R_Packet;
                 }else{
-                    std::cout << " bad R packet " << "\r\n" << std::flush;
+                  //  std::cout << " bad R packet " << "\r\n" << std::flush;
 
                 }
             }
@@ -624,7 +624,7 @@ public:
             if(!crcok)
             {
 
-                std::cout << " bad  T packet " << blockptr/64 << "\r\n" << std::flush;
+      //          std::cout << " bad  T packet " << blockptr/64 << "\r\n" << std::flush;
 
 
                 lastpacketstate=Bad_Packet;
@@ -843,6 +843,7 @@ signals:
     void DataCarrierDetect(bool status);
     void ACARSsignal(ACARSItem &acarsitem);
     void Errorsignal(QString &error);
+
 public slots:
     void setBitRate(double fb);
     void setBurstmode(bool burstmode);
