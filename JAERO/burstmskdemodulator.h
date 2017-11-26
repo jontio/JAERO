@@ -14,6 +14,8 @@
 
 #include "fftrwrapper.h"
 
+#include "Biquad.h"
+
 
 
 typedef FFTrWrapper<double> FFTr;
@@ -67,9 +69,16 @@ public:
     double getCurrentFreq();
 private:
 
+    Biquad refilter;
+    Biquad imfilter;
+
     QString debug;
     WaveTable mixer_center;
     WaveTable mixer2;
+
+    WaveTable test_low;
+    WaveTable test_high;
+
 
     int spectrumnfft,bbnfft;
 
@@ -97,6 +106,7 @@ private:
 
     AGC *agc;
     AGC *agc2;
+    AGC *agc3;
 
 
     MSKEbNoMeasure *ebnomeasure;
@@ -204,6 +214,7 @@ private:
     cpx_type rotator;
     double rotator_freq;
     bool even;
+    int sample;
 
     //st
     Delay<double> delays;
@@ -213,7 +224,10 @@ private:
     IIR st_iir_resonator;
     int yui;
 
+    cpx_type last_pt_msk;
+
     int endRotation;
+    int startProcessing;
 
 
 signals:
@@ -232,10 +246,12 @@ signals:
     void BitRateChanged(double fb,bool burstmode);
     void processDemodulatedSoftBits(const QVector<short> &soft_bits);
 
+
 public slots:
     void FreqOffsetEstimateSlot(double freq_offset_est);
     void CenterFreqChangedSlot(double freq_center);
 
 };
+
 
 #endif // BURSTMSKDEMODULATOR_H

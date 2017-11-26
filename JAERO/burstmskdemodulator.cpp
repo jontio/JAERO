@@ -38,9 +38,9 @@ BurstMskDemodulator::BurstMskDemodulator(QObject *parent)
         matchedfilter_im->FIRSetPoint(i,sin(M_PI*i/(2.0*SamplesPerSymbol))/(2.0*SamplesPerSymbol));
     }
 
-
     agc = new AGC(1,Fs);
     agc2 = new AGC(1,Fs);
+    agc3 = new AGC(1,Fs);
 
     ebnomeasure = new MSKEbNoMeasure(0.25*Fs);//2 second ave //SamplesPerSymbol*125);//125 symbol averaging
 
@@ -48,6 +48,9 @@ BurstMskDemodulator::BurstMskDemodulator(QObject *parent)
 
     mixer_center.SetFreq(freq_center,Fs);
     mixer2.SetFreq(freq_center,Fs);
+
+    test_low.SetFreq(freq_center,Fs);;
+    test_high.SetFreq(freq_center,Fs);;
 
     bbnfft=pow(2,14);
     bbcycbuff.resize(bbnfft);
@@ -78,6 +81,7 @@ BurstMskDemodulator::BurstMskDemodulator(QObject *parent)
     connect(coarsefreqestimate, SIGNAL(FreqOffsetEstimate(double)),this,SLOT(FreqOffsetEstimateSlot(double)));
 
 
+
     // burst stuff
     hfir=new QJHilbertFilter(this);
 
@@ -100,13 +104,11 @@ BurstMskDemodulator::BurstMskDemodulator(QObject *parent)
     st_osc_quarter.SetFreq(fb/2.0,Fs);
 
     pt_d=0;
-    msema = new MovingAverage(128);
+    msema = new MovingAverage(100);
 
     //st 1200hz resonator at 48000fps 10hz bw
     st_iir_resonator.a.resize(3);
     st_iir_resonator.b.resize(3);
-
-
 
     //1200hz 10hz bw peak filter
     st_iir_resonator.a[0]=1;
@@ -124,7 +126,7 @@ BurstMskDemodulator::BurstMskDemodulator(QObject *parent)
     delayt42.setdelay((SamplesPerSymbol)/4.0);
     delayt8.setdelay((SamplesPerSymbol)/2.0);//??
 
-
+    startProcessing = 120;
 }
 
 ///Connects a sink devide to the modem for the demodulated data
@@ -208,7 +210,7 @@ void BurstMskDemodulator::setSettings(Settings _settings)
     agc = new AGC(1,Fs);
 
     delete agc2;
-    agc2 = new AGC(SamplesPerSymbol*32.0/Fs,Fs);
+    delete agc3;
 
     delete ebnomeasure;
     ebnomeasure = new MSKEbNoMeasure(0.25*Fs);//1 second ave //SamplesPerSymbol*125);//125 symbol averaging
@@ -220,13 +222,11 @@ void BurstMskDemodulator::setSettings(Settings _settings)
     emit Plottables(mixer2.GetFreqHz(),mixer_center.GetFreqHz(),lockingbw);
 
     a1.setdelay(SamplesPerSymbol/2);
-    ee=0.05;
 
     symboltone_averotator=1;
     rotator=1;
 
     cntr = 0;
-
 
     if(fb >= 1200){
 
@@ -260,6 +260,25 @@ void BurstMskDemodulator::setSettings(Settings _settings)
 
         endRotation = (120+56)*SamplesPerSymbol;
 
+        //st 1200hz resonator at 48000fps 10hz bw
+        st_iir_resonator.a.resize(3);
+        st_iir_resonator.b.resize(3);
+
+        //1200hz 10hz bw peak filter
+        st_iir_resonator.a[0]=1;
+        st_iir_resonator.a[1]= -1.974084645626565;
+        st_iir_resonator.a[2]=0.998691859050465;
+        st_iir_resonator.b[0]=6.540704747675097e-04;
+        st_iir_resonator.b[1]=0;
+        st_iir_resonator.b[2]=-6.540704747675097e-04;
+
+        st_iir_resonator.init();
+        ee=0.05;
+
+        startProcessing = 120;
+        agc2 = new AGC(SamplesPerSymbol*128.0/Fs,Fs);
+        agc3 = new AGC(SamplesPerSymbol*16.0/Fs,Fs);
+
 
     }else{
 
@@ -285,15 +304,37 @@ void BurstMskDemodulator::setSettings(Settings _settings)
         tridentbuffer.resize(tridentbuffer_sz);
         tridentbuffer_ptr=0;
 
-        d1.setLength(((int) 294 * SamplesPerSymbol) + 20);//adjust so start of burst aligns
-        d2.setLength(qRound((150.0)*SamplesPerSymbol));//delay line for aligning demod to output of trident check and freq est
+        d1.setLength(((int) 397 * SamplesPerSymbol) + 20);//adjust so start of burst aligns
+        d2.setLength(qRound((72+150.0)*SamplesPerSymbol));//delay line for aligning demod to output of trident check and freq est
 
         in.resize(N);
         out_base.resize(N);
         out_top.resize(N);
         out_abs_diff.resize(N/2);
 
-        startstopstart=SamplesPerSymbol*(1050);//(256+2000);//128);
+        startstopstart=SamplesPerSymbol*(500);
+
+
+        //st 600hz resonator at 48000fps 20hz bw
+        st_iir_resonator.a.resize(3);
+        st_iir_resonator.b.resize(3);
+
+        st_iir_resonator.a[0]=1;
+        st_iir_resonator.a[1]= -1.991228154418550;
+        st_iir_resonator.a[2]=0.997385427096603;
+        st_iir_resonator.b[0]=0.001307286451699;
+        st_iir_resonator.b[1]=0;
+        st_iir_resonator.b[2]=-0.001307286451699;
+
+        st_iir_resonator.init();
+        ee=0.015;
+
+        startProcessing = 150;
+        endRotation = (startProcessing+56)*SamplesPerSymbol;
+
+
+        agc2 = new AGC(SamplesPerSymbol*128.0/Fs,Fs);
+        agc3 = new AGC(SamplesPerSymbol*32.0/Fs,Fs);
 
 
     }
@@ -301,9 +342,12 @@ void BurstMskDemodulator::setSettings(Settings _settings)
 
     st_osc.SetFreq(fb,Fs);
     st_osc_filter.SetFreq(fb,Fs);
-
     st_osc_ref.SetFreq(fb,Fs);
     st_osc_quarter.SetFreq(fb/2.0,Fs);
+
+    test_low.SetFreq(freq_center,Fs);;
+    test_high.SetFreq(freq_center,Fs);;
+
 }
 
 void BurstMskDemodulator::CenterFreqChangedSlot(double freq_center)//spectrum display calls this when user changes the center freq
@@ -330,6 +374,7 @@ BurstMskDemodulator::~BurstMskDemodulator()
     delete matchedfilter_im;
     delete agc;
     delete agc2;
+    delete agc3;
     delete ebnomeasure;
     delete pointmean;
 
@@ -501,22 +546,21 @@ qint64 BurstMskDemodulator::writeData(const char *data, qint64 len)
                         maxtopposhigh = i;
                     }
                 }
-
             }
 
             // ok so now we have the center bin, maxtoppos and one of the side peaks, should be to the left of the main peak, minvalbin
             int distfrompeak = std::abs(maxtoppos - minvalbin);
 
             // check if the side peak is within the expected range +/- 5%
-            if(minval>500.0 && std::abs(distfrompeak-peakspacingbins) < std::abs(peakspacingbins/20) && cntr<=0)
-
+            if(minval>500.0 && std::abs(distfrompeak-peakspacingbins) < std::abs(peakspacingbins/20) && !(mse<signalthreshold && cntr>0))
             {
 
                 //set gain given estimate
-                vol_gain=1.4142*(500.0/(minval/2));
+                vol_gain=1.4142*(500.0/(minval/3));
 
                 double carrierphase=std::arg(out_base[minvalbin])-(M_PI/4.0);
                 mixer2.SetPhaseDeg((180.0/M_PI)*carrierphase);
+
 
                 CenterFreqChangedSlot(((maxtopposhigh+maxtoppos)/2)*hzperbin);
 
@@ -557,6 +601,9 @@ qint64 BurstMskDemodulator::writeData(const char *data, qint64 len)
 
                 st_osc_ref.SetPhaseDeg(0);
                 even = true;
+                last_pt_msk=0;
+
+                sample = 0;
             }
         }//end of trident check
 
@@ -565,52 +612,59 @@ qint64 BurstMskDemodulator::writeData(const char *data, qint64 len)
         if(startstop>0)
         {
 
-            if(cntr>=(120*SamplesPerSymbol)){
+            if(cntr>=(startProcessing*SamplesPerSymbol)){
                 startstop--;
             }
             if(cntr<1000000)cntr++;
 
             if(mse<signalthreshold)
             {
-                startstop=startstopstart;
+               startstop=startstopstart;
             }
 
 
         }
+
+        //if(cntr==endRotation+(200*SamplesPerSymbol))
         if(startstop==0)
         {
             startstop--;
 
             emit SignalStatus(false);
             cntr = 0;
+            mse=1;
+
+        //   std::cout << debug.toStdString() << std::flush;
+
         }
 
         if(startstop > 0 )
         {
 
-            cval= mixer2.WTCISValue()*(val_to_demod*vol_gain);
+            //val_to_demod=test_high.WTCISValue().real();
+            cval= mixer2.WTCISValue()*(val_to_demod)*vol_gain;
             cpx_type sig2 = cpx_type(matchedfilter_re->FIRUpdateAndProcess(cval.real()),matchedfilter_im->FIRUpdateAndProcess(cval.imag()));
 
-            if(cntr>(120*SamplesPerSymbol) && cntr<endRotation){
-
+            if(cntr>(startProcessing*SamplesPerSymbol) && cntr<endRotation){
 
                 cpx_type symboltone_pt=sig2*symboltone_rotator*imag;
+
+
                 double er=std::tanh(symboltone_pt.imag())*(symboltone_pt.real());
                 symboltone_rotator=symboltone_rotator*std::exp(imag*er*1.0);
                 symboltone_averotator=symboltone_averotator*0.999+0.001*symboltone_rotator;
 
                 symboltone_pt=cpx_type((symboltone_pt.real()),a1.update(symboltone_pt.real()));
 
-                double progress = (double)cntr-(SamplesPerSymbol*(120));
-                double goal = endRotation-(SamplesPerSymbol*120);
+                double progress = (double)cntr-(SamplesPerSymbol*(startProcessing));
+                double goal = endRotation-(SamplesPerSymbol*startProcessing);
                 progress = progress/goal;
 
                 //x4 pll
                 double st_err=std::arg((st_osc_quarter.WTCISValue())*std::conj(symboltone_pt));
-                st_err*=.75*(1.0-progress*progress);
+                st_err*=0.2*(1.0-progress*progress);
                 st_osc_quarter.AdvanceFractionOfWave(-(1.0/(2.0*M_PI))*st_err*0.1);
                 st_osc.SetPhaseDeg((st_osc_quarter.GetPhaseDeg())*2.0+(360.0*ee)) ;
-
             }
 
             sig2*=symboltone_averotator;
@@ -618,11 +672,12 @@ qint64 BurstMskDemodulator::writeData(const char *data, qint64 len)
             rotator=rotator*std::exp(imag*rotator_freq);
             sig2*=rotator;
 
+
             //Measure ebno
             ebnomeasure->Update(std::abs(sig2));
 
             //send ebno when right time
-            if(cntr==1450*SamplesPerSymbol){
+            if(cntr==1200*SamplesPerSymbol){
                 emit EbNoMeasurmentSignal(ebnomeasure->EbNo);
 
             }
@@ -642,13 +697,13 @@ qint64 BurstMskDemodulator::writeData(const char *data, qint64 len)
             double st_d2out=delayt42.update(st_d1out);
             double st_eta=(st_d2out-st_diff)*st_d1out;
             st_iir_resonator.update(st_eta);
-            if(cntr>126*SamplesPerSymbol)st_eta=st_iir_resonator.y;
+            if(cntr>156*SamplesPerSymbol)st_eta=st_iir_resonator.y;
             cpx_type st_m1=cpx_type(st_eta,-delayt8.update(st_eta));
             cpx_type st_out=st_osc.WTCISValue()*st_m1;
             double st_angle_error=std::arg(st_out);
 
             //acquire the symbol oscillation
-            if(cntr> 120*SamplesPerSymbol && cntr < endRotation)//???
+            if(cntr> startProcessing*SamplesPerSymbol && cntr < endRotation)//???
             {
                 st_osc.IncreseFreqHz(-st_angle_error*0.00000001);//st phase shift
                 st_osc.AdvanceFractionOfWave(-st_angle_error*0.5/360.0);
@@ -661,6 +716,7 @@ qint64 BurstMskDemodulator::writeData(const char *data, qint64 len)
             if(st_osc.GetFreqHz()<(st_osc_ref.GetFreqHz()-0.1))st_osc.SetFreq((st_osc_ref.GetFreqHz()-0.1));
             if(st_osc.GetFreqHz()>(st_osc_ref.GetFreqHz()+0.1))st_osc.SetFreq((st_osc_ref.GetFreqHz()+0.1));
 
+            sample = 0;
 
             //sample times
             if(st_osc.IfHavePassedPoint(ee))//?? 0.4 0.8 etc
@@ -690,23 +746,28 @@ qint64 BurstMskDemodulator::writeData(const char *data, qint64 len)
                 else
                 {
 
+                    sample = 1;
+
                     //carrier tracking
                     double ct_xt=tanh(sig2.imag())*sig2.real();
                     double ct_xt_d=tanh(pt_d.real())*pt_d.imag();
+
                     double ct_ec=ct_xt_d-ct_xt;
                     if(ct_ec>M_PI)ct_ec=M_PI;
                     if(ct_ec<-M_PI)ct_ec=-M_PI;
                     if(ct_ec>M_PI_2)ct_ec=M_PI_2;
                     if(ct_ec<-M_PI_2)ct_ec=-M_PI_2;
-                    if(cntr>(120*SamplesPerSymbol))
+                    if(cntr>(startProcessing*SamplesPerSymbol))
                     {
                         rotator=rotator*std::exp(imag*ct_ec*0.25);//correct carrier phase
-                        rotator_freq=rotator_freq+ct_ec*0.0001;//correct carrier frequency
+                        if(cntr>endRotation){
+                          rotator_freq=rotator_freq+ct_ec*0.0001;//correct carrier frequency
+                        }
                     }
 
                    //gui feedback
 
-                    if(cntr >= 1200*SamplesPerSymbol && pointbuff_ptr<pointbuff.size()){
+                    if(cntr >= (endRotation) && pointbuff_ptr<pointbuff.size()){
                         if(pointbuff_ptr<pointbuff.size())
                         {
                             ASSERTCH(pointbuff,pointbuff_ptr);
@@ -723,7 +784,7 @@ qint64 BurstMskDemodulator::writeData(const char *data, qint64 len)
                     }
 
                     //calc MSE of the points
-                    if(cntr>((1200)*SamplesPerSymbol))
+                    if(cntr>(startProcessing*SamplesPerSymbol))
                     {
 
                         double tda=(fabs((pt_msk*0.75).real())-1.0);
@@ -764,6 +825,8 @@ qint64 BurstMskDemodulator::writeData(const char *data, qint64 len)
                     }
 
                 }
+
+
             }
 
             st_osc.WTnextFrame();
@@ -786,6 +849,10 @@ void BurstMskDemodulator::FreqOffsetEstimateSlot(double freq_offset_est)//coarse
 {
 
   //  mixer2.SetFreq(mixer_center.GetFreqHz()+freq_offset_est);
+
+//    std::cout << cntr << " got freq offset slot " << freq_offset_est << " mixer 2 freq " << mixer2.GetFreqHz() << " mse " << mse << "\r\n" << std::flush;
+
+    //mixer_center.SetFreq(mixer2.GetFreqHz());
 
 
 }
