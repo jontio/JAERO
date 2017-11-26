@@ -191,8 +191,6 @@ private:
     QVector<cpx_type> phasepointbuff;
     int phasepointbuff_ptr;
 
-    QString debug;
-
 //--
 
 

@@ -497,7 +497,7 @@ void BurstOqpskDemodulator::writeDataSlot(const char *data, qint64 len)
                 emit SignalStatus(true);
                 mse=0;
                 msema->Zero();
-                debug="";
+
 
             }
 
@@ -530,8 +530,6 @@ void BurstOqpskDemodulator::writeDataSlot(const char *data, qint64 len)
 
             emit SignalStatus(false);
 
-            std::cout << debug.toStdString()<< std::flush;
-
         }
 
         if((cntr>((256-10)*SamplesPerSymbol))&&insertpreamble)
@@ -540,36 +538,26 @@ void BurstOqpskDemodulator::writeDataSlot(const char *data, qint64 len)
             insertpreamble=false;
         }
 
-        double st_err = 0;
-        double sphase = 0;
-        double sreal = 0;
-         double progress = 0;
-         //symbol tone in preamble
+        //symbol tone in preamble
         if((cntr>SamplesPerSymbol*(128+10))&&(cntr<((256-10)*SamplesPerSymbol)))
         {
 
             //0 to 1
-            progress=(((double)cntr)-(SamplesPerSymbol*(128+10)))/(((256-10)*SamplesPerSymbol)-(SamplesPerSymbol*(128+10)));
+            double progress=(((double)cntr)-(SamplesPerSymbol*(128+10)))/(((256-10)*SamplesPerSymbol)-(SamplesPerSymbol*(128+10)));
 
             //produce symbol tone circle (symboltone_pt) and calc carrier rotation
             cpx_type symboltone_pt=sig2*symboltone_rotator*imag;
             double er=std::tanh(symboltone_pt.imag())*(symboltone_pt.real());
-
             symboltone_rotator=symboltone_rotator*std::exp(imag*er*0.01);
             symboltone_averotator=symboltone_averotator*0.95+0.05*symboltone_rotator;
             symboltone_pt=cpx_type((symboltone_pt.real()),a1.update(symboltone_pt.real()));
             carrier_rotation_est=std::arg(symboltone_averotator);
 
-            sreal = symboltone_pt.real();
-
-            sphase = std::arg(symboltone_pt);
-
             //x4 pll
-            st_err=std::arg((st_osc_quarter.WTCISValue())*std::conj(symboltone_pt));
+            double st_err=std::arg((st_osc_quarter.WTCISValue())*std::conj(symboltone_pt));
             st_err*=1.5*(1.0-progress*progress);
             st_osc_quarter.AdvanceFractionOfWave(-(1.0/(2.0*M_PI))*st_err*0.1);
             st_osc.SetPhaseDeg((st_osc_quarter.GetPhaseDeg())*4.0+(360.0*ee));
-
 
         }
 
@@ -601,33 +589,14 @@ void BurstOqpskDemodulator::writeDataSlot(const char *data, qint64 len)
         double st_d1out=delayt41.update(st_diff);
         double st_d2out=delayt42.update(st_d1out);
         double st_eta=(st_d2out-st_diff)*st_d1out;
-
-        double reson = st_eta;
-
         st_iir_resonator.update(st_eta);
         if(cntr>SamplesPerSymbol*(128+128))st_eta=st_iir_resonator.y;
-
         //st_eta=st_iir_resonator.update(st_eta);
-
-
         cpx_type st_m1=cpx_type(st_eta,-delayt8.update(st_eta));
         cpx_type st_out=st_osc.WTCISValue()*st_m1;
         double st_angle_error=std::arg(st_out);
 
-        //symbol tone in preamble
-       if((cntr>SamplesPerSymbol*(128+10))&&(cntr<((356-10)*SamplesPerSymbol)))
-       {
-           debug.append(QString::number(cntr)+";");
-           debug.append(QString::number(sphase)+";");
-           debug.append(QString::number(st_osc_quarter.WTCISValue().real())+";");
-           debug.append(QString::number(st_osc.WTCISValue().real())+";");
-           debug.append(QString::number(sreal)+";");
-           debug.append(QString::number(progress)+"\r\n");
-
-
-        }
-
-              //adjust sybol timing using normal tracking
+        //adjust sybol timing using normal tracking
         if(cntr>SamplesPerSymbol*(128+64))//???
         {
             st_osc.IncreseFreqHz(-st_angle_error*0.00000001);//st phase shift
