@@ -555,6 +555,7 @@ qint64 BurstMskDemodulator::writeData(const char *data, qint64 len)
             if(minval>500.0 && std::abs(distfrompeak-peakspacingbins) < std::abs(peakspacingbins/20) && !(mse<signalthreshold && cntr>0))
             {
 
+
                 //set gain given estimate
                 vol_gain=1.4142*(500.0/(minval/3));
 
@@ -634,15 +635,15 @@ qint64 BurstMskDemodulator::writeData(const char *data, qint64 len)
             cntr = 0;
             mse=1;
 
-        //   std::cout << debug.toStdString() << std::flush;
-
         }
 
-        if(startstop > 0 )
+        //if(startstop > 0 )
+        if(true)
         {
 
             //val_to_demod=test_high.WTCISValue().real();
             cval= mixer2.WTCISValue()*(val_to_demod)*vol_gain;
+
             cpx_type sig2 = cpx_type(matchedfilter_re->FIRUpdateAndProcess(cval.real()),matchedfilter_im->FIRUpdateAndProcess(cval.imag()));
 
             if(cntr>(startProcessing*SamplesPerSymbol) && cntr<endRotation){
@@ -651,7 +652,7 @@ qint64 BurstMskDemodulator::writeData(const char *data, qint64 len)
 
 
                 double er=std::tanh(symboltone_pt.imag())*(symboltone_pt.real());
-                symboltone_rotator=symboltone_rotator*std::exp(imag*er*1.0);
+                symboltone_rotator=symboltone_rotator*std::exp(imag*er*0.5);
                 symboltone_averotator=symboltone_averotator*0.999+0.001*symboltone_rotator;
 
                 symboltone_pt=cpx_type((symboltone_pt.real()),a1.update(symboltone_pt.real()));
@@ -662,7 +663,7 @@ qint64 BurstMskDemodulator::writeData(const char *data, qint64 len)
 
                 //x4 pll
                 double st_err=std::arg((st_osc_quarter.WTCISValue())*std::conj(symboltone_pt));
-                st_err*=0.2*(1.0-progress*progress);
+                st_err*=0.5*(1.0-progress*progress);
                 st_osc_quarter.AdvanceFractionOfWave(-(1.0/(2.0*M_PI))*st_err*0.1);
                 st_osc.SetPhaseDeg((st_osc_quarter.GetPhaseDeg())*2.0+(360.0*ee)) ;
             }
@@ -710,7 +711,7 @@ qint64 BurstMskDemodulator::writeData(const char *data, qint64 len)
             }// normal symbol timing
             else{
                 st_osc.IncreseFreqHz(-st_angle_error*0.00000001);//st phase shift
-                st_osc.AdvanceFractionOfWave(-st_angle_error*0.001/360.0);
+                st_osc.AdvanceFractionOfWave(-st_angle_error*0.002/360.0);
             }
 
             if(st_osc.GetFreqHz()<(st_osc_ref.GetFreqHz()-0.1))st_osc.SetFreq((st_osc_ref.GetFreqHz()-0.1));
@@ -736,6 +737,7 @@ qint64 BurstMskDemodulator::writeData(const char *data, qint64 len)
                 yui++;yui%=2;
                 if(cntr<(endRotation))
                 {
+
                     if((even&&yui==1)||(!even&&yui==0))
                     {
                         yui++;yui%=2;
@@ -767,7 +769,7 @@ qint64 BurstMskDemodulator::writeData(const char *data, qint64 len)
 
                    //gui feedback
 
-                    if(cntr >= (endRotation) && pointbuff_ptr<pointbuff.size()){
+                    if(cntr >= (endRotation + 200*SamplesPerSymbol) && pointbuff_ptr<pointbuff.size()){
                         if(pointbuff_ptr<pointbuff.size())
                         {
                             ASSERTCH(pointbuff,pointbuff_ptr);
@@ -837,7 +839,7 @@ qint64 BurstMskDemodulator::writeData(const char *data, qint64 len)
             mixer_center.WTnextFrame();
 
             // }// end of if start stop
-        }// end of the hrbuff
+        }// end of true, leaving option to stop processing when idle
 
     }
 
@@ -849,10 +851,6 @@ void BurstMskDemodulator::FreqOffsetEstimateSlot(double freq_offset_est)//coarse
 {
 
   //  mixer2.SetFreq(mixer_center.GetFreqHz()+freq_offset_est);
-
-//    std::cout << cntr << " got freq offset slot " << freq_offset_est << " mixer 2 freq " << mixer2.GetFreqHz() << " mse " << mse << "\r\n" << std::flush;
-
-    //mixer_center.SetFreq(mixer2.GetFreqHz());
 
 
 }

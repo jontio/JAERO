@@ -790,7 +790,6 @@ int PreambleDetectorPhaseInvariant::Update(int val)
     if(xorsum>=(buffer.size()-tollerence)){
 
 
-  //      std::cout << "got inverted preamble " << xorsum << "\r\n";
         inverted=true;
         return true;
     }
@@ -1112,11 +1111,6 @@ QByteArray &AeroL::Decode(QVector<short> &bits, bool soft)//0 bit --> oldest bit
           bool inverted = mskBurstDetector.inverted;
 
           gotsync=mskBurstDetector.Update(bit);
-
-          if(gotsync){
-
-      //        std::cout << "got sync muw " << muw << "\r\n" << std::flush;
-          }
 
           if( muw > 250 && gotsync){
 
