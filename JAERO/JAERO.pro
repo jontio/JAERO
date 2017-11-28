@@ -140,3 +140,4 @@ QMAKE_CXXFLAGS_RELEASE += -O3
 
 # add the desired -O3 if not present
 #QMAKE_CXXFLAGS_RELEASE *= -O3
+

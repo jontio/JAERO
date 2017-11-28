@@ -52,10 +52,8 @@ public:
     explicit BurstMskDemodulator(QObject *parent);
     ~BurstMskDemodulator();
 
-
     void ConnectSinkDevice(QIODevice *datasinkdevice);
     void DisconnectSinkDevice();
-
 
     void start();
     void stop();
@@ -69,28 +67,17 @@ public:
     double getCurrentFreq();
 private:
 
-    Biquad refilter;
-    Biquad imfilter;
-
-    QString debug;
     WaveTable mixer_center;
     WaveTable mixer2;
 
-    WaveTable test_low;
-    WaveTable test_high;
-
+    bool sql;
 
     int spectrumnfft,bbnfft;
 
-    QVector<cpx_type> bbcycbuff;
-    QVector<cpx_type> bbtmpbuff;
-    int bbcycbuff_ptr;
 
     QVector<double> spectrumcycbuff;
     QVector<double> spectrumtmpbuff;
     int spectrumcycbuff_ptr;
-
-    CoarseFreqEstimate *coarsefreqestimate;
 
     double Fs;
     double freq_center;
@@ -106,8 +93,6 @@ private:
 
     AGC *agc;
     AGC *agc2;
-    AGC *agc3;
-
 
     MSKEbNoMeasure *ebnomeasure;
 
@@ -116,17 +101,11 @@ private:
     QVector<cpx_type> pointbuff;
     int pointbuff_ptr;
 
-    QVector<cpx_type> symbolbuff;
-    int symbolbuff_ptr;
-
-    SymTracker symtracker;
-
     QList<int> tixd;
 
     DiffDecode diffdecode;
 
     QVector<short> RxDataBits;//unpacked
-    QByteArray  RxDataBytes;//packed in bytes
 
     double mse;
 
@@ -134,13 +113,7 @@ private:
 
     bool afc;
 
-    double symboltrackingweight;
-
-    bool sql;
-
     int scatterpointtype;
-
-    QVector<cpx_type> singlepointphasevector;
 
     BaceConverter bc;
 
@@ -189,7 +162,6 @@ private:
     double maxval;
     double vol_gain;
     int cntr;
-    int lastcntr;
 
     int startstopstart;
     int startstop;
@@ -214,7 +186,6 @@ private:
     cpx_type rotator;
     double rotator_freq;
     bool even;
-    int sample;
 
     //st
     Delay<double> delays;
@@ -223,8 +194,6 @@ private:
     Delay<double> delayt8;
     IIR st_iir_resonator;
     int yui;
-
-    cpx_type last_pt_msk;
 
     int endRotation;
     int startProcessing;
@@ -248,8 +217,7 @@ signals:
 
 
 public slots:
-    void FreqOffsetEstimateSlot(double freq_offset_est);
-    void CenterFreqChangedSlot(double freq_center);
+     void CenterFreqChangedSlot(double freq_center);
 
 };
 
