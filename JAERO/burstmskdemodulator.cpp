@@ -616,7 +616,7 @@ qint64 BurstMskDemodulator::writeData(const char *data, qint64 len)
             //x4 pll
             double st_err=std::arg((st_osc_quarter.WTCISValue())*std::conj(symboltone_pt));
             st_err*=0.5*(1.0-progress*progress);
-            st_osc_quarter.AdvanceFractionOfWave(-(1.0/(2.0*M_PI))*st_err*0.1);
+            st_osc_quarter.AdvanceFractionOfWave(-(1.0/(2.0*M_PI))*st_err*0.05);
             st_osc.SetPhaseDeg((st_osc_quarter.GetPhaseDeg())*2.0+(360.0*ee)) ;
         }
 
@@ -630,7 +630,7 @@ qint64 BurstMskDemodulator::writeData(const char *data, qint64 len)
         ebnomeasure->Update(std::abs(sig2));
 
         //send ebno when right time
-        if(cntr== endRotation + (200*SamplesPerSymbol)){
+        if(cntr== endRotation + (1200*SamplesPerSymbol)){
             emit EbNoMeasurmentSignal(ebnomeasure->EbNo);
 
         }
