@@ -734,17 +734,7 @@ void MainWindow::on_comboBoxbps_currentIndexChanged(const QString &arg)
         audiomskdemodulator->stop();
 
         selectdemodulatorconnections(BURSTMSK);
-        if(!settingsdialog->widebandwidthenable)
-        {
-            if(audioburstmskdemodulatorsettings.fb==600){audioburstmskdemodulatorsettings.symbolspercycle=12;audioburstmskdemodulatorsettings.Fs=12000;}
-            if(audioburstmskdemodulatorsettings.fb==1200){audioburstmskdemodulatorsettings.symbolspercycle=12;audioburstmskdemodulatorsettings.Fs=24000;}
-        }
-        else
-         {
-            if(audioburstmskdemodulatorsettings.fb==600){audioburstmskdemodulatorsettings.symbolspercycle=12;audioburstmskdemodulatorsettings.Fs=24000;}
-            if(audioburstmskdemodulatorsettings.fb==1200){audioburstmskdemodulatorsettings.symbolspercycle=12;audioburstmskdemodulatorsettings.Fs=48000;}
-         }
-
+        audioburstmskdemodulatorsettings.Fs=48000;
         int idx=ui->comboBoxlbw->findText(((QString)"%1 Hz").arg(audioburstmskdemodulatorsettings.fb*1.5));
         if(idx>=0)audioburstmskdemodulatorsettings.lockingbw=ui->comboBoxlbw->itemText(idx).split(" ")[0].toDouble();
         audioburstmskdemodulatorsettings.audio_device_in=settingsdialog->audioinputdevice;
@@ -936,27 +926,11 @@ void MainWindow::acceptsettings()
         }
 
     }
-    if(typeofdemodtouse==BURSTMSK)
-      {
+    if(typeofdemodtouse==BURSTMSK)// we only use 48000
+    {
 
-          //if bandwidth setting changed then adjust
-          if((settingsdialog->widebandwidthenable&&((audioburstmskdemodulatorsettings.fb==600&&audioburstmskdemodulatorsettings.Fs==12000)
-                                                    ||(audioburstmskdemodulatorsettings.fb==1200&&audioburstmskdemodulatorsettings.Fs==24000)))
-                  ||((!settingsdialog->widebandwidthenable)&&((audioburstmskdemodulatorsettings.fb==600&&audioburstmskdemodulatorsettings.Fs==48000)
-                                                              ||(audioburstmskdemodulatorsettings.fb==1200&&audioburstmskdemodulatorsettings.Fs==48000))))
-          {
-              if(!settingsdialog->widebandwidthenable)
-              {
-                  if(audioburstmskdemodulatorsettings.fb==600){audioburstmskdemodulatorsettings.symbolspercycle=12;audioburstmskdemodulatorsettings.Fs=12000;}
-                  if(audioburstmskdemodulatorsettings.fb==1200){audioburstmskdemodulatorsettings.symbolspercycle=12;audioburstmskdemodulatorsettings.Fs=24000;}
-              }
-              else
-              {
-                  if(audioburstmskdemodulatorsettings.fb==600){audioburstmskdemodulatorsettings.symbolspercycle=12;audioburstmskdemodulatorsettings.Fs=48000;}
-                  if(audioburstmskdemodulatorsettings.fb==1200){audioburstmskdemodulatorsettings.symbolspercycle=12;audioburstmskdemodulatorsettings.Fs=48000;}
-              }
-              audioburstmskdemodulator->setSettings(audioburstmskdemodulatorsettings);
-          }
+       // audioburstmskdemodulatorsettings.Fs=48000;
+       // audioburstmskdemodulator->setSettings(audioburstmskdemodulatorsettings);
 
       }
 
