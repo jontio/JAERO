@@ -12,7 +12,7 @@ BurstMskDemodulator::BurstMskDemodulator(QObject *parent)
     :   QIODevice(parent)
 {
 
-    afc=false;
+    afc=true;
     timer.start();
 
     Fs=8000;
@@ -318,7 +318,7 @@ void BurstMskDemodulator::CenterFreqChangedSlot(double freq_center)//spectrum di
     if(freq_center<(0.75*fb))freq_center=0.75*fb;
     if(freq_center>(Fs/2.0-0.75*fb))freq_center=Fs/2.0-0.75*fb;
     mixer_center.SetFreq(freq_center,Fs);
-    mixer2.SetFreq(mixer_center.GetFreqHz());
+    if(afc)mixer2.SetFreq(mixer_center.GetFreqHz());
     if((mixer2.GetFreqHz()-mixer_center.GetFreqHz())>(lockingbw/2.0))
     {
         mixer2.SetFreq(mixer_center.GetFreqHz()+(lockingbw/2.0));
@@ -521,7 +521,7 @@ qint64 BurstMskDemodulator::writeData(const char *data, qint64 len)
 
                 double carrierphase=std::arg(out_base[minvalbin])-(M_PI/4.0);
                 mixer2.SetPhaseDeg((180.0/M_PI)*carrierphase);
-
+                mixer2.SetFreq(((maxtopposhigh+maxtoppos)/2)*hzperbin);
 
                 CenterFreqChangedSlot(((maxtopposhigh+maxtoppos)/2)*hzperbin);
 
