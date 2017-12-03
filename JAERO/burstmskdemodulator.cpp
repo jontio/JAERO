@@ -318,7 +318,7 @@ void BurstMskDemodulator::CenterFreqChangedSlot(double freq_center)//spectrum di
     if(freq_center<(0.75*fb))freq_center=0.75*fb;
     if(freq_center>(Fs/2.0-0.75*fb))freq_center=Fs/2.0-0.75*fb;
     mixer_center.SetFreq(freq_center,Fs);
-    if(afc)mixer2.SetFreq(mixer_center.GetFreqHz());
+    mixer2.SetFreq(mixer_center.GetFreqHz());
     if((mixer2.GetFreqHz()-mixer_center.GetFreqHz())>(lockingbw/2.0))
     {
         mixer2.SetFreq(mixer_center.GetFreqHz()+(lockingbw/2.0));
@@ -630,7 +630,7 @@ qint64 BurstMskDemodulator::writeData(const char *data, qint64 len)
         ebnomeasure->Update(std::abs(sig2));
 
         //send ebno when right time
-        if(cntr== endRotation + (1200*SamplesPerSymbol)){
+        if(cntr== endRotation + (200*SamplesPerSymbol)){
             emit EbNoMeasurmentSignal(ebnomeasure->EbNo);
 
         }
