@@ -9,7 +9,10 @@
 #include <QList>
 #include <QDebug>
 #include <assert.h>
+#include <math.h>
 #include "../viterbi-xukmin/viterbi.h"
+#include "jconvolutionalcodec.h"
+#include "iostream"
 
 #include "databasetext.h"
 
@@ -404,9 +407,15 @@ public:
     void setSize(int N);
     QVector<int> &interleave(QVector<int> &block);
     QVector<int> &deinterleave(QVector<int> &block);
+    QVector<int> &deinterleaveMSK(QVector<int> &block, int blocks);
+    QByteArray &deinterleaveMSK_ba(QVector<int> &block, int blocks);
+    QByteArray &deinterleave_ba(QVector<int> &block, int blocks);
+
+
     QVector<int> &deinterleave(QVector<int> &block,int cols);//deinterleaves with a fewer number of cols than the block has
 private:
     QVector<int> matrix;
+    QByteArray matrix_ba;
     int M;
     int N;
     QVector<int> interleaverowpermute;
@@ -458,6 +467,10 @@ private:
 class RTChannelDeleaveFECScram
 {
 public:
+
+    int targetSUSize =0;
+    int targetBlocks = 0;
+
     typedef enum ReturnResult
     {
         OK_Packet=      0b00000001,
@@ -482,15 +495,25 @@ public:
 
         lastpacketstate=Nothing;
 
+        jconvolcodec = new JConvolutionalCodec(0);
+        QVector<quint16> polys;
+        polys.push_back(109);
+        polys.push_back(79);
+        jconvolcodec->SetCode(2,7,polys,24);
+
+
+
         resetblockptr();
     }
     ~RTChannelDeleaveFECScram()
     {
         delete convolcodec;
+        delete jconvolcodec;
     }
     ReturnResult resetblockptr()
     {
         blockptr=0;
+
         if(lastpacketstate==Test_Failed)
         {
             lastpacketstate=Nothing;
@@ -514,24 +537,183 @@ public:
             {
                 infofield+=ch;
 
-               // ctt++;
-               // str2+=((QString)"0x%1 ").arg(((QString)"").sprintf("%02X", ch));
-               // if((ctt-6)%12==0)str2+="\n";
+                // ctt++;
+                // str2+=((QString)"0x%1 ").arg(((QString)"").sprintf("%02X", ch));
+                // if((ctt-6)%12==0)str2+="\n";
 
                 ch=0;
             }
-             else ch>>=1;
+            else ch>>=1;
         }
 
         //qDebug()<<str2.toLatin1().data();
     }
+
+
+    ReturnResult updateMSK(int bit)
+    {
+        if(blockptr>=block.size()){
+
+            return FULL;
+        }
+        block[blockptr]=bit;
+        blockptr++;
+
+        int ok = 0;
+
+        if(blockptr>=block.size())qDebug()<<"FULL";
+
+        // for an R Packet we need 5 blocks. For a T Packet check at 8 blocks to find total number
+        // of SU's
+        bool cont = false;
+
+
+        if((((blockptr-(64*5))%(64*3))==0) && (blockptr /64 == 5 || blockptr /64 == targetBlocks || blockptr/64 == 8 || blockptr/64 == 50)){
+
+            cont = true;
+
+        }
+
+
+        //test if interleaver length works
+        if(cont)//true for R and T packets
+        {
+
+
+            //reset scrambler
+            scrambler.reset();
+
+            //deinterleaver
+            delBlock = leaver.deinterleaveMSK_ba(block, blockptr/64);
+
+            //decode
+            deconvol=jconvolcodec->Decode_soft(delBlock, blockptr);
+
+            //scrambler
+            scrambler.update(deconvol);
+
+            //test for R or packet
+            if(blockptr==(64*5))
+            {
+                targetSUSize =0;
+                targetBlocks =0;
+
+                //test crc
+                bool crcok=crc16.calcusingbitsandcheck(deconvol.data(),8*19);
+                if(crcok)
+                {
+
+                    //pack into bytes
+                    packintobytes();
+
+                    blockptr=block.size();//stop further testing
+                    lastpacketstate=OK_R_Packet;
+
+                    return OK_R_Packet;
+                }
+            }
+
+            //Test for T packet
+            //test header crc
+            bool crcok=crc16.calcusingbitsandcheck(deconvol.data(),8*6);
+            if(!crcok)
+            {
+
+                lastpacketstate=Bad_Packet;
+                return Bad_Packet;
+            }
+            // good T packet 48 bit header. If we do not yet know how many SU's, go and check this if block nr is 8
+            else
+            {
+
+                  if(blockptr/64 ==5){
+                    return Nothing;
+                }
+
+                if(blockptr/64 == 8){
+
+                    // we should be able to peek at the SU after the initial SU and figure out the number of SU's in this
+                    // burst
+
+                    QVector<int> isu = deconvol.mid((8*6)+(8*12)*1, 8*12);
+
+                    int bin = 2;
+                    bin+= ((isu[0] * 1) + (isu[1] * 2) + (isu[2] * 4) + (isu[3] * 8) + (isu[4] * 16) + (isu[5] * 32));
+
+                    targetSUSize = bin;
+
+                    if(targetSUSize >= 16){
+                        targetSUSize = floor(targetSUSize/2) +1;
+
+                    }
+
+                    targetBlocks = (targetSUSize*3) +2;
+
+                    return Nothing;
+                }
+
+                // this should be the target blocks for this T packet
+                if(blockptr/64 == targetBlocks)
+                {
+                    for(int i=0;i<targetSUSize;i++)
+                    {
+                        crcok=crc16.calcusingbitsandcheck(deconvol.data()+(8*6)+(8*12)*i,8*12);
+
+                        if(crcok){
+
+                            ok++;
+
+                            std::cout << "SU  "<< i << " ok" << "\r\n";
+
+                         }else{
+                            std::cout << "SU  "<< i << " not ok " << "\r\n";
+
+                        }
+
+                    }// end SU loop
+
+
+                    std::cout << "Number of OK SU's " << ok << " out of total SU's " << targetSUSize << "\r\n" << std::flush;
+
+                    if(ok<=targetSUSize){
+
+                        //pack into bytes
+                        packintobytes();
+                        infofield.chop(1);
+                        numberofsus = targetSUSize;
+                        blockptr=block.size();//stop further testing
+                        lastpacketstate=OK_T_Packet;
+
+                        return OK_T_Packet;
+
+
+                    }
+                }// end target block loop
+                // Max Blocks in one loop
+
+                return Nothing;
+
+            }
+
+            //pack into bytes
+            packintobytes();
+            infofield.chop(1);
+
+            blockptr=block.size();//stop further testing
+            lastpacketstate=OK_T_Packet;
+            return OK_T_Packet;
+
+        }
+        return Nothing;
+    }
+
+
     ReturnResult update(int bit)
     {
         if(blockptr>=block.size())return FULL;
         block[blockptr]=bit;
         blockptr++;
 
-        //if(blockptr>=block.size())qDebug()<<"FULL";
 
         //test if interleaver length works
         if(((blockptr-(64*5))%(64*3))==0)//true for R and T packets
@@ -541,10 +723,13 @@ public:
             scrambler.reset();
 
             //deinterleaver
-            deleaveredblock=leaver.deinterleave(block,blockptr/64);
+            //deleaveredblock=leaver.deinterleave(block,blockptr/64);
+            delBlock = leaver.deinterleave_ba(block, blockptr/64);
+
 
             //decode
-            deconvol=convolcodec->Decode(deleaveredblock,blockptr);
+            //deconvol=convolcodec->Decode(deleaveredblock,blockptr);
+            deconvol=jconvolcodec->Decode_soft(delBlock, blockptr);
 
             //scrambler
             scrambler.update(deconvol);
@@ -599,6 +784,8 @@ public:
                     lastpacketstate=Test_Failed;
                     return Test_Failed;
                 }
+
+
             }
 
             //pack into bytes
@@ -615,13 +802,17 @@ public:
         return Nothing;
     }
 
+
+
     QVector<int> deleaveredblock;
+    QByteArray delBlock;
     QVector<int> deconvol;
     QVector<int> block;
     int blockptr;
     AeroLInterleaver leaver;
     AeroLScrambler scrambler;
     ViterbiCodec *convolcodec;
+    JConvolutionalCodec *jconvolcodec;
     QByteArray infofield;
     AeroLcrc16 crc16;
     ReturnResult lastpacketstate;
@@ -644,6 +835,7 @@ signals:
     void DataCarrierDetect(bool status);
     void ACARSsignal(ACARSItem &acarsitem);
     void Errorsignal(QString &error);
+
 public slots:
     void setBitRate(double fb);
     void setBurstmode(bool burstmode);
@@ -661,17 +853,22 @@ public slots:
     }
     void setDoNotDisplaySUs(QVector<int> &list){donotdisplaysus=list;}
     void setDataBaseDir(const QString &dir){parserisu->setDataBaseDir(dir);}
+    void processDemodulatedSoftBits(const QVector<short> &soft_bits);
 private:
     bool Start();
     void Stop();
-    QByteArray &Decode(QVector<short> &bits);
+    QByteArray &Decode(QVector<short> &bits, bool soft = false);
     QPointer<QIODevice> psinkdevice;
     QVector<short> sbits;
     QByteArray decodedbytes;
     PreambleDetector preambledetector;
 
-    //burstmode
+    //burstmode really not sure this is used
     PreambleDetector preambledetectorburst;
+
+    // 600 / 1200 MSK phase invariant burst detector
+    PreambleDetectorPhaseInvariant mskBurstDetector;
+
     int muw;
     bool burstmode;
     int ifb;
@@ -695,6 +892,8 @@ private:
     AeroLScrambler scrambler;
 
     ViterbiCodec *convolcodec;
+    JConvolutionalCodec * jconvolcodec;
+
     DelayLine dl1,dl2;
 
     AeroLcrc16 crc16;
@@ -723,6 +922,8 @@ private:
     int framecounter2;
     int gotsync_last;
     int blockcnt;
+
+
 
 
 private slots:

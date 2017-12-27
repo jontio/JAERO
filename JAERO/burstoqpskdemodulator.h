@@ -73,6 +73,9 @@ signals:
     void WarningTextSignal(const QString &str);
     void EbNoMeasurmentSignal(double EbNo);
     void writeDataSignal(const char *data, qint64 len);
+    void processDemodulatedSoftBits(const QVector<short> &soft_bits);
+
+
 private:
 
     const cpx_type imag=cpx_type(0, 1);
@@ -178,6 +181,8 @@ private:
 
     BaceConverter bc;
     QByteArray  RxDataBytes;//packed in bytes
+    QVector<short> RxDataBits;//unpacked soft bits
+
 
 
     double mse;

@@ -1,6 +1,5 @@
 //    Copyright (C) 2015  Jonti Olds
 
-
 #ifndef DSPH
 #define DSPH
 //---------------------------------------------------------------------------
@@ -302,8 +301,10 @@ class DiffDecode
 public:
     DiffDecode();
     bool Update(bool state);
+    double UpdateSoft(double soft);
 private:
     bool laststate;
+    double lastsoftstate;
 };
 
 
@@ -566,9 +567,13 @@ public:
 
 
        val=val2;//set return val
-       if(!maxposcntdown)//if time to return peak then return so
+
+      if(!maxposcntdown)//if time to return peak then return so
        {
            maxposcntdown--;
+
+
+
            return true;
        }
        if(maxposcntdown>0)maxposcntdown--;
