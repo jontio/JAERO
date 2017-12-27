@@ -836,14 +836,7 @@ AeroL::AeroL(QObject *parent) : QIODevice(parent)
     sbits.reserve(1000);
     decodedbytes.reserve(1000);
 
-    //ViterbiCodec is not Qt so needs deleting when finished
-    std::vector<int> polynomials;
-    polynomials.push_back(109);
-    polynomials.push_back(79);
-    convolcodec=new ViterbiCodec(7, polynomials);
-    convolcodec->setPaddingLength(24);
-
-    //new viterbi decoder
+    //new viterbi decoder (this is a qobject and has us as perent so is deleted automatically)
     jconvolcodec = new JConvolutionalCodec(this);
     QVector<quint16> polys;
     polys.push_back(109);
@@ -960,9 +953,7 @@ void AeroL::setSettings(double fb, bool _burstmode)
 
 AeroL::~AeroL()
 {
-    delete convolcodec;
 
-    delete jconvolcodec;
 }
 
 bool AeroL::Start()

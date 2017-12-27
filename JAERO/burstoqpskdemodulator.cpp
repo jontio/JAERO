@@ -387,8 +387,8 @@ void BurstOqpskDemodulator::writeDataSlot(const char *data, qint64 len)
             tridentbuffer[tridentbuffer_ptr]=std::real(cval_d);
             tridentbuffer_ptr++;
         }
-        else if(tridentbuffer_ptr==tridentbuffer_sz)//trident buffer is now filled so now check for trident and carrier freq and phase and amplitude
-        {
+         else if(tridentbuffer_ptr==tridentbuffer_sz)//trident buffer is now filled so now check for trident and carrier freq and phase and amplitude
+         {
             tridentbuffer_ptr++;
 
 
@@ -405,14 +405,12 @@ void BurstOqpskDemodulator::writeDataSlot(const char *data, qint64 len)
             fftr->transform(in,out_top);
 
             //diff
-            for(int i=0;i<out_abs_diff.size();i++){
+            for(int i=0;i<out_abs_diff.size();i++)
+            {
 
                 out_abs_diff[i]=(std::abs(out_top[i])-std::abs(out_base[i]));
 
-
             }
-
-
 
             //find best trident loc
             double hzperbin=Fs/((double)out_base.size());
@@ -502,7 +500,7 @@ void BurstOqpskDemodulator::writeDataSlot(const char *data, qint64 len)
             }
 
 
-        }//end of trident check
+         }//end of trident check
 
         //mix
         cpx_type cval_dd=mixer2.WTCISValue()*(vol_gain*val_to_demod);
@@ -628,8 +626,8 @@ void BurstOqpskDemodulator::writeDataSlot(const char *data, qint64 len)
             }
 
             if(!yui)pt_d=pt;
-            else
-            {
+             else
+             {
 
                 cpx_type pt_qpsk=cpx_type(pt.real(),pt_d.imag());
 
@@ -710,7 +708,8 @@ void BurstOqpskDemodulator::writeDataSlot(const char *data, qint64 len)
 
                     //return the demodulated data (soft bit)
 
-                    if(RxDataBits.size() >= 32){
+                    if(RxDataBits.size() >= 32)
+                    {
                         if(!sql||mse<signalthreshold||lastmse<signalthreshold)
                         {
 
@@ -723,7 +722,7 @@ void BurstOqpskDemodulator::writeDataSlot(const char *data, qint64 len)
                 }
 
 
-            }
+             }
 
 
         }

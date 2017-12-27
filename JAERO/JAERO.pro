@@ -39,7 +39,6 @@ SOURCES += main.cpp\
     gui_classes/textinputwidget.cpp \
     gui_classes/settingsdialog.cpp \
     aerol.cpp \
-    ../viterbi-xukmin/viterbi.cpp \
     gui_classes/planelog.cpp \
     downloadmanager.cpp \
     databasetext.cpp \
@@ -75,7 +74,6 @@ HEADERS  += mainwindow.h \
     gui_classes/textinputwidget.h \
     gui_classes/settingsdialog.h \
     aerol.h \
-    ../viterbi-xukmin/viterbi.h \
     gui_classes/planelog.h \
     downloadmanager.h \
     databasetext.h \
@@ -109,8 +107,6 @@ DISTFILES += \
     ../qcustomplot/changelog.txt \
     ../qcustomplot/GPL.txt \
     ../README.md \
-    ../viterbi-xukmin/LICENSE.md \
-    ../viterbi-xukmin/README.md \
     ../images/screenshot-win-main.png \
     ../images/screenshot-win-planelog.png
 
@@ -124,11 +120,10 @@ win32 {
 INCLUDEPATH +=../libcorrect/include
 contains(QT_ARCH, i386) {
     #message("32-bit")
-
-    LIBS += -L$$PWD/../libcorrect/lib/32
+    LIBS += -L$$PWD/../libcorrect/bin/32
 } else {
     #message("64-bit")
-    LIBS += -L$$PWD/../libcorrect/lib/64
+    LIBS += -L$$PWD/../libcorrect/bin/64
 }
 LIBS += -llibcorrect
 }
