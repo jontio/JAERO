@@ -181,7 +181,8 @@ void BurstMskDemodulator::setSettings(Settings _settings)
     delete agc2;
 
     delete ebnomeasure;
-    ebnomeasure = new MSKEbNoMeasure(0.25*Fs);//1 second ave //SamplesPerSymbol*125);//125 symbol averaging
+    //keep the averaging time very short to allow for R packets
+    ebnomeasure = new MSKEbNoMeasure(0.15*Fs);
 
     pointbuff.resize(100);
     pointbuff_ptr=0;
