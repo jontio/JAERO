@@ -600,7 +600,6 @@ qint64 BurstMskDemodulator::writeData(const char *data, qint64 len)
 
         }
 
-        //val_to_demod=test_high.WTCISValue().real();
         cval= mixer2.WTCISValue()*(val_to_demod)*vol_gain;
 
         cpx_type sig2 = cpx_type(matchedfilter_re->FIRUpdateAndProcess(cval.real()),matchedfilter_im->FIRUpdateAndProcess(cval.imag()));
