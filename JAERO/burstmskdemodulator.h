@@ -14,15 +14,10 @@
 
 #include "fftrwrapper.h"
 
-#include "Biquad.h"
-
-
-
 typedef FFTrWrapper<double> FFTr;
 typedef std::complex<double> cpx_type;
 
 class CoarseFreqEstimate;
-
 
 class BurstMskDemodulator : public QIODevice
 {

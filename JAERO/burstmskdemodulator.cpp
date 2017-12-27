@@ -196,7 +196,8 @@ void BurstMskDemodulator::setSettings(Settings _settings)
 
     cntr = 0;
 
-    if(fb >= 1200){
+    if(fb >= 1200)
+    {
 
         bt_d1.setdelay(1.0*SamplesPerSymbol);
         bt_ma1.setLength(qRound(126.0*SamplesPerSymbol));//not sure whats best
@@ -247,7 +248,9 @@ void BurstMskDemodulator::setSettings(Settings _settings)
         agc2 = new AGC(SamplesPerSymbol*128.0/Fs,Fs);
 
 
-    }else{
+    }
+     else
+     {
 
 
         //600........
@@ -303,7 +306,7 @@ void BurstMskDemodulator::setSettings(Settings _settings)
         agc2 = new AGC(SamplesPerSymbol*128.0/Fs,Fs);
 
 
-    }
+     }
 
 
     st_osc.SetFreq(fb,Fs);
@@ -434,8 +437,8 @@ qint64 BurstMskDemodulator::writeData(const char *data, qint64 len)
             tridentbuffer_ptr++;
 
         }
-        else if(tridentbuffer_ptr==tridentbuffer_sz)//trident buffer is now filled so now check for trident and carrier freq and phase and amplitude
-        {
+         else if(tridentbuffer_ptr==tridentbuffer_sz)//trident buffer is now filled so now check for trident and carrier freq and phase and amplitude
+         {
             tridentbuffer_ptr++;
 
             int size_base = 126;
@@ -492,14 +495,17 @@ qint64 BurstMskDemodulator::writeData(const char *data, qint64 len)
 
             for(int i=0; i < out_top.size(); i++){
 
-                if(i > 50){
-                    if((i < minvalbin - (peakspacingbins/2)) &&  std::abs(out_top[i]) > maxtop){
+                if(i > 50)
+                {
+                    if((i < minvalbin - (peakspacingbins/2)) &&  std::abs(out_top[i]) > maxtop)
+                    {
 
                         maxtop = std::abs(out_top[i]);
                         maxtoppos = i;
                     }
 
-                    if((i > minvalbin + (peakspacingbins/2)) &&  std::abs(out_top[i]) > maxtophigh){
+                    if((i > minvalbin + (peakspacingbins/2)) &&  std::abs(out_top[i]) > maxtophigh)
+                    {
 
                         maxtophigh = std::abs(out_top[i]);
                         maxtopposhigh = i;
@@ -562,14 +568,15 @@ qint64 BurstMskDemodulator::writeData(const char *data, qint64 len)
                 even = true;
 
             }
-        }//end of trident check
+         }//end of trident check
 
 
         //sample counting and signalstatus timout
         if(startstop>0)
         {
 
-            if(cntr>=(startProcessing*SamplesPerSymbol)){
+            if(cntr>=(startProcessing*SamplesPerSymbol))
+            {
                 startstop--;
             }
             if(cntr<1000000)cntr++;
@@ -598,7 +605,8 @@ qint64 BurstMskDemodulator::writeData(const char *data, qint64 len)
 
         cpx_type sig2 = cpx_type(matchedfilter_re->FIRUpdateAndProcess(cval.real()),matchedfilter_im->FIRUpdateAndProcess(cval.imag()));
 
-        if(cntr>(startProcessing*SamplesPerSymbol) && cntr<endRotation){
+        if(cntr>(startProcessing*SamplesPerSymbol) && cntr<endRotation)
+        {
 
             cpx_type symboltone_pt=sig2*symboltone_rotator*imag;
 
@@ -630,9 +638,9 @@ qint64 BurstMskDemodulator::writeData(const char *data, qint64 len)
         ebnomeasure->Update(std::abs(sig2));
 
         //send ebno when right time
-        if(cntr== endRotation + (200*SamplesPerSymbol)){
+        if(cntr== endRotation + (200*SamplesPerSymbol))
+        {
             emit EbNoMeasurmentSignal(ebnomeasure->EbNo);
-
         }
 
         //AGC
@@ -661,10 +669,11 @@ qint64 BurstMskDemodulator::writeData(const char *data, qint64 len)
             st_osc.IncreseFreqHz(-st_angle_error*0.00000001);//st phase shift
             st_osc.AdvanceFractionOfWave(-st_angle_error*0.5/360.0);
         }// normal symbol timing
-        else{
+         else
+         {
             st_osc.IncreseFreqHz(-st_angle_error*0.00000001);//st phase shift
             st_osc.AdvanceFractionOfWave(-st_angle_error*0.002/360.0);
-        }
+         }
 
         if(st_osc.GetFreqHz()<(st_osc_ref.GetFreqHz()-0.1))st_osc.SetFreq((st_osc_ref.GetFreqHz()-0.1));
         if(st_osc.GetFreqHz()>(st_osc_ref.GetFreqHz()+0.1))st_osc.SetFreq((st_osc_ref.GetFreqHz()+0.1));
@@ -709,33 +718,31 @@ qint64 BurstMskDemodulator::writeData(const char *data, qint64 len)
                 if(cntr>(startProcessing*SamplesPerSymbol))
                 {
                     rotator=rotator*std::exp(imag*ct_ec*0.25);//correct carrier phase
-                    if(cntr>endRotation){
+                    if(cntr>endRotation)
+                    {
                         rotator_freq=rotator_freq+ct_ec*0.0001;//correct carrier frequency
                     }
                 }
 
                 //gui feedback
-
-                if(cntr >= (endRotation + 100*SamplesPerSymbol) && pointbuff_ptr<pointbuff.size()){
+                if(cntr >= (endRotation + 100*SamplesPerSymbol) && pointbuff_ptr<pointbuff.size())
+                {
                     if(pointbuff_ptr<pointbuff.size())
                     {
                         ASSERTCH(pointbuff,pointbuff_ptr);
-
                         pointbuff[pointbuff_ptr]=pt_msk*0.75;
                         if(pointbuff_ptr<pointbuff.size())pointbuff_ptr++;
                     }
-                    if(scatterpointtype==SPT_constellation&&(pointbuff_ptr==pointbuff.size())){
+                    if(scatterpointtype==SPT_constellation&&(pointbuff_ptr==pointbuff.size()))
+                    {
                         pointbuff_ptr++;
                         emit ScatterPoints(pointbuff);
                     }
-
-
                 }
 
                 //calc MSE of the points
                 if(cntr>(startProcessing*SamplesPerSymbol))
                 {
-
                     double tda=(fabs((pt_msk*0.75).real())-1.0);
                     double tdb=(fabs((pt_msk*0.75).imag())-1.0);
                     mse=msema->Update((tda*tda)+(tdb*tdb));
@@ -768,7 +775,8 @@ qint64 BurstMskDemodulator::writeData(const char *data, qint64 len)
                 RxDataBits.push_back((uchar)ibit);
 
                 // push them out to decode
-                if(RxDataBits.size() >= 12){
+                if(RxDataBits.size() >= 12)
+                {
                     emit processDemodulatedSoftBits(RxDataBits);
                     RxDataBits.clear();
                 }

@@ -423,7 +423,8 @@ qint64 OqpskDemodulator::writeData(const char *data, qint64 len)
 
                 //return the demodulated data (soft bit)
 
-                if(RxDataBits.size() >= 32){
+                if(RxDataBits.size() >= 32)
+                {
                     if(!sql||mse<signalthreshold||lastmse<signalthreshold)
                     {
 

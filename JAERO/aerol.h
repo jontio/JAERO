@@ -10,7 +10,6 @@
 #include <QDebug>
 #include <assert.h>
 #include <math.h>
-#include "../viterbi-xukmin/viterbi.h"
 #include "jconvolutionalcodec.h"
 #include "iostream"
 
@@ -483,12 +482,6 @@ public:
     } ReturnResult;
     RTChannelDeleaveFECScram()
     {
-        //ViterbiCodec is not Qt so needs deleting when finished
-        std::vector<int> polynomials;
-        polynomials.push_back(109);
-        polynomials.push_back(79);
-        convolcodec=new ViterbiCodec(7, polynomials);
-        convolcodec->setPaddingLength(24);
 
         block.resize(64*95);//max rows*cols
         leaver.setSize(95);//max cols needed
@@ -501,14 +494,11 @@ public:
         polys.push_back(79);
         jconvolcodec->SetCode(2,7,polys,24);
 
-
-
         resetblockptr();
     }
     ~RTChannelDeleaveFECScram()
     {
-        delete convolcodec;
-        delete jconvolcodec;
+        jconvolcodec->deleteLater();
     }
     ReturnResult resetblockptr()
     {
@@ -811,7 +801,6 @@ public:
     int blockptr;
     AeroLInterleaver leaver;
     AeroLScrambler scrambler;
-    ViterbiCodec *convolcodec;
     JConvolutionalCodec *jconvolcodec;
     QByteArray infofield;
     AeroLcrc16 crc16;
@@ -891,8 +880,7 @@ private:
     AeroLInterleaver leaver;
     AeroLScrambler scrambler;
 
-    ViterbiCodec *convolcodec;
-    JConvolutionalCodec * jconvolcodec;
+    JConvolutionalCodec *jconvolcodec;
 
     DelayLine dl1,dl2;
 
