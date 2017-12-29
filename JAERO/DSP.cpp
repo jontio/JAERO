@@ -525,27 +525,30 @@ double DiffDecode::UpdateSoft(double soft)
     double retval = 0;
 
     // if the previous value is a zero and the current also zero just return zero
-    if(soft < 0 && lastsoftstate < 0){
+    if(soft < 0 && lastsoftstate < 0)
+    {
 
         // last value is negative so just return to indicate a zero
         retval = lastsoftstate;
         lastsoftstate = soft;
     }
 
-    // if the previous value is one and the current also one
-    else if(soft > 0 && lastsoftstate > 0){
+     // if the previous value is one and the current also one
+     else if(soft > 0 && lastsoftstate > 0)
+     {
 
         // last value is postive so flip sign to indicate zero
         retval =- lastsoftstate;
         lastsoftstate = soft;
-    }
-    else{
+     }
+      else
+      {
 
 
         // retval and soft have different signs, so always return positive
-        retval = std::abs(lastsoftstate);
+        retval = std::fabs(lastsoftstate);
         lastsoftstate = soft;
-    }
+      }
 
     return retval;
 

@@ -135,13 +135,15 @@ QByteArray& JConvolutionalCodec::Hard_To_Soft_Convert(QByteArray& hard_bits_in)
 
     for(int i=0;i<hard_bits_in.size();i++)
     {
-        if(((uchar)(hard_bits_in.at(i)))==0){
+        if(((uchar)(hard_bits_in.at(i)))==0)
+        {
             hard_bits_in[i] = uchar(0);
         }
-        else{
+         else
+         {
             hard_bits_in[i] = uchar(255);
 
-        }
+         }
     }
     return hard_bits_in;
 }

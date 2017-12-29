@@ -409,13 +409,13 @@ qint64 OqpskDemodulator::writeData(const char *data, qint64 len)
                 }*/
 
                 // soft bits
-                int ibit=qRound(pt_qpsk.imag()*127.0+128.0);
+                int ibit=qRound(0.75*pt_qpsk.imag()*127.0+128.0);
                 if(ibit>255)ibit=255;
                 if(ibit<0)ibit=0;
 
                 RxDataBits.push_back((uchar)ibit);
 
-                ibit=qRound(pt_qpsk.real()*127.0+128.0);
+                ibit=qRound(0.75*pt_qpsk.real()*127.0+128.0);
                 if(ibit>255)ibit=255;
                 if(ibit<0)ibit=0;
 

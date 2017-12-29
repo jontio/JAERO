@@ -37,7 +37,7 @@ public:
             fb=125;//bps
             Fs=8000;//Hz
             symbolspercycle=16;
-            signalthreshold=0.5;
+            signalthreshold=0.6;
         }
     };
     explicit MskDemodulator(QObject *parent);
