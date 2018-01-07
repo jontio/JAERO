@@ -542,8 +542,8 @@ public:
 
     ReturnResult updateMSK(int bit)
     {
-        if(blockptr>=block.size()){
-
+        if(blockptr>=block.size())
+        {
             return FULL;
         }
         block[blockptr]=bit;
@@ -558,12 +558,10 @@ public:
         bool cont = false;
 
 
-        if((((blockptr-(64*5))%(64*3))==0) && (blockptr /64 == 5 || blockptr /64 == targetBlocks || blockptr/64 == 8 || blockptr/64 == 50)){
-
+        if((((blockptr-(64*5))%(64*3))==0) && (blockptr /64 == 5 || blockptr /64 == targetBlocks || blockptr/64 == 8 || blockptr/64 == 50))
+        {
             cont = true;
-
         }
-
 
         //test if interleaver length works
         if(cont)//true for R and T packets

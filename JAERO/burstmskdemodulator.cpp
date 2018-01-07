@@ -445,7 +445,8 @@ qint64 BurstMskDemodulator::writeData(const char *data, qint64 len)
             int size_base = 126;
             int size_top = 74;
 
-            if(fb < 1200){
+            if(fb < 1200)
+            {
 
                 size_base = 150;
                 size_top = 74;
@@ -494,7 +495,8 @@ qint64 BurstMskDemodulator::writeData(const char *data, qint64 len)
             int maxtopposhigh =0;
             double maxtophigh =0;
 
-            for(int i=0; i < out_top.size(); i++){
+            for(int i=0; i < out_top.size(); i++)
+            {
 
                 if(i > 50)
                 {
@@ -756,7 +758,7 @@ qint64 BurstMskDemodulator::writeData(const char *data, qint64 len)
 
                 double imagin = diffdecode.UpdateSoft(pt_msk.imag());
 
-                int ibit=qRound((imagin)*127.0+128.0);
+                int ibit=qRound(0.75*(imagin)*127.0+128.0);
                 if(ibit>255)ibit=255;
                 if(ibit<0)ibit=0;
 
@@ -766,7 +768,7 @@ qint64 BurstMskDemodulator::writeData(const char *data, qint64 len)
 
                 real =- real;
 
-                ibit=qRound((real)*127.0+128.0);
+                ibit=qRound(0.75*(real)*127.0+128.0);
 
                 if(ibit>255)ibit=255;
                 if(ibit<0)ibit=0;

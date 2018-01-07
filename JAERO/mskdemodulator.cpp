@@ -486,7 +486,7 @@ qint64 MskDemodulator::writeData(const char *data, qint64 len)
 
                 double imagin = diffdecode.UpdateSoft(thisonpt.imag());
 
-                int ibit=qRound((imagin)*127.0+128.0);
+                int ibit=qRound(0.75*(imagin)*127.0+128.0);
                 if(ibit>255)ibit=255;
                 if(ibit<0)ibit=0;
 
@@ -496,7 +496,7 @@ qint64 MskDemodulator::writeData(const char *data, qint64 len)
 
                 real =- real;
 
-                ibit=qRound((real)*127.0+128.0);
+                ibit=qRound(0.75*(real)*127.0+128.0);
 
                 if(ibit>255)ibit=255;
                 if(ibit<0)ibit=0;

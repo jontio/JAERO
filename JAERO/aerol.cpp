@@ -1008,17 +1008,18 @@ QByteArray &AeroL::Decode(QVector<short> &bits, bool soft)//0 bit --> oldest bit
     quint16 bit=0;
     quint16 soft_bit=0;
 
-      for(int i=0;i<bits.size();i++)
+    for(int i=0;i<bits.size();i++)
     {
 
-
-        if(soft){
+        if(soft)
+        {
             if(((uchar)bits[i])>=128)bit=1;
             else bit=0;
-
-        }else{
-            bit=bits[i];
         }
+         else
+         {
+            bit=bits[i];
+         }
         soft_bit=bits[i];
 
         //for burst mode to allow tolerance of UW
@@ -1044,15 +1045,15 @@ QByteArray &AeroL::Decode(QVector<short> &bits, bool soft)//0 bit --> oldest bit
                     gotsync=0;
                 } else gotsync_last=0;
             }
-            else
-            {
+             else
+             {
                 gotsync=preambledetectorphaseinvariantreal.Update(bit);
                 if(!gotsync_last)
                 {
                     gotsync_last=gotsync;
                     gotsync=0;
                 } else gotsync_last=0;
-            }
+             }
 
             //for 10500 UW should be about 80 samples after start of packet signal from demodulator if not we have a false positive
             if(gotsync&&burstmode)
@@ -1086,47 +1087,55 @@ QByteArray &AeroL::Decode(QVector<short> &bits, bool soft)//0 bit --> oldest bit
                 {
                     bit=1-bit;
 
-                    if(soft_bit > 128){
+                    if(soft_bit > 128)
+                    {
                          soft_bit = 255-soft_bit;
-                    } else if (soft_bit < 128){
-                        soft_bit = 255-soft_bit;
                     }
+                     else if (soft_bit < 128)
+                     {
+                        soft_bit = 255-soft_bit;
+                     }
                 }
             }
 
         } //non 10500 burst mode use a phase invariant preamble detector
-        else if(burstmode){
+         else if(burstmode)
+         {
 
+            bool inverted = mskBurstDetector.inverted;
 
+            gotsync=mskBurstDetector.Update(bit);
 
-          bool inverted = mskBurstDetector.inverted;
+            if( muw > 250 && gotsync)
+            {
 
-          gotsync=mskBurstDetector.Update(bit);
+                if(inverted != mskBurstDetector.inverted)
+                {
+                    mskBurstDetector.inverted = inverted;
+                }
+                gotsync = false;
 
-          if( muw > 250 && gotsync){
+            }
 
-              if(inverted != mskBurstDetector.inverted){
-                  mskBurstDetector.inverted = inverted;
-              }
-               gotsync = false;
-
-           }
-
-           if(mskBurstDetector.inverted){
+            if(mskBurstDetector.inverted)
+            {
 
                 bit=1-bit;
 
-                if(soft_bit > 128){
+                if(soft_bit > 128)
+                {
                      soft_bit = 255-soft_bit;
-                } else if (soft_bit < 128){
-                    soft_bit = 255-soft_bit;
                 }
+                 else if (soft_bit < 128)
+                 {
+                    soft_bit = 255-soft_bit;
+                 }
             }
-        }
-        else{
-
+         }
+          else
+          {
             gotsync=preambledetector.Update(bit);
-        }
+          }
 
         if(cntr<1000000000)cntr++;
         if(cntr<16)
@@ -1186,28 +1195,16 @@ QByteArray &AeroL::Decode(QVector<short> &bits, bool soft)//0 bit --> oldest bit
 
                 RTChannelDeleaveFECScram::ReturnResult result;
 
-                if(useingOQPSK){
-
-                    if(soft){
-                    result = rtchanneldeleavefecscram.update(soft_bit);
-                    }else
-                    {
-                        result = rtchanneldeleavefecscram.update(bit);
-
-                    }
-
-                }else{
-
-                    if(soft){
-
-
-                    result = rtchanneldeleavefecscram.updateMSK(soft_bit);
-                    }
-                    else{
-                        result = rtchanneldeleavefecscram.updateMSK(bit);
-                    }
-
+                if(useingOQPSK)
+                {
+                    if(soft)result = rtchanneldeleavefecscram.update(soft_bit);
+                     else result = rtchanneldeleavefecscram.update(bit);
                 }
+                 else
+                 {
+                    if(soft)result = rtchanneldeleavefecscram.updateMSK(soft_bit);
+                     else result = rtchanneldeleavefecscram.updateMSK(bit);
+                 }
 
                 switch(result)
                 {
@@ -1410,7 +1407,8 @@ QByteArray &AeroL::Decode(QVector<short> &bits, bool soft)//0 bit --> oldest bit
 
             }
 
-            else{
+             else
+             {
 
                 // its a p channel
 
@@ -1773,11 +1771,11 @@ QByteArray &AeroL::Decode(QVector<short> &bits, bool soft)//0 bit --> oldest bit
 
 
                             }
-                            else
-                            {
+                             else
+                             {
                                 decline+=" Bad CRC\n";
                                 //allgood=false;
-                            }
+                             }
 
                             /*if(crc_calc==crc_rec)qDebug()<<k<<((QString)"").sprintf("rec = %02X", crc_rec)<<((QString)"").sprintf("calc = %02X", crc_calc)<<"OK"<<unencoded_BER_estimate*100.0;
                          else
@@ -1803,7 +1801,7 @@ QByteArray &AeroL::Decode(QVector<short> &bits, bool soft)//0 bit --> oldest bit
                 }
 
 
-            }
+             }
 
 
         }
@@ -1852,8 +1850,8 @@ QByteArray &AeroL::Decode(QVector<short> &bits, bool soft)//0 bit --> oldest bit
 
     }
 
-    if((!datacd)&&(!burstmode)){
-
+    if((!datacd)&&(!burstmode))
+    {
         decodedbytes.clear();
     }
 
@@ -1896,8 +1894,8 @@ qint64 AeroL::writeData(const char *data, qint64 len)
     return len;
 }
 
-void AeroL::processDemodulatedSoftBits(const QVector<short> &soft_bits){
-
+void AeroL::processDemodulatedSoftBits(const QVector<short> &soft_bits)
+{
 
     sbits.clear();
 
