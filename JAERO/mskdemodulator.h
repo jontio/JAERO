@@ -37,7 +37,7 @@ public:
             fb=125;//bps
             Fs=8000;//Hz
             symbolspercycle=16;
-            signalthreshold=0.6;
+            signalthreshold=0.5;
         }
     };
     explicit MskDemodulator(QObject *parent);
@@ -114,7 +114,7 @@ private:
 
     DiffDecode diffdecode;
 
-    QVector<short> RxDataBits;//unpacked
+    //QVector<short> RxDataBits;//unpacked
     QByteArray  RxDataBytes;//packed in bytes
 
     double mse;
@@ -142,7 +142,7 @@ signals:
     void OrgOverlapedBuffer(const QVector<double> &buffer);
     void Plottables(double freq_est,double freq_center,double bandwidth);
     void PeakVolume(double Volume);
-    void processDemodulatedSoftBits(const QVector<short> &soft_bits);
+    //void RxData(QVector<short> &data);//unpacked
     void RxData(const QByteArray &data);//packed in bytes
     void MSESignal(double mse);
     void SignalStatus(bool gotasignal);

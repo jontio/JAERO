@@ -414,9 +414,7 @@ void PlaneLog::on_actionClear_triggered()
     }
 
     ui->tableWidget->clearContents();
-    for(int rows = 0; ui->tableWidget->rowCount(); rows++){
-       ui->tableWidget->removeRow(0);
-    }
+    for(int rows = 0; ui->tableWidget->rowCount(); rows++)ui->tableWidget->removeRow(0);
     ui->toolButtonimg->setIcon(QPixmap(":/images/Plane_clip_art.svg"));
     ui->labelAES->clear();
     ui->labelREG->clear();
@@ -430,20 +428,6 @@ void PlaneLog::on_actionClear_triggered()
     ui->textEditmessages->clear();
     ui->plainTextEditdatabase->clear();
     selectedAESitem=NULL;
-
-
-    // remove from registry also, the application gets very slow to load if not removed.
-    QSettings settings("Jontisoft", settings_name);
-    QStringList keys = settings.childKeys();
-    for(int a = 0; a<keys.size(); a++){
-
-        QString key = keys.at(a);
-
-        if(key.startsWith("tableWidget")){
-            settings.remove(key);
-        }
-    }
-
 }
 
 void PlaneLog::on_actionUpDown_triggered()

@@ -37,7 +37,7 @@ public:
             lockingbw=10500;//Hz
             fb=10500;//bps
             Fs=48000;//Hz
-            signalthreshold=0.6;
+            signalthreshold=0.5;
             channel_stereo=false;
         }
     };
@@ -73,9 +73,6 @@ signals:
     void WarningTextSignal(const QString &str);
     void EbNoMeasurmentSignal(double EbNo);
     void writeDataSignal(const char *data, qint64 len);
-    void processDemodulatedSoftBits(const QVector<short> &soft_bits);
-
-
 private:
 
     const cpx_type imag=cpx_type(0, 1);
@@ -181,8 +178,6 @@ private:
 
     BaceConverter bc;
     QByteArray  RxDataBytes;//packed in bytes
-    QVector<short> RxDataBits;//unpacked soft bits
-
 
 
     double mse;

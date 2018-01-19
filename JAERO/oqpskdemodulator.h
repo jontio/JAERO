@@ -32,7 +32,7 @@ public:
             lockingbw=10500;//Hz
             fb=10500;//bps
             Fs=48000;//Hz
-            signalthreshold=0.6;
+            signalthreshold=0.5;
         }
     };
     explicit OqpskDemodulator(QObject *parent);
@@ -61,8 +61,6 @@ signals:
     void SignalStatus(bool gotasignal);
     void WarningTextSignal(const QString &str);
     void EbNoMeasurmentSignal(double EbNo);
-    void processDemodulatedSoftBits(const QVector<short> &soft_bits);
-
 private:
     QPointer<QIODevice> pdatasinkdevice;
     bool afc;
@@ -124,8 +122,6 @@ private:
 
     BaceConverter bc;
     QByteArray  RxDataBytes;//packed in bytes
-    QVector<short> RxDataBits;//unpacked
-
 
     MovingAverage *marg;
     DelayThing<cpx_type> dt;
