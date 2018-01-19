@@ -132,6 +132,9 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(aerol,SIGNAL(DataCarrierDetect(bool)),this,SLOT(DataCarrierDetectStatusSlot(bool)));
     connect(aerol,SIGNAL(ACARSsignal(ACARSItem&)),planelog,SLOT(ACARSslot(ACARSItem&)));
     connect(aerol,SIGNAL(ACARSsignal(ACARSItem&)),this,SLOT(ACARSslot(ACARSItem&)));
+    connect(aerol,SIGNAL(DataCarrierDetect(bool)),audiomskdemodulator,SLOT(DCDstatSlot(bool)));
+    connect(aerol,SIGNAL(DataCarrierDetect(bool)),audioburstmskdemodulator,SLOT(DCDstatSlot(bool)));
+
 
 
     //aeroL2 connections
@@ -603,10 +606,10 @@ void MainWindow::AboutSlot()
 {
     QMessageBox::about(this,"JAERO",""
                                      "<H1>An Aero demodulator and decoder</H1>"
-                                     "<H3>v1.0.4.7-dev</H3>"
+                                     "<H3>v1.0.4.6</H3>"
                                      "<p>This is a program to demodulate and decode Aero signals. These signals contain SatCom ACARS (<em>Satelitle Comunication Aircraft Communications Addressing and Reporting System</em>) messages as used by planes beyond VHF ACARS range. This protocol is used by Inmarsat's \"Classic Aero\" system and can be received using low or medium gain L band or high gain C band antennas.</p>"
                                      "<p>For more information about this application see <a href=\"http://jontio.zapto.org/hda1/jaero.html\">http://jontio.zapto.org/hda1/jaero.html</a>.</p>"
-                                     "<p>Jonti and Jeroen 2017</p>" );
+                                     "<p>Jonti 2016</p>" );
 }
 
 void MainWindow::on_comboBoxbps_currentIndexChanged(const QString &arg)

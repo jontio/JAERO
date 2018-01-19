@@ -12,6 +12,7 @@
 #include <QElapsedTimer>
 #include "aerol.h"
 
+
 class CoarseFreqEstimate;
 
 
@@ -33,11 +34,11 @@ public:
         {
             coarsefreqest_fft_power=13;//2^coarsefreqest_fft_power
             freq_center=1000;//Hz
-            lockingbw=500;//Hz
-            fb=125;//bps
-            Fs=8000;//Hz
+            lockingbw=900;//Hz
+            fb=600;//bps
+            Fs=48000;//Hz
             symbolspercycle=16;
-            signalthreshold=0.6;
+            signalthreshold=0.5;
         }
     };
     explicit MskDemodulator(QObject *parent);
@@ -61,6 +62,7 @@ public:
 private:
     WaveTable mixer_center;
     WaveTable mixer2;
+    WaveTable st_osc;
 
     int spectrumnfft,bbnfft;
 
@@ -78,7 +80,6 @@ private:
     double freq_center;
     double lockingbw;
     double fb;
-    double symbolspercycle;
     double signalthreshold;
 
     double SamplesPerSymbol;
@@ -92,36 +93,21 @@ private:
 
     MovingAverage *pointmean;
 
-    QVector<cpx_type> sig2buff;
-    int sig2buff_ptr;
-
-    QVector<cpx_type> delaybuff;
-
-    QVector<cpx_type> sigbuff;
-    int sigbuff_ptr;
-
     int lastindex;
 
     QVector<cpx_type> pointbuff;
     int pointbuff_ptr;
 
-    QVector<cpx_type> symbolbuff;
-    int symbolbuff_ptr;
-
-    SymTracker symtracker;
-
-    QList<int> tixd;
 
     DiffDecode diffdecode;
 
     QVector<short> RxDataBits;//unpacked
-    QByteArray  RxDataBytes;//packed in bytes
 
     double mse;
 
-    bool afc;
+    MovingAverage *msema;
 
-    double symboltrackingweight;
+    bool afc;
 
     bool sql;
 
@@ -134,6 +120,22 @@ private:
     QPointer<QIODevice> pdatasinkdevice;
 
     QElapsedTimer timer;
+
+    double ee;
+    cpx_type pt_d;
+
+    IIR st_iir_resonator;
+
+    MovingAverage *marg;
+    DelayThing<cpx_type> dt;
+
+    DelayThing<cpx_type> delayedsmpl;
+    Delay<double> delayt8;
+
+    bool dcd;
+
+    double correctionfactor;
+
 
 signals:
     void ScatterPoints(const QVector<cpx_type> &buffer);
@@ -153,6 +155,8 @@ signals:
 public slots:
     void FreqOffsetEstimateSlot(double freq_offset_est);
     void CenterFreqChangedSlot(double freq_center);
+    void DCDstatSlot(bool dcd);
+
 };
 
 #endif // MSKDEMODULATOR_H

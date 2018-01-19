@@ -164,10 +164,7 @@ private:
 
     const cpx_type imag=cpx_type(0, 1);
     WaveTable st_osc;
-    WaveTable st_osc_filter;
-
-    WaveTable st_osc_ref;
-    WaveTable st_osc_quarter;
+    WaveTable st_osc_half;
 
     Delay<double> a1;
 
@@ -176,22 +173,20 @@ private:
     cpx_type symboltone_rotator;
     double carrier_rotation_est;
     cpx_type pt_d;
-    cpx_type pt_last;
 
     cpx_type rotator;
     double rotator_freq;
-    bool even;
 
     //st
-    Delay<double> delays;
-    Delay<double> delayt41;
-    Delay<double> delayt42;
-    Delay<double> delayt8;
     IIR st_iir_resonator;
-    int yui;
+
+    Delay<double> delayt8;
 
     int endRotation;
     int startProcessing;
+    bool dcd;
+
+    DelayThing<cpx_type> delayedsmpl;
 
 
 signals:
@@ -213,6 +208,7 @@ signals:
 
 public slots:
      void CenterFreqChangedSlot(double freq_center);
+     void DCDstatSlot(bool dcd);
 
 };
 
