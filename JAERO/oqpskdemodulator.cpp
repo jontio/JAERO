@@ -392,6 +392,7 @@ qint64 OqpskDemodulator::writeData(const char *data, qint64 len)
                 //calc MSE of the points
                 mse=msecalc->Update(pt_qpsk);
 
+                /*
                 //hard BPSK demod x2
                 bool pt_qpsk_imag_demod=0;
                 bool pt_qpsk_real_demod=0;
@@ -405,16 +406,36 @@ qint64 OqpskDemodulator::writeData(const char *data, qint64 len)
                 {
                     bc.GetNextSymbol();
                     RxDataBytes.push_back((uchar)bc.Result);
+                }*/
+
+                // soft bits
+                int ibit=qRound(0.75*pt_qpsk.imag()*127.0+128.0);
+                if(ibit>255)ibit=255;
+                if(ibit<0)ibit=0;
+
+                RxDataBits.push_back((uchar)ibit);
+
+                ibit=qRound(0.75*pt_qpsk.real()*127.0+128.0);
+                if(ibit>255)ibit=255;
+                if(ibit<0)ibit=0;
+
+                RxDataBits.push_back((uchar)ibit);
+
+                //return the demodulated data (soft bit)
+
+                if(RxDataBits.size() >= 32)
+                {
+                    if(!sql||mse<signalthreshold||lastmse<signalthreshold)
+                    {
+
+                        emit processDemodulatedSoftBits(RxDataBits);
+
+                    }
+                    RxDataBits.clear();
                 }
-
-
-
             }
-
-
         }
         sig2_last=sig2;
-
 
         //-----
 

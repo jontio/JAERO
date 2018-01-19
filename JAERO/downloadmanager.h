@@ -8,6 +8,7 @@
 #include <QUrl>
 #include <QNetworkAccessManager>
 #include <QProgressDialog>
+#include <QMap>
 
 //not perfect but ok.
 //temp nameing may have problems if user has a file called tmp.test.txt and tries to download test.txt then tmp.test.txt will be overwritte

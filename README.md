@@ -11,7 +11,9 @@ SatCom ACARS signals are basically MSK like so the demodulator was forked from [
 The 600 and 1200 bps demodulator uses the technique that treats the signal similar to [OQPSK] but with sine wave transitions rather than rectangular transitions. The BER (*Bit Error Rate*) versus EbNo (*Energy per bit to Noise power density*) performance in the presence of AWGN (*Additive White Gaussian Noise*) is the same as coherently demodulated differentially encoded [BPSK]. While designed for MSK it will also demodulate [GMSK] and some types of [BPSK]. The signal is supplied via the audio input of the computer’s soundcard.
 The software implements differential decoding hence the modulator must use differential encoding. The output of the demodulator can be directed to either a built-in console or to a [UDP] network port.
 
-An OQPSK demodulator has now been added to support the faster 10.5k Aero signals.
+An OQPSK demodulator supports the faster 10.5k Aero signals.
+
+Both 1200 and 10.5k burst C-band signal demodulation (From plane to ground station) are supported.
 
 ![](images/screenshot-win-planelog.png)
 
@@ -27,11 +29,11 @@ The [JAERO](JAERO) directory is where the Qt pro file is for the main applicatio
 
 Compiling JAERO requires the Qt framework which can be obtained from http://www.qt.io/download-open-source/ . Qt Creator can be used to compile JAERO and comes with the Qt framework. At least version 5 of the Qt framework is required. Currently MinGW and GCC work as compilers but VC++ does not.
 
-After installing Qt download the JAERO zip or the tar.gz source file to your computer. No other third-party downloads should be required.
+After installing Qt download the JAERO zip or the tar.gz source file to your computer. Libcorrect may need to be obtained https://github.com/quiet/libcorrect.git and compiled separately (this uses cmake).
 
-Open the [JAERO/JAERO.pro](JAERO/JAERO.pro) file with Qt creator where by Qt should ask you a few simple questions as to how to build JAERO. finally click build then run.
+Open the [JAERO/JAERO.pro](JAERO/JAERO.pro) file with Qt creator where by Qt should ask you a few simple questions as to how to build JAERO. finally click build then run (make sure the shared or static library of libcorrect is available to the build process).
 
-Jonti 2016
+Jonti 2017
 http://jontio.zapto.org
 
 [OQPSK]: https://en.wikipedia.org/wiki/Phase-shift_keying#Offset_QPSK_.28OQPSK.29

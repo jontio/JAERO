@@ -7,6 +7,7 @@
 #include "audiooqpskdemodulator.h"
 #include "audiomskdemodulator.h"
 #include "audioburstoqpskdemodulator.h"
+#include "audioburstmskdemodulator.h"
 #include "gui_classes/settingsdialog.h"
 #include "aerol.h"
 #include "gui_classes/planelog.h"
@@ -31,7 +32,7 @@ public:
     ~MainWindow();
 
 private:
-    enum DemodType{NoDemodType,MSK,OQPSK,BURSTOQPSK};
+    enum DemodType{NoDemodType,MSK,OQPSK,BURSTOQPSK,BURSTMSK};
     Ui::MainWindow *ui;
     AudioMskDemodulator *audiomskdemodulator;
     AudioMskDemodulator::Settings audiomskdemodulatorsettings;
@@ -48,6 +49,11 @@ private:
     AudioBurstOqpskDemodulator *audioburstoqpskdemodulator;
     AudioBurstOqpskDemodulator::Settings audioburstoqpskdemodulatorsettings;
     //
+
+    //Burst MSK add
+    AudioBurstMskDemodulator *audioburstmskdemodulator;
+    AudioBurstMskDemodulator::Settings audioburstmskdemodulatorsettings;
+
 
     //bottom textedit output
     QUdpSocket *udpsocket_bottom_textedit;
@@ -102,6 +108,7 @@ private slots:
     void ERRorslot(QString &error);
 
    // void result(bool ok, int ref, const QStringList &result);
+
 };
 
 #endif // MAINWINDOW_H

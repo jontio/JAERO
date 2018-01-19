@@ -458,6 +458,8 @@ qint64 MskDemodulator::writeData(const char *data, qint64 len)
             for(int k=0;k<tixd.size();k++)
             {
                 cpx_type thisonpt=sigbuff[tixd[k]];
+
+/*
                 if(thisonpt.imag()>0)thisonpt_imag=1;
                  else thisonpt_imag=0;
                 if(thisonpt.real()>0)thisonpt_real=1;
@@ -472,10 +474,34 @@ qint64 MskDemodulator::writeData(const char *data, qint64 len)
                     RxDataBytes.push_back((uchar)bc.Result);
                 }
 
+*/
                 //if you want unpacked bits
                 //RxDataBits.push_back(diffdecode.Update(thisonpt_imag));
                 //RxDataBits.push_back(1-diffdecode.Update(thisonpt_real));
 
+                //soft bits
+                //-1 --> 0 , 1 --> 255 (-1 means 0 and 1 means 1) sort of
+                //there is no packed bits in each byte
+                //convert to the strange range for soft
+
+                double imagin = diffdecode.UpdateSoft(thisonpt.imag());
+
+                int ibit=qRound(0.75*(imagin)*127.0+128.0);
+                if(ibit>255)ibit=255;
+                if(ibit<0)ibit=0;
+
+                RxDataBits.push_back((uchar)ibit);
+
+                double real = diffdecode.UpdateSoft(thisonpt.real());
+
+                real =- real;
+
+                ibit=qRound(0.75*(real)*127.0+128.0);
+
+                if(ibit>255)ibit=255;
+                if(ibit<0)ibit=0;
+
+                RxDataBits.push_back((uchar)ibit);
             }
 
             //return symbol phase
@@ -495,15 +521,21 @@ qint64 MskDemodulator::writeData(const char *data, qint64 len)
             }
             mse/=((double)pointbuff.size());
 
+
             //return the demodulated bits (unpacked bits)
-            //if(!RxDataBits.isEmpty())
-            //{
-            //    if(!sql||mse<signalthreshold||lastmse<signalthreshold)emit RxData(RxDataBits);
-            //    RxDataBits.clear();
-            //}
+            if(!RxDataBits.isEmpty())
+            {
+                if(mse<signalthreshold||lastmse<signalthreshold){
+                    emit processDemodulatedSoftBits(RxDataBits);
+                }
+
+                 RxDataBits.clear();
+            }
 
             //return the demodulated data (packed in bytes)
             //using bytes and the qiodevice class
+/*
+
             if(!RxDataBytes.isEmpty())
             {
                 if(!sql||mse<signalthreshold||lastmse<signalthreshold)
@@ -517,6 +549,7 @@ qint64 MskDemodulator::writeData(const char *data, qint64 len)
                 RxDataBytes.clear();
             }
 
+*/
             if(symbolfreqtofast)emit WarningTextSignal("Symbol rate to fast");
             if(symbolfreqtoslow)emit WarningTextSignal("Symbol rate to slow");
 
