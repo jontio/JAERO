@@ -410,7 +410,7 @@ qint64 MskDemodulator::writeData(const char *data, qint64 len)
             if(dcd)carrier_aggression=8.0*correctionfactor;
 
             mixer2.IncresePhaseDeg(carrier_aggression*1.0*ct_ec);
-            mixer2.IncreseFreqHz(carrier_aggression*0.1*ct_ec);
+            mixer2.IncreseFreqHz(carrier_aggression*0.01*ct_ec);
 
             //rotate to remove any remaining bias
             marg->UpdateSigned(ct_ec/2.0);
