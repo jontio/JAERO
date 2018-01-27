@@ -128,7 +128,12 @@ int ISUData::findisuitemC0(ISUItem &anisuitem)
     if(anisuitem.NOOCTLESTINLASTSSU>8)return -1;
     for(int i=0;i<isuitems.size();i++)
     {
-        if(((anisuitem.SEQNO+1)==isuitems[i].SEQNO)&&(anisuitem.QNO==isuitems[i].QNO)&&(anisuitem.REFNO==isuitems[i].REFNO))return i;
+        if(((anisuitem.AESID==isuitems[i].AESID)
+            &&(anisuitem.GESID==isuitems[i].GESID)
+            &&(anisuitem.SEQNO+1)==isuitems[i].SEQNO)
+            &&(anisuitem.QNO==isuitems[i].QNO)
+            &&(anisuitem.REFNO==isuitems[i].REFNO))
+            return i;
     }
     return -1;
 }
