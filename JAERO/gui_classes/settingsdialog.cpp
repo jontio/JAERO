@@ -190,7 +190,7 @@ void SettingsDialog::on_pushButtonDownloadDB_clicked()
 {
     DownloadManager::QUrlExt urlext;
     urlext.url=QUrl::fromEncoded(ui->lineEditDBURL->text().toLocal8Bit());
-    urlext.filename=ui->lineEditplanesfolder->text()+"/new.aircrafts_dump.csv";
+    urlext.filename=ui->lineEditplanesfolder->text()+"/new.aircrafts_dump.zip";
     urlext.overwrite=true;
     DownloadManager *dm=new DownloadManager(this);
     connect(dm,SIGNAL(downloadresult(QUrl,bool)),this,SLOT(DownloadDBResult(QUrl,bool)));
@@ -209,20 +209,21 @@ void SettingsDialog::DownloadDBResult(const QUrl &url,bool result)
         //decompress
         //why does that guy always keep changing his format??
         //bit of a hack but I'm tired of this
-        QProcess gzip;
-        gzip.start("gzip.exe", QStringList() <<"-d"<<"-S"<<".csv"<<"-f"<< ui->lineEditplanesfolder->text()+"/new.aircrafts_dump.csv");
-        if (gzip.waitForStarted())
+        QProcess decompressor_proc;
+        decompressor_proc.start("7za.exe", QStringList() <<"e"<<"-y"<<"-o"+ui->lineEditplanesfolder->text()+"/"<< ui->lineEditplanesfolder->text()+"/new.aircrafts_dump.zip");
+        if (decompressor_proc.waitForStarted())
         {
-            if (gzip.waitForFinished())
+            if (decompressor_proc.waitForFinished())
             {
                 QDir adir;
-                if(adir.exists(ui->lineEditplanesfolder->text()+"/new.aircrafts_dump"))
+                if(adir.exists(ui->lineEditplanesfolder->text()+"/aircraft_db.csv"))
                 {
-                    adir.rename(ui->lineEditplanesfolder->text()+"/new.aircrafts_dump",ui->lineEditplanesfolder->text()+"/new.aircrafts_dump.csv");
+                    adir.rename(ui->lineEditplanesfolder->text()+"/aircraft_db.csv",ui->lineEditplanesfolder->text()+"/new.aircrafts_dump.csv");
                 }
+                QFile afile(ui->lineEditplanesfolder->text()+"/new.aircrafts_dump.zip");
+                afile.remove();
             }
         }
-
 
         if(dbtext!=NULL)dbtext->importdb(ui->lineEditplanesfolder->text());
     }

@@ -33,7 +33,11 @@ After installing Qt download the JAERO zip or the tar.gz source file to your com
 
 Open the [JAERO/JAERO.pro](JAERO/JAERO.pro) file with Qt creator where by Qt should ask you a few simple questions as to how to build JAERO. finally click build then run (make sure the shared or static library of libcorrect is available to the build process).
 
-Jonti 2017
+## Thanks
+
+I'd like to thank everyone who has given their kind support for JAERO over the years. Thanks for Otti for getting the project started, John and Bev for setting up a worldwide large dish network, everyone who has donated, the people who have send feedback, people who use JAERO, and Jeroen who done an excellent job programming new code for JAERO to bring some features that I’m sure will be appreciated by many.
+
+Jonti 2018
 http://jontio.zapto.org
 
 [OQPSK]: https://en.wikipedia.org/wiki/Phase-shift_keying#Offset_QPSK_.28OQPSK.29
