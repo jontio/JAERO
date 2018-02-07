@@ -105,20 +105,6 @@ OqpskDemodulator::OqpskDemodulator(QObject *parent)
     //rxdata
     RxDataBytes.reserve(1000);//packed in bytes
 
-
-    /*delay.setdelay(2.95);
-    QFile file("test.txt");
-    if (file.open(QFile::WriteOnly | QFile::Truncate))
-    {
-        QTextStream textout(&file);
-        textout<<QString::number(delay.update(1))<<"\r\n";
-        for(int i=0;i<rrc.Points.size();i++)
-        {
-            //textout<<QString::number(rrc.Points[i])<<"\r\n";
-            textout<<QString::number(delay.update(0))<<"\r\n";
-        }
-    }*/
-
 }
 
 OqpskDemodulator::~OqpskDemodulator()
@@ -198,6 +184,68 @@ void OqpskDemodulator::setSettings(Settings _settings)
 
     pointbuff.resize(300);
     pointbuff_ptr=0;
+
+
+    // Reset symbol rate dependent stuff
+
+
+    if(fir_re) delete fir_re;
+    if(fir_im) delete fir_im;
+
+    RootRaisedCosine rrc;
+    rrc.design(1,55,48000,fb/2);
+    fir_re=new FIR(rrc.Points.size());
+    fir_im=new FIR(rrc.Points.size());
+    for(int i=0;i<rrc.Points.size();i++)
+    {
+        fir_re->FIRSetPoint(i,rrc.Points.at(i));
+        fir_im->FIRSetPoint(i,rrc.Points.at(i));
+    }
+
+    //st delays
+    double T=48000.0/(fb/2);
+    delays.setdelay(1);
+    delayt41.setdelay(T/4.0);
+    delayt42.setdelay(T/4.0);
+    delayt8.setdelay(T/8.0);//??? T/4.0 or T/8.0 ??? need to check
+
+    //st resonator at 48000fps on symbol rate
+    st_iir_resonator.a.resize(3);
+    st_iir_resonator.b.resize(3);
+
+    if(fb==8400)
+    {
+
+        st_iir_resonator.a.resize(3);
+        st_iir_resonator.b.resize(3);
+        st_iir_resonator.b[0]=0.003911649911247;
+        st_iir_resonator.b[1]=0;
+        st_iir_resonator.b[2]=-0.003911649911247;
+        st_iir_resonator.a[0]=1;
+        st_iir_resonator.a[1]=-0.904429295683068;
+        st_iir_resonator.a[2]= 0.992176700177507;
+
+        ee = 0.55;
+
+    }
+    else
+    {
+
+        st_iir_resonator.b[0]=0.00032714218939589035;
+        st_iir_resonator.b[1]=0;
+        st_iir_resonator.b[2]=0.00032714218939589035;
+        st_iir_resonator.a[0]=1;
+        st_iir_resonator.a[1]=-0.39005299948210803;
+        st_iir_resonator.a[2]= 0.99934571562120822;
+
+        ee = 0.4;
+
+    }
+    st_iir_resonator.init();
+
+    //st osc
+    st_osc.SetFreq(fb,48000);
+    st_osc_ref.SetFreq(fb,48000);
 
     emit Plottables(mixer2.GetFreqHz(),mixer_center.GetFreqHz(),lockingbw);
 }
@@ -319,19 +367,13 @@ qint64 OqpskDemodulator::writeData(const char *data, qint64 len)
 
         //sample times
         static cpx_type sig2_last=sig2;
-        if(st_osc.IfHavePassedPoint(0.4))
+        if(st_osc.IfHavePassedPoint(ee))
         {
 
             //interpol
             double pt_last=st_osc.FractionOfSampleItPassesBy;
             double pt_this=1.0-pt_last;
             cpx_type pt=pt_this*sig2+pt_last*sig2_last;
-
-            //8 point constellation
-         //   eightpt=cpx_type(mar->UpdateSigned(eightpt.real()),mai->UpdateSigned(eightpt.imag()));
-           /* pointbuff[pointbuff_ptr]=eightpt;///std::abs(eightpt);
-            pointbuff_ptr++;pointbuff_ptr%=pointbuff.size();
-            if(scatterpointtype==SPT_constellation&&pointbuff_ptr==0)emit ScatterPoints(pointbuff);*/
 
             static int yui=0;
             yui++;yui%=2;
@@ -355,7 +397,10 @@ qint64 OqpskDemodulator::writeData(const char *data, qint64 len)
                 double ct_ec=ct_xt_d-ct_xt;
                 if(ct_ec>M_PI)ct_ec=M_PI;
                 if(ct_ec<-M_PI)ct_ec=-M_PI;
-                ct_ec=ct_iir_loopfilter.update(ct_ec);
+                if(fb>8400)
+                {
+                  ct_ec=ct_iir_loopfilter.update(ct_ec);
+                }
                 if(ct_ec>M_PI_2)ct_ec=M_PI_2;
                 if(ct_ec<-M_PI_2)ct_ec=-M_PI_2;
                 mixer2.IncresePhaseDeg(1.0*ct_ec);//*cos(ct_ec));

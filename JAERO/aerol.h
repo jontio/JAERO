@@ -41,6 +41,16 @@ typedef enum MessageType
 } MessageType;
 }
 
+
+namespace AEROTypeC {
+typedef enum MessageType
+{
+    Fill_in_signal_unit=0x01,
+    Call_progress=0x30,
+    Telephony_acknowledge=0x60,
+} MessageType;
+}
+
 namespace AEROTypeP {
 typedef enum MessageType
 {
@@ -67,13 +77,25 @@ typedef enum MessageType
     Reserved_26=0x26,
 
     //CALL INITIATION
+    Call_announcement=0x21,
+
     Data_EIRP_table_broadcast_complete_sequence=0x28,
+
+    // C CHANNEL RELATED
+    Call_progress=0x30,
+    C_channel_assignment_distress=0x31,
+    C_channel_assignment_flight_safety=0x32,
+    C_channel_assignment_other_safety=0x33,
+    C_channel_assignment_non_safety=0x34,
 
     //CHANNEL INFORMATION
     P_R_channel_control_ISU=0x40,
     T_channel_control_ISU=0x41,
 
     T_channel_assignment=0x51,
+
+
+
 
     //ACKNOWLEDGEMENT
     Request_for_acknowledgement_RQA_P_channel=0x61,
@@ -369,6 +391,17 @@ private:
     QVector<int> state;
 };
 
+class PuncturedCode
+{
+public:
+    PuncturedCode();
+    void depunture_soft_block(QByteArray &block, QByteArray &targetblock, int pattern, bool reset=true);
+    void punture_soft_block(QByteArray &block, int pattern, bool reset=true);
+private:
+    int punture_ptr;
+    int depunture_ptr;
+};
+
 class DelayLine
 {
 public:
@@ -454,13 +487,20 @@ class OQPSKPreambleDetectorAndAmbiguityCorrection
 {
 public:
     OQPSKPreambleDetectorAndAmbiguityCorrection();
-    void setPreamble(QVector<int> _preamble);
-    bool setPreamble(quint64 bitpreamble,int len);
-    bool Update(int val);
+    bool setPreamble(quint64 bitpreamble1,quint64 bitpreamble2,int len);
+    void setTollerence(int tollerence);
+    int Update(int val);
+    bool inverted;
+
 private:
-    QVector<int> preamble;
-    QVector<int> buffer;
+    QVector<int> preamble1;
+    QVector<int> buffer1;
+    QVector<int> preamble2;
+    QVector<int> buffer2;
+
     int buffer_ptr;
+    int tollerence;
+
 };
 
 class RTChannelDeleaveFECScram
@@ -822,6 +862,8 @@ signals:
     void DataCarrierDetect(bool status);
     void ACARSsignal(ACARSItem &acarsitem);
     void Errorsignal(QString &error);
+    void Voicesignal(QByteArray &data);
+
 
 public slots:
     void setBitRate(double fb);
@@ -844,7 +886,10 @@ public slots:
 private:
     bool Start();
     void Stop();
+    void SendCAssignment(int k, QString decline);
     QByteArray &Decode(QVector<short> &bits, bool soft = false);
+    QByteArray &DecodeC(QVector<short> &bits);
+
     QPointer<QIODevice> psinkdevice;
     QVector<short> sbits;
     QByteArray decodedbytes;
@@ -865,6 +910,11 @@ private:
     //OQPSK
     PreambleDetectorPhaseInvariant preambledetectorphaseinvariantimag;
     PreambleDetectorPhaseInvariant preambledetectorphaseinvariantreal;
+
+    //C Channel OQPSK
+    OQPSKPreambleDetectorAndAmbiguityCorrection preambledetectorreal;
+    OQPSKPreambleDetectorAndAmbiguityCorrection preambledetectorimag;
+
 
     bool useingOQPSK;
     int AERO_SPEC_NumberOfBits;//info only
@@ -908,8 +958,10 @@ private:
     int framecounter2;
     int gotsync_last;
     int blockcnt;
-
-
+    int index;
+    QByteArray deleaveredBlock;
+    QByteArray depuncturedBlock;
+    PuncturedCode puncturedCode;
 
 
 private slots:

@@ -134,6 +134,7 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(aerol,SIGNAL(ACARSsignal(ACARSItem&)),this,SLOT(ACARSslot(ACARSItem&)));
     connect(aerol,SIGNAL(DataCarrierDetect(bool)),audiomskdemodulator,SLOT(DCDstatSlot(bool)));
     connect(aerol,SIGNAL(DataCarrierDetect(bool)),audioburstmskdemodulator,SLOT(DCDstatSlot(bool)));
+    connect(aerol,SIGNAL(Voicesignal(QByteArray&)),this,SLOT(Voiceslot(QByteArray&)));
 
 
 
@@ -1009,6 +1010,17 @@ void MainWindow::acceptsettings()
 void MainWindow::on_action_PlaneLog_triggered()
 {
     planelog->show();
+}
+
+void MainWindow::Voiceslot(QByteArray &data)
+{
+
+
+   // std::cout << "got voice data from slot " << std::flush;
+
+   // voicedata.write(data);
+
+
 }
 
 //--new method of mainwindow getting second channel from aerol

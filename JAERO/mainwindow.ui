@@ -358,6 +358,11 @@
          </item>
          <item>
           <property name="text">
+           <string>8400 bps</string>
+          </property>
+         </item>
+         <item>
+          <property name="text">
            <string>10500 bps burst</string>
           </property>
          </item>
@@ -403,6 +408,11 @@
          <item>
           <property name="text">
            <string>1800 Hz</string>
+          </property>
+         </item>
+         <item>
+          <property name="text">
+           <string>8400 Hz</string>
           </property>
          </item>
          <item>

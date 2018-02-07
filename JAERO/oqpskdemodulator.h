@@ -130,6 +130,8 @@ private:
     MovingAverage *marg;
     DelayThing<cpx_type> dt;
 
+    double ee;
+
 public slots:
     void FreqOffsetEstimateSlot(double freq_offset_est);
     void CenterFreqChangedSlot(double freq_center);
