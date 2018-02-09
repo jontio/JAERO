@@ -105,6 +105,7 @@ private slots:
     void on_action_Settings_triggered();
     void on_action_PlaneLog_triggered();
     void ACARSslot(ACARSItem &acarsitem);
+    void Voiceslot(QByteArray &data);
     void ERRorslot(QString &error);
 
    // void result(bool ok, int ref, const QStringList &result);
