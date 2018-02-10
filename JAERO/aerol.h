@@ -147,6 +147,34 @@ struct RISUItem : ISUItem{
     }
 };
 
+//to do add plane info
+class CChannelAssignmentItem
+{
+public:
+    quint32 AESID;
+    uchar GESID;
+    uchar INIT_ERIP;
+    uchar REFNO;
+    double receive_freq;
+    double transmit_freq;
+    bool receive_spotbeam;
+    bool transmit_spotbeam;
+    uchar type;
+    void clear()
+    {
+        receive_spotbeam=false;
+        transmit_spotbeam=false;
+        receive_freq=0;
+        transmit_freq=0;
+        REFNO=0;
+        INIT_ERIP=0;
+        GESID=0;
+        AESID=0;
+        type=0;
+    }
+    CChannelAssignmentItem(){clear();}
+};
+
 class ACARSItem : public DBase
 {
 public:
@@ -863,8 +891,7 @@ signals:
     void ACARSsignal(ACARSItem &acarsitem);
     void Errorsignal(QString &error);
     void Voicesignal(QByteArray &data);
-
-
+    void CChannelAssignmentSignal(CChannelAssignmentItem &item);
 public slots:
     void setBitRate(double fb);
     void setBurstmode(bool burstmode);
@@ -887,6 +914,7 @@ private:
     bool Start();
     void Stop();
     void SendCAssignment(int k, QString decline);
+    CChannelAssignmentItem CreateCAssignmentItem(QByteArray su);
     QByteArray &Decode(QVector<short> &bits, bool soft = false);
     QByteArray &DecodeC(QVector<short> &bits);
 

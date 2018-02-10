@@ -1767,33 +1767,36 @@ QByteArray &AeroL::Decode(QVector<short> &bits, bool soft)//0 bit --> oldest bit
                                 case C_channel_assignment_distress:
                                     decline+="C_channel_assignment_distress";
                                 {
+                                    CChannelAssignmentItem item=CreateCAssignmentItem(infofield.mid(k,12));
+                                    emit CChannelAssignmentSignal(item);
                                     SendCAssignment(k, decline);
                                 }
                                 break;
 
-
                                 case C_channel_assignment_flight_safety:
                                     decline+="C_channel_assignment_flight_safety";
                                 {
+                                    CChannelAssignmentItem item=CreateCAssignmentItem(infofield.mid(k,12));
+                                    emit CChannelAssignmentSignal(item);
                                     SendCAssignment(k, decline);
-
                                 }
                                 break;
 
                                 case C_channel_assignment_other_safety:
                                     decline+="C_channel_assignment_other_safety";
                                 {
+                                    CChannelAssignmentItem item=CreateCAssignmentItem(infofield.mid(k,12));
+                                    emit CChannelAssignmentSignal(item);
                                     SendCAssignment(k, decline);
-
                                 }
                                 break;
 
                                 case C_channel_assignment_non_safety:
                                     decline+="C_channel_assignment_non_safety";
                                 {
-
+                                    CChannelAssignmentItem item=CreateCAssignmentItem(infofield.mid(k,12));
+                                    emit CChannelAssignmentSignal(item);
                                     SendCAssignment(k, decline);
-
                                 }
                                 break;
 
@@ -2082,6 +2085,49 @@ void AeroL::processDemodulatedSoftBits(const QVector<short> &soft_bits)
     }
 
 
+}
+
+CChannelAssignmentItem AeroL::CreateCAssignmentItem(QByteArray su)
+{
+    CChannelAssignmentItem item;
+
+    using namespace AEROTypeP;
+    switch((uchar)su[0])
+    {
+    case C_channel_assignment_distress:
+        break;
+    case C_channel_assignment_flight_safety:
+        break;
+    case C_channel_assignment_other_safety:
+        break;
+    case C_channel_assignment_non_safety:
+        break;
+    default:
+        return item;
+    }
+
+    item.type=(uchar)su[0];
+
+    item.AESID=((uchar)su[-1+2])<<8*2|((uchar)su[-1+3])<<8*1|((uchar)su[-1+4])<<8*0;
+    item.GESID=su[-1+5];
+
+    int byte7=((uchar)su[-1+7]);
+    int byte8=((uchar)su[-1+8]);
+    int byte9=((uchar)su[-1+9]);
+    int byte10=((uchar)su[-1+10]);
+
+    int channel_rx=((((byte7&0x7F)<<8)&0xFF00)|(byte8&0x00FF));
+    int channel_tx=((((byte9&0x7F)<<8)&0xFF00)|(byte10&0x00FF));
+    item.receive_freq=(((double)channel_rx)*0.0025)+1510.0;
+    item.transmit_freq=(((double)channel_tx)*0.0025)+1611.5;
+    if(byte7&0x80)item.receive_spotbeam=true;
+    if(byte9&0x80)item.transmit_spotbeam=true;
+
+
+    //looking up the db for plane info is a hassle so i'm not doing it at the moment.
+    //probably something to look at later
+
+    return item;
 }
 
 void AeroL::SendCAssignment(int k, QString decline)

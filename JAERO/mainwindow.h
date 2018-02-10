@@ -106,10 +106,12 @@ private slots:
     void on_action_PlaneLog_triggered();
     void ACARSslot(ACARSItem &acarsitem);
     void Voiceslot(QByteArray &data);
+    void CChannelAssignmentSlot(CChannelAssignmentItem &item);
     void ERRorslot(QString &error);
 
    // void result(bool ok, int ref, const QStringList &result);
 
+    void on_tabWidget_currentChanged(int index);
 };
 
 #endif // MAINWINDOW_H

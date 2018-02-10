@@ -135,8 +135,7 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(aerol,SIGNAL(DataCarrierDetect(bool)),audiomskdemodulator,SLOT(DCDstatSlot(bool)));
     connect(aerol,SIGNAL(DataCarrierDetect(bool)),audioburstmskdemodulator,SLOT(DCDstatSlot(bool)));
     connect(aerol,SIGNAL(Voicesignal(QByteArray&)),this,SLOT(Voiceslot(QByteArray&)));
-
-
+    connect(aerol,SIGNAL(CChannelAssignmentSignal(CChannelAssignmentItem&)),this,SLOT(CChannelAssignmentSlot(CChannelAssignmentItem&)));
 
     //aeroL2 connections
     connect(aerol2,SIGNAL(DataCarrierDetect(bool)),this,SLOT(DataCarrierDetectStatusSlot(bool)));
@@ -153,6 +152,7 @@ MainWindow::MainWindow(QWidget *parent) :
     ui->actionRawOutput->setChecked(settings.value("actionRawOutput",false).toBool());
     double tmpfreq=settings.value("freq_center",1000).toDouble();
     ui->inputwidget->setPlainText(settings.value("inputwidget","").toString());
+    ui->tabWidget->setCurrentIndex(settings.value("tabindex",0).toInt());
 
     //set audio msk demodulator settings and start
     on_comboBoxafc_currentIndexChanged(ui->comboBoxafc->currentText());
@@ -188,10 +188,6 @@ MainWindow::MainWindow(QWidget *parent) :
     audioburstmskdemodulator->setSQL(false);
     audioburstmskdemodulator->setSettings(audioburstmskdemodulatorsettings);
     if(typeofdemodtouse==BURSTMSK)audioburstmskdemodulator->start();
-
-
-    //always connected
-    connect(ui->actionClearTXWindow,SIGNAL(triggered(bool)),ui->inputwidget,SLOT(clear()));
 
     //add todays date
     ui->inputwidget->appendPlainText(QDateTime::currentDateTime().toString("h:mmap ddd d-MMM-yyyy")+" JAERO started\n");
@@ -549,6 +545,7 @@ void MainWindow::closeEvent(QCloseEvent *event)
     settings.setValue("comboBoxdisplay", ui->comboBoxdisplay->currentIndex());
     settings.setValue("actionConnectToUDPPort", ui->actionConnectToUDPPort->isChecked());
     settings.setValue("actionRawOutput", ui->actionRawOutput->isChecked());
+    settings.setValue("tabindex", ui->tabWidget->currentIndex());
     if(typeofdemodtouse==MSK)settings.setValue("freq_center", audiomskdemodulator->getCurrentFreq());
     if(typeofdemodtouse==OQPSK)settings.setValue("freq_center", audiooqpskdemodulator->getCurrentFreq());
     if(typeofdemodtouse==BURSTOQPSK)settings.setValue("freq_center", audioburstoqpskdemodulator->getCurrentFreq());
@@ -794,7 +791,21 @@ void MainWindow::on_comboBoxafc_currentIndexChanged(const QString &arg1)
 
 void MainWindow::on_actionCleanConsole_triggered()
 {
-    ui->console->clear();
+
+    switch(ui->tabWidget->currentIndex())
+    {
+    case 0:
+        ui->console->clear();
+        break;
+    case 1:
+        ui->inputwidget->clear();
+        break;
+    case 2:
+        ui->plainTextEdit_cchan_assignment->clear();
+        break;
+    default:
+        break;
+    };
 }
 
 void MainWindow::on_comboBoxdisplay_currentIndexChanged(const QString &arg1)
@@ -1023,6 +1034,19 @@ void MainWindow::Voiceslot(QByteArray &data)
 
 }
 
+void MainWindow::CChannelAssignmentSlot(CChannelAssignmentItem &item)
+{
+    QString message=QDateTime::currentDateTime().toString("hh:mm:ss dd-MM-yy ")+((QString)"").sprintf("AES:%06X GES:%02X ",item.AESID,item.GESID);
+    QString rx_beam = " Global Beam ";
+    if(item.receive_spotbeam)rx_beam=" Spot Beam ";
+    message += "Receive Freq: " + QString::number(item.receive_freq) + rx_beam + "Transmit " + QString::number(item.transmit_freq);
+    ui->plainTextEdit_cchan_assignment->appendPlainText(message);
+    beep->play();
+    beep->play();
+    beep->play();
+
+}
+
 //--new method of mainwindow getting second channel from aerol
 
 void MainWindow::ACARSslot(ACARSItem &acarsitem)
@@ -1208,3 +1232,11 @@ void MainWindow::ERRorslot(QString &error)
 }
 
 
+
+void MainWindow::on_tabWidget_currentChanged(int index)
+{
+    Q_UNUSED(index);
+    ui->console->verticalScrollBar()->setValue(ui->console->verticalScrollBar()->maximum());
+    ui->inputwidget->verticalScrollBar()->setValue(ui->inputwidget->verticalScrollBar()->maximum());
+    ui->plainTextEdit_cchan_assignment->verticalScrollBar()->setValue(ui->plainTextEdit_cchan_assignment->verticalScrollBar()->maximum());
+}
