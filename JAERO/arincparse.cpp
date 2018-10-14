@@ -1,5 +1,6 @@
 #include "arincparse.h"
 #include <QDebug>
+#include <libacars/cpdlc.h>
 
 ArincParse::ArincParse(QObject *parent) : QObject(parent)
 {
@@ -43,6 +44,16 @@ qint32 ArincParse::extractqint32(QByteArray &ba,int lsbyteoffset,int bitoffset,i
     return val;
 }
 
+void ArincParse::parse_cpdlc_payload(QByteArray &ba, la_msg_dir msg_dir) {
+    la_proto_node *node = la_cpdlc_parse((uint8_t *)ba.data(), ba.size(), msg_dir);
+    la_vstring *vstr = NULL;
+    if(node != NULL) {
+        vstr = la_proto_tree_format_text(NULL, node);
+        arincmessage.info += vstr->str;
+        la_vstring_destroy(vstr, true);
+        la_proto_tree_destroy(node);
+    }
+}
 
 //returns true if something for the user to read. need to check what is valid on return
 bool ArincParse::parseDownlinkmessage(ACARSItem &acarsitem)//QString &msg)
@@ -415,22 +426,22 @@ bool ArincParse::parseDownlinkmessage(ACARSItem &acarsitem)//QString &msg)
         }
         break;
     }
-    case AT1: //not implimented.
+    case AT1:
     {
-        arincmessage.info+="ATCComm";//defined in RTCA DO-219.
-        fail=true;
+        arincmessage.info += "FANS-1/A CPDLC Message:\n";
+        parse_cpdlc_payload(appmessage_bytes, LA_MSG_DIR_AIR2GND);
         break;
     }
-    case DR1: //not implimented.
+    case DR1:
     {
-        arincmessage.info+="ATCComm DISCONNECT REQUEST";
-        fail=true;
+        arincmessage.info += "FANS-1/A CPDLC Disconnect Request:\n";
+        parse_cpdlc_payload(appmessage_bytes, LA_MSG_DIR_AIR2GND);
         break;
     }
-    case CC1: //not implimented.
+    case CC1:
     {
-        arincmessage.info+="ATCComm CONNECT CONFIRM";
-        fail=true;
+        arincmessage.info += "FANS-1/A CPDLC Connect Confirm:\n";
+        parse_cpdlc_payload(appmessage_bytes, LA_MSG_DIR_AIR2GND);
         break;
     }
     default:

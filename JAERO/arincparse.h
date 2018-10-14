@@ -7,6 +7,7 @@
 #include <QMetaEnum>
 #include <QBitArray>
 #include <QtMath>
+#include <libacars/cpdlc.h>
 
 #define lat_scaller                     0.000171661376953125
 #define long_scaller                    0.000171661376953125
@@ -198,6 +199,7 @@ private:
     QString middlespacer;
 
     DownlinkGroups downlinkgroups;
+    void parse_cpdlc_payload(QByteArray &ba, la_msg_dir msg_dir);
 
 };
 
