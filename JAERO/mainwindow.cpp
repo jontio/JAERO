@@ -1188,6 +1188,7 @@ void MainWindow::log(QString &text)
         outlogstream.setDevice(&filelog);
     }
     outlogstream << text << '\n';
+    outlogstream.flush();
 }
 
 void MainWindow::ERRorslot(QString &error)
