@@ -7,7 +7,7 @@
 #include <QMetaEnum>
 #include <QBitArray>
 #include <QtMath>
-#include <libacars/cpdlc.h>
+#include <libacars/libacars.h>
 
 #define lat_scaller                     0.000171661376953125
 #define long_scaller                    0.000171661376953125
@@ -179,6 +179,7 @@ public:
 
     explicit ArincParse(QObject *parent = 0);
     bool parseDownlinkmessage(ACARSItem &acarsitem);//QString &msg);
+    bool parseUplinkmessage(ACARSItem &acarsitem);
 
     ArincMessage arincmessage;
     DownlinkHeader downlinkheader;
@@ -200,6 +201,7 @@ private:
 
     DownlinkGroups downlinkgroups;
     void parse_cpdlc_payload(QByteArray &ba, la_msg_dir msg_dir);
+    void parse_arinc_payload(QByteArray &ba, la_msg_dir msg_dir);
 
 };
 

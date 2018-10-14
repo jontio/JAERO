@@ -1,6 +1,9 @@
 #include "arincparse.h"
 #include <QDebug>
+#include <libacars/libacars.h>
+#include <libacars/arinc.h>
 #include <libacars/cpdlc.h>
+#include <libacars/vstring.h>
 
 ArincParse::ArincParse(QObject *parent) : QObject(parent)
 {
@@ -53,6 +56,27 @@ void ArincParse::parse_cpdlc_payload(QByteArray &ba, la_msg_dir msg_dir) {
         la_vstring_destroy(vstr, true);
         la_proto_tree_destroy(node);
     }
+}
+
+void ArincParse::parse_arinc_payload(QByteArray &ba, la_msg_dir msg_dir) {
+    la_proto_node *node = la_arinc_parse(ba.data(), msg_dir);
+    la_vstring *vstr = NULL;
+    if(node != NULL) {
+        vstr = la_proto_tree_format_text(NULL, node);
+        arincmessage.info += vstr->str;
+        la_vstring_destroy(vstr, true);
+        la_proto_tree_destroy(node);
+    }
+}
+
+bool ArincParse::parseUplinkmessage(ACARSItem &acarsitem)
+{
+    if(acarsitem.downlink)return false;
+    if(acarsitem.nonacars)return false;
+
+    QByteArray ba = acarsitem.message.toLatin1();
+    parse_arinc_payload(ba, LA_MSG_DIR_GND2AIR);
+    return true;
 }
 
 //returns true if something for the user to read. need to check what is valid on return
