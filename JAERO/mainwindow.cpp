@@ -60,6 +60,9 @@ MainWindow::MainWindow(QWidget *parent) :
     aerol = new AeroL(this); //Create Aero sink
     aerol2 = new AeroL(this); //Create Aero sink
 
+    //ambe decompressor
+    ambe=new AeroAMBE(this);
+
     //create settings dialog.
     settingsdialog = new SettingsDialog(this);
 
@@ -75,6 +78,10 @@ MainWindow::MainWindow(QWidget *parent) :
 
     //create the burst msk demodulator
     audioburstmskdemodulator = new AudioBurstMskDemodulator(this);
+
+    //add a audio output device
+    audioout = new AudioOutDevice(this);
+    audioout->start();
 
     //create udp sockets
     udpsocket = new QUdpSocket(this);
@@ -108,7 +115,10 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(audioburstoqpskdemodulator,SIGNAL(processDemodulatedSoftBits(QVector<short>)),aerol,SLOT(processDemodulatedSoftBits(QVector<short>)));
     connect(audioburstoqpskdemodulator->demod2,SIGNAL(processDemodulatedSoftBits(QVector<short>)),aerol2,SLOT(processDemodulatedSoftBits(QVector<short>)));
 
-
+    //send compressed audio through decompressor
+    //connect(ambe,SIGNAL(decoded_signal(QByteArray)),this,SLOT(Voiceslot(QByteArray)));
+    connect(ambe,SIGNAL(decoded_signal(QByteArray)),audioout,SLOT(audioin(QByteArray)));
+    connect(aerol,SIGNAL(Voicesignal(QByteArray)),ambe,SLOT(to_decode_slot(QByteArray)));
 
     //statusbar setup
     freqlabel = new QLabel();
@@ -134,7 +144,6 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(aerol,SIGNAL(ACARSsignal(ACARSItem&)),this,SLOT(ACARSslot(ACARSItem&)));
     connect(aerol,SIGNAL(DataCarrierDetect(bool)),audiomskdemodulator,SLOT(DCDstatSlot(bool)));
     connect(aerol,SIGNAL(DataCarrierDetect(bool)),audioburstmskdemodulator,SLOT(DCDstatSlot(bool)));
-    connect(aerol,SIGNAL(Voicesignal(QByteArray&)),this,SLOT(Voiceslot(QByteArray&)));
     connect(aerol,SIGNAL(CChannelAssignmentSignal(CChannelAssignmentItem&)),this,SLOT(CChannelAssignmentSlot(CChannelAssignmentItem&)));
 
     //aeroL2 connections
@@ -1023,15 +1032,9 @@ void MainWindow::on_action_PlaneLog_triggered()
     planelog->show();
 }
 
-void MainWindow::Voiceslot(QByteArray &data)
+void MainWindow::Voiceslot(const QByteArray &data)
 {
-
-
-   // std::cout << "got voice data from slot " << std::flush;
-
-   // voicedata.write(data);
-
-
+    //to do write a wav saver for the audio  we get here 16bit signed ints in a buffer array
 }
 
 void MainWindow::CChannelAssignmentSlot(CChannelAssignmentItem &item)

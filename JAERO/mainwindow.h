@@ -19,6 +19,9 @@
 
 #include "arincparse.h"
 
+#include "aeroambe.h"
+#include "audiooutdevice.h"
+
 namespace Ui {
 class MainWindow;
 }
@@ -58,6 +61,10 @@ private:
     //bottom textedit output
     QUdpSocket *udpsocket_bottom_textedit;
     //
+
+    //ambe codec
+    AeroAMBE *ambe;
+    AudioOutDevice *audioout;
 
     AeroL *aerol;
     AeroL *aerol2;
@@ -105,7 +112,7 @@ private slots:
     void on_action_Settings_triggered();
     void on_action_PlaneLog_triggered();
     void ACARSslot(ACARSItem &acarsitem);
-    void Voiceslot(QByteArray &data);
+    void Voiceslot(const QByteArray &data);
     void CChannelAssignmentSlot(CChannelAssignmentItem &item);
     void ERRorslot(QString &error);
 

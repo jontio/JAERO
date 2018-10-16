@@ -2424,7 +2424,11 @@ QByteArray &AeroL::DecodeC(QVector<short> &bits)
                        }
                 }
 
-                emit Voicesignal(data);
+                //25 primary fields. this is where the audio lives in a compressed format
+                for(int i=0;i<25;i++)
+                {
+                    emit Voicesignal(data.mid(i*12,12));//send one frame at a time
+                }
 
 
               // reset for next block

@@ -12,6 +12,13 @@ greaterThan(QT_MAJOR_VERSION, 4): QT += widgets  printsupport
 TARGET = JAERO
 TEMPLATE = app
 
+
+AEROAMBELIB_PATH = $$PWD/../../libaeroambe/libaeroambe
+AEROAMBELIB_BIN_PATH = $$PWD/../../libaeroambe/build-test-64bit_shared-Release/release
+
+DEPENDPATH += $$AEROAMBELIB_PATH
+INCLUDEPATH += $$AEROAMBELIB_PATH
+
 #message("QT_ARCH is \"$$QT_ARCH\"");
 contains(QT_ARCH, i386) {
     #message("32-bit")
@@ -53,7 +60,8 @@ SOURCES += main.cpp\
     tcpclient.cpp \
     burstmskdemodulator.cpp \
     audioburstmskdemodulator.cpp \
-    jconvolutionalcodec.cpp
+    jconvolutionalcodec.cpp \
+    audiooutdevice.cpp
 
 
 HEADERS  += mainwindow.h \
@@ -88,7 +96,8 @@ HEADERS  += mainwindow.h \
     tcpclient.h \
     burstmskdemodulator.h \
     audioburstmskdemodulator.h \
-    jconvolutionalcodec.h
+    jconvolutionalcodec.h \
+    audiooutdevice.h
 
 
 FORMS    += mainwindow.ui \
@@ -136,3 +145,4 @@ QMAKE_CXXFLAGS_RELEASE += -O3
 # add the desired -O3 if not present
 #QMAKE_CXXFLAGS_RELEASE *= -O3
 
+LIBS += -L$$AEROAMBELIB_BIN_PATH -laeroambe

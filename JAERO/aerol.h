@@ -890,7 +890,7 @@ signals:
     void DataCarrierDetect(bool status);
     void ACARSsignal(ACARSItem &acarsitem);
     void Errorsignal(QString &error);
-    void Voicesignal(QByteArray &data);
+    void Voicesignal(const QByteArray &data);
     void CChannelAssignmentSignal(CChannelAssignmentItem &item);
 public slots:
     void setBitRate(double fb);
