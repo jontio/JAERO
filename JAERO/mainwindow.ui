@@ -553,6 +553,7 @@
    <addaction name="separator"/>
    <addaction name="action_Settings"/>
    <addaction name="action_PlaneLog"/>
+   <addaction name="actionSound_Out"/>
    <addaction name="actionTXRX"/>
   </widget>
   <action name="action_Exit">
@@ -658,6 +659,22 @@
    </property>
    <property name="text">
     <string>&amp;PlaneLog</string>
+   </property>
+  </action>
+  <action name="actionSound_Out">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="icon">
+    <iconset resource="jaero.qrc">
+     <normaloff>:/images/sound.png</normaloff>
+     <normalon>:/images/sound-off2.png</normalon>:/images/sound.png</iconset>
+   </property>
+   <property name="text">
+    <string>Sound Out</string>
+   </property>
+   <property name="toolTip">
+    <string>Mute the sound</string>
    </property>
   </action>
  </widget>

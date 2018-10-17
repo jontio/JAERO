@@ -6,6 +6,7 @@ AudioOutDevice::AudioOutDevice(QObject *parent)
     :   QIODevice(parent),
       m_audioOutput(NULL)
 {
+    mute=false;
     setSettings(settings);
     clear();
 }
@@ -117,7 +118,8 @@ qint64 AudioOutDevice::readData(char *data, qint64 maxlen)
 
             }
          }
-        *ptr=circ_buffer[circ_buffer_tail];
+        if(!mute)*ptr=circ_buffer[circ_buffer_tail];
+         else *ptr=0;
 
         ptr++;
 

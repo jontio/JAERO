@@ -17,7 +17,7 @@ void CompressedAudioDiskWriter::setLogDir(QString dir)
     closeFile();
     logdir=dir;
     QDir adir;
-    adir.mkpath(dir);
+    if(!dir.isEmpty())adir.mkpath(dir);
 }
 
 void CompressedAudioDiskWriter::timeoutslot()

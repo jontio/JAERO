@@ -2,6 +2,7 @@
 #include "ui_mainwindow.h"
 #include <QDebug>
 #include <QStandardPaths>
+#include <QLibrary>
 
 #ifdef __linux__
 #include <unistd.h>
@@ -61,7 +62,29 @@ MainWindow::MainWindow(QWidget *parent) :
     aerol2 = new AeroL(this); //Create Aero sink
 
     //ambe decompressor
-    ambe=new AeroAMBE(this);
+    QString aeroambe_object_error_str;
+    QLibrary library("aeroambe.dll");
+    if(!library.load())library.setFileName("aeroambe.so");
+    if(!library.load())
+    {
+        aeroambe_object_error_str="Can't find or load all the libraries necicarry for aeroambe. You will not get audio.";//library.errorString() is a usless description and can be missleading, not using
+        ambe=new QObject(this);
+    }
+    if(library.load())
+    {
+        qDebug() << "aeroambe library loaded";
+        typedef QObject *(*CreateQObjectFunction)(QObject*);
+        CreateQObjectFunction cof = (CreateQObjectFunction)library.resolve("createAeroAMBE");
+        if (cof)
+        {
+            ambe = cof(this);
+        }
+        else
+        {
+            ambe=new QObject(this);
+            aeroambe_object_error_str="Could not resolve createAeroAMBE in aeroambe. You will not get audio.";
+        }
+    }
 
     //create settings dialog.
     settingsdialog = new SettingsDialog(this);
@@ -165,6 +188,7 @@ MainWindow::MainWindow(QWidget *parent) :
     ui->comboBoxdisplay->setCurrentIndex(settings.value("comboBoxdisplay",0).toInt());
     ui->actionConnectToUDPPort->setChecked(settings.value("actionConnectToUDPPort",false).toBool());
     ui->actionRawOutput->setChecked(settings.value("actionRawOutput",false).toBool());
+    ui->actionSound_Out->setChecked(settings.value("actionSound_Out",false).toBool());
     double tmpfreq=settings.value("freq_center",1000).toDouble();
     ui->inputwidget->setPlainText(settings.value("inputwidget","").toString());
     ui->tabWidget->setCurrentIndex(settings.value("tabindex",0).toInt());
@@ -207,6 +231,9 @@ MainWindow::MainWindow(QWidget *parent) :
     //add todays date
     ui->inputwidget->appendPlainText(QDateTime::currentDateTime().toString("h:mmap ddd d-MMM-yyyy")+" JAERO started\n");
     QTimer::singleShot(100,ui->inputwidget,SLOT(scrolltoend()));
+
+    //say if aeroabme was not found or loaded correctly
+    if(!aeroambe_object_error_str.isEmpty())ui->inputwidget->appendPlainText(aeroambe_object_error_str+"\n");
 
     ui->actionTXRX->setVisible(false);//there is a hidden audio modulator icon.
 
@@ -560,6 +587,7 @@ void MainWindow::closeEvent(QCloseEvent *event)
     settings.setValue("comboBoxdisplay", ui->comboBoxdisplay->currentIndex());
     settings.setValue("actionConnectToUDPPort", ui->actionConnectToUDPPort->isChecked());
     settings.setValue("actionRawOutput", ui->actionRawOutput->isChecked());
+    settings.setValue("actionSound_Out", ui->actionSound_Out->isChecked());
     settings.setValue("tabindex", ui->tabWidget->currentIndex());
     if(typeofdemodtouse==MSK)settings.setValue("freq_center", audiomskdemodulator->getCurrentFreq());
     if(typeofdemodtouse==OQPSK)settings.setValue("freq_center", audiooqpskdemodulator->getCurrentFreq());
@@ -619,7 +647,7 @@ void MainWindow::AboutSlot()
 {
     QMessageBox::about(this,"JAERO",""
                                      "<H1>An Aero demodulator and decoder</H1>"
-                                     "<H3>v1.0.4.7</H3>"
+                                     "<H3>v1.0.4.8</H3>"
                                      "<p>This is a program to demodulate and decode Aero signals. These signals contain SatCom ACARS (<em>Satelitle Comunication Aircraft Communications Addressing and Reporting System</em>) messages as used by planes beyond VHF ACARS range. This protocol is used by Inmarsat's \"Classic Aero\" system and can be received using low or medium gain L band or high gain C band antennas.</p>"
                                      "<p>For more information about this application see <a href=\"http://jontio.zapto.org/hda1/jaero.html\">http://jontio.zapto.org/hda1/jaero.html</a>.</p>"
                                      "<p>Jonti 2018</p>" );
@@ -1041,11 +1069,6 @@ void MainWindow::on_action_PlaneLog_triggered()
     planelog->show();
 }
 
-void MainWindow::Voiceslot(const QByteArray &data)
-{
-    //to do write a wav saver for the audio  we get here 16bit signed ints in a buffer array
-}
-
 void MainWindow::CChannelAssignmentSlot(CChannelAssignmentItem &item)
 {
     QString message=QDateTime::currentDateTime().toString("hh:mm:ss dd-MM-yy ")+((QString)"").sprintf("AES:%06X GES:%02X ",item.AESID,item.GESID);
@@ -1251,4 +1274,11 @@ void MainWindow::on_tabWidget_currentChanged(int index)
     ui->console->verticalScrollBar()->setValue(ui->console->verticalScrollBar()->maximum());
     ui->inputwidget->verticalScrollBar()->setValue(ui->inputwidget->verticalScrollBar()->maximum());
     ui->plainTextEdit_cchan_assignment->verticalScrollBar()->setValue(ui->plainTextEdit_cchan_assignment->verticalScrollBar()->maximum());
+}
+
+void MainWindow::on_actionSound_Out_toggled(bool mute)
+{
+    if(mute)disconnect(ambe,SIGNAL(decoded_signal(QByteArray)),audioout,SLOT(audioin(QByteArray)));
+     else connect(ambe,SIGNAL(decoded_signal(QByteArray)),audioout,SLOT(audioin(QByteArray)));
+    audioout->mute=mute;
 }

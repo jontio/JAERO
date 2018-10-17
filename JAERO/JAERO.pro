@@ -5,19 +5,18 @@
 #
 #-------------------------------------------------
 
+#the three tricky things will be libvorbis,libogg, and libcorrect
+#the settings I have here are for my setup but other most likely will install the libraries
+#so you will need to point everything to the right place.
+#if you are having trubbles focus on things like "LIBS += -L$$OGG_PATH/src/.libs"
+#remember to compile libvorbis,libogg, and libcorrect before compiling this
+
 QT       += multimedia core network gui svg sql
 
 greaterThan(QT_MAJOR_VERSION, 4): QT += widgets  printsupport
 
 TARGET = JAERO
 TEMPLATE = app
-
-#for audio decompressor
-AEROAMBELIB_PATH = $$PWD/../../libaeroambe/libaeroambe
-AEROAMBELIB_BIN_PATH = $$PWD/../../libaeroambe/build-test-64bit_shared-Release/release
-
-DEPENDPATH += $$AEROAMBELIB_PATH
-INCLUDEPATH += $$AEROAMBELIB_PATH
 
 #for audio compressor
 #compiling libogg "./configure" "make" works. for comping libvorbis without installing in usual place libogg was "./configure --with-ogg-libraries=/e/git/JAERO/libogg-1.3.3/src/.libs  --with-ogg-includes=/e/git/JAERO/libogg-1.3.3/include" then "make"
@@ -134,7 +133,12 @@ DISTFILES += \
     ../qcustomplot/GPL.txt \
     ../README.md \
     ../images/screenshot-win-main.png \
-    ../images/screenshot-win-planelog.png
+    ../images/screenshot-win-planelog.png \
+    ../libvorbis-1.3.6/CHANGES \
+    ../libvorbis-1.3.6/AUTHORS \
+    ../libvorbis-1.3.6/COPYING \
+    ../libogg-1.3.3/CHANGES \
+    ../libogg-1.3.3/AUTHORS
 
 win32 {
 RC_FILE = jaero.rc
@@ -161,8 +165,6 @@ QMAKE_CXXFLAGS_RELEASE += -O3
 
 # add the desired -O3 if not present
 #QMAKE_CXXFLAGS_RELEASE *= -O3
-
-LIBS += -L$$AEROAMBELIB_BIN_PATH -laeroambe
 
 #for audio compressor
 LIBS += -L$$OGG_PATH/src/.libs -logg
