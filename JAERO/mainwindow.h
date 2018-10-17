@@ -21,6 +21,7 @@
 
 #include "aeroambe.h"
 #include "audiooutdevice.h"
+#include "compressedaudiodiskwriter.h"
 
 namespace Ui {
 class MainWindow;
@@ -65,6 +66,7 @@ private:
     //ambe codec
     AeroAMBE *ambe;
     AudioOutDevice *audioout;
+    CompressedAudioDiskWriter *compresseddiskwriter;
 
     AeroL *aerol;
     AeroL *aerol2;

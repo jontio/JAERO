@@ -12,12 +12,25 @@ greaterThan(QT_MAJOR_VERSION, 4): QT += widgets  printsupport
 TARGET = JAERO
 TEMPLATE = app
 
-
+#for audio decompressor
 AEROAMBELIB_PATH = $$PWD/../../libaeroambe/libaeroambe
 AEROAMBELIB_BIN_PATH = $$PWD/../../libaeroambe/build-test-64bit_shared-Release/release
 
 DEPENDPATH += $$AEROAMBELIB_PATH
 INCLUDEPATH += $$AEROAMBELIB_PATH
+
+#for audio compressor
+#compiling libogg "./configure" "make" works. for comping libvorbis without installing in usual place libogg was "./configure --with-ogg-libraries=/e/git/JAERO/libogg-1.3.3/src/.libs  --with-ogg-includes=/e/git/JAERO/libogg-1.3.3/include" then "make"
+VORBIS_PATH = $$PWD/../libvorbis-1.3.6
+OGG_PATH = $$PWD/../libogg-1.3.3
+
+INCLUDEPATH += $$VORBIS_PATH/include
+DEPENDPATH += $$VORBIS_PATH/include
+VPATH += $$VORBIS_PATH/include
+INCLUDEPATH += $$OGG_PATH/include
+DEPENDPATH += $$OGG_PATH/include
+VPATH += $$OGG_PATH/include
+
 
 #message("QT_ARCH is \"$$QT_ARCH\"");
 contains(QT_ARCH, i386) {
@@ -61,7 +74,9 @@ SOURCES += main.cpp\
     burstmskdemodulator.cpp \
     audioburstmskdemodulator.cpp \
     jconvolutionalcodec.cpp \
-    audiooutdevice.cpp
+    audiooutdevice.cpp \
+    audiodiskwriter.cpp \
+    compressedaudiodiskwriter.cpp
 
 
 HEADERS  += mainwindow.h \
@@ -97,7 +112,9 @@ HEADERS  += mainwindow.h \
     burstmskdemodulator.h \
     audioburstmskdemodulator.h \
     jconvolutionalcodec.h \
-    audiooutdevice.h
+    audiooutdevice.h \
+    audiodiskwriter.h \
+    compressedaudiodiskwriter.h
 
 
 FORMS    += mainwindow.ui \
@@ -146,3 +163,7 @@ QMAKE_CXXFLAGS_RELEASE += -O3
 #QMAKE_CXXFLAGS_RELEASE *= -O3
 
 LIBS += -L$$AEROAMBELIB_BIN_PATH -laeroambe
+
+#for audio compressor
+LIBS += -L$$OGG_PATH/src/.libs -logg
+LIBS += -L$$VORBIS_PATH/lib/.libs -lvorbis -lvorbisenc

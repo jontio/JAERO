@@ -83,6 +83,9 @@ MainWindow::MainWindow(QWidget *parent) :
     audioout = new AudioOutDevice(this);
     audioout->start();
 
+    //add a thing for saving audio to disk with
+    compresseddiskwriter = new CompressedAudioDiskWriter(this);
+
     //create udp sockets
     udpsocket = new QUdpSocket(this);
     udpsocket_bottom_textedit = new QUdpSocket(this);
@@ -117,8 +120,11 @@ MainWindow::MainWindow(QWidget *parent) :
 
     //send compressed audio through decompressor
     //connect(ambe,SIGNAL(decoded_signal(QByteArray)),this,SLOT(Voiceslot(QByteArray)));
+    connect(ambe,SIGNAL(decoded_signal(QByteArray)),compresseddiskwriter,SLOT(audioin(QByteArray)));
     connect(ambe,SIGNAL(decoded_signal(QByteArray)),audioout,SLOT(audioin(QByteArray)));
     connect(aerol,SIGNAL(Voicesignal(QByteArray)),ambe,SLOT(to_decode_slot(QByteArray)));
+
+   // compresseddiskwriter->openFileForOutput("e:/delme.ogg");
 
     //statusbar setup
     freqlabel = new QLabel();
@@ -1023,6 +1029,9 @@ void MainWindow::acceptsettings()
     {
         udpsocket_bottom_textedit->connectToHost(settingsdialog->udp_for_decoded_messages_address, settingsdialog->udp_for_decoded_messages_port);
     }
+
+    compresseddiskwriter->setLogDir(settingsdialog->loggingdirectory);
+    if(!settingsdialog->loggingenable)compresseddiskwriter->setLogDir("");
 
 
 }
