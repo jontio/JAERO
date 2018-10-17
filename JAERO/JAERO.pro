@@ -74,7 +74,6 @@ SOURCES += main.cpp\
     audioburstmskdemodulator.cpp \
     jconvolutionalcodec.cpp \
     audiooutdevice.cpp \
-    audiodiskwriter.cpp \
     compressedaudiodiskwriter.cpp
 
 
@@ -112,7 +111,6 @@ HEADERS  += mainwindow.h \
     audioburstmskdemodulator.h \
     jconvolutionalcodec.h \
     audiooutdevice.h \
-    audiodiskwriter.h \
     compressedaudiodiskwriter.h
 
 
@@ -155,8 +153,10 @@ contains(QT_ARCH, i386) {
     #message("64-bit")
     LIBS += -L$$PWD/../libcorrect/bin/64
 }
-LIBS += -llibcorrect
 }
+
+LIBS += -lcorrect
+
 
 # remove possible other optimization flags
 #QMAKE_CXXFLAGS_RELEASE -= -O
