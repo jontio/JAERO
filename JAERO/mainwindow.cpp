@@ -67,7 +67,7 @@ MainWindow::MainWindow(QWidget *parent) :
     if(!library.load())library.setFileName("aeroambe.so");
     if(!library.load())
     {
-        aeroambe_object_error_str="Can't find or load all the libraries necicarry for aeroambe. You will not get audio.";//library.errorString() is a usless description and can be missleading, not using
+        aeroambe_object_error_str="Can't find or load all the libraries necessary for aeroambe. You will not get audio.";//library.errorString() is a usless description and can be missleading, not using
         ambe=new QObject(this);
     }
     if(library.load())

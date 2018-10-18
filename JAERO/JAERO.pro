@@ -167,5 +167,6 @@ QMAKE_CXXFLAGS_RELEASE += -O3
 #QMAKE_CXXFLAGS_RELEASE *= -O3
 
 #for audio compressor
-LIBS += -L$$OGG_PATH/src/.libs -logg
+#for static building order seems to matter
 LIBS += -L$$VORBIS_PATH/lib/.libs -lvorbis -lvorbisenc
+LIBS += -L$$OGG_PATH/src/.libs -logg
