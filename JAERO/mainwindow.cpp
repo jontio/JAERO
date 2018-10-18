@@ -68,7 +68,7 @@ MainWindow::MainWindow(QWidget *parent) :
     if(!library.load())
     {
         aeroambe_object_error_str="Can't find or load all the libraries necessary for aeroambe. You will not get audio.";//library.errorString() is a usless description and can be missleading, not using
-        ambe=new QObject(this);
+        ambe=new QObject;
     }
     if(library.load())
     {
@@ -77,11 +77,11 @@ MainWindow::MainWindow(QWidget *parent) :
         CreateQObjectFunction cof = (CreateQObjectFunction)library.resolve("createAeroAMBE");
         if (cof)
         {
-            ambe = cof(this);
+            ambe = cof(0);//Cannot create children for a parent that is in a different thread. so have to use 0 and manually delete or use an autoptr
         }
         else
         {
-            ambe=new QObject(this);
+            ambe=new QObject;
             aeroambe_object_error_str="Could not resolve createAeroAMBE in aeroambe. You will not get audio.";
         }
     }
@@ -142,7 +142,7 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(audioburstoqpskdemodulator->demod2,SIGNAL(processDemodulatedSoftBits(QVector<short>)),aerol2,SLOT(processDemodulatedSoftBits(QVector<short>)));
 
     //send compressed audio through decompressor
-    //connect(ambe,SIGNAL(decoded_signal(QByteArray)),this,SLOT(Voiceslot(QByteArray)));
+    //connect(ambe,SIGNAL(decoded_signal(QByteArray)),this,SLOT(Voiceslot(QByteArray))); // an example
     connect(ambe,SIGNAL(decoded_signal(QByteArray)),compresseddiskwriter,SLOT(audioin(QByteArray)));
     connect(ambe,SIGNAL(decoded_signal(QByteArray)),audioout,SLOT(audioin(QByteArray)));
     connect(aerol,SIGNAL(Voicesignal(QByteArray)),ambe,SLOT(to_decode_slot(QByteArray)));
@@ -602,6 +602,7 @@ void MainWindow::closeEvent(QCloseEvent *event)
 
 MainWindow::~MainWindow()
 {
+    delete ambe;
     delete planelog;
     delete ui;
 }
@@ -1058,9 +1059,8 @@ void MainWindow::acceptsettings()
         udpsocket_bottom_textedit->connectToHost(settingsdialog->udp_for_decoded_messages_address, settingsdialog->udp_for_decoded_messages_port);
     }
 
-    compresseddiskwriter->setLogDir(settingsdialog->loggingdirectory);
-    if(!settingsdialog->loggingenable)compresseddiskwriter->setLogDir("");
-
+    if(settingsdialog->loggingenable)compresseddiskwriter->setLogDir(settingsdialog->loggingdirectory);
+     else compresseddiskwriter->setLogDir("");
 
 }
 
@@ -1274,6 +1274,12 @@ void MainWindow::on_tabWidget_currentChanged(int index)
     ui->console->verticalScrollBar()->setValue(ui->console->verticalScrollBar()->maximum());
     ui->inputwidget->verticalScrollBar()->setValue(ui->inputwidget->verticalScrollBar()->maximum());
     ui->plainTextEdit_cchan_assignment->verticalScrollBar()->setValue(ui->plainTextEdit_cchan_assignment->verticalScrollBar()->maximum());
+
+    //finally found a hack that makes the scroll to end not overshoot
+    int orgheight=ui->centralWidget->size().height();
+    int orgwidth=ui->centralWidget->size().width();
+    ui->centralWidget->resize(orgwidth,orgheight+1);
+    ui->centralWidget->resize(orgwidth,orgheight);
 }
 
 void MainWindow::on_actionSound_Out_toggled(bool mute)

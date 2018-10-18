@@ -98,7 +98,7 @@ void CompressedAudioDiskWriter::openFileForOutput(QString filename)
     //I think this is all init stuff and writing a header to disk about the codec format
 
     vorbis_info_init(&vi);
-    int ret=vorbis_encode_init_vbr(&vi,2,8000,1.0);//0.1);//1 is the highest quality
+    int ret=vorbis_encode_init_vbr(&vi,2,8000,0.5);//0.1);//1 is the highest quality
     if(ret)
     {
         closeFile();
