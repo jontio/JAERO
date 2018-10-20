@@ -6,7 +6,6 @@ AudioOutDevice::AudioOutDevice(QObject *parent)
     :   QIODevice(parent),
       m_audioOutput(NULL)
 {
-    mute=false;
     setSettings(settings);
     clear();
 }
@@ -60,7 +59,7 @@ void AudioOutDevice::setSettings(Settings _settings)
 
         //setup
         m_audioOutput = new QAudioOutput(settings.audio_device_out, m_format, this);
-        m_audioOutput->setBufferSize(settings.Fs*settings.buffersizeinsecs);//buffersizeinsecs seconds of buffer
+        m_audioOutput->setBufferSize(settings.Fs*settings.buffersizeinsecs);//buffersizeinsecs seconds of buffer. this is ignored for a write device.
     }
     settings=_settings;
 
@@ -76,57 +75,40 @@ AudioOutDevice::~AudioOutDevice()
 
 qint64 AudioOutDevice::readData(char *data, qint64 maxlen)
 {
-
     qint16 *ptr = reinterpret_cast<qint16 *>(data);
     int numofsamples=(maxlen/sizeof(qint16));
 
-    for(int i=0;i<numofsamples;i++)
+    int forward=abs(circ_buffer_tail-circ_buffer_head);
+    int backwards=circ_buffer.size()-forward;
+    if(circ_buffer_tail>circ_buffer_head)
     {
-
-        //calc where head is wrt to us the tail
-        int forward=abs(circ_buffer_tail-circ_buffer_head);
-        int backwards=circ_buffer.size()-forward;
-        int dis=std::min(forward,backwards);
-        if(circ_buffer_tail>circ_buffer_head)
-        {
-            int tmp=backwards;
-            backwards=forward;
-            forward=tmp;
-        }
-
-        //failed to avoid the head so move as far away as posible
-        if(circ_buffer_head==circ_buffer_tail)
-        {
-            circ_buffer_tail=circ_buffer_head+circ_buffer.size()/2;
-            qDebug()<<"AudioOutDevice: underflow";
-        }
-
-        //dithering
-        if(dis>1000)
-        {
-            circ_buffer_tail++;circ_buffer_tail%=circ_buffer.size();
-        }
-         else
-         {
-            *ptr=0;
-            if(backwards<forward)//we are going to slow, skip a frame
-            {
-                circ_buffer_tail+=2;circ_buffer_tail%=circ_buffer.size();
-            }
-            if(backwards>forward) //we are going to fast, pad a frame
-            {
-
-            }
-         }
-        if(!mute)*ptr=circ_buffer[circ_buffer_tail];
-         else *ptr=0;
-
-        ptr++;
-
+        int tmp=forward;
+        forward=backwards;
+        backwards=tmp;
     }
 
+    //choose the max buffer you wish to process
+    numofsamples=qMin(forward-1,numofsamples);
 
-    return maxlen;
+    //if we have run out of data return almost nothing
+    if(numofsamples<1)
+    {
+        circ_buffer[circ_buffer_tail]=((double)circ_buffer[circ_buffer_tail])*0.75;
+        *ptr=circ_buffer[circ_buffer_tail];
+        return sizeof(qint16);
+    }
+
+    //fill in the return data
+    for(int i=0;i<numofsamples;i++)
+    {
+        circ_buffer_tail++;circ_buffer_tail%=circ_buffer.size();
+        *ptr=circ_buffer[circ_buffer_tail];
+        ptr++;
+    }
+
+    //say how much we have written
+    return (numofsamples*sizeof(qint16));
+
 }
 
 void AudioOutDevice::audioin(const QByteArray &signed16array)
@@ -136,13 +118,21 @@ void AudioOutDevice::audioin(const QByteArray &signed16array)
     for(int i=0;i<numofsamples;i++)
     {
 
-        circ_buffer_head++;circ_buffer_head%=circ_buffer.size();
+        int forward=abs(circ_buffer_tail-circ_buffer_head);
+        int backwards=circ_buffer.size()-forward;
+        if(circ_buffer_tail>circ_buffer_head)
+        {
+            int tmp=forward;
+            forward=backwards;
+            backwards=tmp;
+        }
+
+        //make sure we don't pass the tail
+        if(backwards>1){circ_buffer_head++;circ_buffer_head%=circ_buffer.size();}
         circ_buffer[circ_buffer_head]=*ptr;
 
         ptr++;
     }
-
-
 }
 
 qint64 AudioOutDevice::writeData(const char *data, qint64 len)

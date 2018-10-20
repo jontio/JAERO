@@ -69,6 +69,7 @@ MainWindow::MainWindow(QWidget *parent) :
     {
         aeroambe_object_error_str="Can't find or load all the libraries necessary for aeroambe. You will not get audio.";//library.errorString() is a usless description and can be missleading, not using
         ambe=new QObject;
+        ambe->setObjectName("NULL");
     }
     if(library.load())
     {
@@ -78,10 +79,12 @@ MainWindow::MainWindow(QWidget *parent) :
         if (cof)
         {
             ambe = cof(0);//Cannot create children for a parent that is in a different thread. so have to use 0 and manually delete or use an autoptr
+            ambe->setObjectName("ambe");
         }
         else
         {
             ambe=new QObject;
+            ambe->setObjectName("NULL");
             aeroambe_object_error_str="Could not resolve createAeroAMBE in aeroambe. You will not get audio.";
         }
     }
@@ -104,7 +107,7 @@ MainWindow::MainWindow(QWidget *parent) :
 
     //add a audio output device
     audioout = new AudioOutDevice(this);
-    audioout->start();
+    if(ambe->objectName()!="NULL")audioout->start();
 
     //add a thing for saving audio to disk with
     compresseddiskwriter = new CompressedAudioDiskWriter(this);
@@ -1284,7 +1287,15 @@ void MainWindow::on_tabWidget_currentChanged(int index)
 
 void MainWindow::on_actionSound_Out_toggled(bool mute)
 {
-    if(mute)disconnect(ambe,SIGNAL(decoded_signal(QByteArray)),audioout,SLOT(audioin(QByteArray)));
-     else connect(ambe,SIGNAL(decoded_signal(QByteArray)),audioout,SLOT(audioin(QByteArray)));
-    audioout->mute=mute;
+    if(ambe->objectName()=="NULL")return;
+    if(mute)
+    {
+        disconnect(ambe,SIGNAL(decoded_signal(QByteArray)),audioout,SLOT(audioin(QByteArray)));
+        audioout->stop();
+    }
+     else
+     {
+        connect(ambe,SIGNAL(decoded_signal(QByteArray)),audioout,SLOT(audioin(QByteArray)));
+        audioout->start();
+     }
 }

@@ -17,7 +17,7 @@ public:
         Settings()
         {
             audio_device_out=QAudioDeviceInfo::defaultOutputDevice();
-            buffersizeinsecs=0.5;
+            buffersizeinsecs=1.0;
             Fs=8000;
         }
     };
@@ -28,7 +28,6 @@ public:
     void setSettings(Settings settings);
     qint64 readData(char *data, qint64 maxlen);
     qint64 writeData(const char *data, qint64 len);
-    bool mute;
 public slots:
     void audioin(const QByteArray &signed16array);
 private:

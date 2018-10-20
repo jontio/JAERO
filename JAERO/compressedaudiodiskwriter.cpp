@@ -198,7 +198,7 @@ void CompressedAudioDiskWriter::audioin(const QByteArray &signed16arraymono)
         if(!slowdown)
         {
             closeFile();
-            qDebug()<<"File not open for writing.";
+           // qDebug()<<"File not open for writing.";
             if(!logdir.isEmpty())
             {
                 QString filename=logdir+"/audiolog_"+QDateTime::currentDateTime().toString("yyyy-MM-dd_HH-mm-ss")+".ogg";
