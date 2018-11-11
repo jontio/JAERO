@@ -18,6 +18,8 @@ greaterThan(QT_MAJOR_VERSION, 4): QT += widgets  printsupport
 TARGET = JAERO
 TEMPLATE = app
 
+INSTALL_PATH = /opt/jaero
+
 #for audio compressor
 #compiling libogg "./configure" "make" works. for comping libvorbis without installing in usual place libogg was "./configure --with-ogg-libraries=/e/git/JAERO/libogg-1.3.3/src/.libs  --with-ogg-includes=/e/git/JAERO/libogg-1.3.3/include" then "make"
 VORBIS_PATH = $$PWD/../libvorbis-1.3.6
@@ -170,3 +172,37 @@ QMAKE_CXXFLAGS_RELEASE += -O3
 #for static building order seems to matter
 LIBS += -L$$VORBIS_PATH/lib/.libs -lvorbis -lvorbisenc
 LIBS += -L$$OGG_PATH/src/.libs -logg
+
+#define where we store everything so when using the command line we don't make the main directory messy.
+CONFIG(debug, debug|release) {
+    DESTDIR = $$PWD/debug
+    OBJECTS_DIR = $$PWD/tmp/debug/stuff
+    MOC_DIR = $$PWD/tmp/debug/stuff
+    UI_DIR = $$PWD/tmp/debug/stuff
+    RCC_DIR = $$PWD/tmp/debug/stuff
+} else {
+    DESTDIR = $$PWD/release
+    OBJECTS_DIR = $$PWD/tmp/release/stuff
+    MOC_DIR = $$PWD/tmp/release/stuff
+    UI_DIR = $$PWD/tmp/release/stuff
+    RCC_DIR = $$PWD/tmp/release/stuff
+}
+
+#desktop
+desktop.path = /usr/share/applications
+desktop.files += JAERO.desktop
+INSTALLS += desktop
+
+#icon
+icon.path = $$INSTALL_PATH
+icon.files += jaero.ico
+INSTALLS += icon
+
+#install sounds
+soundsDataFiles.path = $$INSTALL_PATH/sounds/
+soundsDataFiles.files = sounds/*.*
+INSTALLS += soundsDataFiles
+
+#install library
+target.path=$$INSTALL_PATH
+INSTALLS += target
