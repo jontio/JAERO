@@ -23,5 +23,7 @@
         <file>sounds/beep.wav</file>
         <file>images/export.svg</file>
         <file>images/import.svg</file>
+        <file>images/sound.png</file>
+        <file>images/sound-off2.png</file>
     </qresource>
 </RCC>

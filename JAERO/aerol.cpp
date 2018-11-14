@@ -810,6 +810,100 @@ void PreambleDetectorPhaseInvariant::setTollerence(int _tollerence)
     tollerence=_tollerence;
 }
 
+/* for C Channels*/
+OQPSKPreambleDetectorAndAmbiguityCorrection::OQPSKPreambleDetectorAndAmbiguityCorrection()
+{
+    inverted=false;
+    preamble1.resize(1);
+    buffer1.resize(1);
+    preamble2.resize(1);
+    buffer2.resize(1);
+
+    buffer_ptr=0;
+    tollerence=0;
+}
+
+bool OQPSKPreambleDetectorAndAmbiguityCorrection::setPreamble(quint64 bitpreamble1,quint64 bitpreamble2,int len)
+{
+    if(len<1||len>64)return false;
+    preamble1.clear();
+    preamble2.clear();
+
+    for(int i=len-1;i>=0;i--)
+    {
+        if((bitpreamble1>>i)&1)preamble1.push_back(1);
+        else preamble1.push_back(0);
+
+        if((bitpreamble2>>i)&1)preamble2.push_back(1);
+        else preamble2.push_back(0);
+    }
+    if(preamble1.size()<1)preamble1.resize(1);
+    buffer1.fill(0,preamble1.size());
+
+    if(preamble2.size()<1)preamble2.resize(1);
+    buffer2.fill(0,preamble2.size());
+
+    buffer_ptr=0;
+
+
+    return true;
+}
+int OQPSKPreambleDetectorAndAmbiguityCorrection::Update(int val)
+{
+    assert(buffer1.size()==preamble1.size());
+    assert(buffer2.size()==preamble2.size());
+
+    /* check the first buffer and preamble */
+    int xorsum=0;
+    for(int i=0;i<(buffer1.size()-1);i++)
+    {
+        buffer1[i]=buffer1[i+1];
+        xorsum+=buffer1[i]^preamble1[i];
+    }
+    xorsum+=val^preamble1[buffer1.size()-1];
+    buffer1[buffer1.size()-1]=val;
+    if(xorsum>=(buffer1.size()-tollerence)){
+
+        inverted=true;
+
+        return true;
+    }
+    if(xorsum<=tollerence){
+
+        inverted=false;
+
+        return true;
+    }
+
+    xorsum=0;
+    for(int i=0;i<(buffer2.size()-1);i++)
+    {
+        buffer2[i]=buffer2[i+1];
+        xorsum+=buffer2[i]^preamble2[i];
+    }
+    xorsum+=val^preamble2[buffer2.size()-1];
+    buffer2[buffer2.size()-1]=val;
+    if(xorsum>=(buffer2.size()-tollerence)){
+
+        inverted=true;
+        return true;
+    }
+    if(xorsum<=tollerence){
+
+        inverted=false;
+        return true;
+    }
+
+
+   return false;
+}
+void OQPSKPreambleDetectorAndAmbiguityCorrection::setTollerence(int _tollerence)
+{
+    tollerence=_tollerence;
+}
+
+
+
 AeroL::AeroL(QObject *parent) : QIODevice(parent)
 {
 
@@ -855,6 +949,15 @@ AeroL::AeroL(QObject *parent) : QIODevice(parent)
 
     preambledetector.setPreamble(3780831379LL,32);//0x3780831379,0b11100001010110101110100010010011
 
+    //I	1010 1011 0011 0111 0110 1001 0011 1000 1011 1100 1010 0011 0000 = 0xAB376938BCA30 hex = 3012071630031408 decimal
+    //Q	0000 1100 0101 0011 1101 0001 1100 1001 0110 1110 1100 1101 0101 = 0xC53D1C96ECD5 hex = 216866263330005 decimal
+
+    // doual preamble detectors for C Channel
+    preambledetectorreal.setPreamble(216866263330005LL,3012071630031408LL,52);
+    preambledetectorimag.setPreamble(216866263330005LL,3012071630031408LL,52);
+
+    index = 0;
+
     //Preamble detector for OQPSK
     preambledetectorphaseinvariantimag.setPreamble(3780831379LL,32);//0x3780831379,0b11100001010110101110100010010011
     preambledetectorphaseinvariantreal.setPreamble(3780831379LL,32);//0x3780831379,0b11100001010110101110100010010011
@@ -897,12 +1000,16 @@ void AeroL::setSettings(double fb, bool _burstmode)
     {
         preambledetectorphaseinvariantimag.setTollerence(4);
         preambledetectorphaseinvariantreal.setTollerence(4);
+        preambledetectorimag.setTollerence(0);
+        preambledetectorreal.setTollerence(0);
         mskBurstDetector.setTollerence(4);
     }
     else
     {
         preambledetectorphaseinvariantimag.setTollerence(0);
         preambledetectorphaseinvariantreal.setTollerence(0);
+        preambledetectorimag.setTollerence(6);
+        preambledetectorreal.setTollerence(6);
         mskBurstDetector.setTollerence(0);
     }
     ifb=qRound(fb);
@@ -925,6 +1032,17 @@ void AeroL::setSettings(double fb, bool _burstmode)
         AERO_SPEC_BitsInHeader=16;
         AERO_SPEC_TotalNumberOfBits=AERO_SPEC_BitsInHeader+AERO_SPEC_NumberOfBits+32;
         useingOQPSK=false;
+        break;
+    case 8400:
+        leaver.setSize(4);//4 rows at 64 bits each
+        block.resize(4*64); // 1 deleaver block
+        deleaveredBlock.resize(16*4*64);
+        dl2.setLength(2714-6);//delay's data to next frame
+        depuncturedBlock.reserve(5460);
+        AERO_SPEC_NumberOfBits=4096;
+        AERO_SPEC_BitsInHeader=0;//178 dummy bits
+        AERO_SPEC_TotalNumberOfBits=AERO_SPEC_BitsInHeader+AERO_SPEC_NumberOfBits;
+        useingOQPSK=true;
         break;
     case 10500:
         leaver.setSize(78);//78 for 10.5k
@@ -1615,6 +1733,7 @@ QByteArray &AeroL::Decode(QVector<short> &bits, bool soft)//0 bit --> oldest bit
                                     break;
                                 case Log_control_P_channel_log_on_interrogation:
                                     decline+="Log_control_P_channel_log_on_interrogation";
+
                                     break;
                                 case Log_on_log_off_acknowledge_P_channel:
                                     decline+="Log_on_log_off_acknowledge_P_channel";
@@ -1645,7 +1764,52 @@ QByteArray &AeroL::Decode(QVector<short> &bits, bool soft)//0 bit --> oldest bit
                                     decline+="T_channel_assignment";
                                     break;
 
-                                    //CHANNEL INFORMATION
+                                case C_channel_assignment_distress:
+                                    decline+="C_channel_assignment_distress";
+                                {
+                                    CChannelAssignmentItem item=CreateCAssignmentItem(infofield.mid(k,12));
+                                    emit CChannelAssignmentSignal(item);
+                                    SendCAssignment(k, decline);
+                                }
+                                break;
+
+                                case C_channel_assignment_flight_safety:
+                                    decline+="C_channel_assignment_flight_safety";
+                                {
+                                    CChannelAssignmentItem item=CreateCAssignmentItem(infofield.mid(k,12));
+                                    emit CChannelAssignmentSignal(item);
+                                    SendCAssignment(k, decline);
+                                }
+                                break;
+
+                                case C_channel_assignment_other_safety:
+                                    decline+="C_channel_assignment_other_safety";
+                                {
+                                    CChannelAssignmentItem item=CreateCAssignmentItem(infofield.mid(k,12));
+                                    emit CChannelAssignmentSignal(item);
+                                    SendCAssignment(k, decline);
+                                }
+                                break;
+
+                                case C_channel_assignment_non_safety:
+                                    decline+="C_channel_assignment_non_safety";
+                                {
+                                    CChannelAssignmentItem item=CreateCAssignmentItem(infofield.mid(k,12));
+                                    emit CChannelAssignmentSignal(item);
+                                    SendCAssignment(k, decline);
+                                }
+                                break;
+
+
+                                case Call_announcement:
+                                    decline+="Call_announcement";
+                                {
+
+                                    SendCAssignment(k, decline);
+                                }
+                                break;
+
+                               //CHANNEL INFORMATION
                                 case P_R_channel_control_ISU:
                                     decline+="P_R_channel_control_ISU";
                                 {
@@ -1906,7 +2070,13 @@ void AeroL::processDemodulatedSoftBits(const QVector<short> &soft_bits)
 
     sbits.append(soft_bits);
 
-    Decode(sbits, true);
+    if(this->ifb == 8400)
+    {
+       DecodeC(sbits);
+    }else
+    {
+       Decode(sbits, true);
+    }
 
     if(!psinkdevice.isNull())
     {
@@ -1916,3 +2086,384 @@ void AeroL::processDemodulatedSoftBits(const QVector<short> &soft_bits)
 
 
 }
+
+CChannelAssignmentItem AeroL::CreateCAssignmentItem(QByteArray su)
+{
+    CChannelAssignmentItem item;
+
+    using namespace AEROTypeP;
+    switch((uchar)su[0])
+    {
+    case C_channel_assignment_distress:
+        break;
+    case C_channel_assignment_flight_safety:
+        break;
+    case C_channel_assignment_other_safety:
+        break;
+    case C_channel_assignment_non_safety:
+        break;
+    default:
+        return item;
+    }
+
+    item.type=(uchar)su[0];
+
+    item.AESID=((uchar)su[-1+2])<<8*2|((uchar)su[-1+3])<<8*1|((uchar)su[-1+4])<<8*0;
+    item.GESID=su[-1+5];
+
+    int byte7=((uchar)su[-1+7]);
+    int byte8=((uchar)su[-1+8]);
+    int byte9=((uchar)su[-1+9]);
+    int byte10=((uchar)su[-1+10]);
+
+    int channel_rx=((((byte7&0x7F)<<8)&0xFF00)|(byte8&0x00FF));
+    int channel_tx=((((byte9&0x7F)<<8)&0xFF00)|(byte10&0x00FF));
+    item.receive_freq=(((double)channel_rx)*0.0025)+1510.0;
+    item.transmit_freq=(((double)channel_tx)*0.0025)+1611.5;
+    if(byte7&0x80)item.receive_spotbeam=true;
+    if(byte9&0x80)item.transmit_spotbeam=true;
+
+
+    //looking up the db for plane info is a hassle so i'm not doing it at the moment.
+    //probably something to look at later
+
+    return item;
+}
+
+void AeroL::SendCAssignment(int k, QString decline)
+{
+    ACARSItem item;
+    item.isuitem.AESID=((uchar)infofield[k*12-1+2])<<8*2|((uchar)infofield[k*12-1+3])<<8*1|((uchar)infofield[k*12-1+4])<<8*0;
+    item.isuitem.GESID=infofield[k*12-1+5];
+
+    item.hastext = true;
+    item.downlink = true;
+    item.nonacars = true;
+    item.valid = true;
+    int byte7=((uchar)infofield[k*12-1+7]);
+    int byte8=((uchar)infofield[k*12-1+8]);
+    int byte9=((uchar)infofield[k*12-1+9]);
+    int byte10=((uchar)infofield[k*12-1+10]);
+
+    int channel1=((((byte7&0x7F)<<8)&0xFF00)|(byte8&0x00FF));
+    int channel2=((((byte9&0x7F)<<8)&0xFF00)|(byte10&0x00FF));
+    double rx=(((double)channel1)*0.0025)+1510.0;
+    double tx=(((double)channel2)*0.0025)+1611.5;
+    QString receive = QString::number(rx);
+    QString transmit = QString::number(tx);
+    QString beam = " Global Beam ";
+    if(byte7&0x80)beam=" Spot Beam ";
+
+
+
+    item.message = "Receive Freq: " + receive + beam + "Transmit " + transmit + "\r\n" + decline;
+    emit ACARSsignal(item);
+}
+
+QByteArray &AeroL::DecodeC(QVector<short> &bits)
+{
+
+    decodedbytes.clear();
+
+
+
+    quint16 bit=0;
+    quint16 soft_bit=0;
+
+    for(int i=0;i<bits.size();i++)
+    {
+
+        // hard bits for preamble
+        if(((uchar)bits[i])>=128)bit=1;
+        else bit=0;
+        soft_bit=bits[i];
+        int gotsync = 0;
+
+        realimag++;realimag%=2;
+        if(realimag)
+        {
+            gotsync=preambledetectorreal.Update(bit);
+            if(!gotsync_last)
+            {
+                gotsync_last=gotsync;
+                gotsync=0;
+            } else gotsync_last=0;
+        }
+         else
+         {
+            gotsync=preambledetectorimag.Update(bit);
+            if(!gotsync_last)
+            {
+                gotsync_last=gotsync;
+                gotsync=0;
+            } else gotsync_last=0;
+         }
+
+        if(realimag)
+        {
+            if(preambledetectorreal.inverted)
+            {
+                bit=1-bit;
+
+                if(soft_bit > 128)
+                {
+                     soft_bit = 255-soft_bit;
+                } else if (soft_bit < 128)
+                {
+                    soft_bit = 255-soft_bit;
+                }
+            }
+
+        }
+        else
+        {
+            if(preambledetectorimag.inverted)
+            {
+                bit=1-bit;
+
+                if(soft_bit > 128)
+                {
+                     soft_bit = 255-soft_bit;
+                }
+                else if (soft_bit < 128)
+                {
+                     soft_bit = 255-soft_bit;
+                }
+            }
+        }
+        if(gotsync)
+        {
+
+            // reset the counter, add first bit next time around
+            cntr=-1;
+            index=-1;
+
+            deleaveredBlock.resize(0);
+            depuncturedBlock.clear();
+            scrambler.reset();
+        }
+        else
+        {
+           // start adding bits to the buffer
+           // frame should be complete
+
+            if(cntr<1000000000)cntr++;
+            if(cntr<=AERO_SPEC_NumberOfBits-1)
+            {
+                index++;
+                block[index]=soft_bit;
+            }
+            if(index == (255))
+            {
+                //deinterleave block
+                QByteArray deleaveredblockBA=leaver.deinterleave_ba(block, 4);
+
+                //apend deinterleaved block to total frame
+                deleaveredBlock.append(deleaveredblockBA);
+
+                // reset for next deleaver block
+                index = -1;
+
+            }
+            if(cntr==AERO_SPEC_NumberOfBits-1)
+            {
+
+                // depuncture the full block
+                puncturedCode.depunture_soft_block(deleaveredBlock, depuncturedBlock, 4, true);
+
+                QVector<int> deconvol=jconvolcodec->Decode_Continuous(depuncturedBlock);
+
+                //resize to drop trailing dummy bits
+                deconvol.resize(2714);
+
+                //delay line for frame alignment for non burst modes. This is needed for the scrambler
+                dl2.update(deconvol);
+
+                //scrambler
+                scrambler.update(deconvol);
+
+                //pack the bits into bytes
+                infofield.clear();
+                int charptr=0;
+                uchar ch=0;
+
+                // extract the 24 sub data 12 bit blocks
+
+                for(int y=0; y<24;y++)
+                {
+                    // offset from start of frame
+                    int offset = y * (1+96+12);
+
+                    for(int h=offset+97;h<offset+109;h++)
+                    {
+                        ch|=deconvol[h]*128;
+                        charptr++;charptr%=8;
+                        if(charptr==0)
+                        {
+                            infofield+=ch;//actual data of information field in bytearray
+                            ch=0;
+                        }
+                        else ch>>=1;
+                    }
+
+                    if(infofield.size()==12)
+                    {
+
+                        QString decline;
+
+                        bool crcok = false;
+
+                        char *infofieldptr=infofield.data();
+                        quint16 crc_calc=crc16.calcusingbytes(&infofieldptr[0],12-2);
+                        quint16 crc_rec=(((uchar)infofield[12-1])<<8)|((uchar)infofield[12-2]);
+
+                        //keep track of the DCD for non burst modes
+                        if(crc_calc==crc_rec)
+                        {
+                            crcok = true;
+                            if(datacdcountdown<12)datacdcountdown+=2;
+                        }
+                        else
+                        {
+                            if(datacdcountdown>0)datacdcountdown-=3;
+                        }
+                        if(!datacd&&datacdcountdown>2)
+                        {
+                            datacd=true;
+                            emit DataCarrierDetect(datacd);
+
+                            decline += " CRC Failed for C Channel Sub-band signal unit \r\n";
+                        }
+
+                        // check for signal unit
+                        if(crcok)
+                        {
+
+                            using namespace AEROTypeC;
+
+                            MessageType message=(MessageType)((uchar)infofield.at(0));
+                            switch(message)
+                            {
+
+
+                                case Fill_in_signal_unit:
+                                //decline+="Fill_in_signal_unit \r\n";
+                                break;
+
+                                case Call_progress:
+                                {
+
+                                    for(int k=0;k<infofield.size()-2;k++)
+                                    decline+=((QString)" 0x%1").arg(((QString)"").sprintf("%02X", (uchar)infofield[k]));
+
+                                    decline+=" AES = "+infofield.mid(1,3).toHex().toUpper();
+                                    decline+=" GES = "+infofield.mid(4,1).toHex().toUpper();
+                                    decline+= " Call_progress \r\n";
+
+                                }
+                                break;
+
+                            case Telephony_acknowledge:
+                            {
+
+                                    for(int k=0;k<infofield.size()-2;k++)
+                                    decline+=((QString)" 0x%1").arg(((QString)"").sprintf("%02X", (uchar)infofield[k]));
+                                    decline+=" AES = "+infofield.mid(1,3).toHex().toUpper();
+                                    decline+=" GES = "+infofield.mid(4,1).toHex().toUpper();
+                                    decline+= " Telephony_acknowledge \r\n";
+
+                            }
+                            break;
+
+                                default:
+                                {
+                                    for(int k=0;k<infofield.size()-2;k++)
+                                    {
+                                        decline+=((QString)" 0x%1").arg(((QString)"").sprintf("%02X", (uchar)infofield[k]));
+                                    }
+
+                                   decline+= " Other C Channel signal unit \r\n";
+                                }
+                            }
+                        }
+
+                        // set the response text for upper window
+
+                        decodedbytes+=decline;
+                        infofield.clear();
+                    }
+
+
+                }// end of sub-data loop
+
+                // Lets get the voice data
+                // extract the 24 sub data 12 bit blocks
+
+                QByteArray data;
+                data.reserve(300);
+
+                int bitsin=0;
+                for(int h=1; h<2714;h++)
+                {
+
+                        ch|=deconvol[h]*128;
+                        charptr++;charptr%=8;
+                        if(charptr==0)
+                        {
+                            data+=ch;//actual data of information field in bytearray
+                            ch=0;
+                        }
+                        else ch>>=1;
+                        bitsin++;
+                        if(bitsin==96)
+                        {
+
+                            bitsin=0;
+                            //move forward 13 bits;
+                            h+=13;
+                       }
+                }
+
+                //25 primary fields. this is where the audio lives in a compressed format
+                for(int i=0;i<25;i++)
+                {
+                    emit Voicesignal(data.mid(i*12,12));//send one frame at a time
+                }
+
+
+              // reset for next block
+              index = -1;
+            }// end of frame
+        }
+    }
+
+    if(!datacd)
+    {
+        decodedbytes.clear();
+    }
+
+    return decodedbytes;
+}
+
+void PuncturedCode::depunture_soft_block(QByteArray &sourceblock,QByteArray &targetblock, int pattern,bool reset)
+{
+    assert(pattern>=2);
+
+    if(reset)depunture_ptr=0;
+    for(int i=0;i<sourceblock.size()-1;i++)
+    {
+        depunture_ptr++;
+        targetblock.push_back(sourceblock.at(i));
+        if(depunture_ptr>=pattern-1)targetblock.push_back(128);
+        depunture_ptr%=(pattern-1);
+    }
+
+}
+
+PuncturedCode::PuncturedCode()
+{
+    punture_ptr=0;
+    depunture_ptr=0;
+}
+
+

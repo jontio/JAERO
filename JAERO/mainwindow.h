@@ -19,6 +19,9 @@
 
 #include "arincparse.h"
 
+#include "audiooutdevice.h"
+#include "compressedaudiodiskwriter.h"
+
 namespace Ui {
 class MainWindow;
 }
@@ -58,6 +61,11 @@ private:
     //bottom textedit output
     QUdpSocket *udpsocket_bottom_textedit;
     //
+
+    //ambe->pcm->vorbis->ogg->disk
+    QObject *ambe;
+    AudioOutDevice *audioout;
+    CompressedAudioDiskWriter *compresseddiskwriter;
 
     AeroL *aerol;
     AeroL *aerol2;
@@ -105,10 +113,13 @@ private slots:
     void on_action_Settings_triggered();
     void on_action_PlaneLog_triggered();
     void ACARSslot(ACARSItem &acarsitem);
+    void CChannelAssignmentSlot(CChannelAssignmentItem &item);
     void ERRorslot(QString &error);
 
    // void result(bool ok, int ref, const QStringList &result);
 
+    void on_tabWidget_currentChanged(int index);
+    void on_actionSound_Out_toggled(bool mute);
 };
 
 #endif // MAINWINDOW_H

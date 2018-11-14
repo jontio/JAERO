@@ -293,7 +293,7 @@ qint64 BurstOqpskDemodulator::readData(char *data, qint64 maxlen)
 
 qint64 BurstOqpskDemodulator::writeData(const char *data, qint64 len)
 {
-    if(len<((int)sizeof(short)))return len;
+    if(len<sizeof(short))return len;
     if(channel_stereo)emit writeDataSignal(data,len);
     writeDataSlot(data,len);
     return len;

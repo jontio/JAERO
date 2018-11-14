@@ -2,6 +2,7 @@
 #include "ui_mainwindow.h"
 #include <QDebug>
 #include <QStandardPaths>
+#include <QLibrary>
 
 #ifdef __linux__
 #include <unistd.h>
@@ -60,6 +61,34 @@ MainWindow::MainWindow(QWidget *parent) :
     aerol = new AeroL(this); //Create Aero sink
     aerol2 = new AeroL(this); //Create Aero sink
 
+    //ambe decompressor
+    QString aeroambe_object_error_str;
+    QLibrary library("aeroambe.dll");
+    if(!library.load())library.setFileName("aeroambe.so");
+    if(!library.load())
+    {
+        aeroambe_object_error_str="Can't find or load all the libraries necessary for aeroambe. You will not get audio.";//library.errorString() is a usless description and can be missleading, not using
+        ambe=new QObject;
+        ambe->setObjectName("NULL");
+    }
+    if(library.load())
+    {
+        qDebug() << "aeroambe library loaded";
+        typedef QObject *(*CreateQObjectFunction)(QObject*);
+        CreateQObjectFunction cof = (CreateQObjectFunction)library.resolve("createAeroAMBE");
+        if (cof)
+        {
+            ambe = cof(0);//Cannot create children for a parent that is in a different thread. so have to use 0 and manually delete or use an autoptr
+            ambe->setObjectName("ambe");
+        }
+        else
+        {
+            ambe=new QObject;
+            ambe->setObjectName("NULL");
+            aeroambe_object_error_str="Could not resolve createAeroAMBE in aeroambe. You will not get audio.";
+        }
+    }
+
     //create settings dialog.
     settingsdialog = new SettingsDialog(this);
 
@@ -75,6 +104,13 @@ MainWindow::MainWindow(QWidget *parent) :
 
     //create the burst msk demodulator
     audioburstmskdemodulator = new AudioBurstMskDemodulator(this);
+
+    //add a audio output device
+    audioout = new AudioOutDevice(this);
+    if(ambe->objectName()!="NULL")audioout->start();
+
+    //add a thing for saving audio to disk with
+    compresseddiskwriter = new CompressedAudioDiskWriter(this);
 
     //create udp sockets
     udpsocket = new QUdpSocket(this);
@@ -108,7 +144,13 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(audioburstoqpskdemodulator,SIGNAL(processDemodulatedSoftBits(QVector<short>)),aerol,SLOT(processDemodulatedSoftBits(QVector<short>)));
     connect(audioburstoqpskdemodulator->demod2,SIGNAL(processDemodulatedSoftBits(QVector<short>)),aerol2,SLOT(processDemodulatedSoftBits(QVector<short>)));
 
+    //send compressed audio through decompressor
+    //connect(ambe,SIGNAL(decoded_signal(QByteArray)),this,SLOT(Voiceslot(QByteArray))); // an example
+    connect(ambe,SIGNAL(decoded_signal(QByteArray)),compresseddiskwriter,SLOT(audioin(QByteArray)));
+    connect(ambe,SIGNAL(decoded_signal(QByteArray)),audioout,SLOT(audioin(QByteArray)));
+    connect(aerol,SIGNAL(Voicesignal(QByteArray)),ambe,SLOT(to_decode_slot(QByteArray)));
 
+   // compresseddiskwriter->openFileForOutput("e:/delme.ogg");
 
     //statusbar setup
     freqlabel = new QLabel();
@@ -134,8 +176,7 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(aerol,SIGNAL(ACARSsignal(ACARSItem&)),this,SLOT(ACARSslot(ACARSItem&)));
     connect(aerol,SIGNAL(DataCarrierDetect(bool)),audiomskdemodulator,SLOT(DCDstatSlot(bool)));
     connect(aerol,SIGNAL(DataCarrierDetect(bool)),audioburstmskdemodulator,SLOT(DCDstatSlot(bool)));
-
-
+    connect(aerol,SIGNAL(CChannelAssignmentSignal(CChannelAssignmentItem&)),this,SLOT(CChannelAssignmentSlot(CChannelAssignmentItem&)));
 
     //aeroL2 connections
     connect(aerol2,SIGNAL(DataCarrierDetect(bool)),this,SLOT(DataCarrierDetectStatusSlot(bool)));
@@ -150,8 +191,10 @@ MainWindow::MainWindow(QWidget *parent) :
     ui->comboBoxdisplay->setCurrentIndex(settings.value("comboBoxdisplay",0).toInt());
     ui->actionConnectToUDPPort->setChecked(settings.value("actionConnectToUDPPort",false).toBool());
     ui->actionRawOutput->setChecked(settings.value("actionRawOutput",false).toBool());
+    ui->actionSound_Out->setChecked(settings.value("actionSound_Out",false).toBool());
     double tmpfreq=settings.value("freq_center",1000).toDouble();
     ui->inputwidget->setPlainText(settings.value("inputwidget","").toString());
+    ui->tabWidget->setCurrentIndex(settings.value("tabindex",0).toInt());
 
     //set audio msk demodulator settings and start
     on_comboBoxafc_currentIndexChanged(ui->comboBoxafc->currentText());
@@ -188,13 +231,12 @@ MainWindow::MainWindow(QWidget *parent) :
     audioburstmskdemodulator->setSettings(audioburstmskdemodulatorsettings);
     if(typeofdemodtouse==BURSTMSK)audioburstmskdemodulator->start();
 
-
-    //always connected
-    connect(ui->actionClearTXWindow,SIGNAL(triggered(bool)),ui->inputwidget,SLOT(clear()));
-
     //add todays date
     ui->inputwidget->appendPlainText(QDateTime::currentDateTime().toString("h:mmap ddd d-MMM-yyyy")+" JAERO started\n");
     QTimer::singleShot(100,ui->inputwidget,SLOT(scrolltoend()));
+
+    //say if aeroabme was not found or loaded correctly
+    if(!aeroambe_object_error_str.isEmpty())ui->inputwidget->appendPlainText(aeroambe_object_error_str+"\n");
 
     ui->actionTXRX->setVisible(false);//there is a hidden audio modulator icon.
 
@@ -548,6 +590,8 @@ void MainWindow::closeEvent(QCloseEvent *event)
     settings.setValue("comboBoxdisplay", ui->comboBoxdisplay->currentIndex());
     settings.setValue("actionConnectToUDPPort", ui->actionConnectToUDPPort->isChecked());
     settings.setValue("actionRawOutput", ui->actionRawOutput->isChecked());
+    settings.setValue("actionSound_Out", ui->actionSound_Out->isChecked());
+    settings.setValue("tabindex", ui->tabWidget->currentIndex());
     if(typeofdemodtouse==MSK)settings.setValue("freq_center", audiomskdemodulator->getCurrentFreq());
     if(typeofdemodtouse==OQPSK)settings.setValue("freq_center", audiooqpskdemodulator->getCurrentFreq());
     if(typeofdemodtouse==BURSTOQPSK)settings.setValue("freq_center", audioburstoqpskdemodulator->getCurrentFreq());
@@ -561,6 +605,7 @@ void MainWindow::closeEvent(QCloseEvent *event)
 
 MainWindow::~MainWindow()
 {
+    delete ambe;
     delete planelog;
     delete ui;
 }
@@ -606,7 +651,7 @@ void MainWindow::AboutSlot()
 {
     QMessageBox::about(this,"JAERO",""
                                      "<H1>An Aero demodulator and decoder</H1>"
-                                     "<H3>v1.0.4.7</H3>"
+                                     "<H3>v1.0.4.8</H3>"
                                      "<p>This is a program to demodulate and decode Aero signals. These signals contain SatCom ACARS (<em>Satelitle Comunication Aircraft Communications Addressing and Reporting System</em>) messages as used by planes beyond VHF ACARS range. This protocol is used by Inmarsat's \"Classic Aero\" system and can be received using low or medium gain L band or high gain C band antennas.</p>"
                                      "<p>For more information about this application see <a href=\"http://jontio.zapto.org/hda1/jaero.html\">http://jontio.zapto.org/hda1/jaero.html</a>.</p>"
                                      "<p>Jonti 2018</p>" );
@@ -793,7 +838,21 @@ void MainWindow::on_comboBoxafc_currentIndexChanged(const QString &arg1)
 
 void MainWindow::on_actionCleanConsole_triggered()
 {
-    ui->console->clear();
+
+    switch(ui->tabWidget->currentIndex())
+    {
+    case 0:
+        ui->console->clear();
+        break;
+    case 1:
+        ui->inputwidget->clear();
+        break;
+    case 2:
+        ui->plainTextEdit_cchan_assignment->clear();
+        break;
+    default:
+        break;
+    };
 }
 
 void MainWindow::on_comboBoxdisplay_currentIndexChanged(const QString &arg1)
@@ -1003,12 +1062,27 @@ void MainWindow::acceptsettings()
         udpsocket_bottom_textedit->connectToHost(settingsdialog->udp_for_decoded_messages_address, settingsdialog->udp_for_decoded_messages_port);
     }
 
+    if(settingsdialog->loggingenable)compresseddiskwriter->setLogDir(settingsdialog->loggingdirectory);
+     else compresseddiskwriter->setLogDir("");
 
 }
 
 void MainWindow::on_action_PlaneLog_triggered()
 {
     planelog->show();
+}
+
+void MainWindow::CChannelAssignmentSlot(CChannelAssignmentItem &item)
+{
+    QString message=QDateTime::currentDateTime().toString("hh:mm:ss dd-MM-yy ")+((QString)"").sprintf("AES:%06X GES:%02X ",item.AESID,item.GESID);
+    QString rx_beam = " Global Beam ";
+    if(item.receive_spotbeam)rx_beam=" Spot Beam ";
+    message += "Receive Freq: " + QString::number(item.receive_freq) + rx_beam + "Transmit " + QString::number(item.transmit_freq);
+    ui->plainTextEdit_cchan_assignment->appendPlainText(message);
+    beep->play();
+    beep->play();
+    beep->play();
+
 }
 
 //--new method of mainwindow getting second channel from aerol
@@ -1198,3 +1272,32 @@ void MainWindow::ERRorslot(QString &error)
 }
 
 
+
+void MainWindow::on_tabWidget_currentChanged(int index)
+{
+    Q_UNUSED(index);
+    ui->console->verticalScrollBar()->setValue(ui->console->verticalScrollBar()->maximum());
+    ui->inputwidget->verticalScrollBar()->setValue(ui->inputwidget->verticalScrollBar()->maximum());
+    ui->plainTextEdit_cchan_assignment->verticalScrollBar()->setValue(ui->plainTextEdit_cchan_assignment->verticalScrollBar()->maximum());
+
+    //finally found a hack that makes the scroll to end not overshoot
+    int orgheight=ui->centralWidget->size().height();
+    int orgwidth=ui->centralWidget->size().width();
+    ui->centralWidget->resize(orgwidth,orgheight+1);
+    ui->centralWidget->resize(orgwidth,orgheight);
+}
+
+void MainWindow::on_actionSound_Out_toggled(bool mute)
+{
+    if(ambe->objectName()=="NULL")return;
+    if(mute)
+    {
+        disconnect(ambe,SIGNAL(decoded_signal(QByteArray)),audioout,SLOT(audioin(QByteArray)));
+        audioout->stop();
+    }
+     else
+     {
+        connect(ambe,SIGNAL(decoded_signal(QByteArray)),audioout,SLOT(audioin(QByteArray)));
+        audioout->start();
+     }
+}

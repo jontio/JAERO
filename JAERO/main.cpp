@@ -22,9 +22,10 @@ int main(int argc, char *argv[])
     cmdparser.process(a);
     settings_name=cmdparser.value(settingsnameoption);
     if(settings_name.isEmpty())settings_name="JAERO";
-     else settings_name="JAERO-"+settings_name;
+     else settings_name="JAERO ["+settings_name+"]";
 
     MainWindow w;
+    w.setWindowTitle(settings_name);
     w.show();
 
     return a.exec();
