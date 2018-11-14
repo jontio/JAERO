@@ -159,6 +159,7 @@ contains(QT_ARCH, i386) {
 
 LIBS += -lcorrect
 
+LIBS += -lacars
 
 # remove possible other optimization flags
 #QMAKE_CXXFLAGS_RELEASE -= -O
