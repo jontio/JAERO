@@ -5,12 +5,33 @@
 #
 #-------------------------------------------------
 
+#the three tricky things will be libvorbis,libogg, and libcorrect
+#the settings I have here are for my setup but other most likely will install the libraries
+#so you will need to point everything to the right place.
+#if you are having trubbles focus on things like "LIBS += -L$$OGG_PATH/src/.libs"
+#remember to compile libvorbis,libogg, and libcorrect before compiling this
+
 QT       += multimedia core network gui svg sql
 
 greaterThan(QT_MAJOR_VERSION, 4): QT += widgets  printsupport
 
 TARGET = JAERO
 TEMPLATE = app
+
+INSTALL_PATH = /opt/jaero
+
+#for audio compressor
+#compiling libogg "./configure" "make" works. for comping libvorbis without installing in usual place libogg was "./configure --with-ogg-libraries=/e/git/JAERO/libogg-1.3.3/src/.libs  --with-ogg-includes=/e/git/JAERO/libogg-1.3.3/include" then "make"
+VORBIS_PATH = $$PWD/../libvorbis-1.3.6
+OGG_PATH = $$PWD/../libogg-1.3.3
+
+INCLUDEPATH += $$VORBIS_PATH/include
+DEPENDPATH += $$VORBIS_PATH/include
+VPATH += $$VORBIS_PATH/include
+INCLUDEPATH += $$OGG_PATH/include
+DEPENDPATH += $$OGG_PATH/include
+VPATH += $$OGG_PATH/include
+
 
 #message("QT_ARCH is \"$$QT_ARCH\"");
 contains(QT_ARCH, i386) {
@@ -53,7 +74,9 @@ SOURCES += main.cpp\
     tcpclient.cpp \
     burstmskdemodulator.cpp \
     audioburstmskdemodulator.cpp \
-    jconvolutionalcodec.cpp
+    jconvolutionalcodec.cpp \
+    audiooutdevice.cpp \
+    compressedaudiodiskwriter.cpp
 
 
 HEADERS  += mainwindow.h \
@@ -88,7 +111,9 @@ HEADERS  += mainwindow.h \
     tcpclient.h \
     burstmskdemodulator.h \
     audioburstmskdemodulator.h \
-    jconvolutionalcodec.h
+    jconvolutionalcodec.h \
+    audiooutdevice.h \
+    compressedaudiodiskwriter.h
 
 
 FORMS    += mainwindow.ui \
@@ -108,7 +133,12 @@ DISTFILES += \
     ../qcustomplot/GPL.txt \
     ../README.md \
     ../images/screenshot-win-main.png \
-    ../images/screenshot-win-planelog.png
+    ../images/screenshot-win-planelog.png \
+    ../libvorbis-1.3.6/CHANGES \
+    ../libvorbis-1.3.6/AUTHORS \
+    ../libvorbis-1.3.6/COPYING \
+    ../libogg-1.3.3/CHANGES \
+    ../libogg-1.3.3/AUTHORS
 
 win32 {
 RC_FILE = jaero.rc
@@ -125,8 +155,11 @@ contains(QT_ARCH, i386) {
     #message("64-bit")
     LIBS += -L$$PWD/../libcorrect/bin/64
 }
-LIBS += -llibcorrect
 }
+
+LIBS += -lcorrect
+
+LIBS += -lacars
 
 # remove possible other optimization flags
 #QMAKE_CXXFLAGS_RELEASE -= -O
@@ -136,3 +169,41 @@ QMAKE_CXXFLAGS_RELEASE += -O3
 # add the desired -O3 if not present
 #QMAKE_CXXFLAGS_RELEASE *= -O3
 
+#for audio compressor
+#for static building order seems to matter
+LIBS += -L$$VORBIS_PATH/lib/.libs -lvorbis -lvorbisenc
+LIBS += -L$$OGG_PATH/src/.libs -logg
+
+#define where we store everything so when using the command line we don't make the main directory messy.
+CONFIG(debug, debug|release) {
+    DESTDIR = $$PWD/debug
+    OBJECTS_DIR = $$PWD/tmp/debug/stuff
+    MOC_DIR = $$PWD/tmp/debug/stuff
+    UI_DIR = $$PWD/tmp/debug/stuff
+    RCC_DIR = $$PWD/tmp/debug/stuff
+} else {
+    DESTDIR = $$PWD/release
+    OBJECTS_DIR = $$PWD/tmp/release/stuff
+    MOC_DIR = $$PWD/tmp/release/stuff
+    UI_DIR = $$PWD/tmp/release/stuff
+    RCC_DIR = $$PWD/tmp/release/stuff
+}
+
+#desktop
+desktop.path = /usr/share/applications
+desktop.files += JAERO.desktop
+INSTALLS += desktop
+
+#icon
+icon.path = $$INSTALL_PATH
+icon.files += jaero.ico
+INSTALLS += icon
+
+#install sounds
+soundsDataFiles.path = $$INSTALL_PATH/sounds/
+soundsDataFiles.files = sounds/*.*
+INSTALLS += soundsDataFiles
+
+#install library
+target.path=$$INSTALL_PATH
+INSTALLS += target

@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>990</width>
+    <width>999</width>
     <height>529</height>
    </rect>
   </property>
@@ -20,36 +20,53 @@
   <widget class="QWidget" name="centralWidget">
    <layout class="QVBoxLayout" name="verticalLayout">
     <item>
-     <widget class="QWidget" name="widget_3" native="true">
-      <layout class="QVBoxLayout" name="verticalLayout_2">
-       <property name="spacing">
-        <number>0</number>
-       </property>
-       <property name="leftMargin">
-        <number>0</number>
-       </property>
-       <property name="topMargin">
-        <number>0</number>
-       </property>
-       <property name="rightMargin">
-        <number>0</number>
-       </property>
-       <property name="bottomMargin">
-        <number>0</number>
-       </property>
-       <item>
-        <widget class="QSplitter" name="splitter">
-         <property name="orientation">
-          <enum>Qt::Vertical</enum>
-         </property>
-         <property name="childrenCollapsible">
-          <bool>false</bool>
-         </property>
+     <widget class="QTabWidget" name="tabWidget">
+      <property name="currentIndex">
+       <number>0</number>
+      </property>
+      <widget class="QWidget" name="sus">
+       <attribute name="title">
+        <string>SUs</string>
+       </attribute>
+       <layout class="QVBoxLayout" name="verticalLayout_2">
+        <item>
          <widget class="Console" name="console" native="true"/>
+        </item>
+       </layout>
+      </widget>
+      <widget class="QWidget" name="acars">
+       <attribute name="title">
+        <string>ACARS</string>
+       </attribute>
+       <layout class="QVBoxLayout" name="verticalLayout_3">
+        <item>
          <widget class="TextInputWidget" name="inputwidget" native="true"/>
-        </widget>
-       </item>
-      </layout>
+        </item>
+       </layout>
+      </widget>
+      <widget class="QWidget" name="cchan">
+       <attribute name="title">
+        <string>C channel info</string>
+       </attribute>
+       <layout class="QHBoxLayout" name="horizontalLayout_4">
+        <item>
+         <layout class="QHBoxLayout" name="horizontalLayout_3">
+          <item>
+           <widget class="QGroupBox" name="groupBox">
+            <property name="title">
+             <string>Channel assignment</string>
+            </property>
+            <layout class="QVBoxLayout" name="verticalLayout_4">
+             <item>
+              <widget class="QPlainTextEdit" name="plainTextEdit_cchan_assignment"/>
+             </item>
+            </layout>
+           </widget>
+          </item>
+         </layout>
+        </item>
+       </layout>
+      </widget>
      </widget>
     </item>
     <item>
@@ -358,6 +375,11 @@
          </item>
          <item>
           <property name="text">
+           <string>8400 bps</string>
+          </property>
+         </item>
+         <item>
+          <property name="text">
            <string>10500 bps burst</string>
           </property>
          </item>
@@ -403,6 +425,11 @@
          <item>
           <property name="text">
            <string>1800 Hz</string>
+          </property>
+         </item>
+         <item>
+          <property name="text">
+           <string>8400 Hz</string>
           </property>
          </item>
          <item>
@@ -483,8 +510,8 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>990</width>
-     <height>21</height>
+     <width>999</width>
+     <height>23</height>
     </rect>
    </property>
    <widget class="QMenu" name="menu_File">
@@ -521,12 +548,12 @@
     <bool>false</bool>
    </attribute>
    <addaction name="actionCleanConsole"/>
-   <addaction name="actionClearTXWindow"/>
    <addaction name="actionConnectToUDPPort"/>
    <addaction name="actionRawOutput"/>
    <addaction name="separator"/>
    <addaction name="action_Settings"/>
    <addaction name="action_PlaneLog"/>
+   <addaction name="actionSound_Out"/>
    <addaction name="actionTXRX"/>
   </widget>
   <action name="action_Exit">
@@ -552,7 +579,7 @@
     <string>CleanConsole</string>
    </property>
    <property name="toolTip">
-    <string>Clear the top window</string>
+    <string>Clear the window</string>
    </property>
   </action>
   <action name="actionConnectToUDPPort">
@@ -613,18 +640,6 @@
     <enum>QAction::NoRole</enum>
    </property>
   </action>
-  <action name="actionClearTXWindow">
-   <property name="icon">
-    <iconset resource="jaero.qrc">
-     <normaloff>:/images/clear.png</normaloff>:/images/clear.png</iconset>
-   </property>
-   <property name="text">
-    <string>clearTXWindow</string>
-   </property>
-   <property name="toolTip">
-    <string>Clear the bottom window</string>
-   </property>
-  </action>
   <action name="action_Settings">
    <property name="icon">
     <iconset resource="jaero.qrc">
@@ -644,6 +659,22 @@
    </property>
    <property name="text">
     <string>&amp;PlaneLog</string>
+   </property>
+  </action>
+  <action name="actionSound_Out">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="icon">
+    <iconset resource="jaero.qrc">
+     <normaloff>:/images/sound.png</normaloff>
+     <normalon>:/images/sound-off2.png</normalon>:/images/sound.png</iconset>
+   </property>
+   <property name="text">
+    <string>Sound Out</string>
+   </property>
+   <property name="toolTip">
+    <string>Mute the sound</string>
    </property>
   </action>
  </widget>

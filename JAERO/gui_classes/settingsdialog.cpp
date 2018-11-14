@@ -210,7 +210,13 @@ void SettingsDialog::DownloadDBResult(const QUrl &url,bool result)
         //why does that guy always keep changing his format??
         //bit of a hack but I'm tired of this
         QProcess decompressor_proc;
+
+#ifdef Q_OS_WIN
         decompressor_proc.start("7za.exe", QStringList() <<"e"<<"-y"<<"-o"+ui->lineEditplanesfolder->text()+"/"<< ui->lineEditplanesfolder->text()+"/new.aircrafts_dump.zip");
+#else
+        decompressor_proc.start("unzip", QStringList() <<"-e"<<"-o"<<"-d"<<ui->lineEditplanesfolder->text()+"/"<< ui->lineEditplanesfolder->text()+"/new.aircrafts_dump.zip");
+#endif
+
         if (decompressor_proc.waitForStarted())
         {
             if (decompressor_proc.waitForFinished())
