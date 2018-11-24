@@ -24,6 +24,7 @@ INSTALL_PATH = /opt/jaero
 #compiling libogg "./configure" "make" works. for comping libvorbis without installing in usual place libogg was "./configure --with-ogg-libraries=/e/git/JAERO/libogg-1.3.3/src/.libs  --with-ogg-includes=/e/git/JAERO/libogg-1.3.3/include" then "make"
 VORBIS_PATH = $$PWD/../libvorbis-1.3.6
 OGG_PATH = $$PWD/../libogg-1.3.3
+LIBACARS_PATH =$$PWD/../libacars
 
 INCLUDEPATH += $$VORBIS_PATH/include
 DEPENDPATH += $$VORBIS_PATH/include
@@ -32,6 +33,7 @@ INCLUDEPATH += $$OGG_PATH/include
 DEPENDPATH += $$OGG_PATH/include
 VPATH += $$OGG_PATH/include
 
+INCLUDEPATH += $$LIBACARS_PATH/src
 
 #message("QT_ARCH is \"$$QT_ARCH\"");
 contains(QT_ARCH, i386) {
@@ -159,8 +161,6 @@ contains(QT_ARCH, i386) {
 
 LIBS += -lcorrect
 
-LIBS += -lacars
-
 # remove possible other optimization flags
 #QMAKE_CXXFLAGS_RELEASE -= -O
 QMAKE_CXXFLAGS_RELEASE -= -O2
@@ -173,6 +173,10 @@ QMAKE_CXXFLAGS_RELEASE += -O3
 #for static building order seems to matter
 LIBS += -L$$VORBIS_PATH/lib/.libs -lvorbis -lvorbisenc
 LIBS += -L$$OGG_PATH/src/.libs -logg
+
+# libacars support
+LIBS += -L$$LIBACARS_PATH/build/src/libacars -lacars
+
 
 #define where we store everything so when using the command line we don't make the main directory messy.
 CONFIG(debug, debug|release) {
