@@ -1095,6 +1095,7 @@ void MainWindow::ACARSslot(ACARSItem &acarsitem)
     TAKstr+=acarsitem.TAK;
 
     arincparser.parseDownlinkmessage(acarsitem);//parse ARINC 745-2 and header
+    arincparser.parseUplinkmessage(acarsitem);
 
     if(acarsitem.hastext&&settingsdialog->beepontextmessage)
     {
@@ -1262,6 +1263,7 @@ void MainWindow::log(QString &text)
         outlogstream.setDevice(&filelog);
     }
     outlogstream << text << '\n';
+    outlogstream.flush();
 }
 
 void MainWindow::ERRorslot(QString &error)
