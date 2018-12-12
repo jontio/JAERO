@@ -17,7 +17,7 @@ void AudioOutDevice::clear()
     circ_buffer_tail=circ_buffer.size()/2;
     for(int i=0;i<circ_buffer.size();i++)
     {
-        double dval=0.1*sin(2.0*M_PI*500*((double)i)/(((double)(settings.Fs))));
+        double dval=0.1*sin(2.0*M_PI*500.0*((double)i)/(((double)(settings.Fs))));
         dval=0;
         circ_buffer[i]=floor(0.75*dval*32767.0+0.5);
     }

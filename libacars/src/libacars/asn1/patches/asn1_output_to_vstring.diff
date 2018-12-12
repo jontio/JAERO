@@ -1,0 +1,69 @@
+diff -u constr_TYPE.c.orig constr_TYPE.c
+index dc3c227..3615a36 100644
+--- constr_TYPE.c.orig
++++ constr_TYPE.c
+@@ -5,6 +5,7 @@
+ #include "asn_internal.h"
+ #include "constr_TYPE.h"
+ #include <errno.h>
++#include <libacars/vstring.h>
+ 
+ /*
+  * Version of the ASN.1 infrastructure shipped with compiler.
+@@ -62,6 +63,30 @@ _print2fp(const void *buffer, size_t size, void *app_key) {
+ 	return 0;
+ }
+ 
++/* Append the data to the specified vstring */
++static int
++_print2vstring(const void *buffer, size_t size, void *app_key) {
++	la_vstring *vstr = (la_vstring *)app_key;
++	la_vstring_append_buffer(vstr, buffer, size);
++	return 0;
++}
++
++/* libacars-specific printer */
++int
++asn_sprintf(la_vstring *vstr, asn_TYPE_descriptor_t *td, const void *struct_ptr, int indent) {
++	if(!vstr || !td || !struct_ptr) {
++		errno = EINVAL;
++		return -1;
++	}
++
++	/* Invoke type-specific printer */
++	if(td->print_struct(td, struct_ptr, indent, _print2vstring, vstr))
++		return -1;
++
++	/* Terminate the output */
++	_print2vstring("\n", 1, vstr);
++	return 0;
++}
+ 
+ /*
+  * Some compilers do not support variable args macros.
+diff -u constr_TYPE.h.orig constr_TYPE.h
+index 908944b..adecc44 100644
+--- constr_TYPE.h.orig
++++ constr_TYPE.h
+@@ -42,6 +42,7 @@ typedef struct asn_struct_ctx_s {
+ #include "per_decoder.h"	/* Packet Encoding Rules decoder */
+ #include "per_encoder.h"	/* Packet Encoding Rules encoder */
+ #include "constraints.h"	/* Subtype constraints support */
++#include <libacars/vstring.h>	/* libacars vstring */
+ 
+ /*
+  * Free the structure according to its specification.
+@@ -174,6 +175,13 @@ int asn_fprint(FILE *stream,		/* Destination stream descriptor */
+ 	const void *struct_ptr,		/* Structure to be printed */
+ 	int indent);			/* Indentation level */
+ 
++/* libacars-specific printing routine */
++
++int asn_sprintf(la_vstring *vstr,	/* Destination vstring pointer */
++	asn_TYPE_descriptor_t *td,	/* ASN.1 type descriptor */
++	const void *struct_ptr,		/* Structure to be printed */
++	int indent);			/* Indentation level */
++
+ #ifdef __cplusplus
+ }
+ #endif

@@ -29,6 +29,7 @@ LIBACARS_PATH =$$PWD/../libacars
 INCLUDEPATH += $$VORBIS_PATH/include
 DEPENDPATH += $$VORBIS_PATH/include
 VPATH += $$VORBIS_PATH/include
+
 INCLUDEPATH += $$OGG_PATH/include
 DEPENDPATH += $$OGG_PATH/include
 VPATH += $$OGG_PATH/include
@@ -158,7 +159,6 @@ contains(QT_ARCH, i386) {
     LIBS += -L$$PWD/../libcorrect/bin/64
 }
 }
-
 LIBS += -lcorrect
 
 # remove possible other optimization flags
@@ -175,8 +175,17 @@ LIBS += -L$$VORBIS_PATH/lib/.libs -lvorbis -lvorbisenc
 LIBS += -L$$OGG_PATH/src/.libs -logg
 
 # libacars support
-LIBS += -L$$LIBACARS_PATH/build/src/libacars -lacars
-
+LIBS += -L$$LIBACARS_PATH/build/src/libacars
+win32 {
+contains(QT_ARCH, i386) {
+    #message("32-bit")
+    LIBS += -L$$LIBACARS_PATH/bin/32
+} else {
+    #message("64-bit")
+    LIBS += -L$$LIBACARS_PATH/bin/64
+}
+}
+LIBS += -lacars
 
 #define where we store everything so when using the command line we don't make the main directory messy.
 CONFIG(debug, debug|release) {

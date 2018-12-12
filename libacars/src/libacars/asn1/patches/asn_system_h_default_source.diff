@@ -1,0 +1,10 @@
+--- asn_system.h.orig	2017-04-17 13:28:59.879721449 +0200
++++ asn_system.h	2017-04-17 13:29:42.887344030 +0200
+@@ -15,6 +15,7 @@
+ 
+ #ifndef _BSD_SOURCE
+ #define _BSD_SOURCE /* for snprintf() on some linux systems  */
++#define _DEFAULT_SOURCE /* avoid compiler warnings on newer glibc */
+ #endif
+ 
+ #include <stdio.h>	/* For snprintf(3) */

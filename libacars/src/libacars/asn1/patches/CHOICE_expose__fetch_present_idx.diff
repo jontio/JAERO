@@ -1,0 +1,31 @@
+--- constr_CHOICE.c.orig	2018-03-26 22:17:50.259532892 +0200
++++ constr_CHOICE.c	2018-03-26 22:19:47.442893283 +0200
+@@ -63,7 +63,7 @@
+ /*
+  * See the definitions.
+  */
+-static int _fetch_present_idx(const void *struct_ptr, int off, int size);
++int _fetch_present_idx(const void *struct_ptr, int off, int size);
+ static void _set_present_idx(void *sptr, int offset, int size, int pres);
+ 
+ /*
+@@ -1078,7 +1078,7 @@
+  * is guaranteed to be aligned properly. ASN.1 compiler itself does not
+  * produce packed code.
+  */
+-static int
++int
+ _fetch_present_idx(const void *struct_ptr, int pres_offset, int pres_size) {
+ 	const void *present_ptr;
+ 	int present;
+--- constr_CHOICE.h.orig	2018-03-26 22:17:54.457581631 +0200
++++ constr_CHOICE.h	2018-03-26 22:20:14.915212178 +0200
+@@ -50,6 +50,8 @@
+ per_type_encoder_f CHOICE_encode_uper;
+ asn_outmost_tag_f CHOICE_outmost_tag;
+ 
++int _fetch_present_idx(const void *struct_ptr, int pres_offset, int pres_size);
++
+ #ifdef __cplusplus
+ }
+ #endif

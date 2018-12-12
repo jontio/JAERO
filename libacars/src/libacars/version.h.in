@@ -1,0 +1,23 @@
+/*
+ *  This file is a part of libacars
+ *
+ *  Copyright (c) 2018 Tomasz Lemiech <szpajder@gmail.com>
+ */
+
+#ifndef LA_VERSION_H
+#define LA_VERSION_H 1
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+#define LA_VERSION_MAJOR @LA_VERSION_MAJOR@
+#define LA_VERSION_MINOR @LA_VERSION_MINOR@
+#define LA_VERSION_PATCH @LA_VERSION_PATCH@
+#define LA_VERSION "@LA_VERSION@"
+
+#ifdef __cplusplus
+}
+#endif
+
+#endif // !LA_VERSION_H
