@@ -1,8 +1,7 @@
 #include "arincparse.h"
 #include <QDebug>
 #include <libacars/libacars.h>
-#include <libacars/arinc.h>
-#include <libacars/cpdlc.h>
+#include <libacars/acars.h>
 #include <libacars/vstring.h>
 
 ArincParse::ArincParse(QObject *parent) : QObject(parent)
@@ -47,26 +46,24 @@ qint32 ArincParse::extractqint32(QByteArray &ba,int lsbyteoffset,int bitoffset,i
     return val;
 }
 
-void ArincParse::parse_cpdlc_payload(QByteArray &ba, la_msg_dir msg_dir) {
-    la_proto_node *node = la_cpdlc_parse((uint8_t *)ba.data(), ba.size(), msg_dir);
-    la_vstring *vstr = NULL;
-    if(node != NULL) {
-        vstr = la_proto_tree_format_text(NULL, node);
-        arincmessage.info += vstr->str;
-        la_vstring_destroy(vstr, true);
-        la_proto_tree_destroy(node);
+void ArincParse::try_acars_apps(ACARSItem &acarsitem, la_msg_dir msg_dir) {
+    QByteArray ba;
+    if(msg_dir == LA_MSG_DIR_AIR2GND) {
+// skip message number and flight ID
+        ba = acarsitem.message.mid(4+6).toLatin1();
+    } else {
+        ba = acarsitem.message.toLatin1();
     }
-}
-
-void ArincParse::parse_arinc_payload(QByteArray &ba, la_msg_dir msg_dir) {
-    la_proto_node *node = la_arinc_parse(ba.data(), msg_dir);
-    la_vstring *vstr = NULL;
-    if(node != NULL) {
-        vstr = la_proto_tree_format_text(NULL, node);
-        arincmessage.info += vstr->str;
-        la_vstring_destroy(vstr, true);
-        la_proto_tree_destroy(node);
+    if(ba.size() < 1) {
+        return;
     }
+    la_proto_node *node = la_acars_decode_apps(acarsitem.LABEL.data(), ba.data(), msg_dir);
+    if(node != NULL) {
+            la_vstring *vstr = la_proto_tree_format_text(NULL, node);
+            arincmessage.info += vstr->str;
+            la_vstring_destroy(vstr, true);
+    }
+    la_proto_tree_destroy(node);
 }
 
 bool ArincParse::parseUplinkmessage(ACARSItem &acarsitem)
@@ -74,8 +71,7 @@ bool ArincParse::parseUplinkmessage(ACARSItem &acarsitem)
     if(acarsitem.downlink)return false;
     if(acarsitem.nonacars)return false;
 
-    QByteArray ba = acarsitem.message.toLatin1();
-    parse_arinc_payload(ba, LA_MSG_DIR_GND2AIR);
+    try_acars_apps(acarsitem, LA_MSG_DIR_GND2AIR);
     return true;
 }
 
@@ -117,7 +113,11 @@ bool ArincParse::parseDownlinkmessage(ACARSItem &acarsitem)//QString &msg)
 
     //deal with application section
     QStringList sections=acarsitem.message.split('/');
-    if(sections.size()!=2)return true;
+    // Not an ARINC message - try other ACARS applications with libacars
+    if(sections.size()!=2) {
+        try_acars_apps(acarsitem, LA_MSG_DIR_AIR2GND);
+        return true;
+    }
 
     //split up into components as strings
     //eg "F58ADL0040/AKLCDYA.ADS.N705DN07EEE19454DAC7D010D21D0DEEEC44556208024029F0588C71D7884D000E13B90F00000F12C1A280001029305F1019F4"
@@ -450,26 +450,10 @@ bool ArincParse::parseDownlinkmessage(ACARSItem &acarsitem)//QString &msg)
         }
         break;
     }
-    case AT1:
-    {
-        arincmessage.info += "FANS-1/A CPDLC Message:\n";
-        parse_cpdlc_payload(appmessage_bytes, LA_MSG_DIR_AIR2GND);
-        break;
-    }
-    case DR1:
-    {
-        arincmessage.info += "FANS-1/A CPDLC Disconnect Request:\n";
-        parse_cpdlc_payload(appmessage_bytes, LA_MSG_DIR_AIR2GND);
-        break;
-    }
-    case CC1:
-    {
-        arincmessage.info += "FANS-1/A CPDLC Connect Confirm:\n";
-        parse_cpdlc_payload(appmessage_bytes, LA_MSG_DIR_AIR2GND);
-        break;
-    }
     default:
-        break;
+    // Not an ADS-C message - try other ACARS applications with libacars
+        try_acars_apps(acarsitem, LA_MSG_DIR_AIR2GND);
+        return true;
     }
 
     if(fail)arincmessage.info+="...\n";//"Failed understanding\n";//no need to bog the user down with to much detail

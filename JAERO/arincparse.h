@@ -200,8 +200,7 @@ private:
     QString middlespacer;
 
     DownlinkGroups downlinkgroups;
-    void parse_cpdlc_payload(QByteArray &ba, la_msg_dir msg_dir);
-    void parse_arinc_payload(QByteArray &ba, la_msg_dir msg_dir);
+    void try_acars_apps(ACARSItem &acarsitem, la_msg_dir msg_dir);
 
 };
 
