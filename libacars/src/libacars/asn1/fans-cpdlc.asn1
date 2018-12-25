@@ -1,0 +1,2142 @@
+FANSACTwoWayDataLinkCommunications DEFINITIONS IMPLICIT TAGS ::=
+BEGIN
+
+FANSATCUplinkMessage ::= SEQUENCE {
+    aTCMessageheader	FANSATCMessageHeader,
+    aTCuplinkmsgelementId	FANSATCUplinkMsgElementId,
+    aTCuplinkmsgelementid-seqOf	FANSATCUplinkMsgElementIdSequence OPTIONAL
+}
+
+FANSATCUplinkMsgElementIdSequence ::=	SEQUENCE SIZE(1..4) OF FANSATCUplinkMsgElementId
+
+FANSATCMessageHeader ::= SEQUENCE {
+    msgIdentificationNumber FANSMsgIdentificationNumber,
+    msgReferenceNumber FANSMsgReferenceNumber        OPTIONAL,
+    timestamp FANSTimestamp                OPTIONAL
+}
+
+FANSMsgIdentificationNumber ::= INTEGER (0..63)
+
+FANSMsgReferenceNumber ::= INTEGER (0..63)
+
+FANSTimestamp ::= SEQUENCE {
+    hours FANSTimehours,
+    minutes FANSTimeminutes,
+    seconds FANSTimeSeconds
+}
+
+FANSTimehours ::= INTEGER (0..23)
+--Units = 1 Hour, Range (0..23)
+
+FANSTimeminutes ::= INTEGER (0..59)
+--Units = 1 Minute, Range (0..59)
+
+FANSTimeSeconds ::= INTEGER (0..59)
+--Units = 1 Second, Range (0..59)
+
+FANSATCUplinkMsgElementId ::= CHOICE
+{
+-- UNABLE
+-- Urg(N)/Alr(V)/Resp(NE)/Rec( )
+uM0NULL                                    [0] NULL,
+
+-- STANDBY
+-- Urg(N)/Alr(V)/Resp(NE)/Rec( )
+uM1NULL                                   [1] NULL,
+
+-- REQUEST DEFERRED
+-- Urg(N)/Alr(V)/Resp(NE)/Rec( )
+uM2NULL                                   [2] NULL,
+
+-- ROGER
+-- Urg(N)/Alr(V)/Resp(NE)/Rec( )
+uM3NULL                                   [3] NULL,
+
+-- AFFIRM
+-- Urg(N)/Alr(V)/Resp(NE)/Rec( )
+uM4NULL                                   [4] NULL,
+
+-- NEGATIVE
+-- Urg(N)/Alr(V)/Resp(NE)/Rec( )
+uM5NULL                                    [5] NULL,
+
+-- EXPECT [altitude]
+-- Urg(L)/Alr(V)/Resp(R)/Rec(EC)
+uM6Altitude                                [6] FANSAltitude,
+
+-- EXPECT CLIMB AT [time]
+-- Urg(L)/Alr(V)/Resp(R)/Rec(EC)
+uM7Time                                    [7] FANSTime,
+
+-- EXPECT CLIMB AT [position]
+-- Urg(L)/Alr(V)/Resp(R)/Rec(EC)
+uM8Position                                [8] FANSPosition,
+
+-- EXPECT DESCENT AT [time]
+-- Urg(L)/Alr(V)/Resp(R)/Rec(EC)
+uM9Time                                    [9] FANSTime,
+
+-- EXPECT DESCENT AT [position]
+-- Urg(L)/Alr(V)/Resp(R)/Rec(EC)
+uM10Position                               [10] FANSPosition,
+
+-- EXPECT CRUISE CLIMB AT [time]
+-- Urg(L)/Alr(V)/Resp(R)/Rec(EC)
+uM11Time                                   [11] FANSTime,
+
+-- EXPECT CRUISE CLIMB AT [position]
+-- Urg(L)/Alr(V)/Resp(R)/Rec(EC)
+uM12Position                               [12] FANSPosition,
+
+-- AT [time] EXPECT CLIMB TO [altitude]
+-- Urg(L)/Alr(V)/Resp(R)/Rec(EC)
+uM13TimeAltitude                           [13] FANSTimeAltitude,
+
+-- AT [position] EXPECT CLIMB TO [altitude]
+-- Urg(L)/Alr(V)/Resp(R)/Rec(EC)
+uM14PositionAltitude                       [14] FANSPositionAltitude,
+
+-- AT [time] EXPECT DESCENT TO [altitude]
+-- Urg(L)/Alr(V)/Resp(R)/Rec(EC)
+uM15TimeAltitude                           [15] FANSTimeAltitude,
+
+-- AT [position] EXPECT DESCENT TO [altitude]
+-- Urg(L)/Alr(V)/Resp(R)/Rec(EC)
+uM16PositionAltitude                       [16] FANSPositionAltitude,
+
+-- AT [time] EXPECT CRUISE CLIMB TO [altitude]
+-- Urg(L)/Alr(V)/Resp(R)/Rec(EC)
+uM17TimeAltitude                          [17] FANSTimeAltitude,
+
+-- AT [position] EXPECT CRUISE CLIMB TO [altitude]
+-- Urg(L)/Alr(V)/Resp(R)/Rec(EC)
+uM18PositionAltitude                       [18] FANSPositionAltitude,
+
+-- MAINTAIN [altitude]
+-- Urg(N)/Alr(A)/Resp(W/U)/Rec(VC)
+uM19Altitude                               [19] FANSAltitude,
+
+-- CLIMB TO AND MAINTAIN [altitude]
+-- Urg(N)/Alr(A)/Resp(W/U)/Rec(VC)
+uM20Altitude                               [20] FANSAltitude,
+
+-- AT [time] CLIMB TO AND MAINTAIN [altitude]
+-- Urg(N)/Alr(A)/Resp(W/U)/Rec(VC)
+uM21TimeAltitude                         [21] FANSTimeAltitude,
+
+-- AT [position] CLIMB TO AND MAINTAIN [altitude]
+-- Urg(N)/Alr(A)/Resp(W/U)/Rec(VC)
+uM22PositionAltitude                      [22] FANSPositionAltitude,
+
+-- DESCEND TO AND MAINTAIN [altitude]
+-- Urg(N)/Alr(A)/Resp(W/U)/Rec(VC)
+uM23Altitude                              [23] FANSAltitude,
+
+-- AT [time] DESCEND TO AND MAINTAIN [altitude]
+-- Urg(N)/Alr(A)/Resp(W/U)/Rec(VC)
+uM24TimeAltitude                        [24] FANSTimeAltitude,
+
+-- AT [position] DESCEND TO AND MAINTAIN [altitude]
+-- Urg(N)/Alr(A)/Resp(W/U)/Rec(VC)
+uM25PositionAltitude                    [25] FANSPositionAltitude,
+
+-- CLIMB TO REACH [altitude] BY [time]
+-- Urg(N)/Alr(A)/Resp(W/U)/Rec(VC)
+uM26AltitudeTime                          [26] FANSAltitudeTime,
+
+-- CLIMB TO REACH [altitude] BY [position]
+-- Urg(N)/Alr(A)/Resp(W/U)/Rec(VC)
+uM27AltitudePosition                      [27] FANSAltitudePosition,
+
+-- DESCEND TO REACH [altitude] BY [time]
+-- Urg(N)/Alr(A)/Resp(W/U)/Rec(VC)
+uM28AltitudeTime                          [28] FANSAltitudeTime,
+
+-- DESCEND TO REACH [altitude] BY [position]
+-- Urg(N)/Alr(A)/Resp(W/U)/Rec(VC)
+uM29AltitudePosition                      [29] FANSAltitudePosition,
+
+-- MAINTAIN BLOCK [altitude] TO [altitude]
+-- Urg(N)/Alr(A)/Resp(W/U)/Rec(VC)
+uM30AltitudeAltitude                      [30] FANSAltitudeAltitude,
+
+-- CLIMB TO AND MAINTAIN BLOCK [altitude] TO [altitude]
+-- Urg(N)/Alr(A)/Resp(W/U)/Rec(VC)
+uM31AltitudeAltitude                    [31] FANSAltitudeAltitude,
+
+-- DESCEND TO AND MAINTAIN BLOCK [altitude] TO [altitude]
+-- Urg(N)/Alr(A)/Resp(W/U)/Rec(VC)
+uM32AltitudeAltitude                    [32] FANSAltitudeAltitude,
+
+-- CRUISE [altitude]
+-- Urg(N)/Alr(A)/Resp(W/U)/Rec(VC)
+uM33Altitude                              [33] FANSAltitude,
+
+-- CRUISE CLIMB TO [altitude]
+-- Urg(N)/Alr(A)/Resp(W/U)/Rec(VC)
+uM34Altitude                              [34] FANSAltitude,
+
+-- CRUISE CLIMB ABOVE [altitude]
+-- Urg(N)/Alr(A)/Resp(W/U)/Rec(VC)
+uM35Altitude                              [35] FANSAltitude,
+
+-- EXPEDITE CLIMB TO [altitude]
+-- Urg(U)/Alr(A)/Resp(W/U)/Rec(VC)
+uM36Altitude                              [36] FANSAltitude,
+
+-- EXPEDITE DESCENT TO [altitude]
+-- Urg(U)/Alr(A)/Resp(W/U)/Rec(VC)
+uM37Altitude                              [37] FANSAltitude,
+
+-- IMMEDIATELY CLIMB TO [altitude]
+-- Urg(D)/Alr(A/D)/Resp(W/U)/Rec(VC)
+uM38Altitude                              [38] FANSAltitude,
+
+-- IMMEDIATELY DESCEND TO [altitude]
+-- Urg(D)/Alr(A/D)/Resp(W/U)/Rec(VC)
+uM39Altitude                              [39] FANSAltitude,
+
+-- IMMEDIATELY STOP CLIMB AT [altitude]
+-- Urg(D)/Alr(A/D)/Resp(W/U)/Rec(VC)
+uM40Altitude                               [40] FANSAltitude,
+
+-- IMMEDIATELY STOP DESCENT AT [altitude]
+-- Urg(D)/Alr(A/D)/Resp(W/U)/Rec(VC)
+uM41Altitude                               [41] FANSAltitude,
+
+-- EXPECT TO CROSS [position] AT [altitude]
+-- Urg(L)/Alr(V)/Resp(R)/Rec(EC)
+uM42PositionAltitude                       [42] FANSPositionAltitude,
+
+-- EXPECT TO CROSS [position] AT OR ABOVE [altitude]
+-- Urg(L)/Alr(V)/Resp(R)/Rec(EC)
+uM43PositionAltitude                    [43] FANSPositionAltitude,
+
+-- EXPECT TO CROSS [position] AT OR BELOW [altitude]
+-- Urg(L)/Alr(V)/Resp(R)/Rec(EC)
+uM44PositionAltitude                    [44] FANSPositionAltitude,
+
+-- EXPECT TO CROSS [position] AT AND MAINTAIN [altitude]
+-- Urg(L)/Alr(V)/Resp(R)/Rec(EC)
+uM45PositionAltitude                       [45] FANSPositionAltitude,
+
+-- CROSS [position] AT [altitude]
+-- Urg(N)/Alr(A)/Resp(W/U)/Rec(VC)
+uM46PositionAltitude                       [46] FANSPositionAltitude,
+
+-- CROSS [position] AT OR ABOVE [altitude]
+-- Urg(N)/Alr(A)/Resp(W/U)/Rec(VC)
+uM47PositionAltitude                       [47] FANSPositionAltitude,
+
+-- CROSS [position] AT OR BELOW [altitude]
+-- Urg(N)/Alr(A)/Resp(W/U)/Rec(VC)
+uM48PositionAltitude                       [48] FANSPositionAltitude,
+
+-- CROSS [position] AT AND MAINTAIN [altitude]
+-- Urg(N)/Alr(A)/Resp(W/U)/Rec(VC)
+uM49PositionAltitude                      [49] FANSPositionAltitude,
+
+-- CROSS [position] BETWEEN [altitude] AND [altitude]
+-- Urg(N)/Alr(A)/Resp(W/U)/Rec(VC)
+uM50PositionAltitudeAltitude                 [50] FANSPositionAltitudeAltitude,
+
+-- CROSS [position] AT [time]
+-- Urg(N)/Alr(A)/Resp(W/U)/Rec( )
+uM51PositionTime                           [51] FANSPositionTime,
+
+-- CROSS [position] AT OR BEFORE [time]
+-- Urg(N)/Alr(A)/Resp(W/U)/Rec( )
+uM52PositionTime                           [52] FANSPositionTime,
+
+-- CROSS [position] AT OR AFTER [time]
+-- Urg(N)/Alr(A)/Resp(W/U)/Rec( )
+uM53PositionTime                           [53] FANSPositionTime,
+
+-- CROSS [position] BETWEEN [time] AND [time]
+-- Urg(N)/Alr(A)/Resp(W/U)/Rec( )
+uM54PositionTimeTime                       [54] FANSPositionTimeTime,
+
+-- CROSS [position] AT [speed]
+-- Urg(N)/Alr(A)/Resp(W/U)/Rec( )
+uM55PositionSpeed                          [55] FANSPositionSpeed,
+
+-- CROSS [position] AT OR LESS THAN [speed]
+-- Urg(N)/Alr(A)/Resp(W/U)/Rec( )
+uM56PositionSpeed                          [56] FANSPositionSpeed,
+
+-- CROSS [position] AT OR GREATER THAN [speed]
+-- Urg(N)/Alr(A)/Resp(W/U)/Rec( )
+uM57PositionSpeed                       [57] FANSPositionSpeed,
+
+-- CROSS [position] AT [time] AT [altitude]
+-- Urg(N)/Alr(A)/Resp(W/U)/Rec(VC)
+uM58PositionTimeAltitude                      [58] FANSPositionTimeAltitude,
+
+-- CROSS [position] AT OR BEFORE [time] AT [altitude]
+-- Urg(N)/Alr(A)/Resp(W/U)/Rec(VC)
+uM59PositionTimeAltitude                     [59] FANSPositionTimeAltitude,
+
+-- CROSS [position] AT OR AFTER [time] AT [altitude]
+-- Urg(N)/Alr(A)/Resp(W/U)/Rec(VC)
+uM60PositionTimeAltitude                     [60] FANSPositionTimeAltitude,
+
+-- CROSS [position] AT AND MAINTAIN [altitude] AT [speed]
+-- Urg(N)/Alr(A)/Resp(W/U)/Rec(VC)
+uM61PositionAltitudeSpeed                  [61] FANSPositionAltitudeSpeed,
+
+-- AT [time] CROSS [position] AT AND MAINTAIN [altitude]
+-- Urg(N)/Alr(A)/Resp(W/U)/Rec(VC)
+uM62TimePositionAltitude                  [62] FANSTimePositionAltitude,
+
+-- AT [time] CROSS [position] AT AND MAINTAIN [altitude] AT [speed]
+-- Urg(N)/Alr(A)/Resp(W/U)/Rec(VC)
+uM63TimePositionAltitudeSpeed                 [63] FANSTimePositionAltitudeSpeed,
+
+-- OFFSET [distanceoffset] [direction] OF ROUTE
+-- Urg(N)/Alr(A)/Resp(W/U)/Rec( )
+uM64DistanceOffsetDirection                   [64] FANSDistanceOffsetDirection,
+
+-- AT [position] OFFSET [distanceoffset] [direction] OF ROUTE
+-- Urg(N)/Alr(A)/Resp(W/U)/Rec( )
+uM65PositionDistanceOffsetDirection              [65] FANSPositionDistanceOffsetDirection,
+
+-- AT [time] OFFSET [distanceoffset] [direction] OF ROUTE
+-- Urg(N)/Alr(A)/Resp(W/U)/Rec( )
+uM66TimeDistanceOffsetDirection                 [66] FANSTimeDistanceOffsetDirection,
+
+-- PROCEED BACK ON ROUTE
+-- Urg(N)/Alr(A)/Resp(W/U)/Rec( )
+uM67NULL                                      [67] NULL,
+
+-- REJOIN ROUTE BY [position]
+-- Urg(N)/Alr(A)/Resp(W/U)/Rec( )
+uM68Position                                  [68] FANSPosition,
+
+-- REJOIN ROUTE BY [time]
+-- Urg(N)/Alr(A)/Resp(W/U)/Rec( )
+uM69Time                                      [69] FANSTime,
+
+-- EXPECT BACK ON ROUTE BY [position]
+-- Urg(L)/Alr(V)/Resp(R)/Rec( )
+uM70Position                                  [70] FANSPosition,
+
+-- EXPECT BACK ON ROUTE BY [time]
+-- Urg(L)/Alr(V)/Resp(R)/Rec( )
+uM71Time                                      [71] FANSTime,
+
+-- RESUME OWN NAVIGATION
+-- Urg(N)/Alr(A)/Resp(W/U)/Rec( )
+uM72NULL                                      [72] NULL,
+
+-- [predepartureclearance]
+-- Urg(N)/Alr(A)/Resp(W/U)/Rec(RC)
+uM73Predepartureclearance                    [73] FANSPredepartureClearance,
+
+-- PROCEED DIRECT TO [position]
+-- Urg(N)/Alr(A)/Resp(W/U)/Rec( )
+uM74Position                                  [74] FANSPosition,
+
+-- WHEN ABLE PROCEED DIRECT TO [position]
+-- Urg(N)/Alr(A)/Resp(W/U)/Rec( )
+uM75Position                         [75] FANSPosition,
+
+-- AT [time] PROCEED DIRECT TO [position]
+-- Urg(N)/Alr(A)/Resp(W/U)/Rec( )
+uM76TimePosition   [76] FANSTimePosition,
+
+-- AT [position] PROCEED DIRECT TO [position]
+-- Urg(N)/Alr(A)/Resp(W/U)/Rec( )
+uM77PositionPosition                        [77] FANSPositionPosition,
+
+-- AT [altitude] PROCEED DIRECT TO [position]
+-- Urg(N)/Alr(A)/Resp(W/U)/Rec( )
+uM78AltitudePosition                        [78] FANSAltitudePosition,
+
+-- CLEARED TO [position] VIA [routeclearance]
+-- Urg(N)/Alr(A)/Resp(W/U)/Rec(RC)
+uM79PositionRouteClearance                  [79] FANSPositionRouteClearance,
+
+-- CLEARED [routeclearance]
+-- Urg(N)/Alr(A)/Resp(W/U)/Rec(RC)
+uM80RouteClearance                          [80] FANSRouteClearance,
+
+-- CLEARED [procedurename]
+-- Urg(N)/Alr(A)/Resp(W/U)/Rec(RC)
+uM81ProcedureName                           [81] FANSProcedureName,
+
+-- CLEARED TO DEVIATE UP TO [distanceoffset] [direction] OF ROUTE
+-- Urg(N)/Alr(A)/Resp(W/U)/Rec( )
+uM82DistanceOffsetDirection                [82] FANSDistanceOffsetDirection,
+
+-- AT [position] CLEARED [routeclearance]
+-- Urg(N)/Alr(A)/Resp(W/U)/Rec(RC)
+uM83PositionRouteClearance                  [83] FANSPositionRouteClearance,
+
+-- AT [position] CLEARED [procedurename]
+-- Urg(N)/Alr(A)/Resp(W/U)/Rec(RC)
+uM84PositionProcedureName                   [84] FANSPositionProcedureName,
+
+-- EXPECT [routeclearance]
+-- Urg(L)/Alr(V)/Resp(R)/Rec(EC)
+uM85RouteClearance                          [85] FANSRouteClearance,
+
+-- AT [position] EXPECT [routeclearance]
+-- Urg(L)/Alr(V)/Resp(R)/Rec(EC)
+uM86PositionRouteClearance                  [86] FANSPositionRouteClearance,
+
+-- EXPECT DIRECT TO [position]
+-- Urg(L)/Alr(V)/Resp(R)/Rec( )
+uM87Position                                [87] FANSPosition,
+
+-- AT [position] EXPECT DIRECT TO [position]
+-- Urg(L)/Alr(V)/Resp(R)/Rec( )
+uM88PositionPosition                        [88] FANSPositionPosition,
+
+-- AT [time] EXPECT DIRECT TO [position]
+-- Urg(L)/Alr(V)/Resp(R)/Rec( )
+uM89TimePosition                            [89] FANSTimePosition,
+
+-- AT [altitude] EXPECT DIRECT TO [position]
+-- Urg(L)/Alr(V)/Resp(R)/Rec( )
+uM90AltitudePosition                        [90] FANSAltitudePosition,
+
+-- HOLD AT [position] MAINTAIN [altitude] INBOUND TRACK [degrees] [direction] TURNS [legtype]
+-- Urg(N)/Alr(A)/Resp(W/U)/Rec(VC)
+uM91HoldClearance                         [91] FANSHoldClearance,
+
+-- HOLD AT [position] AS PUBLISHED MAINTAIN [altitude]
+-- Urg(N)/Alr(A)/Resp(W/U)/Rec(VC)
+uM92PositionAltitude                   [92] FANSPositionAltitude,
+
+-- EXPECT FURTHER CLEARANCE AT [time]
+-- Urg(L)/Alr(V)/Resp(R)/Rec( )
+uM93Time                                    [93] FANSTime,
+
+-- TURN [direction] HEADING [degrees]
+-- Urg(N)/Alr(A)/Resp(W/U)/Rec( )
+uM94DirectionDegrees                     [94] FANSDirectionDegrees,
+
+-- TURN [direction] GROUND TRACK [degrees]
+-- Urg(N)/Alr(A)/Resp(W/U)/Rec( )
+uM95DirectionDegrees                     [95] FANSDirectionDegrees,
+
+-- FLY PRESENT HEADING
+-- Urg(N)/Alr(A)/Resp(W/U)/Rec( )
+uM96NULL                                [96] NULL,
+
+-- AT [position] FLY HEADING [degrees]
+-- Urg(N)/Alr(A)/Resp(W/U)/Rec( )
+uM97PositionDegrees                      [97] FANSPositionDegrees,
+
+-- IMMEDIATELY TURN [direction] HEADING [degrees]
+-- Urg(D)/Alr(A/D)/Resp(W/U)/Rec( )
+uM98DirectionDegrees                   [98] FANSDirectionDegrees,
+
+-- EXPECT [procedurename]
+-- Urg(L)/Alr(V)/Resp(R)/Rec(EC)
+uM99ProcedureName                       [99] FANSProcedureName,
+
+-- AT [time] EXPECT [speed]
+-- Urg(L)/Alr(V)/Resp(R)/Rec( )
+uM100TimeSpeed                          [100] FANSTimeSpeed,
+
+-- AT [position] EXPECT [speed]
+-- Urg(L)/Alr(V)/Resp(R)/Rec( )
+uM101PositionSpeed                       [101] FANSPositionSpeed,
+
+-- AT [altitude] EXPECT [speed]
+-- Urg(L)/Alr(V)/Resp(R)/Rec( )
+uM102AltitudeSpeed                       [102] FANSAltitudeSpeed,
+
+-- AT [time] EXPECT [speed] TO [speed]
+-- Urg(L)/Alr(V)/Resp(R)/Rec( )
+uM103TimeSpeedSpeed                     [103] FANSTimeSpeedSpeed,
+
+-- AT [position] EXPECT [speed] TO [speed]
+-- Urg(L)/Alr(V)/Resp(R)/Rec( )
+uM104PositionSpeedSpeed                  [104] FANSPositionSpeedSpeed,
+
+-- AT [altitude] EXPECT [speed] TO [speed]
+-- Urg(L)/Alr(V)/Resp(R)/Rec( )
+uM105AltitudeSpeedSpeed                  [105] FANSAltitudeSpeedSpeed,
+
+-- MAINTAIN [speed]
+-- Urg(N)/Alr(A)/Resp(W/U)/Rec( )
+uM106Speed                              [106] FANSSpeed,
+
+-- MAINTAIN PRESENT SPEED
+-- Urg(N)/Alr(A)/Resp(W/U)/Rec( )
+uM107NULL                               [107] NULL,
+
+-- MAINTAIN [speed] OR GREATER
+-- Urg(N)/Alr(A)/Resp(W/U)/Rec( )
+uM108Speed                              [108] FANSSpeed,
+
+-- MAINTAIN [speed] OR LESS
+-- Urg(N)/Alr(A)/Resp(W/U)/Rec( )
+uM109Speed                              [109] FANSSpeed,
+
+-- MAINTAIN [speed] TO [speed]
+-- Urg(N)/Alr(A)/Resp(W/U)/Rec( )
+uM110SpeedSpeed                         [110] FANSSpeedSpeed,
+
+-- INCREASE SPEED TO [speed]
+-- Urg(N)/Alr(A)/Resp(W/U)/Rec( )
+uM111Speed                             [111] FANSSpeed,
+
+-- INCREASE SPEED TO [speed] OR GREATER
+-- Urg(N)/Alr(A)/Resp(W/U)/Rec( )
+uM112Speed                             [112] FANSSpeed,
+
+-- REDUCE SPEED TO [speed]
+-- Urg(N)/Alr(A)/Resp(W/U)/Rec( )
+uM113Speed                                   [113] FANSSpeed,
+
+-- REDUCE SPEED TO [speed] OR LESS
+-- Urg(N)/Alr(A)/Resp(W/U)/Rec( )
+uM114Speed                                   [114] FANSSpeed,
+
+-- DO NOT EXCEED [speed]
+-- Urg(N)/Alr(A)/Resp(W/U)/Rec( )
+uM115Speed                                   [115] FANSSpeed,
+
+-- RESUME NORMAL SPEED
+-- Urg(N)/Alr(A)/Resp(W/U)/Rec( )
+uM116NULL                                    [116] NULL,
+
+-- CONTACT [icaounitname] [frequency]
+-- Urg(N)/Alr(A)/Resp(W/U)/Rec( )
+uM117ICAOunitnameFrequency                   [117] FANSICAOUnitNameFrequency,
+
+-- AT [position] CONTACT [icaounitname] [frequency]
+-- Urg(N)/Alr(A)/Resp(W/U)/Rec( )
+uM118PositionICAOunitnameFrequency           [118] FANSPositionICAOUnitNameFrequency,
+
+-- AT [time] CONTACT [icaounitname] [frequency]
+-- Urg(N)/Alr(A)/Resp(W/U)/Rec( )
+uM119TimeICAOunitnameFrequency               [119] FANSTimeICAOunitnameFrequency,
+
+-- MONITOR [icaounitname] [frequency]
+-- Urg(N)/Alr(A)/Resp(W/U)/Rec( )
+uM120ICAOunitnameFrequency                   [120] FANSICAOUnitNameFrequency,
+
+-- AT [position] MONITOR [icaounitname] [frequency]
+-- Urg(N)/Alr(A)/Resp(W/U)/Rec( )
+uM121PositionICAOunitnameFrequency           [121] FANSPositionICAOUnitNameFrequency,
+
+-- AT [time] MONITOR [icaounitname] [frequency]
+-- Urg(N)/Alr(A)/Resp(W/U)/Rec( )
+uM122TimeICAOunitnameFrequency               [122] FANSTimeICAOunitnameFrequency,
+
+-- SQUAWK [beaconcode]
+-- Urg(N)/Alr(A)/Resp(W/U)/Rec( )
+uM123BeaconCode                              [123] FANSBeaconCode,
+
+-- STOP SQUAWK
+-- Urg(N)/Alr(A)/Resp(W/U)/Rec( )
+uM124NULL                                    [124] NULL,
+
+-- SQUAWK ALTITUDE
+-- Urg(N)/Alr(A)/Resp(W/U)/Rec( )
+uM125NULL                                    [125] NULL,
+
+-- STOP ALTITUDE SQUAWK
+-- Urg(N)/Alr(A)/Resp(W/U)/Rec( )
+uM126NULL                                    [126] NULL,
+
+-- REPORT BACK ON ROUTE
+-- Urg(N)/Alr(A)/Resp(R)/Rec( )
+uM127NULL                                    [127] NULL,
+
+-- REPORT LEAVING [altitude]
+-- Urg(N)/Alr(A)/Resp(R)/Rec( )
+uM128Altitude                                [128] FANSAltitude,
+
+-- REPORT LEVEL [altitude]
+-- Urg(N)/Alr(A)/Resp(R)/Rec( )
+uM129Altitude                                [129] FANSAltitude,
+
+-- REPORT PASSING [position]
+-- Urg(N)/Alr(A)/Resp(R)/Rec( )
+uM130Position                                [130] FANSPosition,
+
+-- REPORT REMAINING FUEL AND SOULS ON BOARD
+-- Urg(N)/Alr(A)/Resp(NE)/Rec( )
+uM131NULL                         [131] NULL,
+
+-- CONFIRM POSITION
+-- Urg(N)/Alr(A)/Resp(NE)/Rec( )
+uM132NULL                               [132] NULL,
+
+-- CONFIRM ALTITUDE
+-- Urg(N)/Alr(A)/Resp(NE)/Rec( )
+uM133NULL                               [133] NULL,
+
+-- CONFIRM SPEED
+-- Urg(N)/Alr(A)/Resp(NE)/Rec( )
+uM134NULL                               [134] NULL,
+
+-- CONFIRM ASSIGNED ALTITUDE
+-- Urg(N)/Alr(A)/Resp(NE)/Rec( )
+uM135NULL                               [135] NULL,
+
+-- CONFIRM ASSIGNED SPEED
+-- Urg(N)/Alr(A)/Resp(NE)/Rec( )
+uM136NULL                               [136] NULL,
+
+-- CONFIRM ASSIGNED ROUTE
+-- Urg(N)/Alr(A)/Resp(NE)/Rec( )
+uM137NULL                               [137] NULL,
+
+-- CONFIRM TIME OVER REPORTED WAYPOINT
+-- Urg(N)/Alr(A)/Resp(NE)/Rec( )
+uM138NULL                        [138] NULL,
+
+-- CONFIRM REPORTED WAYPOINT
+-- Urg(N)/Alr(A)/Resp(NE)/Rec( )
+uM139NULL                               [139] NULL,
+
+-- CONFIRM NEXT WAYPOINT
+-- Urg(N)/Alr(A)/Resp(NE)/Rec( )
+uM140NULL                               [140] NULL,
+
+-- CONFIRM NEXT WAYPOINT ETA
+-- Urg(N)/Alr(A)/Resp(NE)/Rec( )
+uM141NULL                               [141] NULL,
+
+-- CONFIRM ENSUING WAYPOINT
+-- Urg(N)/Alr(A)/Resp(NE)/Rec( )
+uM142NULL                               [142] NULL,
+
+-- CONFIRM REQUEST
+-- Urg(N)/Alr(A)/Resp(NE)/Rec( )
+uM143NULL                               [143] NULL,
+
+-- CONFIRM SQUAWK
+-- Urg(N)/Alr(A)/Resp(NE)/Rec( )
+uM144NULL                               [144] NULL,
+
+-- CONFIRM HEADING
+-- Urg(N)/Alr(A)/Resp(NE)/Rec( )
+uM145NULL                               [145] NULL,
+
+-- CONFIRM GROUND TRACK
+-- Urg(N)/Alr(A)/Resp(NE)/Rec( )
+uM146NULL                               [146] NULL,
+
+-- REQUEST POSITION REPORT
+-- Urg(N)/Alr(A)/Resp(NE)/Rec( )
+uM147NULL                               [147] NULL,
+
+-- WHEN CAN YOU ACCEPT [altitude]
+-- Urg(N)/Alr(A)/Resp(NE)/Rec( )
+uM148Altitude                           [148] FANSAltitude,
+
+-- CAN YOU ACCEPT [altitude] AT [position]
+-- Urg(N)/Alr(A)/Resp(A/N)/Rec( )
+uM149AltitudePosition                     [149] FANSAltitudePosition,
+
+-- CAN YOU ACCEPT [altitude] AT [time]
+-- Urg(N)/Alr(A)/Resp(A/N)/Rec( )
+uM150AltitudeTime                         [150] FANSAltitudeTime,
+
+-- WHEN CAN YOU ACCEPT [speed]
+-- Urg(N)/Alr(A)/Resp(NE)/Rec( )
+uM151Speed                                [151] FANSSpeed,
+
+-- WHEN CAN YOU ACCEPT [distanceoffset] [direction] OFFSET
+-- Urg(N)/Alr(A)/Resp(NE)/Rec( )
+uM152DistanceOffsetDirection    [152] FANSDistanceOffsetDirection,
+
+-- ALTIMETER [altimeter]
+-- Urg(N)/Alr(A)/Resp(R)/Rec( )
+uM153Altimeter                            [153] FANSAltimeter,
+
+-- RADAR SERVICES TERMINATED
+-- Urg(N)/Alr(A)/Resp(R)/Rec( )
+uM154NULL                                 [154] NULL,
+
+-- RADAR CONTACT [position]
+-- Urg(N)/Alr(A)/Resp(R)/Rec( )
+uM155Position                             [155] FANSPosition,
+
+-- RADAR CONTACT LOST
+-- Urg(N)/Alr(A)/Resp(R)/Rec( )
+uM156NULL                                 [156] NULL,
+
+-- CHECK STUCK MICROPHONE [frequency]
+-- Urg(U)/Alr(A)/Resp(R)/Rec( )
+uM157Frequency                            [157] FANSFrequency,
+
+-- ATIS [atiscode]
+-- Urg(N)/Alr(A)/Resp(R)/Rec( )
+uM158ATISCode                             [158] FANSATISCode,
+
+-- ERROR [errorinformation]
+-- Urg(U)/Alr(A)/Resp(NE)/Rec( )
+uM159ErrorInformation                     [159] FANSErrorInformation,
+
+-- NEXT DATA AUTHORITY [icaofacilitydesignation]
+-- Urg(L)/Alr(N)/Resp(NE)/Rec( )
+uM160ICAOfacilitydesignation              [160] FANSICAOfacilityDesignation,
+
+-- END SERVICE
+-- Urg(L)/Alr(N)/Resp(NE)/Rec( )
+uM161NULL                                 [161] NULL,
+
+-- SERVICE UNAVAILABLE
+-- Urg(L)/Alr(V)/Resp(NE)/Rec( )
+uM162NULL                                 [162] NULL,
+
+-- [icaofacilitydesignation] [tp4table]
+-- Urg(L)/Alr(N)/Resp(NE)/Rec( )
+uM163ICAOfacilitydesignationTp4table    [163] FANSICAOFacilityDesignationTp4Table,
+
+-- WHEN READY
+-- Urg(L)/Alr(N)/Resp(NE)/Rec( )
+uM164NULL                                 [164] NULL,
+
+-- THEN
+-- Urg(L)/Alr(N)/Resp(NE)/Rec( )
+uM165NULL                                 [165] NULL,
+
+-- DUE TO TRAFFIC
+-- Urg(L)/Alr(N)/Resp(NE)/Rec( )
+uM166NULL                                 [166] NULL,
+
+-- DUE TO AIRSPACE RESTRICTION
+-- Urg(L)/Alr(N)/Resp(NE)/Rec( )
+uM167NULL                                 [167] NULL,
+
+-- DISREGARD
+-- Urg(N)/Alr(A)/Resp(R)/Rec( )
+uM168NULL                                      [168] NULL,
+
+-- [freetext]
+-- Urg(N)/Alr(V)/Resp(R)/Rec( )
+uM169FreeText                                 [169] FANSFreeText,
+
+-- [freetext]
+-- Urg(D)/Alr(A/D)/Resp(R)/Rec( )
+uM170FreeText                                 [170] FANSFreeText,
+
+-- CLIMB AT [verticalrate] MINIMUM
+-- Urg(N)/Alr(A)/Resp(W/U)/Rec( )
+uM171VerticalRate                               [171] FANSVerticalRate,
+
+-- CLIMB AT [verticalrate] MAXIMUM
+-- Urg(N)/Alr(A)/Resp(W/U)/Rec( )
+uM172VerticalRate                               [172] FANSVerticalRate,
+
+-- DESCEND AT [verticalrate] MINIMUM
+-- Urg(N)/Alr(A)/Resp(W/U)/Rec( )
+uM173VerticalRate                               [173] FANSVerticalRate,
+
+-- DESCEND AT [verticalrate] MAXIMUM
+-- Urg(N)/Alr(A)/Resp(W/U)/Rec( )
+uM174VerticalRate                               [174] FANSVerticalRate,
+
+-- REPORT REACHING [altitude]
+-- Urg(N)/Alr(A)/Resp(R)/Rec( )
+uM175Altitude                                   [175] FANSAltitude,
+
+-- MAINTAIN OWN SEPARATION AND VMC
+-- Urg(N)/Alr(A)/Resp(W/U)/Rec( )
+uM176NULL                                       [176] NULL,
+
+-- AT PILOTS DISCRETION
+-- Urg(L)/Alr(L)/Resp(N)/Rec( )
+uM177NULL                                       [177] NULL,
+
+-- [trackdetailmsg-deleted]
+-- Urg(N)/Alr(A)/Resp(W/U)/Rec(RC)
+uM178NULL                                     [178] NULL,
+
+-- SQUAWK IDENT
+-- Urg(N)/Alr(A)/Resp(W/U)/Rec( )
+uM179NULL                                       [179] NULL,
+
+-- REPORT REACHING BLOCK [altitude] TO [altitude]
+-- Urg(N)/Alr(A)/Resp(R)/Rec( )
+uM180AltitudeAltitude                     [180] FANSAltitudeAltitude,
+
+-- REPORT DISTANCE [tofrom] [position]
+-- Urg(N)/Alr(A)/Resp(NE)/Rec( )
+uM181ToFromPosition                             [181] FANSToFromPosition,
+
+-- CONFIRM ATIS CODE
+-- Urg(N)/Alr(A)/Resp(NE)/Rec( )
+uM182NULL                                       [182] NULL
+}
+-- Note: End of FANSATCUplinkMsgElementId CHOICE Data Structure
+
+FANSATCDownlinkMessage ::= SEQUENCE {
+    aTCMessageheader			FANSATCMessageHeader,
+    aTCDownlinkmsgelementid		FANSATCDownlinkMsgElementId,
+    aTCdownlinkmsgelementid-seqOf	FANSATCDownlinkMsgElementIdSequence OPTIONAL
+}
+
+FANSATCDownlinkMsgElementIdSequence ::=	SEQUENCE SIZE (1..4) OF FANSATCDownlinkMsgElementId
+
+FANSATCDownlinkMsgElementId ::= CHOICE {
+-- WILCO
+-- Resp(N)
+dM0NULL                                      [0] NULL,
+
+-- UNABLE
+-- Resp(N)
+dM1NULL                                      [1] NULL,
+
+-- STANDBY
+-- Resp(N)
+dM2NULL                                      [2] NULL,
+
+-- ROGER
+-- Resp(N)
+dM3NULL                                      [3] NULL,
+
+-- AFFIRM
+-- Resp(N)
+dM4NULL                                      [4] NULL,
+
+-- NEGATIVE
+-- Resp(N)
+dM5NULL                                      [5] NULL,
+
+-- REQUEST [altitude]
+-- Resp(Y)
+dM6Altitude                                  [6] FANSAltitude,
+
+-- REQUEST BLOCK [altitude] TO [altitude]
+-- Resp(Y)
+dM7AltitudeAltitude                  [7] FANSAltitudeAltitude,
+
+-- REQUEST CRUISE CLIMB TO [altitude]
+-- Resp(Y)
+dM8Altitude                                  [8] FANSAltitude,
+
+-- REQUEST CLIMB TO [altitude]
+-- Resp(Y)
+dM9Altitude                 [9] FANSAltitude,
+
+-- REQUEST DESCENT TO [altitude]
+-- Resp(Y)
+dM10Altitude                                 [10] FANSAltitude,
+
+-- AT [position] REQUEST CLIMB TO [altitude]
+-- Resp(Y)
+dM11PositionAltitude                         [11] FANSPositionAltitude,
+
+-- AT [position] REQUEST DESCENT TO [altitude]
+-- Resp(Y)
+dM12PositionAltitude                      [12] FANSPositionAltitude,
+
+-- AT [time] REQUEST CLIMB TO [altitude]
+-- Resp(Y)
+dM13TimeAltitude                             [13] FANSTimeAltitude,
+
+-- AT [time] REQUEST DESCENT TO [altitude]
+-- Resp(Y)
+dM14TimeAltitude                             [14] FANSTimeAltitude,
+
+-- REQUEST OFFSET [distanceoffset] [direction] OF ROUTE
+-- Resp(Y)
+dM15DistanceOffsetDirection                  [15] FANSDistanceOffsetDirection,
+
+-- AT [position] REQUEST OFFSET [distanceoffset] [direction] OF ROUTE
+-- Resp(Y)
+dM16PositionDistanceOffsetDirection        [16] FANSPositionDistanceOffsetDirection,
+
+-- AT [time] REQUEST OFFSET [distanceoffset] [direction] OF ROUTE
+-- Resp(Y)
+dM17TimeDistanceOffsetDirection            [17] FANSTimeDistanceOffsetDirection,
+
+-- REQUEST [speed]
+-- Resp(Y)
+dM18Speed                                    [18] FANSSpeed,
+
+-- REQUEST [speed] TO [speed]
+-- Resp(Y)
+dM19SpeedSpeed                               [19] FANSSpeedSpeed,
+
+-- REQUEST VOICE CONTACT
+-- Resp(Y)
+dM20NULL                                     [20] NULL,
+
+-- REQUEST VOICE CONTACT [frequency]
+-- Resp(Y)
+dM21Frequency                                [21] FANSFrequency,
+
+-- REQUEST DIRECT TO [position]
+-- Resp(Y)
+dM22Position                                 [22] FANSPosition,
+
+-- REQUEST [procedurename]
+-- Resp(Y)
+dM23ProcedureName                            [23] FANSProcedureName,
+
+-- REQUEST [routeclearance]
+-- Resp(Y)
+dM24RouteClearance                           [24] FANSRouteClearance,
+
+-- REQUEST CLEARANCE
+-- Resp(Y)
+dM25NULL                                     [25] NULL,
+
+-- REQUEST WEATHER DEVIATION TO [position] VIA [routeclearance]
+-- Resp(Y)
+dM26PositionRouteClearance                  [26] FANSPositionRouteClearance,
+
+-- REQUEST WEATHER DEVIATION UP TO [distanceoffset] [direction] OF ROUTE
+-- Resp(Y)
+dM27DistanceOffsetDirection              [27] FANSDistanceOffsetDirection,
+
+-- LEAVING [altitude]
+-- Resp(N)
+dM28Altitude                             [28] FANSAltitude,
+
+-- CLIMBING TO [altitude]
+-- Resp(N)
+dM29Altitude                             [29] FANSAltitude,
+
+-- DESCENDING TO [altitude]
+-- Resp(N)
+dM30Altitude                             [30] FANSAltitude,
+
+-- PASSING [position]
+-- Resp(N)
+dM31Position                             [31] FANSPosition,
+
+-- PRESENT ALTITUDE [altitude]
+-- Resp(N)
+dM32Altitude                             [32] FANSAltitude,
+
+-- PRESENT POSITION [position]
+-- Resp(N)
+dM33Position                             [33] FANSPosition,
+
+-- PRESENT SPEED [speed]
+-- Resp(N)
+dM34Speed                                [34] FANSSpeed,
+
+-- PRESENT HEADING [degrees]
+-- Resp(N)
+dM35Degrees                              [35] FANSDegrees,
+
+-- PRESENT GROUND TRACK [degrees]
+-- Resp(N)
+dM36Degrees                              [36] FANSDegrees,
+
+-- LEVEL [altitude]
+-- Resp(N)
+dM37Altitude                             [37] FANSAltitude,
+
+-- ASSIGNED ALTITUDE [altitude]
+-- Resp(N)
+dM38Altitude                             [38] FANSAltitude,
+
+-- ASSIGNED SPEED [speed]
+-- Resp(N)
+dM39Speed                                [39] FANSSpeed,
+
+-- ASSIGNED ROUTE [routeclearance]
+-- Resp(N)
+dM40RouteClearance                       [40] FANSRouteClearance,
+
+-- BACK ON ROUTE
+-- Resp(N)
+dM41NULL                                 [41] NULL,
+
+-- NEXT WAYPOINT [position]
+-- Resp(N)
+dM42Position                             [42] FANSPosition,
+
+-- NEXT WAYPOINT ETA [time]
+-- Resp(N)
+dM43Time                                 [43] FANSTime,
+
+-- ENSUING WAYPOINT [position]
+-- Resp(N)
+dM44Position                             [44] FANSPosition,
+
+-- REPORTED WAYPOINT [position]
+-- Resp(N)
+dM45Position                                 [45] FANSPosition,
+
+-- REPORTED WAYPOINT [time]
+-- Resp(N)
+dM46Time                                     [46] FANSTime,
+
+-- SQUAWKING [beaconcode]
+-- Resp(N)
+dM47BeaconCode                               [47] FANSBeaconCode,
+
+-- POSITION REPORT [positionreport]
+-- Resp(N)
+dM48PositionReport                           [48] FANSPositionReport,
+
+-- WHEN CAN WE EXPECT [speed]
+-- Resp(Y)
+dM49Speed                                    [49] FANSSpeed,
+
+-- WHEN CAN WE EXPECT [speed] TO [speed]
+-- Resp(Y)
+dM50SpeedSpeed                               [50] FANSSpeedSpeed,
+
+-- WHEN CAN WE EXPECT BACK ON ROUTE
+-- Resp(Y)
+dM51NULL                                     [51] NULL,
+
+-- WHEN CAN WE EXPECT LOWER ALTITUDE
+-- Resp(Y)
+dM52NULL                        [52] NULL,
+
+-- WHEN CAN WE EXPECT HIGHER ALTITUDE
+-- Resp(Y)
+dM53NULL                         [53] NULL,
+
+-- WHEN CAN WE EXPECT CRUISE CLIMB TO [altitude]
+-- Resp(Y)
+dM54Altitude                        [54] FANSAltitude,
+
+-- PAN PAN PAN
+-- Resp(N)
+dM55NULL                                     [55] NULL,
+
+-- MAYDAY MAYDAY MAYDAY
+-- Resp(N)
+dM56NULL                                     [56] NULL,
+
+-- [remainingfuel] OF FUEL REMAINING AND [remainingsouls] SOULS ON BOARD
+-- Resp(N)
+dM57RemainingFuelRemainingSouls             [57] FANSRemainingFuelRemainingSouls,
+
+-- CANCEL EMERGENCY
+-- Resp(N)
+dM58NULL                                     [58] NULL,
+
+-- DIVERTING TO [position] VIA [routeclearance]
+-- Resp(N)
+dM59PositionRouteClearance                  [59] FANSPositionRouteClearance,
+
+-- OFFSETTING [distanceoffset] [direction] OF ROUTE
+-- Resp(N)
+dM60DistanceOffsetDirection                  [60] FANSDistanceOffsetDirection,
+
+-- DESCENDING TO [altitude]
+-- Resp(N)
+dM61Altitude                                 [61] FANSAltitude,
+
+-- ERROR [errorinformation]
+-- Resp(N)
+dM62ErrorInformation                         [62] FANSErrorInformation,
+
+-- NOT CURRENT DATA AUTHORITY
+-- Resp(N)
+dM63NULL                                         [63] NULL,
+
+-- [icaofacilitydesignation]
+-- Resp(N)
+dM64ICAOfacilitydesignation            [64] FANSICAOfacilityDesignation,
+
+-- DUE TO WEATHER
+-- Resp(N)
+dM65NULL                                         [65] NULL,
+
+-- DUE TO AIRCRAFT PERFORMANCE
+-- Resp(N)
+dM66NULL                                         [66] NULL,
+
+-- Note: The ATC Ground System peer will assign an Urgency of Low for messsage element [67].
+-- [freetext]
+-- Resp(N)
+dM67FreeText                                 [67] FANSFreeText,
+
+-- Note: The ATC Ground System peer will assign an Urgency of Distress for message element [68].
+-- [freetext]
+-- Resp(Y)
+dM68FreeText                                 [68] FANSFreeText,
+
+-- REQUEST VMC DESCENT
+-- Resp(Y)
+dM69NULL                                         [69] NULL,
+
+-- REQUEST HEADING [degrees]
+-- Resp(Y)
+dM70Degrees                                      [70] FANSDegrees,
+
+-- REQUEST GROUND TRACK [degrees]
+-- Resp(Y)
+dM71Degrees                                      [71] FANSDegrees,
+
+-- REACHING [altitude]
+-- Resp(N)
+dM72Altitude                                     [72] FANSAltitude,
+
+-- [versionnumber]
+-- Resp(N)
+dM73VersionNumber                               [73] FANSVersionNumber,
+
+-- MAINTAIN OWN SEPARATION AND VMC
+-- Resp(N)
+dM74NULL                                                 [74] NULL,
+
+-- AT PILOTS DISCRETION
+-- Resp(N)
+dM75NULL                                                 [75] NULL,
+
+-- REACHING BLOCK [altitude] TO [altitude]
+-- Resp(N)
+dM76AltitudeAltitude                             [76] FANSAltitudeAltitude,
+
+-- ASSIGNED BLOCK [altitude] TO [altitude]
+-- Resp(N)
+dM77AltitudeAltitude                             [77] FANSAltitudeAltitude,
+
+-- AT [time] [distance] [tofrom] [position]
+-- Resp(N)
+dM78TimeDistanceToFromPosition                   [78] FANSTimeDistanceToFromPosition,
+
+-- ATIS [atiscode]
+-- Resp(N)
+dM79ATISCode                                     [79] FANSATISCode,
+
+-- DEVIATING [distanceoffset][direction] OF ROUTE
+-- Resp(N)
+dM80DistanceOffsetDirection             [80] FANSDistanceOffsetDirection,
+
+-- reserved to ensure eight bit message element identification field.
+dM81NULL                                          [81] NULL,
+
+-- reserved to ensure eight bit message element identification field.
+dM82NULL                                          [82] NULL,
+
+-- reserved to ensure eight bit message element identification field.
+dM83NULL                                          [83] NULL,
+
+-- reserved to ensure eight bit message element identification field.
+dM84NULL                                          [84] NULL,
+
+-- reserved to ensure eight bit message element identification field.
+dM85NULL                                          [85] NULL,
+
+-- reserved to ensure eight bit message element identification field.
+dM86NULL                                          [86] NULL,
+
+-- reserved to ensure eight bit message element identification field.
+dM87NULL                                          [87] NULL,
+
+-- reserved to ensure eight bit message element identification field.
+dM88NULL                                          [88] NULL,
+
+-- reserved to ensure eight bit message element identification field.
+dM89NULL                                          [89] NULL,
+
+-- reserved to ensure eight bit message element identification field.
+dM90NULL                                          [90] NULL,
+
+-- reserved to ensure eight bit message element identification field.
+dM91NULL                                          [91] NULL,
+
+-- reserved to ensure eight bit message element identification field.
+dM92NULL                                          [92] NULL,
+
+-- reserved to ensure eight bit message element identification field.
+dM93NULL                                          [93] NULL,
+
+-- reserved to ensure eight bit message element identification field.
+dM94NULL                                          [94] NULL,
+
+-- reserved to ensure eight bit message element identification field.
+dM95NULL                                          [95] NULL,
+
+-- reserved to ensure eight bit message element identification field.
+dM96NULL                                          [96] NULL,
+
+-- reserved to ensure eight bit message element identification field.
+dM97NULL                                          [97] NULL,
+
+-- reserved to ensure eight bit message element identification field.
+dM98NULL                                          [98] NULL,
+
+-- reserved to ensure eight bit message element identification field.
+dM99NULL                                          [99] NULL,
+
+-- reserved to ensure eight bit message element identification field.
+dM100NULL                                         [100] NULL,
+
+-- reserved to ensure eight bit message element identification field.
+dM101NULL                                         [101] NULL,
+
+-- reserved to ensure eight bit message element identification field.
+dM102NULL                                         [102] NULL,
+
+-- reserved to ensure eight bit message element identification field.
+dM103NULL                                         [103] NULL,
+
+-- reserved to ensure eight bit message element identification field.
+dM104NULL                                         [104] NULL,
+
+-- reserved to ensure eight bit message element identification field.
+dM105NULL                                         [105] NULL,
+
+-- reserved to ensure eight bit message element identification field.
+dM106NULL                                         [106] NULL,
+
+-- reserved to ensure eight bit message element identification field.
+dM107NULL                                         [107] NULL,
+
+-- reserved to ensure eight bit message element identification field.
+dM108NULL                                         [108] NULL,
+
+-- reserved to ensure eight bit message element identification field.
+dM109NULL                                         [109] NULL,
+
+-- reserved to ensure eight bit message element identification field.
+dM110NULL                                         [110] NULL,
+
+-- reserved to ensure eight bit message element identification field.
+dM111NULL                                         [111] NULL,
+
+-- reserved to ensure eight bit message element identification field.
+dM112NULL                                         [112] NULL,
+
+-- reserved to ensure eight bit message element identification field.
+dM113NULL                                         [113] NULL,
+
+-- reserved to ensure eight bit message element identification field.
+dM114NULL                                         [114] NULL,
+
+-- reserved to ensure eight bit message element identification field.
+dM115NULL                                         [115] NULL,
+
+-- reserved to ensure eight bit message element identification field.
+dM116NULL                                         [116] NULL,
+
+-- reserved to ensure eight bit message element identification field.
+dM117NULL                                         [117] NULL,
+
+-- reserved to ensure eight bit message element identification field.
+dM118NULL                                         [118] NULL,
+
+-- reserved to ensure eight bit message element identification field.
+dM119NULL                                         [119] NULL,
+
+-- reserved to ensure eight bit message element identification field.
+dM120NULL                                         [120] NULL,
+
+-- reserved to ensure eight bit message element identification field.
+dM121NULL                                         [121] NULL,
+
+-- reserved to ensure eight bit message element identification field.
+dM122NULL                                         [122] NULL,
+
+-- reserved to ensure eight bit message element identification field.
+dM123NULL                                         [123] NULL,
+
+-- reserved to ensure eight bit message element identification field.
+dM124NULL                                         [124] NULL,
+
+-- reserved to ensure eight bit message element identification field.
+dM125NULL                                         [125] NULL,
+
+-- reserved to ensure eight bit message element identification field.
+dM126NULL                                         [126] NULL,
+
+-- reserved to ensure eight bit message element identification field.
+dM127NULL                                         [127] NULL,
+
+-- reserved to ensure eight bit message element identification field.
+dM128NULL                                         [128] NULL
+}
+-- Note: End of FANSATCDownlinkMsgElementId CHOICE Data Structure
+
+-- Note: Data Structures referenced within the Uplink and Downlink Messages
+--    and those used frequently within other data structures are listed
+--    in Alphabetical Order. Otherwise, the primitives are defined
+--    the first time they are used.
+
+FANSAirport ::= IA5String (SIZE (4))
+
+FANSAltimeter ::= CHOICE {
+    altimeterEnglish      [0] FANSAltimeterEnglish,
+    altimeterMetric       [1] FANSAltimeterMetric
+}
+
+FANSAltimeterEnglish ::= INTEGER (2200..3200)
+-- Units = .01 Inchs Mercury, Range (22.00 .. 32.00)
+
+FANSAltimeterMetric ::= INTEGER (7500..12500)
+-- Units = .1 HectoPascal, Range (750.0..1250.0)
+
+FANSAltitude ::= CHOICE {
+    altitudeQNH                    [0]   FANSAltitudeQNH,
+    altitudeQNHMeters              [1]   FANSAltitudeQNHMeters,
+    altitudeQFE                    [2]   FANSAltitudeQFE,
+    altitudeQFEMeters              [3]   FANSAltitudeQFEMeters,
+    altitudeGNSSFeet               [4]   FANSAltitudeGNSSFeet,
+    altitudeGNSSMeters             [5]   FANSAltitudeGNSSMeters,
+    altitudeFlightLevel            [6]   FANSAltitudeFlightLevel,
+    altitudeFlightLevelMetric      [7]   FANSAltitudeFlightLevelMetric
+}
+
+FANSAltitudeQNH ::= INTEGER (0..2500)
+-- Units = 10 Feet, Range (0..25000)
+
+FANSAltitudeQNHMeters ::= INTEGER (0..16000)
+-- Units = 1 Meter, Range (0..16000)
+
+FANSAltitudeQFE ::= INTEGER (0..2100)
+-- Units = 10 Feet, Range (0..21000)
+
+FANSAltitudeQFEMeters ::= INTEGER (0..7000)
+-- Units = 1 Meter, Range (0..7000)
+
+FANSAltitudeGNSSFeet ::= INTEGER (0..150000)
+-- Units = 1 Foot, Range (0..150000)
+
+FANSAltitudeGNSSMeters ::= INTEGER (0..50000)
+-- Units = 1 Meter, Range (0..50000)
+
+FANSAltitudeFlightLevel ::= INTEGER (30..600)
+-- Units = 1 Level (100 Feet), Range (030..600)
+
+FANSAltitudeFlightLevelMetric ::= INTEGER (100..2000)
+-- Units = 1 Level (10 Meters), Range (100..2000)
+
+FANSAltitudePosition ::= SEQUENCE {
+    altitude FANSAltitude,
+    position FANSPosition
+}
+
+FANSAltitudeAltitude ::= SEQUENCE SIZE (2) OF FANSAltitude
+
+FANSAltitudeSpeed ::= SEQUENCE {
+    altitude FANSAltitude,
+    speed FANSSpeed
+}
+
+FANSAltitudeSpeedSpeed ::= SEQUENCE {
+    altitude          FANSAltitude,
+    speed-seqOf       FANSSpeedSpeed
+}
+
+FANSAltitudeTime ::= SEQUENCE {
+    altitude FANSAltitude,
+    time FANSTime
+}
+
+FANSATISCode ::= IA5String (SIZE (1))
+
+FANSATWAltitude ::= SEQUENCE {
+    aTWAltitudeTolerance FANSATWAltitudeTolerance,
+    altitude FANSAltitude
+}
+
+FANSATWAltitudeTolerance ::= ENUMERATED {
+    at                 (0),
+    atorabove          (1),
+    atorbelow          (2)
+}
+
+FANSBeaconCode ::= SEQUENCE SIZE (4) OF FANSBeaconCodeOctalDigit
+
+FANSBeaconCodeOctalDigit ::= INTEGER (0..7)
+
+FANSDegrees ::= CHOICE {
+    degreesMagnetic      [0] FANSDegreesMagnetic,
+    degreesTrue [1] FANSDegreesTrue
+}
+
+FANSDegreesMagnetic ::= INTEGER (1..360)
+-- Units = 1 degree, Range (1..360)
+
+FANSDegreesTrue ::= INTEGER (1..360)
+-- Units = 1 degree, Range (1..360)
+
+FANSDirection ::= ENUMERATED {
+    left       (0),
+    right      (1),
+    eitherSide (2),
+    north      (3),
+    south      (4),
+    east       (5),
+    west       (6),
+    northEast (7),
+    northWest (8),
+    southEast (9),
+    southWest (10)
+}
+
+FANSDirectionDegrees ::= SEQUENCE {
+    direction FANSDirection,
+    degrees FANSDegrees
+}
+
+FANSDistanceOffset ::= CHOICE {
+    distanceOffsetNm [0] FANSDistanceOffsetNm,
+    distanceOffsetKm [1] FANSDistanceOffsetKm
+}
+
+FANSDistanceOffsetNm ::= INTEGER (1..128)
+-- Units = 1 Nautical Mile, Range (1..128)
+
+FANSDistanceOffsetKm ::= INTEGER (1..256)
+-- Units = 1 Kilometer, Range (1..256)
+
+FANSDistanceOffsetDirection ::= SEQUENCE {
+    distanceOffset FANSDistanceOffset,
+    direction FANSDirection
+}
+
+FANSErrorInformation ::= ENUMERATED {
+    applicationError                         (0),
+    duplicateMsgIdentificationNumber         (1),
+    unrecognizedMsgReferenceNumber           (2),
+    endServiceWithPendingMsgs                (3),
+    endServiceWithNoValidResponse            (4),
+    insufficientMsgStorageCapacity           (5),
+    noAvailableMsgIdentificationNumber       (6),
+    commandedTermination                     (7),
+    insufficientData                         (8),
+    unexpectedData                           (9),
+    invalidData                              (10),
+    reservedErrorMsg                         (16)
+-- reservedErrorMsg to ensure 5 bit FANSErrorInformation field for additional errror messages
+}
+
+FANSFixName ::= IA5String (SIZE (1..5))
+
+FANSFreeText ::= IA5String (SIZE (1..256))
+
+FANSFrequency ::= CHOICE {
+    frequencyhf                      [0] FANSFrequencyhf,
+    frequencyvhf                     [1] FANSFrequencyvhf,
+    frequencyuhf                     [2] FANSFrequencyuhf,
+    frequencysatchannel              [3] FANSFrequencysatchannel
+}
+
+FANSFrequencyhf ::= INTEGER (2850..28000)
+-- Units = 1 Kilohertz, Range (2850..28000)
+
+FANSFrequencyvhf ::= INTEGER (117000..138000)
+-- Units = .001 Megahertz, Range (117.000..138.000)
+
+FANSFrequencyuhf ::= INTEGER (225000..399975)
+-- Units = .025 Megahertz, Range (225.000..399.975)
+
+FANSFrequencysatchannel ::= NumericString (SIZE (12))
+-- FANSFrequencysatchannel corresponds to a 12 digit telephone number
+
+FANSHoldClearance ::= SEQUENCE {
+    position FANSPosition,
+    altitude FANSAltitude,
+    degrees FANSDegrees,
+    direction FANSDirection,
+    legType FANSLegType                         OPTIONAL
+}
+
+FANSICAOUnitName ::= SEQUENCE {
+    iCAOFacilityIdentification FANSICAOFacilityIdentification,
+    iCAOFacilityFunction FANSICAOFacilityFunction
+}
+
+FANSICAOFacilityIdentification ::= CHOICE {
+    iCAOfacilitydesignation          [0] FANSICAOfacilityDesignation,
+    iCAOfacilityname                 [1] FANSICAOFacilityName
+}
+
+FANSICAOfacilityDesignation ::= IA5String (SIZE (4))
+
+FANSICAOFacilityName ::= IA5String (SIZE (3..18))
+
+FANSICAOFacilityFunction ::= ENUMERATED {
+    center                     (0),
+    approach                   (1),
+    tower                      (2),
+    final                      (3),
+    groundControl              (4),
+    clearanceDelivery          (5),
+    departure                  (6),
+    control                    (7)
+}
+
+FANSICAOUnitNameFrequency ::= SEQUENCE {
+    iCAOUnitName FANSICAOUnitName,
+    frequency FANSFrequency
+}
+
+FANSICAOFacilityDesignationTp4Table ::= SEQUENCE {
+    iCAOFacilityDesignation FANSICAOfacilityDesignation,
+    tp4table FANSTp4table
+}
+
+FANSLatitudeLongitude ::= SEQUENCE {
+    latitude FANSLatitude,
+    longitude FANSLongitude
+}
+
+FANSLatitudeLongitudeSequence ::= SEQUENCE SIZE (1..128) OF FANSLatitudeLongitude
+
+FANSLatitude ::= SEQUENCE {
+    latitudeDegrees FANSLatitudeDegrees,
+    minutesLatLon FANSMinutesLatLon                        OPTIONAL,
+    latitudeDirection FANSLatitudeDirection
+}
+
+FANSLatitudeDegrees ::= INTEGER (0..90)
+-- Units = 1 Degree, Range (0..90)
+
+FANSMinutesLatLon ::= INTEGER (0..599)
+-- Units = .1 Minute, Range (0.. 59.9)
+
+FANSLatitudeDirection ::= ENUMERATED {
+    north               (0),
+    south               (1)
+}
+
+FANSLongitude ::= SEQUENCE {
+    longitudeDegrees FANSLongitudeDegrees,
+    minutesLatLon FANSMinutesLatLon                       OPTIONAL,
+    longitudeDirection FANSLongitudeDirection
+}
+
+FANSLongitudeDegrees ::= INTEGER (0..180)
+-- Units = 1 Degree, Range (0..180)
+
+FANSLongitudeDirection ::= ENUMERATED {
+    east                 (0),
+    west                 (1)
+}
+
+FANSLegType ::= CHOICE {
+    legDistance                     [0] FANSLegDistance,
+    legTime                         [1] FANSLegTime
+}
+
+FANSLegDistance ::= CHOICE {
+    legDistanceEnglish                  [0] FANSLegDistanceEnglish ,
+    legDistanceMetric                   [1] FANSLegDistanceMetric
+}
+
+FANSLegDistanceEnglish ::= INTEGER (1..999)
+-- Units = .1 Nautical Mile, Range (.1..99.9)
+
+FANSLegDistanceMetric ::= INTEGER (1..128)
+-- Units = 1 Kilometer, Range (1..128)
+
+FANSLegTime ::= INTEGER (1..99)
+-- Units = .1 Minute, Range (.1..9.9)
+
+FANSPlaceBearingDistance ::= SEQUENCE {
+    fixName FANSFixName,
+    latitudeLongitude FANSLatitudeLongitude         OPTIONAL,
+    degrees FANSDegrees,
+    distance FANSDistance
+}
+
+FANSDistance ::= CHOICE {
+    distanceNm [0] FANSDistanceNm,
+    distanceKm [1] FANSDistanceKm
+}
+
+FANSDistanceNm ::= INTEGER (0..9999)
+-- Units = .1 Nautical Mile, Range (0..999.9)
+
+FANSDistanceKm ::= INTEGER (1..1024)
+-- Units = 1 Kilometer, Range (1..1024)
+
+FANSPosition ::= CHOICE {
+    fixName                       [0] FANSFixName,
+    navaid                        [1] FANSNavaid,
+    airport                       [2] FANSAirport,
+    latitudeLongitude             [3] FANSLatitudeLongitude,
+    placeBearingDistance [4] FANSPlaceBearingDistance
+}
+
+FANSNavaid ::= IA5String (SIZE (1..4) )
+
+FANSPositionAltitude ::= SEQUENCE {
+    position FANSPosition,
+    altitude FANSAltitude
+}
+
+
+FANSPositionAltitudeAltitude ::= SEQUENCE {
+    position             FANSPosition,
+    altitude-seqOf       FANSAltitudeAltitude
+}
+
+FANSPositionAltitudeSpeed ::= SEQUENCE {
+    position FANSPosition,
+    altitude FANSAltitude,
+    speed FANSSpeed
+}
+
+FANSPositionDegrees ::= SEQUENCE {
+    position FANSPosition,
+    degrees FANSDegrees
+}
+
+FANSPositionDistanceOffsetDirection ::= SEQUENCE {
+    position FANSPosition,
+    distanceOffset FANSDistanceOffset,
+    direction FANSDirection
+}
+
+FANSPositionICAOUnitNameFrequency ::= SEQUENCE {
+    position FANSPosition,
+    iCAOUnitName FANSICAOUnitName,
+    frequency FANSFrequency
+}
+
+FANSPositionPosition ::= SEQUENCE SIZE (2) OF FANSPosition
+
+FANSPositionProcedureName ::= SEQUENCE {
+    position FANSPosition,
+    procedureName FANSProcedureName
+}
+
+FANSPositionReport ::= SEQUENCE {
+    positioncurrent                 [0] FANSPositionCurrent,
+    timeatpositioncurrent           [1] FANSTimeAtPositionCurrent,
+    altitude                        [2] FANSAltitude,
+    fixnext                         [3] FANSFixNext                     OPTIONAL,
+    timeetaatfixnext                [4] FANSTimeEtaAtFixNext            OPTIONAL,
+    fixnextplusone                  [5] FANSFixNextPlusOne              OPTIONAL,
+    timeetadestination              [6] FANSTimeEtaDestination          OPTIONAL,
+    remainingFuel                   [7] FANSRemainingFuel               OPTIONAL,
+    temperature                     [8] FANSTemperature                 OPTIONAL,
+    winds                           [9] FANSWinds                       OPTIONAL,
+    turbulence                      [10] FANSTurbulence                 OPTIONAL,
+    icing                           [11] FANSIcing                      OPTIONAL,
+    speed                           [12] FANSSpeed                      OPTIONAL,
+    speedground                     [13] FANSSpeedGround                OPTIONAL,
+    verticalChange                  [14] FANSVerticalChange             OPTIONAL,
+    trackAngle                      [15] FANSTrackAngle                 OPTIONAL,
+    trueHeading                     [16] FANSTrueheading                OPTIONAL,
+    distance                        [17] FANSDistance                   OPTIONAL,
+    supplementaryInformation        [18] FANSSupplementaryInformation   OPTIONAL,
+    reportedWaypointPosition        [19] FANSReportedWaypointPosition   OPTIONAL,
+    reportedWaypointTime            [20] FANSReportedWaypointTime       OPTIONAL,
+    reportedWaypointAltitude        [21] FANSReportedWaypointAltitude   OPTIONAL
+}
+
+FANSPositionCurrent ::= FANSPosition
+
+FANSTimeAtPositionCurrent ::= FANSTime
+
+FANSFixNext ::= FANSPosition
+
+FANSTimeEtaAtFixNext ::= FANSTime
+
+FANSFixNextPlusOne ::= FANSPosition
+
+FANSTimeEtaDestination ::= FANSTime
+
+FANSTemperature ::= CHOICE {
+    temperatureC [0] FANSTemperatureC,
+    temperatureF [1] FANSTemperatureF
+}
+
+FANSTemperatureC ::= INTEGER (-80..47)
+-- Units = 1 Degree Centigrade, Range (-80..47)
+
+FANSTemperatureF ::= INTEGER (-105..150)
+-- Units = 1 Degree Fahrenheit, Range (-105..150)
+
+FANSWinds ::= SEQUENCE {
+    windDirection FANSWindDirection,
+    windSpeed FANSWindSpeed
+}
+
+FANSWindDirection ::= INTEGER (1..360)
+-- Units = 1 Degree, Range (1..360)
+
+FANSWindSpeed ::= CHOICE {
+    windSpeedEnglish [0] FANSWindSpeedEnglish,
+    windSpeedMetric  [1] FANSWindSpeedMetric
+}
+
+FANSWindSpeedEnglish ::= INTEGER (0..255)
+-- Units = 1 Knot, Range (0..255)
+
+FANSWindSpeedMetric ::= INTEGER (0..511)
+--Units = 1 Kilometer/Hour, Range (0..511)
+
+FANSTurbulence ::= ENUMERATED {
+    light       (0),
+    moderate    (1),
+    severe      (2)
+}
+
+FANSIcing ::= ENUMERATED {
+    trace    (0),
+    light    (1),
+    moderate (2),
+    severe   (3)
+}
+
+FANSVerticalChange ::= SEQUENCE {
+    verticalDirection FANSVerticalDirection,
+    verticalRate FANSVerticalRate
+}
+
+FANSVerticalDirection ::= ENUMERATED {
+    up              (0),
+    down            (1)
+}
+
+FANSTrackAngle ::= FANSDegrees
+
+FANSTrueheading ::= FANSDegrees
+
+FANSSupplementaryInformation ::= FANSFreeText
+
+FANSReportedWaypointPosition ::= FANSPosition
+
+FANSReportedWaypointTime ::= FANSTime
+
+FANSReportedWaypointAltitude ::= FANSAltitude
+
+FANSPositionRouteClearance ::= SEQUENCE {
+    position FANSPosition,
+    routeClearance FANSRouteClearance
+}
+
+FANSPositionSpeed ::= SEQUENCE {
+    position FANSPosition,
+    speed FANSSpeed
+}
+
+FANSPositionSpeedSpeed ::= SEQUENCE {
+    position          FANSPosition,
+    speed-seqOf       FANSSpeedSpeed
+}
+
+
+FANSPositionTime ::= SEQUENCE {
+    position FANSPosition,
+    time FANSTime
+}
+
+FANSPositionTimeAltitude ::= SEQUENCE {
+    position FANSPosition,
+    time FANSTime,
+    altitude FANSAltitude
+}
+
+FANSPositionTimeTime ::= SEQUENCE {
+    position        FANSPosition,
+    time-seqOf      FANSTimeTime
+}
+
+FANSPredepartureClearance ::= SEQUENCE {
+    aircraftFlightIdentification [0] FANSAircraftFlightIdentification,
+    aircraftType                 [1] FANSAircraftType              OPTIONAL,
+    aircraftEquipmentCode        [2] FANSAircraftEquipmentCode OPTIONAL,
+    timeDepartureEdct            [3] FANSTimeDepartureEdct,
+    routeClearance               [4] FANSRouteClearance,
+    altitudeRestriction          [5] FANSAltitudeRestriction       OPTIONAL,
+    frequencyDeparture           [6] FANSFrequencyDeparture,
+    beaconCode                   [7] FANSBeaconCode,
+    pDCrevision                  [8] FANSPDCrevision
+}
+
+FANSAircraftFlightIdentification ::= IA5String (SIZE (2..7))
+
+FANSAircraftType ::= IA5String (SIZE (2..5))
+
+FANSAircraftEquipmentCode ::= SEQUENCE {
+    cOMNAVApproachEquipmentAvailable           FANSCOMNAVApproachEquipmentAvailable,
+    comnavequipmentstatus-seqOf                FANSCOMNAVEquipmentStatusSequence        OPTIONAL,
+    sSREquipmentAvailable                      FANSSSREquipmentAvailable
+}
+
+FANSCOMNAVApproachEquipmentAvailable ::= BOOLEAN
+
+FANSCOMNAVEquipmentStatus ::= ENUMERATED {
+    aloranA                  (0),
+    cloranC                  (1),
+    ddme                     (2),
+    edecca                   (3),
+    fadf                     (4),
+    ggnss                    (5),
+    hhfRTF                   (6),
+    iinertialNavigation      (7),
+    lils                     (8),
+    momega                   (9),
+    ovor                     (10),
+    pdoppler                 (11),
+    rrnavRouteEquipment      (12),
+    ttacan                   (13),
+    uuhfRTF                  (14),
+    vvhfRTF                  (15)
+}
+
+FANSCOMNAVEquipmentStatusSequence ::= SEQUENCE SIZE (1..16) OF FANSCOMNAVEquipmentStatus
+
+FANSSSREquipmentAvailable ::= ENUMERATED {
+    nnil                            (0),
+    atransponderModeA               (1),
+    ctransponderModeAandC           (2),
+    xtransponderModeS               (3),
+    ptransponderModeSPA             (4),
+    itransponderModeSID             (5),
+    stransponderModeSPAID           (6)
+}
+-- Note: PA; Pressure FANSAltitude, ID; Aircraft Identification
+
+FANSTimeDepartureEdct ::= FANSTime
+
+FANSAltitudeRestriction ::= FANSAltitude
+
+FANSFrequencyDeparture ::= FANSFrequencyvhf
+
+FANSPDCrevision ::= INTEGER (1..16)
+
+FANSProcedureName ::= SEQUENCE {
+    procedureType FANSProcedureType,
+    procedure FANSProcedure,
+    procedureTransition FANSProcedureTransition        OPTIONAL
+}
+
+FANSProcedureType ::= ENUMERATED {
+    arrival      (0),
+    approach     (1),
+    departure    (2)
+}
+
+FANSProcedure ::= IA5String (SIZE (1..6))
+
+FANSProcedureTransition ::= IA5String (SIZE (1..5))
+
+FANSRemainingFuelRemainingSouls ::= SEQUENCE {
+    remainingFuel FANSRemainingFuel,
+    remainingSouls FANSRemainingSouls
+}
+
+FANSRemainingFuel ::= SEQUENCE {
+    hours FANSTimehours,
+    minutes FANSTimeminutes
+}
+
+FANSRemainingSouls ::= INTEGER (1..1024)
+
+FANSRouteClearance ::= SEQUENCE {
+    airportDeparture               [0] FANSAirportDeparture             OPTIONAL,
+    airportDestination             [1] FANSAirportDestination           OPTIONAL,
+    runwayDeparture                [2] FANSRunwayDeparture              OPTIONAL,
+    procedureDeparture             [3] FANSProcedureDeparture           OPTIONAL,
+    runwayArrival                  [4] FANSRunwayArrival                OPTIONAL,
+    procedureApproach              [5] FANSProcedureApproach            OPTIONAL,
+    procedureArrival               [6] FANSProcedureArrival             OPTIONAL,
+    airwayIntercept                [7] FANSAirwayIntercept              OPTIONAL,
+    routeinformation-seqOf         [8] FANSRouteInformationSequence     OPTIONAL,
+    routeInformationAdditional     [9] FANSRouteInformationAdditional   OPTIONAL
+}
+
+FANSAirportDeparture ::= FANSAirport
+
+FANSAirportDestination ::= FANSAirport
+
+FANSRunwayDeparture ::= FANSRunway
+
+FANSRunway ::= SEQUENCE {
+    runwayDirection FANSRunwayDirection,
+    runwayConfiguration FANSRunwayConfiguration
+}
+
+FANSRunwayDirection ::= INTEGER (1..36)
+
+FANSRunwayConfiguration ::= ENUMERATED {
+    left      (0),
+    right     (1),
+    center    (2),
+    none      (3)
+}
+
+FANSProcedureDeparture ::= FANSProcedureName
+
+FANSRunwayArrival ::= FANSRunway
+
+FANSProcedureApproach ::= FANSProcedureName
+
+FANSProcedureArrival ::= FANSProcedureName
+
+FANSAirwayIntercept ::= IA5String (SIZE (1..5))
+
+FANSRouteInformation ::= CHOICE {
+    publishedIdentifier                [0]   FANSPublishedIdentifier,
+    latitudeLongitude                  [1]   FANSLatitudeLongitude,
+    placeBearingPlaceBearing           [2]   FANSPlaceBearingPlaceBearing,
+    placeBearingDistance               [3]   FANSPlaceBearingDistance,
+    airwayIdentifier                   [4]   FANSAirwayIdentifier,
+    trackDetail                        [5]   FANSTrackDetail
+}
+
+FANSRouteInformationSequence ::= SEQUENCE SIZE (1..128) OF FANSRouteInformation
+
+FANSPublishedIdentifier ::= SEQUENCE {
+    fixName FANSFixName,
+    latitudeLongitude FANSLatitudeLongitude         OPTIONAL
+}
+
+FANSPlaceBearing ::= SEQUENCE {
+    fixName FANSFixName,
+    latitudeLongitude FANSLatitudeLongitude             OPTIONAL,
+    degrees FANSDegrees
+}
+
+FANSPlaceBearingPlaceBearing ::= SEQUENCE SIZE (2) OF FANSPlaceBearing
+
+FANSAirwayIdentifier ::= IA5String (SIZE (1..5))
+
+FANSTrackDetail ::= SEQUENCE {
+    trackName                       FANSTrackName,
+    latitudeLongitude-seqOf         FANSLatitudeLongitudeSequence
+}
+
+FANSTrackName ::= IA5String (SIZE (3..6))
+
+FANSATWAlongTrackWaypointSequence ::= SEQUENCE SIZE (1..8) OF FANSATWAlongTrackWaypoint
+
+FANSInterceptCourseFromSequence ::= SEQUENCE SIZE (1..4) OF FANSInterceptCourseFrom
+
+FANSHoldatwaypointSequence ::= SEQUENCE SIZE (1..8) OF FANSHoldatwaypoint
+
+FANSWaypointSpeedAltitudesequence ::= SEQUENCE SIZE (1..32) OF FANSWaypointSpeedAltitude
+
+FANSRTARequiredTimeArrivalSequence ::= SEQUENCE SIZE (1..32) OF FANSRTARequiredTimeArrival
+
+FANSRouteInformationAdditional ::= SEQUENCE {
+    aTWalongtrackwaypointsequence [0] FANSATWAlongTrackWaypointSequence                OPTIONAL,
+    reportingPoints                  [1] FANSReportingPoints                           OPTIONAL,
+    interceptCourseFromSequence      [2] FANSInterceptCourseFromSequence               OPTIONAL,
+    holdAtWaypointSequence           [3] FANSHoldatwaypointSequence                    OPTIONAL,
+    waypointSpeedAltitudeSequence    [4] FANSWaypointSpeedAltitudesequence             OPTIONAL,
+    rTArequiredtimearrivalsequenc    [5] FANSRTARequiredTimeArrivalSequence            OPTIONAL
+}
+
+FANSATWAltitudeSequence ::= SEQUENCE SIZE (1..2) OF FANSATWAltitude
+
+FANSATWAlongTrackWaypoint ::= SEQUENCE {
+    position              [0] FANSPosition,
+    aTWdistance           [1] FANSATWDistance,
+    speed                 [2] FANSSpeed             OPTIONAL,
+    aTWaltitudesequence [3] FANSATWAltitudeSequence OPTIONAL
+}
+
+FANSATWDistance ::= SEQUENCE {
+    atwDistanceTolerance FANSATWDistanceTolerance,
+    distance FANSDistance
+}
+
+FANSATWDistanceTolerance ::= ENUMERATED {
+    plus   (0),
+    minus (1)
+}
+
+FANSReportingPoints ::= SEQUENCE {
+    latLonReportingPoints FANSLatLonReportingPoints,
+    degreeIncrement FANSDegreeIncrement               OPTIONAL
+}
+
+FANSLatLonReportingPoints ::= CHOICE {
+    latitudeReportingPoints   [0] FANSLatitudeReportingPoints,
+    longitudeReportingPoints   [1] FANSLongitudeReportingPoints
+}
+
+FANSLatitudeReportingPoints ::= SEQUENCE {
+    latitudeDirection FANSLatitudeDirection,
+    latitudeDegrees FANSLatitudeDegrees
+}
+
+FANSLongitudeReportingPoints ::= SEQUENCE {
+    longitudeDirection FANSLongitudeDirection,
+    longitudeDegrees FANSLongitudeDegrees
+}
+
+FANSDegreeIncrement ::= INTEGER (1..20)
+-- Units = 1 Degree, Range (1..20)
+
+FANSInterceptCourseFrom ::= SEQUENCE {
+    interceptCourceFromSelection FANSInterceptCourseFromSelection,
+    degrees FANSDegrees
+}
+
+FANSInterceptCourseFromSelection ::= CHOICE {
+    publishedIdentifier          [0] FANSPublishedIdentifier,
+    latitudeLongitude            [1] FANSLatitudeLongitude,
+    placeBearingPlaceBearing     [2] FANSPlaceBearingPlaceBearing,
+    placeBearingDistance         [3] FANSPlaceBearingDistance
+}
+
+FANSHoldatwaypointSpeedLow ::= FANSSpeed
+
+FANSHoldatwaypointSpeedHigh ::= FANSSpeed
+
+FANSEFCtime ::= FANSTime
+
+FANSHoldatwaypoint ::= SEQUENCE {
+    position                          [0] FANSPosition,
+    holdatwaypointspeedlow            [1] FANSHoldatwaypointSpeedLow         OPTIONAL,
+    aTWaltitude                       [2] FANSATWAltitude                    OPTIONAL,
+    holdatwaypointspeedhigh           [3] FANSHoldatwaypointSpeedHigh        OPTIONAL,
+    direction                         [4] FANSDirection                      OPTIONAL,
+    degrees                           [5] FANSDegrees                        OPTIONAL,
+    eFCtime                           [6] FANSEFCtime                        OPTIONAL,
+    legType                           [7] FANSLegType                        OPTIONAL
+}
+
+FANSWaypointSpeedAltitude ::= SEQUENCE {
+    position                      [0] FANSPosition,
+    speed                         [1] FANSSpeed                               OPTIONAL,
+    aTWaltitudesequence           [2] FANSATWAltitudeSequence                 OPTIONAL
+}
+
+FANSRTARequiredTimeArrival ::= SEQUENCE {
+    position FANSPosition,
+    rTATime FANSRTATime,
+    rTATolerance FANSRTATolerance OPTIONAL
+}
+
+FANSRTATime ::= SEQUENCE {
+    time FANSTime,
+    timeTolerance FANSTimeTolerance
+}
+
+FANSTimeTolerance ::= ENUMERATED {
+    at              (0),
+    atorafter       (1),
+    atorbefore      (2)
+}
+
+FANSRTATolerance ::= INTEGER (1..150)
+-- Units=.1 Minute, Range (.1..15.0)
+
+FANSSpeed ::= CHOICE {
+    speedIndicated                [0]    FANSSpeedIndicated,
+    speedIndicatedMetric          [1]    FANSSpeedIndicatedMetric,
+    speedTrue                     [2]    FANSSpeedTrue,
+    speedTrueMetric               [3]    FANSSpeedTrueMetric,
+    speedGround                   [4]    FANSSpeedGround,
+    speedGroundMetric             [5]    FANSSpeedGroundMetric,
+    speedMach                     [6]    FANSSpeedMach,
+    speedMachLarge                [7]    FANSSpeedMachLarge
+}
+
+FANSSpeedIndicated ::= INTEGER (7..38)
+-- Units = 10 Knots, Range (70..380)
+
+FANSSpeedIndicatedMetric ::= INTEGER (10..137)
+-- Units = 10 Kilometers/Hour, Range (100..1370)
+
+FANSSpeedTrue ::= INTEGER (7..70)
+-- Units = 10 Knots, Range (70..700)
+
+FANSSpeedTrueMetric ::= INTEGER (10..137)
+-- Units = 10 Kilometers/Hour, Range (100..1370)
+
+FANSSpeedGround ::= INTEGER (7..70)
+-- Units = 10 Knots, Range (70..700)
+
+FANSSpeedGroundMetric ::= INTEGER (10..265)
+-- Units = 10 Kilometers/Hour, Range (100..2650)
+
+FANSSpeedMach ::= INTEGER (61..92)
+-- Units = .01 Mach; Range (.61 to .92)
+
+FANSSpeedMachLarge ::= INTEGER (93..604)
+-- Units = .01 Mach; Range (.93 to 6.04)
+
+FANSSpeedSpeed ::= SEQUENCE SIZE (2) OF FANSSpeed
+
+FANSTime ::= SEQUENCE {
+    hours FANSTimehours,
+    minutes FANSTimeminutes
+}
+
+FANSTimeAltitude ::= SEQUENCE {
+    time FANSTime,
+    altitude FANSAltitude
+}
+
+FANSTimeDistanceOffsetDirection ::= SEQUENCE {
+    time FANSTime,
+    distanceOffset FANSDistanceOffset,
+    direction FANSDirection
+}
+
+FANSTimeDistanceToFromPosition ::= SEQUENCE {
+    time           [0]    FANSTime,
+    distance       [1]    FANSDistance,
+    toFrom         [2]    FANSToFrom,
+    position       [3]    FANSPosition
+}
+
+FANSTimeTime ::= SEQUENCE SIZE (2) OF FANSTime
+
+FANSToFrom ::= ENUMERATED {
+    to   (0),
+    from (1)
+}
+
+FANSTimeICAOunitnameFrequency ::= SEQUENCE {
+    time FANSTime,
+    iCAOUnitName FANSICAOUnitName,
+    frequency FANSFrequency
+}
+
+FANSTimePosition ::= SEQUENCE {
+    time FANSTime,
+    position FANSPosition
+}
+
+FANSTimePositionAltitude ::= SEQUENCE {
+    time FANSTime,
+    position FANSPosition,
+    altitude FANSAltitude
+}
+
+FANSTimePositionAltitudeSpeed ::= SEQUENCE {
+    time FANSTime,
+    position FANSPosition,
+    altitude FANSAltitude,
+    speed FANSSpeed
+}
+
+FANSTimeSpeed ::= SEQUENCE {
+    time FANSTime,
+    speed FANSSpeed
+}
+
+FANSTimeSpeedSpeed ::= SEQUENCE {
+    time              FANSTime,
+    speed-seqOf       FANSSpeedSpeed
+}
+
+FANSToFromPosition ::= SEQUENCE {
+    toFrom FANSToFrom,
+    position  FANSPosition
+}
+
+FANSTp4table ::= ENUMERATED {
+    labelA    (0),
+    labelB    (1)
+}
+
+FANSVersionNumber ::= INTEGER (0..15)
+
+FANSVerticalRate ::= CHOICE {
+    verticalRateEnglish          [0] FANSVerticalRateEnglish,
+    verticalRateMetric           [1] FANSVerticalRateMetric
+}
+
+FANSVerticalRateEnglish ::= INTEGER (0..60)
+-- Units = 100 Feet/Minute, Range (0..6000)
+
+FANSVerticalRateMetric ::= INTEGER (0..200)
+-- Units = 10 Meters/Minute, Range (0..2000)
+
+END

@@ -1079,10 +1079,6 @@ void MainWindow::CChannelAssignmentSlot(CChannelAssignmentItem &item)
     if(item.receive_spotbeam)rx_beam=" Spot Beam ";
     message += "Receive Freq: " + QString::number(item.receive_freq) + rx_beam + "Transmit " + QString::number(item.transmit_freq);
     ui->plainTextEdit_cchan_assignment->appendPlainText(message);
-    beep->play();
-    beep->play();
-    beep->play();
-
 }
 
 //--new method of mainwindow getting second channel from aerol

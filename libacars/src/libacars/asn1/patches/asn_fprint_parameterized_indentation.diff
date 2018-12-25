@@ -1,0 +1,32 @@
+--- constr_TYPE.c.orig	2018-03-25 13:03:14.865189453 +0200
++++ constr_TYPE.c	2018-03-25 13:05:25.610715952 +0200
+@@ -33,7 +33,7 @@
+  * Print the target language's structure in human readable form.
+  */
+ int
+-asn_fprint(FILE *stream, asn_TYPE_descriptor_t *td, const void *struct_ptr) {
++asn_fprint(FILE *stream, asn_TYPE_descriptor_t *td, const void *struct_ptr, int indent) {
+ 	if(!stream) stream = stdout;
+ 	if(!td || !struct_ptr) {
+ 		errno = EINVAL;
+@@ -41,7 +41,7 @@
+ 	}
+ 
+ 	/* Invoke type-specific printer */
+-	if(td->print_struct(td, struct_ptr, 1, _print2fp, stream))
++	if(td->print_struct(td, struct_ptr, indent, _print2fp, stream))
+ 		return -1;
+ 
+ 	/* Terminate the output */
+--- constr_TYPE.h.orig	2018-03-25 13:05:37.115850279 +0200
++++ constr_TYPE.h	2018-03-25 13:06:04.819173724 +0200
+@@ -171,7 +171,8 @@
+  */
+ int asn_fprint(FILE *stream,		/* Destination stream descriptor */
+ 	asn_TYPE_descriptor_t *td,	/* ASN.1 type descriptor */
+-	const void *struct_ptr);	/* Structure to be printed */
++	const void *struct_ptr,		/* Structure to be printed */
++	int indent);			/* Indentation level */
+ 
+ #ifdef __cplusplus
+ }
