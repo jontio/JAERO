@@ -177,6 +177,8 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(aerol,SIGNAL(DataCarrierDetect(bool)),audiomskdemodulator,SLOT(DCDstatSlot(bool)));
     connect(aerol,SIGNAL(DataCarrierDetect(bool)),audioburstmskdemodulator,SLOT(DCDstatSlot(bool)));
     connect(aerol,SIGNAL(CChannelAssignmentSignal(CChannelAssignmentItem&)),this,SLOT(CChannelAssignmentSlot(CChannelAssignmentItem&)));
+    connect(aerol,SIGNAL(DataCarrierDetect(bool)),audiooqpskdemodulator,SLOT(DCDstatSlot(bool)));
+    connect(aerol,SIGNAL(Call_progress_Signal(QByteArray)),compresseddiskwriter,SLOT(Call_progress_Slot(QByteArray)));
 
     //aeroL2 connections
     connect(aerol2,SIGNAL(DataCarrierDetect(bool)),this,SLOT(DataCarrierDetectStatusSlot(bool)));
@@ -651,10 +653,10 @@ void MainWindow::AboutSlot()
 {
     QMessageBox::about(this,"JAERO",""
                                      "<H1>An Aero demodulator and decoder</H1>"
-                                     "<H3>v1.0.4.8</H3>"
+                                     "<H3>v1.0.4.9</H3>"
                                      "<p>This is a program to demodulate and decode Aero signals. These signals contain SatCom ACARS (<em>Satelitle Comunication Aircraft Communications Addressing and Reporting System</em>) messages as used by planes beyond VHF ACARS range. This protocol is used by Inmarsat's \"Classic Aero\" system and can be received using low or medium gain L band or high gain C band antennas.</p>"
                                      "<p>For more information about this application see <a href=\"http://jontio.zapto.org/hda1/jaero.html\">http://jontio.zapto.org/hda1/jaero.html</a>.</p>"
-                                     "<p>Jonti 2018</p>" );
+                                     "<p>Jonti 2019</p>" );
 }
 
 void MainWindow::on_comboBoxbps_currentIndexChanged(const QString &arg)
@@ -744,6 +746,14 @@ void MainWindow::on_comboBoxbps_currentIndexChanged(const QString &arg)
         audiooqpskdemodulatorsettings.Fs=48000;
         int idx=ui->comboBoxlbw->findText(((QString)"%1 Hz").arg(audiooqpskdemodulatorsettings.fb*1.0));
         if(idx>=0)audiooqpskdemodulatorsettings.lockingbw=ui->comboBoxlbw->itemText(idx).split(" ")[0].toDouble();
+
+        //if ambe then use a smaller locking bw by default
+        if(audiooqpskdemodulatorsettings.fb==8400)
+        {
+            idx=ui->comboBoxlbw->findText(((QString)"%1 Hz").arg(5000));
+            if(idx>=0)audiooqpskdemodulatorsettings.lockingbw=ui->comboBoxlbw->itemText(idx).split(" ")[0].toDouble();
+        }
+
         audiooqpskdemodulatorsettings.audio_device_in=settingsdialog->audioinputdevice;
         audiooqpskdemodulator->setSettings(audiooqpskdemodulatorsettings);
         if(idx>=0)ui->comboBoxlbw->setCurrentIndex(idx);

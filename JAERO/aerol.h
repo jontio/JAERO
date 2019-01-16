@@ -892,6 +892,7 @@ signals:
     void Errorsignal(QString &error);
     void Voicesignal(const QByteArray &data);
     void CChannelAssignmentSignal(CChannelAssignmentItem &item);
+    void Call_progress_Signal(QByteArray infofield);
 public slots:
     void setBitRate(double fb);
     void setBurstmode(bool burstmode);

@@ -2325,7 +2325,7 @@ QByteArray &AeroL::DecodeC(QVector<short> &bits)
                         }
                         else
                         {
-                            if(datacdcountdown>0)datacdcountdown-=3;
+                            if(datacdcountdown>0)datacdcountdown-=5;//3;//C channel packets come slower so make timeout faster to compensate
                         }
                         if(!datacd&&datacdcountdown>2)
                         {
@@ -2346,44 +2346,41 @@ QByteArray &AeroL::DecodeC(QVector<short> &bits)
                             {
 
 
-                                case Fill_in_signal_unit:
+                            case Fill_in_signal_unit:
                                 //decline+="Fill_in_signal_unit \r\n";
                                 break;
 
-                                case Call_progress:
-                                {
+                            case Call_progress:
+                            {
 
-                                    for(int k=0;k<infofield.size()-2;k++)
-                                    decline+=((QString)" 0x%1").arg(((QString)"").sprintf("%02X", (uchar)infofield[k]));
-
-                                    decline+=" AES = "+infofield.mid(1,3).toHex().toUpper();
-                                    decline+=" GES = "+infofield.mid(4,1).toHex().toUpper();
-                                    decline+= " Call_progress \r\n";
-
-                                }
-                                break;
+                                for(int k=0;k<infofield.size()-2;k++)decline+=((QString)" 0x%1").arg(((QString)"").sprintf("%02X", (uchar)infofield[k]));
+                                decline+=" AES = "+infofield.mid(1,3).toHex().toUpper();
+                                decline+=" GES = "+infofield.mid(4,1).toHex().toUpper();
+                                decline+=" Call_progress \r\n";
+                                emit Call_progress_Signal(infofield);
+                            }
+                            break;
 
                             case Telephony_acknowledge:
                             {
 
-                                    for(int k=0;k<infofield.size()-2;k++)
-                                    decline+=((QString)" 0x%1").arg(((QString)"").sprintf("%02X", (uchar)infofield[k]));
-                                    decline+=" AES = "+infofield.mid(1,3).toHex().toUpper();
-                                    decline+=" GES = "+infofield.mid(4,1).toHex().toUpper();
-                                    decline+= " Telephony_acknowledge \r\n";
+                                for(int k=0;k<infofield.size()-2;k++)decline+=((QString)" 0x%1").arg(((QString)"").sprintf("%02X", (uchar)infofield[k]));
+                                decline+=" AES = "+infofield.mid(1,3).toHex().toUpper();
+                                decline+=" GES = "+infofield.mid(4,1).toHex().toUpper();
+                                decline+=" Telephony_acknowledge \r\n";
 
                             }
                             break;
 
-                                default:
+                            default:
+                            {
+                                for(int k=0;k<infofield.size()-2;k++)
                                 {
-                                    for(int k=0;k<infofield.size()-2;k++)
-                                    {
-                                        decline+=((QString)" 0x%1").arg(((QString)"").sprintf("%02X", (uchar)infofield[k]));
-                                    }
-
-                                   decline+= " Other C Channel signal unit \r\n";
+                                    decline+=((QString)" 0x%1").arg(((QString)"").sprintf("%02X", (uchar)infofield[k]));
                                 }
+
+                                decline+= " Other C Channel signal unit \r\n";
+                            }
                             }
                         }
 

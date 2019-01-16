@@ -24,7 +24,7 @@ void CompressedAudioDiskWriter::timeoutslot()
 {
     timeout->stop();
     closeFile();
-    qDebug()<<"timeout --> closed";
+    //qDebug()<<"timeout --> closed";
 }
 
 CompressedAudioDiskWriter::CompressedAudioDiskWriter(QObject *parent) : QObject(parent)
@@ -43,7 +43,7 @@ CompressedAudioDiskWriter::CompressedAudioDiskWriter(QObject *parent) : QObject(
 
     timeout = new QTimer(this);
     connect(timeout, SIGNAL(timeout()), this, SLOT(timeoutslot()));
-    timeout->start(1000);
+    timeout->start(2000);
 
 
 //    //tone test
@@ -186,12 +186,43 @@ void CompressedAudioDiskWriter::closeFile()
     vc_valid=false;
     vd_valid=false;
     vb_valid=false;
+
+    //add AES and GES to file name if avalible
+    if((!current_call_progress_infofield.isEmpty())&&(!outfile.fileName().isEmpty()))
+    {
+        QString AES=current_call_progress_infofield.mid(1,3).toHex().toUpper();
+        QString GES=current_call_progress_infofield.mid(4,1).toHex().toUpper();
+        QFileInfo fileinfo(outfile.fileName());
+        outfile.rename(fileinfo.path()+"/"+AES+"_"+GES+"_"+fileinfo.fileName());
+        qDebug()<<"renaming "<<outfile.fileName();
+    }
+
+    //delete small files
+    QFileInfo fileinfo(outfile.fileName());
+    if(fileinfo.exists()&&(fileinfo.size()<10000)){qDebug()<<"removed small file";outfile.remove();}
+
+    outfile.setFileName("");
+    current_call_progress_infofield.clear();
+
+}
+
+void CompressedAudioDiskWriter::Call_progress_Slot(QByteArray infofield)
+{
+    if(!current_call_progress_infofield.isEmpty())
+    {
+        if(current_call_progress_infofield.mid(1,3).toHex().toUpper()!=infofield.mid(1,3).toHex().toUpper())
+        {
+           qDebug()<<"caller has changed from"<<current_call_progress_infofield.mid(1,3).toHex().toUpper()<<"to"<<infofield.mid(1,3).toHex().toUpper();
+           closeFile();
+        }
+    }
+    current_call_progress_infofield=infofield;
 }
 
 void CompressedAudioDiskWriter::audioin(const QByteArray &signed16arraymono)
 {
 
-    timeout->start(1000);
+    timeout->start(2000);
 
     if(!outfile.isOpen())
     {

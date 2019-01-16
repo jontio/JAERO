@@ -23,6 +23,7 @@ public:
 signals:
 public slots:
     void audioin(const QByteArray &signed16arraymono);
+    void Call_progress_Slot(QByteArray infofield);
 private slots:
     void timeoutslot();
 private:
@@ -55,6 +56,8 @@ private:
 
     void closeFile();
     void openFileForOutput(QString filename);
+
+    QByteArray current_call_progress_infofield;
 };
 
 #endif // COMPRESSEDAUDIODISKWRITER_H

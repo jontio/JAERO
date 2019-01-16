@@ -26,6 +26,7 @@ private:
     FFT *ifft;
     QVector<cpx_type> out;
     QVector<cpx_type> in;
+    QVector<double> window;
     QVector<double> y;
     QVector<double> z;
     double nfft;

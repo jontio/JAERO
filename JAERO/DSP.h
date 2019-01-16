@@ -44,6 +44,7 @@ public:
         ~WaveTable();
         void   WTnextFrame();
         cpx_type  WTCISValue();
+        cpx_type  WTCISValue_conj();
         double   WTSinValue();
         double   WTSinValue(double PlusFractOfSample);
         double  WTCosValue();
@@ -267,6 +268,7 @@ class OQPSKEbNoMeasure
 public:
     OQPSKEbNoMeasure(int number,double Fs,double fb);
     ~OQPSKEbNoMeasure();
+    void setup_update(double Fs,double fb);
     double Update(double sig);//requires a matched filter first
     double EbNo;
     double Var;

@@ -27,12 +27,12 @@ public:
         double signalthreshold;
         Settings()
         {
-            coarsefreqest_fft_power=13;//2^coarsefreqest_fft_power
+            coarsefreqest_fft_power=14;//13;//2^coarsefreqest_fft_power
             freq_center=8000;//Hz
             lockingbw=10500;//Hz
             fb=10500;//bps
             Fs=48000;//Hz
-            signalthreshold=0.6;
+            signalthreshold=0.65;//0.6;
         }
     };
     explicit OqpskDemodulator(QObject *parent);
@@ -132,9 +132,16 @@ private:
 
     double ee;
 
+    bool dcd;
+    QJFastFIRFilter *fir_pre;
+    WaveTable mixer_fir_pre;
+
+
+
 public slots:
     void FreqOffsetEstimateSlot(double freq_offset_est);
     void CenterFreqChangedSlot(double freq_center);
+    void DCDstatSlot(bool _dcd);
 
 };
 

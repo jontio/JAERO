@@ -22,7 +22,7 @@
     <item>
      <widget class="QTabWidget" name="tabWidget">
       <property name="currentIndex">
-       <number>0</number>
+       <number>1</number>
       </property>
       <widget class="QWidget" name="sus">
        <attribute name="title">
@@ -425,6 +425,11 @@
          <item>
           <property name="text">
            <string>1800 Hz</string>
+          </property>
+         </item>
+         <item>
+          <property name="text">
+           <string>5000 Hz</string>
           </property>
          </item>
          <item>

@@ -21,6 +21,19 @@ CoarseFreqEstimate::CoarseFreqEstimate(QObject *parent) : QObject(parent)
     stopbin=nfft-startbin;
     expectedpeakbin=round(fb/(2.0*hzperbin));
     emptyingcountdown=1;
+
+    window.resize(nfft);
+    window.fill(0);
+    window[0]=1;
+    for(int i=1;i<=startbin;i++)
+    {
+        double val=cos(M_PI_2*((double)i)/((double)startbin));
+        val*=val;
+        if((nfft-i)<0)break;
+        if(i>=nfft)break;
+        window[nfft-i]=val;
+        window[i]=val;
+    }
 }
 
 void CoarseFreqEstimate::setSettings(int _coarsefreqest_fft_power,double _lockingbw,double _fb,double _Fs)
@@ -43,6 +56,23 @@ void CoarseFreqEstimate::setSettings(int _coarsefreqest_fft_power,double _lockin
     startbin=std::max(round(lockingbw/hzperbin),1.0);
     stopbin=nfft-startbin;
     expectedpeakbin=round(fb/(2.0*hzperbin));
+
+
+    //use a raised cos window to favor signals in the middle rather than to the edges
+    window.resize(nfft);
+    window.fill(0);
+    window[0]=1;
+    for(int i=1;i<=startbin;i++)
+    {
+        double val=cos(M_PI_2*((double)i)/((double)startbin));
+        val*=val;
+        if((nfft-i)<0)break;
+        if(i>=nfft)break;
+        window[nfft-i]=val;
+        window[i]=val;
+    }
+
+
 }
 
 CoarseFreqEstimate::~CoarseFreqEstimate()
@@ -64,7 +94,11 @@ void CoarseFreqEstimate::ProcessBasebandData(const QVector<cpx_type> &data)
 
     //remove high frequencies then square and do fft and shift (0hz bin is at nfft/2)
     fft->transform(data,out);
-    for(int i=startbin;i<=stopbin;i++)out[i]=0;
+
+//what window would be better?
+if(fb!=8400)for(int i=startbin;i<=stopbin;i++)out[i]=0;//this one is a boxcar window so can be pulled easily to the sides
+ else for(int i=0;i<nfft;i++)out[i]*=window[i];//this one will weight ones closer to the center more
+
     ifft->transform(out,in);
     for(int i=0;i<nfft;i++)in[i]=in[i]*in[i];
     fft->transform(in,out);

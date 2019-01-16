@@ -84,6 +84,14 @@ cpx_type  WaveTable::WTCISValue()
     return tringlookup.CISWT[tint];
 }
 
+cpx_type  WaveTable::WTCISValue_conj()
+{
+    tint=(int)WTptr;
+    if(tint>=WTSIZE)tint=0;
+    if(tint<0)tint=WTSIZE-1;
+    return std::conj(tringlookup.CISWT[tint]);
+}
+
 double   WaveTable::WTSinValue()
 {
     tint=(int)WTptr;
@@ -704,6 +712,12 @@ OQPSKEbNoMeasure::OQPSKEbNoMeasure(int number,double _Fs,double _fb)
     fb=_fb;
     E = new MovingAverage(number);
     E2 = new MovingAverage(number);
+}
+
+void OQPSKEbNoMeasure::setup_update(double _Fs,double _fb)
+{
+    Fs=_Fs;
+    fb=_fb;
 }
 
 double OQPSKEbNoMeasure::Update(double sig)
