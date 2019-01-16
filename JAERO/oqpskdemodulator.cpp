@@ -285,8 +285,7 @@ void OqpskDemodulator::setSettings(Settings _settings)
         fir_pre_imp_responce[i].r=rrc_pre_imp.Points.at(i);
         fir_pre_imp_responce[i].i=0;
     }
-    fir_pre->setKernel(fir_pre_imp_responce);
-
+    fir_pre->setKernel(fir_pre_imp_responce,4096);//use x2 rather than the x4 rule of thumb, will make it more responsive but may use more cpu
 
     emit Plottables(mixer2.GetFreqHz(),mixer_center.GetFreqHz(),lockingbw);
 }
@@ -336,6 +335,8 @@ qint64 OqpskDemodulator::readData(char *data, qint64 maxlen)
 
 qint64 OqpskDemodulator::writeData(const char *data, qint64 len)
 {
+
+    if(!len)return 0;
 
     double lastmse=mse;
 
@@ -397,9 +398,10 @@ qint64 OqpskDemodulator::writeData(const char *data, qint64 len)
 
     //prefilter end
 
-
+    double mixer2_freq_sum=0;
+    int i=0;
     const short *ptr = reinterpret_cast<const short *>(data);
-    for(int i=0;i<len/sizeof(short);i++)
+    for(i=0;i<len/sizeof(short);i++)
     {
         double dval=((double)(*ptr))/32768.0;
 
@@ -446,6 +448,10 @@ qint64 OqpskDemodulator::writeData(const char *data, qint64 len)
             //this would be both
             //cval=mixer2.WTCISValue()*cval_prefiltered[i];
             //sig2=cpx_type(fir_re->FIRUpdateAndProcess(cval.real()),fir_im->FIRUpdateAndProcess(cval.imag()));
+
+            //calc ave of freq over this block for 8400bps prefilter
+            mixer2_freq_sum+=mixer2.GetFreqHz();
+
         }
          else
          {
@@ -612,6 +618,9 @@ qint64 OqpskDemodulator::writeData(const char *data, qint64 len)
         st_osc_ref.WTnextFrame();
         ptr++;
     }
+
+    //update the 8400bps pre filter with better estimates of carrier in case someone uses C band with lots of drift. untested on C-band.
+    mixer_fir_pre.SetFreq(mixer2_freq_sum/((double)i));
 
     //return the demodulated data (packed in bytes)
     //using bytes and the qiodevice class
