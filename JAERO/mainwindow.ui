@@ -442,6 +442,11 @@
            <string>10500 Hz</string>
           </property>
          </item>
+         <item>
+          <property name="text">
+           <string>24000 Hz</string>
+          </property>
+         </item>
         </widget>
        </item>
        <item>

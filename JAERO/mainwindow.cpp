@@ -808,22 +808,23 @@ void MainWindow::on_comboBoxlbw_currentIndexChanged(const QString &arg1)
 {
     audiomskdemodulatorsettings.lockingbw=arg1.split(" ")[0].toDouble();
     audiomskdemodulatorsettings.freq_center=audiomskdemodulator->getCurrentFreq();
+    if(audiomskdemodulatorsettings.lockingbw==24000)audiomskdemodulatorsettings.freq_center=12000;
     audiomskdemodulator->setSettings(audiomskdemodulatorsettings);
 
     audiooqpskdemodulatorsettings.lockingbw=arg1.split(" ")[0].toDouble();
     audiooqpskdemodulatorsettings.freq_center=audiooqpskdemodulator->getCurrentFreq();
+    if(audiooqpskdemodulatorsettings.lockingbw==24000)audiooqpskdemodulatorsettings.freq_center=12000;
     audiooqpskdemodulator->setSettings(audiooqpskdemodulatorsettings);
 
     audioburstoqpskdemodulatorsettings.lockingbw=arg1.split(" ")[0].toDouble();
     audioburstoqpskdemodulatorsettings.freq_center=audioburstoqpskdemodulator->getCurrentFreq();
+    if(audioburstoqpskdemodulatorsettings.lockingbw==24000)audioburstoqpskdemodulatorsettings.freq_center=12000;
     audioburstoqpskdemodulator->setSettings(audioburstoqpskdemodulatorsettings);
-
 
     audioburstmskdemodulatorsettings.lockingbw=arg1.split(" ")[0].toDouble();
     audioburstmskdemodulatorsettings.freq_center=audioburstmskdemodulator->getCurrentFreq();
+    if(audioburstmskdemodulatorsettings.lockingbw==24000)audioburstmskdemodulatorsettings.freq_center=12000;
     audioburstmskdemodulator->setSettings(audioburstmskdemodulatorsettings);
-
-
 }
 
 void MainWindow::on_comboBoxafc_currentIndexChanged(const QString &arg1)
