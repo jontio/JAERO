@@ -1089,6 +1089,26 @@ void MainWindow::CChannelAssignmentSlot(CChannelAssignmentItem &item)
     QString rx_beam = " Global Beam ";
     if(item.receive_spotbeam)rx_beam=" Spot Beam ";
     message += "Receive Freq: " + QString::number(item.receive_freq) + rx_beam + "Transmit " + QString::number(item.transmit_freq);
+
+
+    switch(item.type)
+    {
+    case AEROTypeP::MessageType::C_channel_assignment_distress:
+        message+=" distress";
+        break;
+    case AEROTypeP::MessageType::C_channel_assignment_flight_safety:
+        message+=" flight safety";
+        break;
+    case AEROTypeP::MessageType::C_channel_assignment_other_safety:
+        message+=" other safety";
+        break;
+    case AEROTypeP::MessageType::C_channel_assignment_non_safety:
+        message+=" non safety";
+        break;
+    default:
+        message+=" unknown type";
+    }
+
     ui->plainTextEdit_cchan_assignment->appendPlainText(message);
 }
 

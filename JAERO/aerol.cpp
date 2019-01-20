@@ -1767,7 +1767,7 @@ QByteArray &AeroL::Decode(QVector<short> &bits, bool soft)//0 bit --> oldest bit
                                 case C_channel_assignment_distress:
                                     decline+="C_channel_assignment_distress";
                                 {
-                                    CChannelAssignmentItem item=CreateCAssignmentItem(infofield.mid(k,12));
+                                    CChannelAssignmentItem item=CreateCAssignmentItem(infofield.mid(k*12,12));
                                     emit CChannelAssignmentSignal(item);
                                     SendCAssignment(k, decline);
                                 }
@@ -1776,7 +1776,7 @@ QByteArray &AeroL::Decode(QVector<short> &bits, bool soft)//0 bit --> oldest bit
                                 case C_channel_assignment_flight_safety:
                                     decline+="C_channel_assignment_flight_safety";
                                 {
-                                    CChannelAssignmentItem item=CreateCAssignmentItem(infofield.mid(k,12));
+                                    CChannelAssignmentItem item=CreateCAssignmentItem(infofield.mid(k*12,12));
                                     emit CChannelAssignmentSignal(item);
                                     SendCAssignment(k, decline);
                                 }
@@ -1785,7 +1785,7 @@ QByteArray &AeroL::Decode(QVector<short> &bits, bool soft)//0 bit --> oldest bit
                                 case C_channel_assignment_other_safety:
                                     decline+="C_channel_assignment_other_safety";
                                 {
-                                    CChannelAssignmentItem item=CreateCAssignmentItem(infofield.mid(k,12));
+                                    CChannelAssignmentItem item=CreateCAssignmentItem(infofield.mid(k*12,12));
                                     emit CChannelAssignmentSignal(item);
                                     SendCAssignment(k, decline);
                                 }
@@ -1794,7 +1794,7 @@ QByteArray &AeroL::Decode(QVector<short> &bits, bool soft)//0 bit --> oldest bit
                                 case C_channel_assignment_non_safety:
                                     decline+="C_channel_assignment_non_safety";
                                 {
-                                    CChannelAssignmentItem item=CreateCAssignmentItem(infofield.mid(k,12));
+                                    CChannelAssignmentItem item=CreateCAssignmentItem(infofield.mid(k*12,12));
                                     emit CChannelAssignmentSignal(item);
                                     SendCAssignment(k, decline);
                                 }
@@ -2103,7 +2103,8 @@ CChannelAssignmentItem AeroL::CreateCAssignmentItem(QByteArray su)
     case C_channel_assignment_non_safety:
         break;
     default:
-        return item;
+        qDebug()<<"unknown CChannelAssignment type"<<(uchar)su[0];
+        //return item; // dont return in case this is a reserved type. however without this return I wouldn't have figured out that there was a bug calling this function.
     }
 
     item.type=(uchar)su[0];

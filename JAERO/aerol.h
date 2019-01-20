@@ -715,21 +715,21 @@ public:
                     {
                         crcok=crc16.calcusingbitsandcheck(deconvol.data()+(8*6)+(8*12)*i,8*12);
 
-                        if(crcok){
-
+                        if(crcok)
+                        {
                             ok++;
-
-                            std::cout << "SU  "<< i << " ok" << "\r\n";
-
-                         }else{
-                            std::cout << "SU  "<< i << " not ok " << "\r\n";
+//                            qDebug()<<"SU"<<i<<"ok";
 
                         }
+                         else
+                         {
+//                            qDebug()<<"SU"<<i<<"not ok";
+                         }
 
                     }// end SU loop
 
 
-                    std::cout << "Number of OK SU's " << ok << " out of total SU's " << targetSUSize << "\r\n" << std::flush;
+//                    qDebug()<<"Number of OK SU's"<<ok<< "out of total SU's"<<targetSUSize;
 
                     if(ok<=targetSUSize){
 
