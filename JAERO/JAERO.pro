@@ -185,7 +185,12 @@ contains(QT_ARCH, i386) {
     LIBS += -L$$LIBACARS_PATH/bin/64
 }
 }
+#in windows use the dynamic lib rather than the static one even when stattically compiling
+win32 {
+LIBS += -lacars.dll
+} else {
 LIBS += -lacars
+}
 
 #define where we store everything so when using the command line we don't make the main directory messy.
 CONFIG(debug, debug|release) {
