@@ -409,9 +409,9 @@ public:
     {
         for(int j=0;j<data.size();j++)
         {
-            int val0=state[0]^state[14];
-            data[j]^=val0;
-            for(int i=state.size()-1;i>0;i--)state[i]=state[i-1];
+            int val0=state.at(0)^state.at(14);
+            data[j] = data.at(j)^val0;
+            for(int i=state.size()-1;i>0;i--)state[i]=state.at(i-1);
             state[0]=val0;
         }
     }

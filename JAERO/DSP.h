@@ -389,9 +389,9 @@ public:
 
         double weighting=dptr-((double)iptr);
         ASSERTCH(buff,iptr);
-        T older=buff[iptr];
+        T older=buff.at(iptr);
         iptr++;iptr%=buff.size();
-        T newer=buff[iptr];
+        T newer=buff.at(iptr);
 
         return (weighting*newer+(1.0-weighting)*older);
     }

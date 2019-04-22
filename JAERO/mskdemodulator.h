@@ -57,6 +57,7 @@ public:
     void invalidatesettings();
     void setAFC(bool state);
     void setSQL(bool state);
+    void setCPUReduce(bool state);
     void setScatterPointType(ScatterPointType type);
     double getCurrentFreq();
 private:
@@ -135,6 +136,9 @@ private:
     bool dcd;
 
     double correctionfactor;
+
+    int coarseCounter;
+    bool cpuReduce;
 
 
 signals:

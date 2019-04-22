@@ -194,6 +194,8 @@ MainWindow::MainWindow(QWidget *parent) :
     ui->actionConnectToUDPPort->setChecked(settings.value("actionConnectToUDPPort",false).toBool());
     ui->actionRawOutput->setChecked(settings.value("actionRawOutput",false).toBool());
     ui->actionSound_Out->setChecked(settings.value("actionSound_Out",false).toBool());
+    ui->actionReduce_CPU->setChecked(settings.value("actionCpuReduce",false).toBool());
+
     double tmpfreq=settings.value("freq_center",1000).toDouble();
     ui->inputwidget->setPlainText(settings.value("inputwidget","").toString());
     ui->tabWidget->setCurrentIndex(settings.value("tabindex",0).toInt());
@@ -210,6 +212,7 @@ MainWindow::MainWindow(QWidget *parent) :
     audiomskdemodulatorsettings.freq_center=tmpfreq;
     audiomskdemodulator->setSQL(false);
     audiomskdemodulator->setSettings(audiomskdemodulatorsettings);
+    audiomskdemodulator->setCPUReduce(ui->actionReduce_CPU->isChecked());
     if(typeofdemodtouse==MSK)audiomskdemodulator->start();
 
     //oqpsk
@@ -217,6 +220,7 @@ MainWindow::MainWindow(QWidget *parent) :
     audiooqpskdemodulatorsettings.freq_center=tmpfreq;
     audiooqpskdemodulator->setSQL(false);
     audiooqpskdemodulator->setSettings(audiooqpskdemodulatorsettings);
+    audiooqpskdemodulator->setCPUReduce(ui->actionReduce_CPU->isChecked());
     if(typeofdemodtouse==OQPSK)audiooqpskdemodulator->start();
 
     //burstoqpsk
@@ -593,6 +597,7 @@ void MainWindow::closeEvent(QCloseEvent *event)
     settings.setValue("actionConnectToUDPPort", ui->actionConnectToUDPPort->isChecked());
     settings.setValue("actionRawOutput", ui->actionRawOutput->isChecked());
     settings.setValue("actionSound_Out", ui->actionSound_Out->isChecked());
+    settings.setValue("actionCpuReduce", ui->actionReduce_CPU->isChecked());
     settings.setValue("tabindex", ui->tabWidget->currentIndex());
     if(typeofdemodtouse==MSK)settings.setValue("freq_center", audiomskdemodulator->getCurrentFreq());
     if(typeofdemodtouse==OQPSK)settings.setValue("freq_center", audiooqpskdemodulator->getCurrentFreq());
@@ -1327,4 +1332,13 @@ void MainWindow::on_actionSound_Out_toggled(bool mute)
         connect(ambe,SIGNAL(decoded_signal(QByteArray)),audioout,SLOT(audioin(QByteArray)));
         audioout->start();
      }
+}
+
+
+void MainWindow::on_actionReduce_CPU_triggered(bool checked)
+{
+
+    audiooqpskdemodulator->setCPUReduce(checked);
+    audiomskdemodulator->setCPUReduce(checked);
+
 }

@@ -564,6 +564,7 @@
    <addaction name="action_Settings"/>
    <addaction name="action_PlaneLog"/>
    <addaction name="actionSound_Out"/>
+   <addaction name="actionReduce_CPU"/>
    <addaction name="actionTXRX"/>
   </widget>
   <action name="action_Exit">
@@ -685,6 +686,24 @@
    </property>
    <property name="toolTip">
     <string>Mute the sound</string>
+   </property>
+  </action>
+  <action name="actionReduce_CPU">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="icon">
+    <iconset>
+     <normaloff>images/cpu.png</normaloff>
+     <normalon>images/green_cpu.png</normalon>
+     <disabledoff>:/images/cpu.png</disabledoff>
+     <disabledon>:/images/green_cpu.png</disabledon>images/cpu.png</iconset>
+   </property>
+   <property name="text">
+    <string>Reduce CPU</string>
+   </property>
+   <property name="toolTip">
+    <string>Lowers FFT and CoarseFrequency speed</string>
    </property>
   </action>
  </widget>

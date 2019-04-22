@@ -110,7 +110,8 @@ void Console::putPlainData(const QByteArray &_data)
     QByteArray data=_data;
     data.replace((char)22,"");
 
-    if(!enableupdates)return;
+    if(!enableupdates || data.length() == 0)return;
+
     const QTextCursor old_cursor = textCursor();
     const int old_scrollbar_value = verticalScrollBar()->value();
     const bool is_scrolled_down = old_scrollbar_value == verticalScrollBar()->maximum();

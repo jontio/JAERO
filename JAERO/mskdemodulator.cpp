@@ -112,6 +112,10 @@ void MskDemodulator::setSQL(bool state)
     sql=state;
 }
 
+void MskDemodulator::setCPUReduce(bool state)
+{
+    cpuReduce=state;
+}
 void MskDemodulator::setScatterPointType(ScatterPointType type)
 {
     scatterpointtype=type;
@@ -254,6 +258,7 @@ void MskDemodulator::setSettings(Settings _settings)
 
     delayt8.setdelay((SamplesPerSymbol)/2.0);
 
+    coarseCounter = 0;
 }
 
 void MskDemodulator::CenterFreqChangedSlot(double freq_center)//spectrum display calls this when user changes the center freq
@@ -318,7 +323,7 @@ qint64 MskDemodulator::writeData(const char *data, qint64 len)
         //for looks
         spectrumcycbuff[spectrumcycbuff_ptr]=dval;
         spectrumcycbuff_ptr++;spectrumcycbuff_ptr%=spectrumnfft;
-        if(spectrumcycbuff_ptr%(spectrumnfft/4)==0)
+        if(spectrumcycbuff_ptr%(spectrumnfft)==0)
         {
             double maxval=0;
             for(int j=0;j<spectrumcycbuff.size();j++)
@@ -331,7 +336,7 @@ qint64 MskDemodulator::writeData(const char *data, qint64 len)
                 }
             }
 
-            if(timer.elapsed()>100)
+            if((!cpuReduce && timer.elapsed()>150) || (cpuReduce && timer.elapsed()>1000))
             {
                 timer.start();
                 emit OrgOverlapedBuffer(spectrumtmpbuff);
@@ -341,10 +346,13 @@ qint64 MskDemodulator::writeData(const char *data, qint64 len)
             }
         }
 
+        if((coarseCounter >= Fs || !cpuReduce))
+        {
+
         //for coarse freq estimation
         bbcycbuff[bbcycbuff_ptr]=mixer_center.WTCISValue()*dval;
         bbcycbuff_ptr++;bbcycbuff_ptr%=bbnfft;
-        if(bbcycbuff_ptr%(bbnfft)==0)//75% overlap
+        if(bbcycbuff_ptr%(cpuReduce ? bbnfft : bbnfft/4)==0)//75% overlap if not in low cpu mode
         {
             for(int j=0;j<bbcycbuff.size();j++)
             {
@@ -352,9 +360,11 @@ qint64 MskDemodulator::writeData(const char *data, qint64 len)
                 bbcycbuff_ptr++;bbcycbuff_ptr%=bbnfft;
             }
             emit BBOverlapedBuffer(bbtmpbuff);
+                coarseCounter = 0;
         }
 
-
+        }
+        coarseCounter++;
         cpx_type cval= mixer2.WTCISValue()*(dval);
         cpx_type sig2 = cpx_type(matchedfilter_re->FIRUpdateAndProcess(cval.real()),matchedfilter_im->FIRUpdateAndProcess(cval.imag()));
 

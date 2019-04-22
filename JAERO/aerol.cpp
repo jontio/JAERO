@@ -787,10 +787,10 @@ int PreambleDetectorPhaseInvariant::Update(int val)
     int xorsum=0;
     for(int i=0;i<(buffer.size()-1);i++)
     {
-        buffer[i]=buffer[i+1];
-        xorsum+=buffer[i]^preamble[i];
+        buffer[i]= buffer.at(i+1);
+        xorsum+=buffer.at(i)^preamble.at(i);
     }
-    xorsum+=val^preamble[buffer.size()-1];
+    xorsum+=val^preamble.at(buffer.size()-1);
     buffer[buffer.size()-1]=val;
     if(xorsum>=(buffer.size()-tollerence)){
 
@@ -1161,21 +1161,35 @@ QByteArray &AeroL::Decode(QVector<short> &bits, bool soft)//0 bit --> oldest bit
             realimag++;realimag%=2;
             if(realimag)
             {
+
+                if(cntr > AERO_SPEC_NumberOfBits-68 || cntr <= 0)
+                {
                 gotsync=preambledetectorphaseinvariantimag.Update(bit);
                 if(!gotsync_last)
                 {
                     gotsync_last=gotsync;
                     gotsync=0;
                 } else gotsync_last=0;
+                }else{
+                    gotsync = false;
+                    gotsync_last = false;
+                }
             }
              else
              {
+                if(cntr > AERO_SPEC_NumberOfBits-68 || cntr <= 0)
+                {
                 gotsync=preambledetectorphaseinvariantreal.Update(bit);
                 if(!gotsync_last)
                 {
                     gotsync_last=gotsync;
                     gotsync=0;
                 } else gotsync_last=0;
+
+                }else{
+                    gotsync = false;
+                    gotsync_last = false;
+                }
              }
 
             //for 10500 UW should be about 80 samples after start of packet signal from demodulator if not we have a false positive
@@ -2183,21 +2197,45 @@ QByteArray &AeroL::DecodeC(QVector<short> &bits)
         realimag++;realimag%=2;
         if(realimag)
         {
+
+            if(cntr > AERO_SPEC_NumberOfBits-112 || cntr <= 0)
+            {
+
+
             gotsync=preambledetectorreal.Update(bit);
             if(!gotsync_last)
             {
                 gotsync_last=gotsync;
                 gotsync=0;
             } else gotsync_last=0;
+
+            } else {
+                gotsync = 0;
+                gotsync_last = 0;
+
+            }
+
         }
          else
          {
+
+            if(cntr > AERO_SPEC_NumberOfBits-112 || cntr <= 0)
+            {
+
             gotsync=preambledetectorimag.Update(bit);
             if(!gotsync_last)
             {
                 gotsync_last=gotsync;
                 gotsync=0;
             } else gotsync_last=0;
+            } else {
+                gotsync = 0;
+                gotsync_last = 0;
+
+            }
+
+
+
          }
 
         if(realimag)
