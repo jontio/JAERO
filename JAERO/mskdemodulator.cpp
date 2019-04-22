@@ -349,19 +349,19 @@ qint64 MskDemodulator::writeData(const char *data, qint64 len)
         if((coarseCounter >= Fs || !cpuReduce))
         {
 
-        //for coarse freq estimation
-        bbcycbuff[bbcycbuff_ptr]=mixer_center.WTCISValue()*dval;
-        bbcycbuff_ptr++;bbcycbuff_ptr%=bbnfft;
-        if(bbcycbuff_ptr%(cpuReduce ? bbnfft : bbnfft/4)==0)//75% overlap if not in low cpu mode
-        {
-            for(int j=0;j<bbcycbuff.size();j++)
+            //for coarse freq estimation
+            bbcycbuff[bbcycbuff_ptr]=mixer_center.WTCISValue()*dval;
+            bbcycbuff_ptr++;bbcycbuff_ptr%=bbnfft;
+            if(bbcycbuff_ptr%(cpuReduce ? bbnfft : bbnfft/4)==0)//75% overlap if not in low cpu mode
             {
-                bbtmpbuff[j]=bbcycbuff[bbcycbuff_ptr];
-                bbcycbuff_ptr++;bbcycbuff_ptr%=bbnfft;
-            }
-            emit BBOverlapedBuffer(bbtmpbuff);
+                for(int j=0;j<bbcycbuff.size();j++)
+                {
+                    bbtmpbuff[j]=bbcycbuff[bbcycbuff_ptr];
+                    bbcycbuff_ptr++;bbcycbuff_ptr%=bbnfft;
+                }
+                emit BBOverlapedBuffer(bbtmpbuff);
                 coarseCounter = 0;
-        }
+            }
 
         }
         coarseCounter++;
