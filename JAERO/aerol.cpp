@@ -1162,7 +1162,7 @@ QByteArray &AeroL::Decode(QVector<short> &bits, bool soft)//0 bit --> oldest bit
             if(realimag)
             {
 
-                if(cntr > AERO_SPEC_NumberOfBits-68 || cntr <= 0)
+                if(cntr > AERO_SPEC_NumberOfBits-68 || cntr <= 0 ||!datacd)
                 {
                 gotsync=preambledetectorphaseinvariantimag.Update(bit);
                 if(!gotsync_last)
@@ -1177,7 +1177,7 @@ QByteArray &AeroL::Decode(QVector<short> &bits, bool soft)//0 bit --> oldest bit
             }
              else
              {
-                if(cntr > AERO_SPEC_NumberOfBits-68 || cntr <= 0)
+                if(cntr > AERO_SPEC_NumberOfBits-68 || cntr <= 0 ||!datacd)
                 {
                 gotsync=preambledetectorphaseinvariantreal.Update(bit);
                 if(!gotsync_last)
