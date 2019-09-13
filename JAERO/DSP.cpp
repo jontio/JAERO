@@ -659,8 +659,14 @@ void IIR::init()
 double  IIR::update(double sig)
 {
 
-    buff_x.resize(b.size());
-    buff_y.resize(a.size()-1);
+    if(buff_x.size() != b.size())
+    {
+        buff_x.resize(b.size());
+    }
+    if(buff_y.size() != a.size()-1)
+    {
+        buff_y.resize(a.size()-1);
+    }
     if(buff_x_ptr>=buff_x.size())buff_x_ptr=0;
     if(buff_y_ptr>=buff_y.size())buff_y_ptr=0;
 
@@ -676,7 +682,7 @@ double  IIR::update(double sig)
     {
         ASSERTCH(buff_x,buff_x_ptr);
         ASSERTCH(b,i);
-        y+=buff_x[buff_x_ptr]*b[i];
+        y+=buff_x.at(buff_x_ptr)*b.at(i);
         buff_x_ptr++;buff_x_ptr%=buff_x.size();
     }
 
@@ -684,7 +690,7 @@ double  IIR::update(double sig)
     {
         ASSERTCH(buff_y,buff_y_ptr);
         ASSERTCH(a,i);
-        y-=buff_y[buff_y_ptr]*a[i];
+        y-=buff_y.at(buff_y_ptr)*a.at(i);
         buff_y_ptr++;buff_y_ptr%=buff_y.size();
     }
 

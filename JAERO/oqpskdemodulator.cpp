@@ -162,6 +162,11 @@ void OqpskDemodulator::setSQL(bool state)
     sql=state;
 }
 
+void OqpskDemodulator::setCPUReduce(bool state)
+{
+    cpuReduce=state;
+
+}
 void OqpskDemodulator::setScatterPointType(ScatterPointType type)
 {
     scatterpointtype=type;
@@ -288,6 +293,9 @@ void OqpskDemodulator::setSettings(Settings _settings)
     fir_pre->setKernel(fir_pre_imp_responce,4096);//use x2 rather than the x4 rule of thumb, will make it more responsive but may use more cpu
 
     emit Plottables(mixer2.GetFreqHz(),mixer_center.GetFreqHz(),lockingbw);
+
+    coarseCounter = 0;
+
 }
 
 void OqpskDemodulator::CenterFreqChangedSlot(double freq_center)//spectrum display calls this when user changes the center freq
@@ -410,7 +418,9 @@ qint64 OqpskDemodulator::writeData(const char *data, qint64 len)
         if(fabs(dval)>maxval)maxval=fabs(dval);
         spectrumcycbuff[spectrumcycbuff_ptr]=dval;
         spectrumcycbuff_ptr++;spectrumcycbuff_ptr%=spectrumnfft;
-        if(timer.elapsed()>150)
+
+
+        if((!cpuReduce && timer.elapsed()>150) || (cpuReduce && fb == 8400 && timer.elapsed()>150) || (cpuReduce && fb > 8400 && timer.elapsed()>1000))
         {
             sendscatterpoints=true;
             timer.start();
@@ -419,11 +429,15 @@ qint64 OqpskDemodulator::writeData(const char *data, qint64 len)
             maxval=0;
         }
 
-        //for coarse freq estimation
+
+
+        if((coarseCounter >= Fs || !cpuReduce))
+        {
+
         ASSERTCH(bbcycbuff,bbcycbuff_ptr);
         bbcycbuff[bbcycbuff_ptr]=mixer_center.WTCISValue()*dval;
         bbcycbuff_ptr++;bbcycbuff_ptr%=bbnfft;
-        if(bbcycbuff_ptr%(bbnfft/4)==0)//75% overlap
+            if (bbcycbuff_ptr % (cpuReduce? bbnfft : bbnfft/4) == 0)//75% overlap
         {
             for(int j=0;j<bbcycbuff.size();j++)
             {
@@ -433,8 +447,12 @@ qint64 OqpskDemodulator::writeData(const char *data, qint64 len)
                 bbcycbuff_ptr++;bbcycbuff_ptr%=bbnfft;
             }
             emit BBOverlapedBuffer(bbtmpbuff);
+                coarseCounter = 0;
+
+            }
         }
 
+        coarseCounter++;
         //-----
 
         cpx_type cval,sig2;

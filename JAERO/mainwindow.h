@@ -120,6 +120,7 @@ private slots:
 
     void on_tabWidget_currentChanged(int index);
     void on_actionSound_Out_toggled(bool mute);
+    void on_actionReduce_CPU_triggered(bool checked);
 };
 
 #endif // MAINWINDOW_H

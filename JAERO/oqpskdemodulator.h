@@ -39,6 +39,7 @@ public:
     ~OqpskDemodulator();
     void setAFC(bool state);
     void setSQL(bool state);
+    void setCPUReduce(bool state);
     void setSettings(Settings settings);
     void invalidatesettings();
     void ConnectSinkDevice(QIODevice *datasinkdevice);
@@ -136,6 +137,8 @@ private:
     QJFastFIRFilter *fir_pre;
     WaveTable mixer_fir_pre;
 
+    int coarseCounter;
+    bool cpuReduce;
 
 
 public slots:
