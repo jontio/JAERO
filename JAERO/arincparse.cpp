@@ -27,6 +27,9 @@ qint32 ArincParse::extractqint32(QByteArray &ba,int lsbyteoffset,int bitoffset,i
     qint32 val=0;
     int shift=0;
     qint32 byte;
+    assert(bitoffset>=0);
+    assert(bitoffset<=8);
+    assert(numberofbits>=0);
     int mask=(~((0x00FF)<<(8-bitoffset)))&0xFF;
     for(int i=lsbyteoffset;i>=0;i--)
     {
@@ -46,24 +49,36 @@ qint32 ArincParse::extractqint32(QByteArray &ba,int lsbyteoffset,int bitoffset,i
     return val;
 }
 
-void ArincParse::try_acars_apps(ACARSItem &acarsitem, la_msg_dir msg_dir) {
-    QByteArray ba;
-    if(msg_dir == LA_MSG_DIR_AIR2GND) {
-// skip message number and flight ID
+void ArincParse::try_acars_apps(ACARSItem &acarsitem, la_msg_dir msg_dir)
+{
+//    qDebug()<<"void ArincParse::try_acars_apps(ACARSItem &acarsitem, la_msg_dir msg_dir)";
+//    qDebug()<<"acarsitem="<<acarsitem.message;
+//    qDebug()<<"msg_dir="<<msg_dir;
+//    qDebug()<<"acarsitem.valid="<<acarsitem.valid;
+//    qDebug()<<"arincmessage.info="<<arincmessage.info;
+    QByteArray ba="";
+    if(acarsitem.message.isEmpty())return;
+    if(msg_dir == LA_MSG_DIR_AIR2GND)
+    {
+        // skip message number and flight ID
         ba = acarsitem.message.mid(4+6).toLatin1();
-    } else {
+    }
+    else
+    {
         ba = acarsitem.message.toLatin1();
     }
-    if(ba.size() < 1) {
-        return;
-    }
+    if(ba.isEmpty())return;
+
     la_proto_node *node = la_acars_decode_apps(acarsitem.LABEL.data(), ba.data(), msg_dir);
-    if(node != NULL) {
-            la_vstring *vstr = la_proto_tree_format_text(NULL, node);
-            arincmessage.info += vstr->str;
-            la_vstring_destroy(vstr, true);
+    if(node != NULL)
+    {
+        la_vstring *vstr = la_proto_tree_format_text(NULL, node);
+//        qDebug()<<"vstr->str="<<vstr->str;
+        arincmessage.info += vstr->str;
+        la_vstring_destroy(vstr, true);
     }
     la_proto_tree_destroy(node);
+
 }
 
 bool ArincParse::parseUplinkmessage(ACARSItem &acarsitem)
@@ -76,7 +91,7 @@ bool ArincParse::parseUplinkmessage(ACARSItem &acarsitem)
 }
 
 //returns true if something for the user to read. need to check what is valid on return
-bool ArincParse::parseDownlinkmessage(ACARSItem &acarsitem)//QString &msg)
+bool ArincParse::parseDownlinkmessage(ACARSItem &acarsitem)
 {
     //qDebug()<<acarsitem.message;
 
@@ -114,7 +129,8 @@ bool ArincParse::parseDownlinkmessage(ACARSItem &acarsitem)//QString &msg)
     //deal with application section
     QStringList sections=acarsitem.message.split('/');
     // Not an ARINC message - try other ACARS applications with libacars
-    if(sections.size()!=2) {
+    if(sections.size()!=2)
+    {
         try_acars_apps(acarsitem, LA_MSG_DIR_AIR2GND);
         return true;
     }

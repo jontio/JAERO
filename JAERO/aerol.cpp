@@ -395,7 +395,7 @@ bool ParserISU::parse(ISUItem &isuitem)
             &&(((uchar)isuitem.userdata[15])==0x83 || ((uchar)isuitem.userdata[15])==0x02 ))
         isacars = true;
 
-      if(isacars)
+    if(isacars)
     {
 
 
@@ -483,7 +483,7 @@ bool ParserISU::parse(ISUItem &isuitem)
     QString AESIDstr=((QString)"").sprintf("%06X",anacarsitem.isuitem.AESID);
     dbtu->request(databasedir,AESIDstr,pai);
 
-     return true;
+    return true;
 
 }
 void ParserISU::setDataBaseDir(const QString &dir)
@@ -546,7 +546,8 @@ void AeroLInterleaver::setSize(int _N)
     N=_N;
     matrix.resize(M*N);
     matrix_ba.resize(M*N);
-    for(int a = 0; a < matrix_ba.length(); a++){
+    for(int a = 0; a < matrix_ba.length(); a++)
+    {
         matrix_ba[a] = 0;
     }
 }

@@ -24,7 +24,13 @@ INSTALL_PATH = /opt/jaero
 #compiling libogg "./configure" "make" works. for comping libvorbis without installing in usual place libogg was "./configure --with-ogg-libraries=/e/git/JAERO/libogg-1.3.3/src/.libs  --with-ogg-includes=/e/git/JAERO/libogg-1.3.3/include" then "make"
 VORBIS_PATH = $$PWD/../libvorbis-1.3.6
 OGG_PATH = $$PWD/../libogg-1.3.3
-LIBACARS_PATH =$$PWD/../libacars-1.1.0
+
+# I've moved libacars source to outside JAERO repo so I can
+# clone libacars and update easier. Really this should be
+# done for the other libs here rather than including them
+# in the JAERO repo. The downside is more repos have to be
+# downloaded.
+LIBACARS_PATH =$$PWD/../../libacars
 
 INCLUDEPATH += $$VORBIS_PATH/include
 DEPENDPATH += $$VORBIS_PATH/include
@@ -176,15 +182,18 @@ LIBS += -L$$OGG_PATH/src/.libs -logg
 
 # libacars support
 LIBS += -L$$LIBACARS_PATH/build/src/libacars
-win32 {
-contains(QT_ARCH, i386) {
-    #message("32-bit")
-    LIBS += -L$$LIBACARS_PATH/bin/32
-} else {
-    #message("64-bit")
-    LIBS += -L$$LIBACARS_PATH/bin/64
-}
-}
+
+#this used to be needed in the old versions of qt/mingw on windows but now you dont need it.
+#win32 {
+#contains(QT_ARCH, i386) {
+#    #message("32-bit")
+#    LIBS += -L$$LIBACARS_PATH/bin/32
+#} else {
+#    #message("64-bit")
+#    LIBS += -L$$LIBACARS_PATH/bin/64
+#}
+#}
+
 #in windows use the dynamic lib rather than the static one even when stattically compiling
 win32 {
 LIBS += -lacars.dll
@@ -192,20 +201,21 @@ LIBS += -lacars.dll
 LIBS += -lacars
 }
 
+#this can have issues in qtcreator
 #define where we store everything so when using the command line we don't make the main directory messy.
-CONFIG(debug, debug|release) {
-    DESTDIR = $$PWD/debug
-    OBJECTS_DIR = $$PWD/tmp/debug/stuff
-    MOC_DIR = $$PWD/tmp/debug/stuff
-    UI_DIR = $$PWD/tmp/debug/stuff
-    RCC_DIR = $$PWD/tmp/debug/stuff
-} else {
-    DESTDIR = $$PWD/release
-    OBJECTS_DIR = $$PWD/tmp/release/stuff
-    MOC_DIR = $$PWD/tmp/release/stuff
-    UI_DIR = $$PWD/tmp/release/stuff
-    RCC_DIR = $$PWD/tmp/release/stuff
-}
+#CONFIG(debug, debug|release) {
+#    DESTDIR = $$PWD/debug
+#    OBJECTS_DIR = $$PWD/tmp/debug/stuff
+#    MOC_DIR = $$PWD/tmp/debug/stuff
+#    UI_DIR = $$PWD/tmp/debug/stuff
+#    RCC_DIR = $$PWD/tmp/debug/stuff
+#} else {
+#    DESTDIR = $$PWD/release
+#    OBJECTS_DIR = $$PWD/tmp/release/stuff
+#    MOC_DIR = $$PWD/tmp/release/stuff
+#    UI_DIR = $$PWD/tmp/release/stuff
+#    RCC_DIR = $$PWD/tmp/release/stuff
+#}
 
 #desktop
 desktop.path = /usr/share/applications
