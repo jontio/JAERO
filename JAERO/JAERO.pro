@@ -237,3 +237,7 @@ INSTALLS += soundsDataFiles
 #install library
 target.path=$$INSTALL_PATH
 INSTALLS += target
+
+# disable stupid deprecated-copy warnings
+# cluttering up issues
+QMAKE_CXXFLAGS += '-Wno-deprecated-copy'
