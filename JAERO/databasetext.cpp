@@ -357,7 +357,7 @@ void DataBaseWorkerText::DbLookupFromAES(const QString &dirname, const QString &
     {
         //not found
         cache.insert(AEStext,new QStringList);
-        values.clear();values.push_back("Not found5");
+        values.clear();values.push_back("Not found");
         QMetaObject::invokeMethod(sender,member, Qt::QueuedConnection,Q_ARG(bool, false),Q_ARG(int, userdata),Q_ARG(const QStringList&, values));
         return;
     }

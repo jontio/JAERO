@@ -200,14 +200,13 @@ PlaneLog::PlaneLog(QWidget *parent) :
 
 void PlaneLog::closeEvent(QCloseEvent *event)
 {
-    if(toolBar)toolBar->setHidden(true);
-    event->accept();
+    event->ignore();
+    hide();
 }
 
 void PlaneLog::showEvent(QShowEvent *event)
 {
     updateinfopain();
-    toolBar->setHidden(false);
     event->accept();
 }
 
