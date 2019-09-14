@@ -196,6 +196,9 @@ MainWindow::MainWindow(QWidget *parent) :
     ui->actionSound_Out->setChecked(settings.value("actionSound_Out",false).toBool());
     ui->actionReduce_CPU->setChecked(settings.value("actionCpuReduce",false).toBool());
 
+    restoreGeometry(settings.value("geometry").toByteArray());
+    restoreState(settings.value("windowState").toByteArray());
+
     double tmpfreq=settings.value("freq_center",1000).toDouble();
     ui->inputwidget->setPlainText(settings.value("inputwidget","").toString());
     ui->tabWidget->setCurrentIndex(settings.value("tabindex",0).toInt());
@@ -605,6 +608,9 @@ void MainWindow::closeEvent(QCloseEvent *event)
     if(typeofdemodtouse==BURSTMSK)settings.setValue("freq_center", audioburstmskdemodulator->getCurrentFreq());
 
     settings.setValue("inputwidget", ui->inputwidget->toPlainText());
+
+    settings.setValue("geometry", saveGeometry());
+    settings.setValue("windowState", saveState());
 
     planelog->close();
     event->accept();

@@ -177,8 +177,10 @@ QMAKE_CXXFLAGS_RELEASE += -O3
 
 #for audio compressor
 #for static building order seems to matter
-LIBS += -L$$VORBIS_PATH/lib/.libs -lvorbis -lvorbisenc
-LIBS += -L$$OGG_PATH/src/.libs -logg
+#LIBS += -L$$VORBIS_PATH/lib/.libs -lvorbis -lvorbisenc
+#LIBS += -L$$OGG_PATH/src/.libs -logg
+# if you have installed the libs ie. "make install" then this will do instead
+LIBS += -lvorbis -lvorbisenc -logg
 
 # libacars support
 LIBS += -L$$LIBACARS_PATH/build/src/libacars

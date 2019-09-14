@@ -240,7 +240,6 @@ PlaneLog::~PlaneLog()
 
 void PlaneLog::ACARSslot(ACARSItem &acarsitem)
 {
-
     if(!acarsitem.valid)return;
 
     ui->tableWidget->setSortingEnabled(false);//!!!!!
@@ -350,6 +349,7 @@ void PlaneLog::ACARSslot(ACARSItem &acarsitem)
         if(message.right(1)=="\n")message.chop(1);
         if(message.left(1)=="\n")message.remove(0,1);
         arincparser.parseDownlinkmessage(acarsitem);
+        arincparser.parseUplinkmessage(acarsitem);
         message.replace('\n',"●");//● instead of \n\t
 
         QByteArray TAKstr;
@@ -368,7 +368,7 @@ void PlaneLog::ACARSslot(ACARSItem &acarsitem)
              else tmp+="✈: "+QDateTime::currentDateTime().toString("hh:mm:ss dd-MM-yy ")+(((QString)"").sprintf("AES:%06X GES:%02X %c %s %s %c%c %c●●",acarsitem.isuitem.AESID,acarsitem.isuitem.GESID,acarsitem.MODE,acarsitem.PLANEREG.data(),TAKstr.data(),(uchar)acarsitem.LABEL[0],label1,acarsitem.BI));
          }
 
-        if((!acarsitem.nonacars)&&(acarsitem.downlink)&&arincparser.arincmessage.info.size()>2)
+        if((!acarsitem.nonacars)&&arincparser.arincmessage.info.size()>2)
         {
             arincparser.arincmessage.info.replace("\n","●");
             LastMessageitem->setText(tmp+message+"●●"+arincparser.arincmessage.info);

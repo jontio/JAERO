@@ -52,12 +52,12 @@ qint32 ArincParse::extractqint32(QByteArray &ba,int lsbyteoffset,int bitoffset,i
 void ArincParse::try_acars_apps(ACARSItem &acarsitem, la_msg_dir msg_dir)
 {
 //    qDebug()<<"void ArincParse::try_acars_apps(ACARSItem &acarsitem, la_msg_dir msg_dir)";
+    if(acarsitem.message.isEmpty())return;
 //    qDebug()<<"acarsitem="<<acarsitem.message;
 //    qDebug()<<"msg_dir="<<msg_dir;
 //    qDebug()<<"acarsitem.valid="<<acarsitem.valid;
 //    qDebug()<<"arincmessage.info="<<arincmessage.info;
     QByteArray ba="";
-    if(acarsitem.message.isEmpty())return;
     if(msg_dir == LA_MSG_DIR_AIR2GND)
     {
         // skip message number and flight ID
