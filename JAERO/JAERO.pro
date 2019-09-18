@@ -20,6 +20,8 @@ TEMPLATE = app
 
 INSTALL_PATH = /opt/jaero
 
+QMAKE_CXXFLAGS += -std=c++11
+
 #for audio compressor
 #compiling libogg "./configure" "make" works. for comping libvorbis without installing in usual place libogg was "./configure --with-ogg-libraries=/e/git/JAERO/libogg-1.3.3/src/.libs  --with-ogg-includes=/e/git/JAERO/libogg-1.3.3/include" then "make"
 VORBIS_PATH = $$PWD/../libvorbis-1.3.6
