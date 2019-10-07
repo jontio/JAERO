@@ -192,6 +192,11 @@
           <height>21</height>
          </rect>
         </property>
+        <property name="toolTip">
+         <string>you can output to multiple destinations
+by placing a space between destinations.
+eg &quot;localhost:12345 localhost:12346&quot;</string>
+        </property>
         <property name="text">
          <string>localhost:18765</string>
         </property>
