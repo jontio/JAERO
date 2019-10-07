@@ -61,23 +61,41 @@ void SettingsDialog::poulatepublicvars()
     beepontextmessage=ui->checkBoxbeepontextmessage->isChecked();
 
     //bottom text window output settings
-    QString hostaddr=ui->lineEditudpoutputdecodedmessagesaddress->text().section(':',0,0);
-    if(hostaddr.toUpper()=="LOCALHOST")hostaddr="127.0.0.1";
-    if(!udp_for_decoded_messages_address.setAddress(hostaddr))
+    QStringList hosts=ui->lineEditudpoutputdecodedmessagesaddress->text().simplified().split(" ");
+    udp_for_decoded_messages_address.clear();
+    udp_for_decoded_messages_port.clear();
+    for(int i=0;i<hosts.size();i++)
     {
-        qDebug()<<"Can't set UDP address";
-    }
-    udp_for_decoded_messages_port=ui->lineEditudpoutputdecodedmessagesaddress->text().section(':',1,1).toInt();
-    if(udp_for_decoded_messages_port==0)
-    {
-        qDebug()<<"Can't set UDP port reverting to 18765";
-        udp_for_decoded_messages_port=18765;
+        QString host=hosts[i];
+        QHostAddress hostaddress;
+        quint16 hostport;
+        QString hostaddress_string=host.section(':',0,0).simplified();
+        if(hostaddress_string.toUpper()=="LOCALHOST")hostaddress_string="127.0.0.1";
+        if(!hostaddress.setAddress(hostaddress_string))
+        {
+            qDebug()<<"Can't set UDP address";
+        }
+        hostport=host.section(':',1,1).toInt();
+        if(hostport==0)
+        {
+            qDebug()<<"Can't set UDP port reverting to 18765";
+            hostport=18765;
+        }
+        if(!((udp_for_decoded_messages_port.contains(hostport)&&udp_for_decoded_messages_address.contains(hostaddress))))
+        {
+            udp_for_decoded_messages_address.push_back(hostaddress);
+            udp_for_decoded_messages_port.push_back(hostport);
+        }
+         else
+         {
+              qDebug()<<"Can't set UDP address:port as it's already used";
+         }
     }
     udp_for_decoded_messages_enabled=ui->checkOutputDecodedMessageToUDPPort->isChecked();
 
 
     //ads message output using SBS1 protocol over TCP
-    hostaddr=ui->lineEdittcpoutputadsmessagesaddress->text().section(':',0,0);
+    QString hostaddr=ui->lineEdittcpoutputadsmessagesaddress->text().section(':',0,0);
     if(!tcp_for_ads_messages_address.setAddress(hostaddr))
     {
         QString tstr=ui->lineEdittcpoutputadsmessagesaddress->text().section(':',1,1);

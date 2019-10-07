@@ -43,8 +43,8 @@ public:
     bool beepontextmessage;
     void DataBaseUpdateSugestion();
 
-    QHostAddress udp_for_decoded_messages_address;
-    quint16 udp_for_decoded_messages_port;
+    QList<QHostAddress> udp_for_decoded_messages_address;
+    QList<quint16> udp_for_decoded_messages_port;
     bool udp_for_decoded_messages_enabled;
 
 

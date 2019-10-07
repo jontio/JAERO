@@ -59,8 +59,7 @@ private:
 
 
     //bottom textedit output
-    QUdpSocket *udpsocket_bottom_textedit;
-    //
+    QList<QPointer<QUdpSocket> > udpsockets_bottom_textedit;
 
     //ambe->pcm->vorbis->ogg->disk
     QObject *ambe;

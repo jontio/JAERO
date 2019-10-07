@@ -112,9 +112,8 @@ MainWindow::MainWindow(QWidget *parent) :
     //add a thing for saving audio to disk with
     compresseddiskwriter = new CompressedAudioDiskWriter(this);
 
-    //create udp sockets
+    //create udp socket for raw data and hex (not bottom textbox)
     udpsocket = new QUdpSocket(this);
-    udpsocket_bottom_textedit = new QUdpSocket(this);
 
     //create sbs server and connect the ADS parser to it
     sbs1 = new SBS1(this);
@@ -920,7 +919,6 @@ void MainWindow::on_actionConnectToUDPPort_toggled(bool arg1)
     aerol->DisconnectSinkDevice();
     aerol2->DisconnectSinkDevice();
     udpsocket->close();
-    udpsocket_bottom_textedit->close();
     if(arg1)
     {
         ui->actionRawOutput->setEnabled(true);
@@ -1078,10 +1076,31 @@ void MainWindow::acceptsettings()
 
     planelog->planesfolder=settingsdialog->planesfolder;
     planelog->planelookup=settingsdialog->planelookup;
-    udpsocket_bottom_textedit->close();
+
+    //this is for bottom textbox udp output
+    //disconnect ports
+    for(int ii=0;ii<udpsockets_bottom_textedit.size();ii++)
+    {
+        udpsockets_bottom_textedit[ii].data()->close();
+    }
+    //resize number of ports
+    int number_of_ports_wanted=qMin(settingsdialog->udp_for_decoded_messages_address.size(),settingsdialog->udp_for_decoded_messages_port.size());
+    while(udpsockets_bottom_textedit.size()<number_of_ports_wanted)
+    {
+        udpsockets_bottom_textedit.push_back(new QUdpSocket(this));
+    }
+    for(int ii=number_of_ports_wanted;ii<udpsockets_bottom_textedit.size();)
+    {
+        udpsockets_bottom_textedit[ii].data()->deleteLater();
+        udpsockets_bottom_textedit.removeAt(ii);
+    }
+    //connect ports
     if(settingsdialog->udp_for_decoded_messages_enabled)
     {
-        udpsocket_bottom_textedit->connectToHost(settingsdialog->udp_for_decoded_messages_address, settingsdialog->udp_for_decoded_messages_port);
+        for(int ii=0;ii<udpsockets_bottom_textedit.size();ii++)
+        {
+            udpsockets_bottom_textedit[ii].data()->connectToHost(settingsdialog->udp_for_decoded_messages_address[ii], settingsdialog->udp_for_decoded_messages_port[ii]);
+        }
     }
 
     if(settingsdialog->loggingenable)compresseddiskwriter->setLogDir(settingsdialog->loggingdirectory);
@@ -1272,12 +1291,19 @@ void MainWindow::ACARSslot(ACARSItem &acarsitem)
         {
             if(settingsdialog->udp_for_decoded_messages_enabled)//((settingsdialog->udp_for_decoded_messages_enabled)&&(arincparser.adownlinkbasicreportgroup.valid))
             {
-                if((!udpsocket_bottom_textedit->isOpen())||(!udpsocket_bottom_textedit->isWritable()))
+                //send bottom text window to all udp sockects
+                for(int ii=0;ii<udpsockets_bottom_textedit.size();ii++)
                 {
-                    udpsocket_bottom_textedit->close();
-                    udpsocket_bottom_textedit->connectToHost(settingsdialog->udp_for_decoded_messages_address, settingsdialog->udp_for_decoded_messages_port);
+                    if(ii>=settingsdialog->udp_for_decoded_messages_address.size())continue;
+                    if(ii>=settingsdialog->udp_for_decoded_messages_port.size())continue;
+                    QUdpSocket *sock=udpsockets_bottom_textedit[ii].data();
+                    if((!sock->isOpen())||(!sock->isWritable()))
+                    {
+                        sock->close();
+                        sock->connectToHost(settingsdialog->udp_for_decoded_messages_address[ii], settingsdialog->udp_for_decoded_messages_port[ii]);
+                    }
+                    if((sock->isOpen())&&(sock->isWritable()))sock->write((humantext+"\n").toLatin1().data());
                 }
-                if((udpsocket_bottom_textedit->isOpen())&&(udpsocket_bottom_textedit->isWritable()))udpsocket_bottom_textedit->write((humantext+"\n").toLatin1().data());
             }
             ui->inputwidget->appendPlainText(humantext);
             log(humantext);
