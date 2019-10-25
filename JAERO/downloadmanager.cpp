@@ -93,7 +93,7 @@ void DownloadManager::startNextDownload()
     if (downloadQueue.isEmpty())
     {
         pd.hide();
-        qDebug(qPrintable(((QString)"").sprintf("%d/%d files downloaded successfully\n", downloadedCount, totalCount)));
+        qDebug()<<QString::asprintf("%d/%d files downloaded successfully\n", downloadedCount, totalCount);
 
         if(downloadedCount||(totalCount>1))
         {
@@ -128,13 +128,13 @@ void DownloadManager::startNextDownload()
         msgBox.setIcon(QMessageBox::Critical);
         msgBox.exec();
 
-        qCritical(qPrintable(((QString)"").sprintf(
+        qCritical()<<QString::asprintf(
 
                                  "Problem opening save file '%s' for download '%s': %s\n",
                                                  qPrintable(tmptofilalfilenamemap.value(filename)), url.toEncoded().constData(),
                                                  qPrintable(output.errorString())
 
-                                 )));
+                                 );
 
         startNextDownload();
         return;                 // skip this download
@@ -184,11 +184,11 @@ void DownloadManager::downloadFinished()
 
         // download failed
 
-        qCritical(qPrintable(((QString)"").sprintf(
+        qCritical()<<QString::asprintf(
 
                                  "Download Failed: %s", qPrintable(currentDownload->errorString())
 
-                                 )));
+                                 );
 
         QMessageBox msgBox;
         msgBox.setText("Download failed.");

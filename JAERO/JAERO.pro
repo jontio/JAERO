@@ -53,6 +53,8 @@ contains(QT_ARCH, i386) {
     DEFINES += kiss_fft_scalar=double
 }
 
+DEFINES += _USE_MATH_DEFINES
+
 SOURCES += main.cpp\
         mainwindow.cpp \
     coarsefreqestimate.cpp \
@@ -243,3 +245,5 @@ INSTALLS += target
 # disable stupid deprecated-copy warnings
 # cluttering up issues
 QMAKE_CXXFLAGS += '-Wno-deprecated-copy'
+
+#QMAKE_CXXFLAGS += '-Werror=format-security'

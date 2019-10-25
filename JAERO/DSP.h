@@ -3,7 +3,6 @@
 #ifndef DSPH
 #define DSPH
 //---------------------------------------------------------------------------
-#define _USE_MATH_DEFINES
 #include <math.h>
 #include <vector>
 #include <complex>
