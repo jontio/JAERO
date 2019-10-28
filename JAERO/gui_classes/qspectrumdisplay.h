@@ -4,8 +4,8 @@
 #include <QObject>
 #include <complex>
 #include <vector>
+#include <qcustomplot.h>
 
-#include "../../qcustomplot/qcustomplot.h"
 #include "fftrwrapper.h"
 
 typedef FFTrWrapper<double> FFTr;

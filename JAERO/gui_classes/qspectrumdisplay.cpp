@@ -24,9 +24,16 @@ QSpectrumDisplay::QSpectrumDisplay(QWidget *parent)
     axisRect()->setMargins(QMargins(0,0,1,0));
 
     lockingbwbar = new QCPBars(xAxis, yAxis);
+#if QCUSTOMPLOT_VERSION >= 0x020000
+#else
     addPlottable(lockingbwbar);
+#endif
+
     freqmarker = new QCPBars(xAxis, yAxis);
+#if QCUSTOMPLOT_VERSION >= 0x020000
+#else
     addPlottable(freqmarker);
+#endif
     freqmarker->setWidth(10);
     lockingbwbar->setPen(Qt::NoPen);
     lockingbwbar->setBrush(QColor(10, 140, 70, 80));

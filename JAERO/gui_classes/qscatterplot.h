@@ -4,8 +4,7 @@
 #include <QObject>
 #include <complex>
 #include <QElapsedTimer>
-
-#include "../../qcustomplot/qcustomplot.h"
+#include <qcustomplot.h>
 
 typedef std::complex<double> cpx_type;
 

@@ -877,8 +877,13 @@ void MainWindow::on_actionCleanConsole_triggered()
 }
 
 void MainWindow::on_comboBoxdisplay_currentIndexChanged(const QString &arg1)
-{
+{  
+#if QCUSTOMPLOT_VERSION >= 0x020000
+    ui->scatterplot->graph(0)->data().clear();
+#else
     ui->scatterplot->graph(0)->clearData();
+#endif
+
     ui->scatterplot->replot();
     ui->scatterplot->setDisksize(3);
     if(arg1=="Constellation")

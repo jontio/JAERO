@@ -60,7 +60,6 @@ SOURCES += main.cpp\
     coarsefreqestimate.cpp \
     DSP.cpp \
     mskdemodulator.cpp \
-    ../qcustomplot/qcustomplot.cpp \
     audiomskdemodulator.cpp \
     gui_classes/console.cpp \
     gui_classes/qscatterplot.cpp \
@@ -91,12 +90,10 @@ SOURCES += main.cpp\
     audiooutdevice.cpp \
     compressedaudiodiskwriter.cpp
 
-
 HEADERS  += mainwindow.h \
     coarsefreqestimate.h \
     DSP.h \
     mskdemodulator.h \
-    ../qcustomplot/qcustomplot.h \
     audiomskdemodulator.h \
     gui_classes/console.h \
     gui_classes/qscatterplot.h \
@@ -128,6 +125,17 @@ HEADERS  += mainwindow.h \
     audiooutdevice.h \
     compressedaudiodiskwriter.h
 
+#unbundle qcustomplot for linux.
+#windows qcustomplot is still bundled.
+win32 {
+#message("windows")
+INCLUDEPATH += $$PWD/../qcustomplot/
+SOURCES += ../qcustomplot/qcustomplot.cpp
+HEADERS += ../qcustomplot/qcustomplot.h
+} else {
+#message("not windows")
+LIBS += -lqcustomplot
+}
 
 FORMS    += mainwindow.ui \
     gui_classes/settingsdialog.ui \
