@@ -661,12 +661,13 @@ void MainWindow::PlottablesSlot(double freq_est,double freq_center,double bandwi
 
 void MainWindow::AboutSlot()
 {
+    QStringList date=QString(__DATE__).split(" ");
     QMessageBox::about(this,"JAERO",""
                                      "<H1>An Aero demodulator and decoder</H1>"
-                                     "<H3>v1.0.4.11</H3>"
+                                     "<H3>"+QString(JAERO_VERSION)+"</H3>"
                                      "<p>This is a program to demodulate and decode Aero signals. These signals contain SatCom ACARS (<em>Satellite Communication Aircraft Communications Addressing and Reporting System</em>) messages as used by planes beyond VHF ACARS range. This protocol is used by Inmarsat's \"Classic Aero\" system and can be received using low or medium gain L band or high gain C band antennas.</p>"
                                      "<p>For more information about this application see <a href=\"http://jontio.zapto.org/hda1/jaero.html\">http://jontio.zapto.org/hda1/jaero.html</a>.</p>"
-                                     "<p>Jonti 2019</p>" );
+                                     "<p>Jonti "+date[1]+" "+date[0]+" "+date[2]+"</p>" );
 }
 
 void MainWindow::on_comboBoxbps_currentIndexChanged(const QString &arg)

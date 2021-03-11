@@ -5,7 +5,7 @@
 #ifdef __cplusplus
   extern "C" {
 #endif
-#include "../libcorrect/include/correct.h"
+#include "correct.h"
 #ifdef __cplusplus
   }
 #endif

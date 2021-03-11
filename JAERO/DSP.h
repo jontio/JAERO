@@ -9,7 +9,7 @@
 #include <QObject>
 #include <assert.h>
 #include <QVector>
-#include "../kiss_fft130/kiss_fastfir.h"
+#include "kiss_fft.h"
 //---------------------------------------------------------------------------
 
 //#define ASSERTCH(obj,idx) assert(idx>=0);assert(idx<obj.size())
