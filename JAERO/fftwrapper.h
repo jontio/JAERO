@@ -3,7 +3,7 @@
 
 #include <QVector>
 #include <complex>
-#include "kiss_fft.h"
+#include "../../JFFT/jfft.h"
 
 //underlying fft still uses the type in the  kiss_fft_type in the c stuff
 template<typename T>
@@ -14,10 +14,11 @@ public:
     ~FFTWrapper();
     void transform(const QVector< std::complex<T> > &in, QVector< std::complex<T> > &out);
 private:
-    kiss_fft_cfg cfg;
-    QVector<kiss_fft_cpx> privatein;
-    QVector<kiss_fft_cpx> privateout;
+    JFFT fft;
+//    QVector<std::complex<T>> privatein;
+//    QVector<std::complex<T>> privateout;
     int nfft;
+    bool inverse;
 };
 
 #endif // FFTWRAPPER_H

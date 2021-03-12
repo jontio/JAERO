@@ -134,7 +134,7 @@ private:
     double ee;
 
     bool dcd;
-    QJFastFIRFilter *fir_pre;
+    JFastFir fir_pre;
     WaveTable mixer_fir_pre;
 
     int coarseCounter;

@@ -9,7 +9,7 @@
 #include <QObject>
 #include <assert.h>
 #include <QVector>
-#include "kiss_fft.h"
+#include "../../JFFT/jfft.h"
 //---------------------------------------------------------------------------
 
 //#define ASSERTCH(obj,idx) assert(idx>=0);assert(idx<obj.size())
@@ -100,37 +100,14 @@ public:
 
 //--C-band
 
-
-class QJFastFIRFilter : public QObject
+class QJHilbertFilter : public JFastFir
 {
-    Q_OBJECT
 public:
-    QJFastFIRFilter(QObject *parent = 0);
-    int setKernel(QVector<kffsamp_t> imp_responce,int nfft);
-    int setKernel(QVector<kffsamp_t> imp_responce);
-    void Update(kffsamp_t *data,int Size);
-    void Update(QVector<kffsamp_t> &data);
-    void reset();
-    ~QJFastFIRFilter();
-private:
-    size_t nfft;
-    kiss_fastfir_cfg cfg;
-    size_t idx_inbuf;
-    QVector<kffsamp_t> inbuf;
-    QVector<kffsamp_t> outbuf;
-    QVector<kffsamp_t> remainder;
-    int remainder_ptr;
-};
-
-class QJHilbertFilter : public QJFastFIRFilter
-{
-    Q_OBJECT
-public:
-    QJHilbertFilter(QObject *parent = 0);
+    QJHilbertFilter();
     void setSize(int N);
-    QVector<kffsamp_t> getKernel();
+    QVector<JFFT::cpx_type> getKernel();
 private:
-    QVector<kffsamp_t> kernel;
+    QVector<JFFT::cpx_type> kernel;
 };
 
 //--

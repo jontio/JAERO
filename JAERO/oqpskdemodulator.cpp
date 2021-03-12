@@ -107,17 +107,9 @@ OqpskDemodulator::OqpskDemodulator(QObject *parent)
 
     //just for 8400
     //maybe another type of filter would be better?
-    fir_pre = new QJFastFIRFilter(this);
     RootRaisedCosine rrc_pre_imp;
     rrc_pre_imp.design(1,1024,48000,10500/2);//8096,48000,10500/2);
-    QVector<kffsamp_t> fir_pre_imp_responce;
-    fir_pre_imp_responce.resize(rrc_pre_imp.Points.size());
-    for(int i=0;i<rrc_pre_imp.Points.size();i++)
-    {
-        fir_pre_imp_responce[i].r=rrc_pre_imp.Points.at(i);
-        fir_pre_imp_responce[i].i=0;
-    }
-    fir_pre->setKernel(fir_pre_imp_responce);
+    fir_pre.SetKernel(rrc_pre_imp.Points);
     mixer_fir_pre.SetFreq(freq_center,Fs);
 
 }
@@ -283,14 +275,7 @@ void OqpskDemodulator::setSettings(Settings _settings)
     RootRaisedCosine rrc_pre_imp;
     if(fb==8400)rrc_pre_imp.design(0.6,2048,Fs,fb/2);//0.6 --> smaller number mean less interchannel interference but locking is harder
      else rrc_pre_imp.design(1.0,2048,Fs,fb/2);
-    QVector<kffsamp_t> fir_pre_imp_responce;
-    fir_pre_imp_responce.resize(rrc_pre_imp.Points.size());
-    for(int i=0;i<rrc_pre_imp.Points.size();i++)
-    {
-        fir_pre_imp_responce[i].r=rrc_pre_imp.Points.at(i);
-        fir_pre_imp_responce[i].i=0;
-    }
-    fir_pre->setKernel(fir_pre_imp_responce,4096);//use x2 rather than the x4 rule of thumb, will make it more responsive but may use more cpu
+    fir_pre.SetKernel(rrc_pre_imp.Points,4096);//use x2 rather than the x4 rule of thumb, will make it more responsive but may use more cpu
 
     emit Plottables(mixer2.GetFreqHz(),mixer_center.GetFreqHz(),lockingbw);
 
@@ -359,11 +344,10 @@ qint64 OqpskDemodulator::writeData(const char *data, qint64 len)
         //mixer_fir_pre.SetFreq(mixer2.GetFreqHz()*0.03+0.97*mixer_fir_pre.GetFreqHz());
 
         //down and convert to kiss vector
-        QVector<kffsamp_t> cval_tmp;
-        cval_tmp.resize(len/sizeof(short));
+        cval_prefiltered.resize(len/sizeof(short));
         const short *ptr2 = reinterpret_cast<const short *>(data);
         double savedphase=mixer_fir_pre.GetPhaseDeg();
-        for(int i=0;i<len/sizeof(short);i++)
+        for(int i=0;i<cval_prefiltered.size();i++)
         {
             double dval=((double)(*ptr2))/32768.0;
 
@@ -371,37 +355,29 @@ qint64 OqpskDemodulator::writeData(const char *data, qint64 len)
             cpx_type cval=mixer_fir_pre.WTCISValue()*dval;
 
             //save as kiss
-            kffsamp_t cval_kiss;
-            cval_kiss.r=cval.real();
-            cval_kiss.i=cval.imag();
-            cval_tmp[i]=cval_kiss;
+            cval_prefiltered[i]=cval;
 
             //next
             mixer_fir_pre.WTnextFrame();
             ptr2++;
         }
 
-        //filter kiss vector
-        fir_pre->Update(cval_tmp);
+        //filter vector
+        fir_pre.update(cval_prefiltered);
 
-        //up and convert to std::complex vector
-        cval_prefiltered.resize(cval_tmp.size());
+        //up
         mixer_fir_pre.SetPhaseDeg(savedphase);
-        for(int i=0;i<cval_tmp.size();i++)
+        for(int i=0;i<cval_prefiltered.size();i++)
         {
             //up
-            cpx_type cval=cpx_type(cval_tmp[i].r,cval_tmp[i].i);
+            cpx_type cval=cval_prefiltered[i];
             cval=mixer_fir_pre.WTCISValue_conj()*cval;
-
-            //save as std::complex
             cval_prefiltered[i]=cval;
 
             //next
             mixer_fir_pre.WTnextFrame();
         }
 
-        //clear junk
-        cval_tmp.clear();
     }
 
     //prefilter end
@@ -409,7 +385,7 @@ qint64 OqpskDemodulator::writeData(const char *data, qint64 len)
     double mixer2_freq_sum=0;
     int i=0;
     const short *ptr = reinterpret_cast<const short *>(data);
-    for(i=0;i<len/sizeof(short);i++)
+    for(i=0;i<(int)(len/sizeof(short));i++)
     {
         double dval=((double)(*ptr))/32768.0;
 

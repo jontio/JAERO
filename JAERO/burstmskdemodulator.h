@@ -119,11 +119,11 @@ private:
     // trident detector stuff
 
     //hilbert
-    QJHilbertFilter *hfir;
-    QVector<kffsamp_t> hfirbuff;
+    QJHilbertFilter hfir;
+    QVector<cpx_type> hfirbuff;
 
     //delay lines
-    Delay< std::complex<double> > bt_d1;
+    Delay<cpx_type> bt_d1;
     Delay< double > bt_ma_diff;
 
     //MAs

@@ -2,18 +2,15 @@
 #include <assert.h>
 
 template<class T>
-FFTrWrapper<T>::FFTrWrapper(int _nfft,bool inverse)
+FFTrWrapper<T>::FFTrWrapper(int nfft)//???
 {
-    nfft=_nfft;
-    cfg = kiss_fftr_alloc(nfft, inverse, NULL, NULL);
-    privatescalar.resize(nfft);
-    privatecomplex.resize(nfft);
+    this->nfft=nfft;
+    fft.init(nfft);
 }
 
 template<class T>
 FFTrWrapper<T>::~FFTrWrapper()
 {
-    free(cfg);
 
 }
 
@@ -22,15 +19,7 @@ void FFTrWrapper<T>::transform(const QVector<T> &in, QVector< std::complex<T> > 
 {
     assert(in.size()==out.size());
     assert(in.size()==nfft);
-    for(int i=0;i<in.size();i++)
-    {
-        privatescalar[i]=in[i];
-    }
-    kiss_fftr(cfg,privatescalar.data(),privatecomplex.data());
-    for(int i=0;i<out.size();i++)
-    {
-        out[i]=std::complex<T>((double)privatecomplex[i].r,(double)privatecomplex[i].i);
-    }
+    fft.fft_real(const_cast < QVector<T> & > (in),out);
 }
 
 template<class T>
@@ -38,17 +27,7 @@ void FFTrWrapper<T>::transform(const QVector< std::complex<T> > &in, QVector<T> 
 {
     assert(in.size()==out.size());
     assert(in.size()==nfft);
-    for(int i=0;i<in.size();i++)
-    {
-        privatecomplex[i].r=in[i].real();
-        privatecomplex[i].i=in[i].imag();
-    }
-    kiss_fftri(cfg,privatecomplex.data(),privatescalar.data());
-    for(int i=0;i<out.size();i++)
-    {
-        out[i]=privatescalar[i];
-    }
+    fft.ifft_real(const_cast < QVector<std::complex<T>> & > (in),out);
 }
 
-template class FFTrWrapper<float>;
 template class FFTrWrapper<double>;

@@ -24,24 +24,7 @@ INSTALL_PATH = /opt/jaero
 
 QMAKE_CXXFLAGS += -std=c++11
 
-INCLUDEPATH += $$VORBIS_PATH/include
-DEPENDPATH += $$VORBIS_PATH/include
-VPATH += $$VORBIS_PATH/include
-
-INCLUDEPATH += $$OGG_PATH/include
-DEPENDPATH += $$OGG_PATH/include
-VPATH += $$OGG_PATH/include
-
 INCLUDEPATH += $$LIBACARS_PATH/src
-
-#message("QT_ARCH is \"$$QT_ARCH\"");
-contains(QT_ARCH, i386) {
-    #message("32-bit")
-    DEFINES += kiss_fft_scalar=float
-} else {
-    #message("64-bit")
-    DEFINES += kiss_fft_scalar=double
-}
 
 DEFINES += _USE_MATH_DEFINES
 
@@ -75,7 +58,8 @@ SOURCES += main.cpp\
     audioburstmskdemodulator.cpp \
     jconvolutionalcodec.cpp \
     audiooutdevice.cpp \
-    compressedaudiodiskwriter.cpp
+    compressedaudiodiskwriter.cpp \
+    ../../JFFT/jfft.cpp
 
 HEADERS  += mainwindow.h \
     coarsefreqestimate.h \
@@ -106,7 +90,8 @@ HEADERS  += mainwindow.h \
     audioburstmskdemodulator.h \
     jconvolutionalcodec.h \
     audiooutdevice.h \
-    compressedaudiodiskwriter.h
+    compressedaudiodiskwriter.h \
+    ../../JFFT/jfft.h
 
 # Tell the qcustomplot header that it will be used as library:
 DEFINES += QCUSTOMPLOT_USE_LIBRARY

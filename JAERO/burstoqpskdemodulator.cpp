@@ -27,9 +27,7 @@ BurstOqpskDemodulator::BurstOqpskDemodulator(QObject *parent)
 
     agc2 = new AGC(50.0/Fs,Fs);
 
-    hfir=new QJHilbertFilter(this);
-
-    fftr = new FFTr(pow(2.0,(ceil(log2(  128.0*SamplesPerSymbol   )))),false);
+    fftr = new FFTr(pow(2.0,(ceil(log2(  128.0*SamplesPerSymbol   )))));
     mav1= new MovingAverage(SamplesPerSymbol*128);
 
     rotation_bias_delay.setLength(256);
@@ -222,7 +220,7 @@ void BurstOqpskDemodulator::setSettings(Settings _settings)
     delete agc2;
     agc2 = new AGC(SamplesPerSymbol*64.0/Fs,Fs);
 
-    hfir->setSize(2048);
+    hfir.setSize(2048);
 
     pointbuff.resize(128);
     pointbuff_ptr=0;
@@ -239,7 +237,7 @@ void BurstOqpskDemodulator::setSettings(Settings _settings)
 
     delete fftr;
     int N=4096*4*2;
-    fftr = new FFTr(N,false);
+    fftr = new FFTr(N);
 
     tridentbuffer_sz=qRound((256.0+16.0+16.0)*SamplesPerSymbol);//room for trident and preamble and a bit more
     tridentbuffer.resize(tridentbuffer_sz);
@@ -311,16 +309,13 @@ void BurstOqpskDemodulator::writeDataSlot(const char *data, qint64 len)
 
     //make analytical signal
     hfirbuff.resize(numofsamples);
-    kffsamp_t asample;
-    asample.i=0;
     const short *ptr = reinterpret_cast<const short *>(data);
     if(channel_stereo)
     {
         if(channel_select_other)ptr++;
         for(int i=0;i<numofsamples;i++)
         {
-            asample.r=((double)(*ptr))/32768.0;
-            hfirbuff[i]=asample;
+            hfirbuff[i]=cpx_type(((double)(*ptr))/32768.0,0);
             ptr+=2;
         }
     }
@@ -328,18 +323,17 @@ void BurstOqpskDemodulator::writeDataSlot(const char *data, qint64 len)
     {
         for(int i=0;i<numofsamples;i++)
         {
-            asample.r=((double)(*ptr))/32768.0;
-            hfirbuff[i]=asample;
+            hfirbuff[i]=cpx_type(((double)(*ptr))/32768.0,0);
             ptr++;
         }
     }
-    hfir->Update(hfirbuff);
+    hfir.update(hfirbuff);
 
     //run through each sample of analyitical signal
     for(int i=0;i<hfirbuff.size();i++)
     {
 
-        std::complex<double> cval=std::complex<double>(hfirbuff[i].r,hfirbuff[i].i);
+        std::complex<double> cval=hfirbuff[i];
 
         //take orginal arm
         double dval=cval.real();
