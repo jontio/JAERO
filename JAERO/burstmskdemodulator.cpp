@@ -493,7 +493,8 @@ qint64 BurstMskDemodulator::writeData(const char *data, qint64 len)
             int maxtopposhigh =0;
             double maxtophigh =0;
 
-            for(int i=0; i < out_top.size()/2; i++)//?? should this be /2 or not? i think /2 as fft repeats after that
+            //fixed bug fft output half is the conjugate complex so dont look at hence why /2
+            for(int i=0; i < out_top.size()/2; i++)
             {
 
                 if(i > 50)
@@ -521,11 +522,6 @@ qint64 BurstMskDemodulator::writeData(const char *data, qint64 len)
             if(minval>500.0 && std::abs(distfrompeak-peakspacingbins) < std::abs(peakspacingbins/20) && !(dcd) && !(cntr>0 && cntr<(500*SamplesPerSymbol)))
             {
 
-//some reason maxtopposhigh is wrong
-//qDebug()<<((maxtopposhigh+0)/1)*hzperbin<<((0+maxtoppos)/1)*hzperbin;
-//maxtopposhigh=(maxtoppos*hzperbin+1200.0)/hzperbin;
-
-
                 //set gain given estimate
                 vol_gain=1.4142*(500.0/(minval/3));
 
@@ -543,7 +539,6 @@ qint64 BurstMskDemodulator::writeData(const char *data, qint64 len)
                 startstop=startstopstart;
                 cntr=0;
                 emit SignalStatus(true);
-
 
                 RxDataBits.clear();
                 // indicate start of burst
@@ -643,7 +638,6 @@ qint64 BurstMskDemodulator::writeData(const char *data, qint64 len)
         //clipping
         double abval=std::abs(sig2);
         if(abval>2.84)sig2=(2.84/abval)*sig2;
-
 
         //normal symbol timer
         cpx_type pt_d = delayedsmpl.update_dont_touch(sig2);
@@ -754,6 +748,5 @@ qint64 BurstMskDemodulator::writeData(const char *data, qint64 len)
 void BurstMskDemodulator::DCDstatSlot(bool _dcd)
 {
     dcd=_dcd;
-
 }
 

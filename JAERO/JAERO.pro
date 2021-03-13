@@ -28,8 +28,25 @@ INCLUDEPATH += $$LIBACARS_PATH/src
 
 DEFINES += _USE_MATH_DEFINES
 
-SOURCES += main.cpp\
-        mainwindow.cpp \
+#for unit tests
+CI {
+  DEFINES += GENERATE_TEST_OUTPUT_FILES
+  SOURCES += \
+    tests/testall.cpp \
+    tests/fftwrapper_tests.cpp \
+    tests/fftrwrapper_tests.cpp
+
+  LIBS += -lCppUTest
+
+  DEFINES+= MATLAB_PATH=\\\"$${PWD}/matlab/\\\"
+  DEFINES+= TEST_OUTPUT_PATH=\\\"$${PWD}/test_output/\\\"
+
+} else {
+  SOURCES += \
+        main.cpp
+}
+
+SOURCES += mainwindow.cpp \
     coarsefreqestimate.cpp \
     DSP.cpp \
     mskdemodulator.cpp \
@@ -59,7 +76,8 @@ SOURCES += main.cpp\
     jconvolutionalcodec.cpp \
     audiooutdevice.cpp \
     compressedaudiodiskwriter.cpp \
-    ../../JFFT/jfft.cpp
+    ../../JFFT/jfft.cpp \
+    util/stdio_utils.cpp
 
 HEADERS  += mainwindow.h \
     coarsefreqestimate.h \
@@ -91,7 +109,8 @@ HEADERS  += mainwindow.h \
     jconvolutionalcodec.h \
     audiooutdevice.h \
     compressedaudiodiskwriter.h \
-    ../../JFFT/jfft.h
+    ../../JFFT/jfft.h \
+    util/stdio_utils.h
 
 # Tell the qcustomplot header that it will be used as library:
 DEFINES += QCUSTOMPLOT_USE_LIBRARY

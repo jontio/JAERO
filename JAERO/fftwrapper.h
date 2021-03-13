@@ -10,15 +10,14 @@ template<typename T>
 class FFTWrapper
 {
 public:
-    FFTWrapper(int nfft,bool inverse);
+    FFTWrapper(int nfft, bool inverse, bool kissfft_scaling=true);
     ~FFTWrapper();
     void transform(const QVector< std::complex<T> > &in, QVector< std::complex<T> > &out);
 private:
     JFFT fft;
-//    QVector<std::complex<T>> privatein;
-//    QVector<std::complex<T>> privateout;
     int nfft;
     bool inverse;
+    bool kissfft_scaling;
 };
 
 #endif // FFTWRAPPER_H
