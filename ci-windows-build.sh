@@ -1,3 +1,6 @@
+#!/bin/bash
+PATH=/mingw64/bin:$PATH
+
 #libacars
 git clone https://github.com/szpajder/libacars
 cd libacars && git checkout v1.3.1
