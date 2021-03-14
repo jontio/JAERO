@@ -29,19 +29,13 @@ The [JAERO](JAERO) directory is where the Qt pro file is for the main applicatio
 
 ## Compiling JAERO
 
-Compiling JAERO requires the Qt framework which can be obtained from http://www.qt.io/download-open-source/ but I would suggest using [MSYS2] to install the dev environment. Qt Creator can be used to compile JAERO and comes with the Qt framework. At least version 5 of the Qt framework is required. Currently MinGW and GCC work as compilers but VC++ does not.
-
-After installing Qt download the JAERO zip or the tar.gz source file to your computer.
-
-Open the [JAERO/JAERO.pro](JAERO/JAERO.pro) file with Qt creator where by Qt should ask you a few simple questions as to how to build JAERO. finally click build then run (make sure the shared or static library of libcorrect is available to the build process and the other growing list of dependencies are available to JAERO).
-
-I would suggest going to the [JAERO Wiki] for more up to date detail on how to compile everything.
+Compiling JAERO requires the Qt framework. I would suggest using [MSYS2] to install the Qt framework and the rest of the development environment. Qt Creator can be used to compile JAERO and comes with the Qt framework. At least version 5 of the Qt framework is required. I only use MinGW and GCC for building so don't know if MSVC works.
 
 ## Thanks
 
 I'd like to thank everyone who has given their kind support for JAERO over the years. Thanks for Otti for getting the project started, John and Bev for setting up a worldwide large dish network, everyone who has donated, the people who have send feedback, people who use JAERO, Jeroen who done an excellent job programming new code for JAERO to bring some features that I’m sure will be appreciated by many, Tomasz for adding more ACARS message support, Corrosive for adding documentation, and the many other people who have written the libraries that JAERO uses.
 
-Jonti 2019
+Jonti 2021
 http://jontio.zapto.org
 
 [OQPSK]: https://en.wikipedia.org/wiki/Phase-shift_keying#Offset_QPSK_.28OQPSK.29
