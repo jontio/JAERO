@@ -275,7 +275,7 @@ void OqpskDemodulator::setSettings(Settings _settings)
     RootRaisedCosine rrc_pre_imp;
     if(fb==8400)rrc_pre_imp.design(0.6,2048,Fs,fb/2);//0.6 --> smaller number mean less interchannel interference but locking is harder
     else rrc_pre_imp.design(1.0,2048,Fs,fb/2);
-    fir_pre.SetKernel(rrc_pre_imp.Points,rrc_pre_imp.Points.size());//use x2 rather than the x4 rule of thumb, will make it more responsive but may use more cpu
+    fir_pre.SetKernel(rrc_pre_imp.Points,4096);//rrc_pre_imp.Points.size()*2);//use x2 rather than the x4 rule of thumb, will make it more responsive but may use more cpu
 
     emit Plottables(mixer2.GetFreqHz(),mixer_center.GetFreqHz(),lockingbw);
 
@@ -435,12 +435,8 @@ qint64 OqpskDemodulator::writeData(const char *data, qint64 len)
             sig2= mixer2.WTCISValue()*cval_prefiltered[i];
 
             //this would be both
-//            cval=mixer2.WTCISValue()*cval_prefiltered[i];
-//            sig2=cpx_type(fir_re->FIRUpdateAndProcess(cval.real()),fir_im->FIRUpdateAndProcess(cval.imag()));
-
-            //this would be the old way
-//            cval= mixer2.WTCISValue()*dval;
-//            sig2=cpx_type(fir_re->FIRUpdateAndProcess(cval.real()),fir_im->FIRUpdateAndProcess(cval.imag()));
+            //cval=mixer2.WTCISValue()*cval_prefiltered[i];
+            //sig2=cpx_type(fir_re->FIRUpdateAndProcess(cval.real()),fir_im->FIRUpdateAndProcess(cval.imag()));
 
             //calc ave of freq over this block for 8400bps prefilter
             mixer2_freq_sum+=mixer2.GetFreqHz();

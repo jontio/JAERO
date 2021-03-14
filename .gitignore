@@ -72,5 +72,6 @@ Thumbs.db
 *.exe
 
 # other
-test_output/*
+JAERO/test_output/*
+JAERO/matlab/actual_*
 build-*/

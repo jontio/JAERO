@@ -34,7 +34,13 @@ CI {
   SOURCES += \
     tests/testall.cpp \
     tests/fftwrapper_tests.cpp \
-    tests/fftrwrapper_tests.cpp
+    tests/fftrwrapper_tests.cpp \
+    tests/jfastfir_tests.cpp \
+    tests/jfastfir_data_input.cpp \
+    tests/jfastfir_data_expected_output.cpp
+
+  HEADERS += \
+    tests/jfastfir_data.h
 
   LIBS += -lCppUTest
 
@@ -77,7 +83,9 @@ SOURCES += mainwindow.cpp \
     audiooutdevice.cpp \
     compressedaudiodiskwriter.cpp \
     ../../JFFT/jfft.cpp \
-    util/stdio_utils.cpp
+    util/stdio_utils.cpp \
+    util/file_utils.cpp \
+    util/RuntimeError.cpp
 
 HEADERS  += mainwindow.h \
     coarsefreqestimate.h \
@@ -110,7 +118,9 @@ HEADERS  += mainwindow.h \
     audiooutdevice.h \
     compressedaudiodiskwriter.h \
     ../../JFFT/jfft.h \
-    util/stdio_utils.h
+    util/stdio_utils.h \
+    util/file_utils.h \
+    util/RuntimeError.h
 
 # Tell the qcustomplot header that it will be used as library:
 DEFINES += QCUSTOMPLOT_USE_LIBRARY

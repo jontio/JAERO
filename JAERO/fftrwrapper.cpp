@@ -20,7 +20,7 @@ void FFTrWrapper<T>::transform(const QVector<T> &in, QVector< std::complex<T> > 
 {
     assert(in.size()==out.size());
     assert(in.size()==nfft);
-    fft.fft_real(const_cast < QVector<T> & > (in),out);
+    fft.fft_real(in,out);
 
     //for forward kissfft sets the remaining conj complex to 0
     if(kissfft_scaling)for(int i=out.size()/2+1;i<out.size();i++)out[i]=0;
@@ -31,7 +31,7 @@ void FFTrWrapper<T>::transform(const QVector< std::complex<T> > &in, QVector<T> 
 {
     assert(in.size()==out.size());
     assert(in.size()==nfft);
-    fft.ifft_real(const_cast < QVector<std::complex<T>> & > (in),out);
+    fft.ifft_real(in,out);
 
     //for forward kissfft scales by nfft
     if(kissfft_scaling)for(int i=0;i<out.size();i++)out[i]*=(double)out.size();
