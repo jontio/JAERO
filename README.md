@@ -36,6 +36,7 @@ Compiling JAERO requires the Qt framework. I would suggest using [MSYS2] to inst
 I'd like to thank everyone who has given their kind support for JAERO over the years. Thanks for Otti for getting the project started, John and Bev for setting up a worldwide large dish network, everyone who has donated, the people who have send feedback, people who use JAERO, Jeroen who done an excellent job programming new code for JAERO to bring some features that I’m sure will be appreciated by many, Tomasz for adding more ACARS message support, Corrosive for adding documentation, and the many other people who have written the libraries that JAERO uses.
 
 Jonti 2021
+<br>
 http://jontio.zapto.org
 
 [OQPSK]: https://en.wikipedia.org/wiki/Phase-shift_keying#Offset_QPSK_.28OQPSK.29
