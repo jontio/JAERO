@@ -1,4 +1,9 @@
 #!/bin/bash
+
+#windows build
+#this is for 64bit mingw and msys2 install. all is done on the command line.
+#for unit testing add "CONFIG+="CI"" for qmake when building JAERO.
+
 PATH=/mingw64/bin:$PATH
 
 #libacars
@@ -38,6 +43,7 @@ cd ../..
 git clone https://github.com/jontio/JFFT
 
 #JAERO
+#github action already has already cloned JAERO
 #git clone https://github.com/jontio/JAERO
 cd JAERO
 #git checkout 2021
