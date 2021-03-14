@@ -1,10 +1,3 @@
-#windows build and install of depenancies
-#cmake qmake qt gcc and other basic build stuff is needed not sure of all the things required
-#this is for 64bit mingw and msys2 install. all is done on the command line.
-#for unit testing add "CONFIG+="CI"" for qmake.
-
-pacman -S mingw-w64-x86_64-cpputest
-
 #libacars
 git clone https://github.com/szpajder/libacars
 cd libacars && git checkout v1.3.1
@@ -27,10 +20,7 @@ cp release/libqcustomplot2.dll.a /mingw64/lib/
 cp debug/qcustomplotd2.dll /mingw64/bin/
 cp debug/libqcustomplotd2.dll.a /mingw64/lib/
 cp ../../qcustomplot.h /mingw64/include/
-cd ../..
-
-#libvorbis and libogg
-pacman -S mingw-w64-x86_64-libvorbis
+cd ../../..
 
 #libcorrect
 git clone https://github.com/quiet/libcorrect
@@ -39,5 +29,26 @@ mkdir build && cd build
 cmake -G "MinGW Makefiles" -DCMAKE_INSTALL_PREFIX:PATH=/mingw64/ ..
 mingw32-make
 mingw32-make DESTDIR=/../ install
+cd ../..
 
+#JFFT
+git clone https://github.com/jontio/JFFT
 
+#JAERO
+git clone https://github.com/jontio/JAERO
+cd JAERO
+git checkout 2021
+cd JAERO
+qmake
+mingw32-make
+mkdir build
+cp release/JAERO.exe build/
+cd build
+windeployqt.exe --force JAERO.exe
+cp /mingw64/bin/libstdc++-6.dll $PWD
+cp /mingw64/bin/libgcc_s_seh-1.dll $PWD
+cp /mingw64/bin/libvorbisenc-2.dll $PWD
+cp /mingw64/bin/libvorbis-0.dll $PWD
+cp /mingw64/bin/libogg-0.dll $PWD
+cp /mingw64/bin/libacars.dll $PWD
+cp /mingw64/lib/libcorrect.dll $PWD
