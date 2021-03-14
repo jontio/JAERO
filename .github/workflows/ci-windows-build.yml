@@ -16,8 +16,15 @@ jobs:
         with:
           msystem: MINGW64
           update: true
-          #install: git mingw-w64-x86_64-toolchain autoconf libtool mingw-w64-x86_64-cpputest mingw-w64-x86_64-qt5 mingw-w64-x86_64-cmake mingw-w64-x86_64-libvorbis
+          install: git mingw-w64-x86_64-toolchain autoconf libtool mingw-w64-x86_64-cpputest mingw-w64-x86_64-qt5 mingw-w64-x86_64-cmake mingw-w64-x86_64-libvorbis zip p7zip
       - name: CI-Build
         run: |
           echo 'Running in MSYS2!'
-          ./JAERO/test.sh
+          ./JAERO/ci-windows-build.sh 
+      # upload artifact    
+      - name: Upload binary artifacts
+        uses: actions/upload-artifact@v2
+        with:
+          name: jaero
+          path: |
+            JAERO/JAERO/release/*.zip

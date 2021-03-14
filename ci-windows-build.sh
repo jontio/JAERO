@@ -38,15 +38,15 @@ cd ../..
 git clone https://github.com/jontio/JFFT
 
 #JAERO
-git clone https://github.com/jontio/JAERO
+#git clone https://github.com/jontio/JAERO
 cd JAERO
-git checkout 2021
+#git checkout 2021
 cd JAERO
 qmake
 mingw32-make
-mkdir build
-cp release/JAERO.exe build/
-cd build
+mkdir release/jaero
+cp release/JAERO.exe release/jaero/
+cd release/jaero
 windeployqt.exe --force JAERO.exe
 cp /mingw64/bin/libstdc++-6.dll $PWD
 cp /mingw64/bin/libgcc_s_seh-1.dll $PWD
@@ -55,3 +55,30 @@ cp /mingw64/bin/libvorbis-0.dll $PWD
 cp /mingw64/bin/libogg-0.dll $PWD
 cp /mingw64/bin/libacars.dll $PWD
 cp /mingw64/lib/libcorrect.dll $PWD
+cp /mingw64/bin/libwinpthread-1.dll $PWD
+cp /mingw64/bin/zlib1.dll $PWD
+cp /mingw64/bin/qcustomplot2.dll $PWD
+cp /mingw64/bin/Qt5PrintSupport.dll $PWD
+cp /mingw64/bin/libdouble-conversion.dll $PWD
+cp /mingw64/bin/libicuin68.dll $PWD
+cp /mingw64/bin/libicuuc68.dll $PWD
+cp /mingw64/bin/libpcre2-16-0.dll $PWD
+cp /mingw64/bin/libzstd.dll $PWD
+cp /mingw64/bin/libharfbuzz-0.dll $PWD
+cp /mingw64/bin/libpng16-16.dll $PWD
+cp /mingw64/bin/libfreetype-6.dll $PWD
+cp /mingw64/bin/libgraphite2.dll $PWD
+cp /mingw64/bin/libglib-2.0-0.dll $PWD
+cp /mingw64/bin/libicudt68.dll $PWD
+cp /mingw64/bin/libbz2-1.dll $PWD
+cp /mingw64/bin/libbrotlidec.dll $PWD
+cp /mingw64/bin/libintl-8.dll $PWD
+cp /mingw64/bin/libpcre-1.dll $PWD
+cp /mingw64/bin/libbrotlicommon.dll $PWD
+cp /mingw64/bin/libiconv-2.dll $PWD
+cp /usr/lib/p7zip/7za.exe $PWD
+cp /usr/bin/msys-stdc++-6.dll $PWD
+cp /usr/bin/msys-gcc_s-seh-1.dll $PWD
+cp /usr/bin/msys-2.0.dll $PWD
+cd ..
+zip -r jaero.zip jaero
