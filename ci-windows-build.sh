@@ -8,7 +8,7 @@
 #git clone https://github.com/jontio/JAERO
 #cd JAERO
 #git checkout 2021
-#cd..
+#cd ..
 
 #libacars
 git clone https://github.com/szpajder/libacars

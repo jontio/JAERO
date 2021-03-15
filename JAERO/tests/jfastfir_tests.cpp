@@ -12,14 +12,19 @@ TEST_GROUP(Test_JFastFir)
 {
     const double doubles_equal_threshold=0.00001;
 
+    //the strange error that cpputest throws of a memory leak when using QFile only happens so far on linux
     void setup()
     {
-        srand(1);
+#ifdef __linux__
+        MemoryLeakWarningPlugin::turnOffNewDeleteOverloads();
+#endif
     }
 
     void teardown()
     {
-        // This gets run after every test
+#ifdef __linux__
+        MemoryLeakWarningPlugin::turnOnNewDeleteOverloads();
+#endif
     }
 };
 
