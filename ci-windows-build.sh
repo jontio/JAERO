@@ -1,10 +1,14 @@
 #!/bin/bash
 
-#windows build
+#windows build (for github "windows-latest")
 #this is for 64bit mingw and msys2 install. all is done on the command line.
 #for unit testing add "CONFIG+="CI"" for qmake when building JAERO.
 
-PATH=/mingw64/bin:$PATH
+#without github actions...
+#git clone https://github.com/jontio/JAERO
+#cd JAERO
+#git checkout 2021
+#cd..
 
 #libacars
 git clone https://github.com/szpajder/libacars
@@ -42,12 +46,24 @@ cd ../..
 #JFFT
 git clone https://github.com/jontio/JFFT
 
+#libaeroambe
+git clone https://github.com/jontio/libaeroambe
+cd libaeroambe/mbelib-master
+mkdir build && cd build
+cmake -G "MinGW Makefiles" -DCMAKE_INSTALL_PREFIX:PATH=/mingw64/ ..
+mingw32-make
+mingw32-make DESTDIR=/../ install
+cp libmbe.dll /mingw64/bin/
+cd ../../libaeroambe
+qmake
+mingw32-make
+cp release/*.dll /mingw64/bin/
+cp release/*.dll.a /mingw64/lib/
+cd ../..
+
 #JAERO
 #github action already has already cloned JAERO
-#git clone https://github.com/jontio/JAERO
-cd JAERO
-#git checkout 2021
-cd JAERO
+cd JAERO/JAERO
 qmake
 mingw32-make
 mkdir release/jaero
@@ -86,5 +102,7 @@ cp /usr/lib/p7zip/7za.exe $PWD
 cp /usr/bin/msys-stdc++-6.dll $PWD
 cp /usr/bin/msys-gcc_s-seh-1.dll $PWD
 cp /usr/bin/msys-2.0.dll $PWD
+cp /mingw64/bin/aeroambe.dll $PWD
+cp /mingw64/bin/libmbe.dll $PWD
 cd ..
 zip -r jaero.zip jaero

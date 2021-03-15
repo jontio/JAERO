@@ -1,30 +1,57 @@
-name: wintest
+name: build
 on:
   workflow_dispatch:
 
 jobs:
   build:
-    runs-on: windows-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
     defaults:
+      if: ${{ matrix.os == 'windows-latest' }}
       run:
         shell: msys2 {0}
     steps:
       - uses: actions/checkout@v2
         with:
           path: JAERO
-      - uses: msys2/setup-msys2@v2
+      # install MSYS2 for windows
+      - name: if windows install MSYS2
+        if: ${{ matrix.os == 'windows-latest' }}
+        uses: msys2/setup-msys2@v2
         with:
           msystem: MINGW64
           update: true
           install: git mingw-w64-x86_64-toolchain autoconf libtool mingw-w64-x86_64-cpputest mingw-w64-x86_64-qt5 mingw-w64-x86_64-cmake mingw-w64-x86_64-libvorbis zip p7zip
-      - name: CI-Build
+      # build for windows
+      - name: Windows-CI-Build
+        if: ${{ matrix.os == 'windows-latest' }}
         run: |
           echo 'Running in MSYS2!'
-          ./JAERO/ci-windows-build.sh 
-      # upload artifact    
-      - name: Upload binary artifacts
+          ./JAERO/ci-windows-build.sh
+      # build for linux
+      - name: Linux-CI-Build
+        if: ${{ matrix.os == 'ubuntu-latest' }}
+        run: |
+          echo 'Running in bash!'
+          ./JAERO/ci-linux-build.sh          
+      # upload windows artifacts    
+      - name: Upload windows binary artifacts
+        if: ${{ matrix.os == 'windows-latest' }}
         uses: actions/upload-artifact@v2
         with:
           name: jaero
+          retention-days: 2
           path: |
             JAERO/JAERO/release/*.zip
+      # upload linux artifacts    
+      - name: Upload linux binary artifacts
+        if: ${{ matrix.os == 'ubuntu-latest' }}
+        uses: actions/upload-artifact@v2
+        with:
+          name: jaero
+          retention-days: 2
+          path: |
+            JAERO/JAERO/test
