@@ -3,6 +3,12 @@
 #linux build (for github "ubuntu-latest")
 
 #will get dependancies, build and install jaero
+#NB will create folders at the same level as the JAERO folder. e.g if you cloned into ~/git/JAERO then you will have the following folders..
+#~/git/JFFT
+#~/git/JAERO
+#~/git/libacars
+#~/git/libcorrect
+#~/git/libaeroambe
 
 #fail on first error
 set -e
@@ -21,7 +27,7 @@ sudo apt-get install qt5-default cpputest build-essential qtmultimedia5-dev cmak
 
 SCRIPT=$(realpath $0)
 SCRIPTPATH=$(dirname $SCRIPT)
-cd $SCRIPTPATH
+cd $SCRIPTPATH/..
 
 #libacars
 git clone https://github.com/szpajder/libacars
@@ -188,5 +194,7 @@ dpkg-deb --build ${PACKAGE_NAME}_${PACKAGE_VERSION%_*}-1
 sudo apt install ./${PACKAGE_NAME}*.deb -y
 sudo ldconfig
 cd ../..
+
+#package
 
 echo "done"
