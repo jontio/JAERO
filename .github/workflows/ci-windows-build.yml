@@ -9,9 +9,6 @@ jobs:
       matrix:
         os: [ubuntu-latest, windows-latest]
     runs-on: ${{ matrix.os }}
-#    defaults:
-#      run:
-#        shell: msys2 {0}
     steps:
       - uses: actions/checkout@v2
         with:
@@ -42,7 +39,7 @@ jobs:
         if: ${{ matrix.os == 'windows-latest' }}
         uses: actions/upload-artifact@v2
         with:
-          name: jaero
+          name: jaero_windows
           retention-days: 2
           path: |
             JAERO/JAERO/release/*.zip
@@ -51,7 +48,25 @@ jobs:
         if: ${{ matrix.os == 'ubuntu-latest' }}
         uses: actions/upload-artifact@v2
         with:
-          name: jaero
+          name: jaero_linux
           retention-days: 2
           path: |
-            JAERO/JAERO/bin/*tar.gz
+            JAERO/bin/*.tar.gz
+  release:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      # download all artifacts for this workflow
+      - name: Download all workflow artifacts
+        uses: actions/download-artifact@v2
+      # Create a release
+      - name: Create a release
+        uses: "marvinpinto/action-automatic-releases@latest"
+        with:
+          repo_token: "${{ secrets.GITHUB_TOKEN }}"
+          automatic_release_tag: "latest"
+          prerelease: true
+          title: "Development Build"
+          files: |
+            jaero_linux/*.tar.gz
+            jaero_windows/*.zip

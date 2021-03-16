@@ -223,5 +223,5 @@ Cheers,<br>
 ci-linux-build.sh
 EOT
 #compress
-tar -czvf ${PACKAGE_NAME}_${PACKAGE_VERSION%_*}-1.tar.gz jaero
+tar -czvf ${PACKAGE_NAME}_${PACKAGE_VERSION%_*}-1_linux_$(uname -m).tar.gz jaero
 echo "done"

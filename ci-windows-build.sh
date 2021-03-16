@@ -73,8 +73,19 @@ cp release/*.dll.a /mingw64/lib/
 cd ../..
 
 #JAERO
-#github action already has already cloned JAERO
-cd $SCRIPTPATH/JAERO
+cd $SCRIPTPATH
+#needed for github actions
+git fetch --prune --unshallow --tags || true
+git status > /dev/null 2>&1
+PACKAGE_VERSION=$(git describe --tags --match 'v*' --dirty 2> /dev/null | tr -d v)
+PACKAGE_NAME=jaero
+MAINTAINER=https://github.com/jontio
+PACKAGE_SOURCE=https://github.com/jontio/JAERO
+echo "PACKAGE_NAME="$PACKAGE_NAME
+echo "PACKAGE_VERSION="$PACKAGE_VERSION
+echo "MAINTAINER="$MAINTAINER
+echo "PACKAGE_SOURCE="$PACKAGE_SOURCE
+cd JAERO
 qmake
 mingw32-make
 mkdir release/jaero
@@ -115,5 +126,18 @@ cp /usr/bin/msys-gcc_s-seh-1.dll $PWD
 cp /usr/bin/msys-2.0.dll $PWD
 cp /mingw64/bin/aeroambe.dll $PWD
 cp /mingw64/bin/libmbe.dll $PWD
+#add readme
+cat <<EOT > readme.md
+# JAERO ${PACKAGE_VERSION}
+
+### OS Name: $(systeminfo | sed -n -e 's/^OS Name://p' | awk '{$1=$1;print}')
+### OS Version: $(systeminfo | sed -n -e 's/^OS Version://p' | awk '{$1=$1;print}')
+### System Type: $(systeminfo | sed -n -e 's/^System Type://p' | awk '{$1=$1;print}')
+### Build Date: $(date -u)
+
+Cheers,<br>
+ci-windows-build.sh
+EOT
+#compress
 cd ..
-zip -r jaero.zip jaero
+zip -r ${PACKAGE_NAME}_${PACKAGE_VERSION%_*}-1_win_$(uname -m).zip jaero
