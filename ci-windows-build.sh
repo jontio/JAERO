@@ -2,13 +2,24 @@
 
 #windows build (for github "windows-latest")
 #this is for 64bit mingw and msys2 install. all is done on the command line.
-#for unit testing add "CONFIG+="CI"" for qmake when building JAERO.
 
-#without github actions...
-#git clone https://github.com/jontio/JAERO
-#cd JAERO
-#git checkout 2021
-#cd ..
+#will get dependancies, build and install jaero
+#NB will create folders at the same level as the JAERO folder. e.g if you cloned into ~/git/JAERO then you will have the following folders..
+#~/git/JFFT
+#~/git/JAERO
+#~/git/libacars
+#~/git/libcorrect
+#~/git/libaeroambe
+
+#fail on first error
+set -e
+
+pacman -S --needed --noconfirm git mingw-w64-x86_64-toolchain autoconf libtool mingw-w64-x86_64-cpputest mingw-w64-x86_64-qt5 mingw-w64-x86_64-cmake mingw-w64-x86_64-libvorbis zip p7zip
+
+#get script path
+SCRIPT=$(realpath $0)
+SCRIPTPATH=$(dirname $SCRIPT)
+cd $SCRIPTPATH/..
 
 #libacars
 git clone https://github.com/szpajder/libacars
@@ -63,7 +74,7 @@ cd ../..
 
 #JAERO
 #github action already has already cloned JAERO
-cd JAERO/JAERO
+cd $SCRIPTPATH/JAERO
 qmake
 mingw32-make
 mkdir release/jaero

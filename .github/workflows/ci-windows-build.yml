@@ -54,4 +54,4 @@ jobs:
           name: jaero
           retention-days: 2
           path: |
-            JAERO/JAERO/test
+            JAERO/JAERO/bin/*tar.gz
