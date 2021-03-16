@@ -34,11 +34,11 @@ The [JAERO](JAERO) directory is where the Qt pro file is for the main applicatio
 
 Compiling JAERO requires the Qt framework. I would suggest using [MSYS2] to install the Qt framework and the rest of the development environment. Qt Creator can be used to compile JAERO and comes with the Qt framework. At least version 5 of the Qt framework is required. I only use MinGW and GCC for building so don't know if MSVC works.
 
-I've now added a Windows and Linux build scripts. The Windows build script requires MSYS2, once installed run msys64 clone the repo then type `./ci-windows-build.sh`. The Linux build script is for Debian based distros and will need to be changed for others, I have only tested it on some of the Ubuntu family (Ubuntu, Kubuntu and Lubuntu). For Linux type `./ci-linux-build.sh`, it will install JAERO as a few packages so uninstalling should be clean.
+I've now added a Windows and Linux build scripts. The Windows build script requires MSYS2, once installed run msys64 clone the repo then type `./ci-windows-build.sh`. The Linux build script is for Debian based distros and will need to be changed for others; I have only tested it on some of the Ubuntu family (Ubuntu, Kubuntu and Lubuntu). For Linux type `./ci-linux-build.sh`, it will install JAERO as a few packages so uninstalling should be clean. For Windows there is no fancy installer but rather just a folder with the dependencies and the exe file itself. The build will fail if any of the dependency folders already exist; so the scripts could still do with a bit more work. Currently the aim of the scripts is as a way of automatically building JAERO from a default system so I'm can easily make changes to the code and not have the hassle of build releases.
 
-I've added a continuous integration script [.github/workflows/ci-windows-build.yml](.github/workflows/ci-windows-build.yml) that will get Gihub to build JAERO for both Windows and Ubuntu. Currently the script is triggered manually in the [actions](https://github.com/jontio/JAERO/actions) tab.
+I've added a continuous integration script [.github/workflows/ci-windows-build.yml](.github/workflows/ci-windows-build.yml) that will get Gihub to build JAERO for both Windows and Ubuntu. Currently the script is triggered manually in the [actions](https://github.com/jontio/JAERO/actions) tab. I suspect some older computers, say ones that don't support AVX instructions may now not run the new releases created in this manor and will need building on the intended computer itself.
 
-JAERO's dependencies will undoubtedly change over time, so I suspect eventually the build scripts will fail and will need fixing. Till then they work, but I have no idea how long they will work for; we shall see.
+JAERO's dependencies will undoubtedly change over time, so I suspect eventually the build scripts will fail and will need fixing. Till then they work, but I have no idea how long they will work for.
 
 ## Thanks
 
