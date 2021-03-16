@@ -9,10 +9,10 @@ jobs:
       matrix:
         os: [ubuntu-latest, windows-latest]
     runs-on: ${{ matrix.os }}
-    defaults:
-      if: ${{ matrix.os == 'windows-latest' }}
-      run:
-        shell: msys2 {0}
+#    defaults:
+#      if: ${{ matrix.os == 'windows-latest' }}
+#      run:
+#        shell: msys2 {0}
     steps:
       - uses: actions/checkout@v2
         with:
@@ -28,9 +28,10 @@ jobs:
       # build for windows
       - name: Windows-CI-Build
         if: ${{ matrix.os == 'windows-latest' }}
-        run: |
-          echo 'Running in MSYS2!'
-          ./JAERO/ci-windows-build.sh
+        shell: msys2 {0}
+          run: |
+            echo 'Running in MSYS2!'
+            ./JAERO/ci-windows-build.sh
       # build for linux
       - name: Linux-CI-Build
         if: ${{ matrix.os == 'ubuntu-latest' }}
