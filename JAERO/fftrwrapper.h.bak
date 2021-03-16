@@ -3,7 +3,7 @@
 
 #include <QVector>
 #include <complex>
-#include "jfft.h"
+#include "../../JFFT/jfft.h"
 
 template<typename T>
 class FFTrWrapper

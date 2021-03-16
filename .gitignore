@@ -74,4 +74,9 @@ Thumbs.db
 # other
 JAERO/test_output/*
 JAERO/matlab/actual_*
+JAERO/matlab/*.h
 build-*/
+JFFT/*
+libacars/*
+libaeroambe/*
+libcorrect/*

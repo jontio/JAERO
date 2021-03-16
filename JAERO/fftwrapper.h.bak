@@ -3,7 +3,7 @@
 
 #include <QVector>
 #include <complex>
-#include "jfft.h"
+#include "../../JFFT/jfft.h"
 
 //underlying fft still uses the type in the  kiss_fft_type in the c stuff
 template<typename T>

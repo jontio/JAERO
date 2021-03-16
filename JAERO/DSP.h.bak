@@ -9,7 +9,7 @@
 #include <QObject>
 #include <assert.h>
 #include <QVector>
-#include "jfft.h"
+#include "../../JFFT/jfft.h"
 //---------------------------------------------------------------------------
 
 //#define ASSERTCH(obj,idx) assert(idx>=0);assert(idx<obj.size())

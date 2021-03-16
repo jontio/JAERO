@@ -21,10 +21,11 @@ TARGET = JAERO
 TEMPLATE = app
 
 INSTALL_PATH = /opt/jaero
+JFFT_PATH = ../../JFFT/
 
 QMAKE_CXXFLAGS += -std=c++11
 
-INCLUDEPATH += $$LIBACARS_PATH/src
+INCLUDEPATH += $$JFFT_PATH
 
 DEFINES += _USE_MATH_DEFINES
 
@@ -82,7 +83,7 @@ SOURCES += mainwindow.cpp \
     jconvolutionalcodec.cpp \
     audiooutdevice.cpp \
     compressedaudiodiskwriter.cpp \
-    ../../JFFT/jfft.cpp \
+    $$JFFT_PATH/jfft.cpp \
     util/stdio_utils.cpp \
     util/file_utils.cpp \
     util/RuntimeError.cpp
@@ -117,7 +118,7 @@ HEADERS  += mainwindow.h \
     jconvolutionalcodec.h \
     audiooutdevice.h \
     compressedaudiodiskwriter.h \
-    ../../JFFT/jfft.h \
+    $$JFFT_PATH/jfft.h \
     util/stdio_utils.h \
     util/file_utils.h \
     util/RuntimeError.h
@@ -151,8 +152,6 @@ RC_FILE = jaero.rc
 
 }
 
-LIBS += -lcorrect
-
 # remove possible other optimization flags
 #QMAKE_CXXFLAGS_RELEASE -= -O
 QMAKE_CXXFLAGS_RELEASE -= -O2
@@ -162,7 +161,7 @@ QMAKE_CXXFLAGS_RELEASE += -O3
 #QMAKE_CXXFLAGS_RELEASE *= -O3
 
 #for static building order seems to matter
-LIBS += -lvorbis -lvorbisenc -logg -lacars
+LIBS += -lcorrect -lvorbis -lvorbisenc -logg -lacars
 
 #desktop
 desktop.path = /usr/share/applications
