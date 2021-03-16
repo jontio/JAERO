@@ -751,7 +751,7 @@ OQPSKEbNoMeasure::~OQPSKEbNoMeasure()
 
 
 //---fast Hilbert filter
-QJHilbertFilter::QJHilbertFilter(QObject *parent)  : QJFastFIRFilter(parent)
+QJHilbertFilter::QJHilbertFilter()
 {
     setSize(2048);
 }
@@ -763,35 +763,32 @@ void QJHilbertFilter::setSize(int N)
 
     kernel.clear();
 
-    kffsamp_t asample;
+    JFFT::cpx_type asample;
     for(int i=0;i<N;i++)
     {
 
         if(i==N/2)
         {
-            asample.i=0;
-            asample.r=-1;
+            asample=JFFT::cpx_type(-1,0);
             kernel.push_back(asample);
             continue;
         }
 
         if((i%2)==0)
         {
-            asample.i=0;
-            asample.r=0;
+            asample=JFFT::cpx_type(0,0);
             kernel.push_back(asample);
             continue;
         }
 
-        asample.r=0;
-        asample.i=(2.0/((double)N))/(std::tan(M_PI*(((double)i)/((double)N)-0.5)));
+        asample=JFFT::cpx_type(0,(2.0/((double)N))/(std::tan(M_PI*(((double)i)/((double)N)-0.5))));
         kernel.push_back(asample);
 
     }
-    setKernel(kernel);
+    SetKernel(kernel);
 }
 
-QVector<kffsamp_t> QJHilbertFilter::getKernel()
+QVector<JFFT::cpx_type> QJHilbertFilter::getKernel()
 {
     return kernel;
 }
@@ -799,119 +796,3 @@ QVector<kffsamp_t> QJHilbertFilter::getKernel()
 
 //---
 
-//---fast FIR
-
-QJFastFIRFilter::QJFastFIRFilter(QObject *parent) : QObject(parent)
-{
-    QVector<kffsamp_t> tvect;
-    kffsamp_t asample;
-    asample.r=1;
-    asample.i=0;
-    tvect.push_back(asample);
-    nfft=2;
-    cfg=kiss_fastfir_alloc(tvect.data(),tvect.size(),&nfft,0,0);
-    reset();
-}
-
-int QJFastFIRFilter::setKernel(QVector<kffsamp_t> imp_responce)
-{
-    int _nfft=imp_responce.size()*4;//rule of thumb
-    _nfft=pow(2.0,(ceil(log2(_nfft))));
-    return setKernel(imp_responce,_nfft);
-}
-
-int QJFastFIRFilter::setKernel(QVector<kffsamp_t> imp_responce,int _nfft)
-{
-    if(!imp_responce.size())return nfft;
-    free(cfg);
-    _nfft=pow(2.0,(ceil(log2(_nfft))));
-    nfft=_nfft;
-    cfg=kiss_fastfir_alloc(imp_responce.data(),imp_responce.size(),&nfft,0,0);
-    reset();
-    return nfft;
-}
-
-
-void QJFastFIRFilter::reset()
-{
-    kffsamp_t asample;
-    asample.r=0;
-    asample.i=0;
-    remainder.fill(asample,nfft*2);
-    idx_inbuf=0;
-    remainder_ptr=nfft;
-}
-
-void QJFastFIRFilter::Update(QVector<kffsamp_t> &data)
-{
-    Update(data.data(), data.size());
-}
-
-void QJFastFIRFilter::Update(kffsamp_t *data,int Size)
-{
-
-    //ensure enough storage
-    if((inbuf.size()-idx_inbuf)<(size_t)Size)
-    {
-        inbuf.resize(Size+nfft);
-        outbuf.resize(Size+nfft);
-    }
-
-    //add data to storage
-    memcpy ( inbuf.data()+idx_inbuf, data, sizeof(kffsamp_t)*Size );
-    size_t nread=Size;
-
-    //fast fir of storage
-    size_t nwrite=kiss_fastfir(cfg, inbuf.data(), outbuf.data(),nread,&idx_inbuf);
-
-    int currentwantednum=Size;
-    int numfromremainder=std::min(currentwantednum,remainder_ptr);
-
-    //return as much as posible from remainder buffer
-    if(numfromremainder>0)
-    {
-        memcpy ( data, remainder.data(), sizeof(kffsamp_t)*numfromremainder );
-
-        currentwantednum-=numfromremainder;
-        data+=numfromremainder;
-
-        if(numfromremainder<remainder_ptr)
-        {
-            remainder_ptr-=numfromremainder;
-            memcpy ( remainder.data(), remainder.data()+numfromremainder, sizeof(kffsamp_t)*remainder_ptr );
-        } else remainder_ptr=0;
-    }
-
-    //then return stuff from output buffer
-    int numfromoutbuf=std::min(currentwantednum,(int)nwrite);
-    if(numfromoutbuf>0)
-    {
-        memcpy ( data, outbuf.data(), sizeof(kffsamp_t)*numfromoutbuf );
-        currentwantednum-=numfromoutbuf;
-        data+=numfromoutbuf;
-    }
-
-    //any left over is added to remainder buffer
-    if(((size_t)numfromoutbuf<nwrite)&&(nwrite>0))
-    {
-        memcpy ( remainder.data()+remainder_ptr, outbuf.data()+numfromoutbuf, sizeof(kffsamp_t)*(nwrite-numfromoutbuf) );
-        remainder_ptr+=(nwrite-numfromoutbuf);
-    }
-
-
-    //if currentwantednum>0 then some items were not changed, this should not happen
-    //we should anyways have enough to return but if we dont this happens. this should be avoided else a discontinuity of frames occurs. set remainder to zero and set remainder_ptr to nfft before running to avoid this
-    if(currentwantednum>0)
-    {
-        qDebug()<<"Error: user wants "<<currentwantednum<<" more items from fir filter!";
-        remainder_ptr+=currentwantednum;
-    }
-
-}
-
-QJFastFIRFilter::~QJFastFIRFilter()
-{
-    free(cfg);
-}
-
-//-----------

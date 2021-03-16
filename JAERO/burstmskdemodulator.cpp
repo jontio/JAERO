@@ -57,9 +57,8 @@ BurstMskDemodulator::BurstMskDemodulator(QObject *parent)
     RxDataBits.reserve(1000);//unpacked
 
     // burst stuff
-    hfir=new QJHilbertFilter(this);
 
-    fftr = new FFTr(pow(2.0,(ceil(log2(  128.0*SamplesPerSymbol   )))),false);
+    fftr = new FFTr(pow(2.0,(ceil(log2(  128.0*SamplesPerSymbol   )))));
     mav1= new MovingAverage(SamplesPerSymbol*128);
 
     tridentbuffer_sz=qRound((256.0+16.0+16.0)*SamplesPerSymbol);//room for trident and preamble and a bit more
@@ -182,6 +181,8 @@ void BurstMskDemodulator::setSettings(Settings _settings)
     //keep the averaging time very short to allow for R packets
     ebnomeasure = new MSKEbNoMeasure(0.15*Fs);
 
+    hfir.setSize(2048);
+
     pointbuff.resize(100);
 
     pointbuff_ptr=0;
@@ -209,7 +210,7 @@ void BurstMskDemodulator::setSettings(Settings _settings)
 
         delete fftr;
         int N=4096*4*2;
-        fftr = new FFTr(N,false);
+        fftr = new FFTr(N);
 
         // changed trident from 120 to 194, half of 74 + 120
         tridentbuffer_sz=qRound((200.0)*SamplesPerSymbol);//room for trident and preamble and a bit more
@@ -268,7 +269,7 @@ void BurstMskDemodulator::setSettings(Settings _settings)
 
         delete fftr;
         int N=4096*4*2;
-        fftr = new FFTr(N,false);
+        fftr = new FFTr(N);
 
 
         tridentbuffer_sz=qRound((224)*SamplesPerSymbol);//room for trident and preamble and a bit more
@@ -372,25 +373,20 @@ qint64 BurstMskDemodulator::writeData(const char *data, qint64 len)
 
     //make analytical signal
     hfirbuff.resize(numofsamples);
-    kffsamp_t asample;
-    asample.i=0;
 
     for(int i=0;i<numofsamples;i++)
     {
-        asample.r=((double)(*ptr))/32768.0;
-
-        hfirbuff[i]=asample;
-
+        hfirbuff[i]=cpx_type(((double)(*ptr))/32768.0,0);
         ptr++;
     }
 
-    hfir->Update(hfirbuff);
+    hfir.update(hfirbuff);
 
     //run through each sample of analyitical signal
     for(int i=0;i<hfirbuff.size();i++)
     {
 
-        std::complex<double> cval=std::complex<double>(hfirbuff[i].r,hfirbuff[i].i);
+        cpx_type cval=hfirbuff[i];
 
         //take orginal arm
         double dval=cval.real();
@@ -497,7 +493,8 @@ qint64 BurstMskDemodulator::writeData(const char *data, qint64 len)
             int maxtopposhigh =0;
             double maxtophigh =0;
 
-            for(int i=0; i < out_top.size(); i++)
+            //fixed bug fft output half is the conjugate complex so dont look at hence why /2
+            for(int i=0; i < out_top.size()/2; i++)
             {
 
                 if(i > 50)
@@ -525,7 +522,6 @@ qint64 BurstMskDemodulator::writeData(const char *data, qint64 len)
             if(minval>500.0 && std::abs(distfrompeak-peakspacingbins) < std::abs(peakspacingbins/20) && !(dcd) && !(cntr>0 && cntr<(500*SamplesPerSymbol)))
             {
 
-
                 //set gain given estimate
                 vol_gain=1.4142*(500.0/(minval/3));
 
@@ -543,7 +539,6 @@ qint64 BurstMskDemodulator::writeData(const char *data, qint64 len)
                 startstop=startstopstart;
                 cntr=0;
                 emit SignalStatus(true);
-
 
                 RxDataBits.clear();
                 // indicate start of burst
@@ -643,7 +638,6 @@ qint64 BurstMskDemodulator::writeData(const char *data, qint64 len)
         //clipping
         double abval=std::abs(sig2);
         if(abval>2.84)sig2=(2.84/abval)*sig2;
-
 
         //normal symbol timer
         cpx_type pt_d = delayedsmpl.update_dont_touch(sig2);
@@ -754,6 +748,5 @@ qint64 BurstMskDemodulator::writeData(const char *data, qint64 len)
 void BurstMskDemodulator::DCDstatSlot(bool _dcd)
 {
     dcd=_dcd;
-
 }
 

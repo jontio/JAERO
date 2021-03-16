@@ -6,7 +6,7 @@ QSpectrumDisplay::QSpectrumDisplay(QWidget *parent)
     : QCustomPlot(parent)
 {
 
-    fftr = new FFTr(pow(2,SPECTRUM_FFT_POWER),false);
+    fftr = new FFTr(pow(2,SPECTRUM_FFT_POWER));
     addGraph();
 
     timer.start();

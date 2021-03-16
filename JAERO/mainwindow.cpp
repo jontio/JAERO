@@ -40,7 +40,10 @@ MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
     ui(new Ui::MainWindow)
 {
+
     ui->setupUi(this);
+
+    QTimer::singleShot(100, [this]() { setWindowTitle("JAERO "+QString(JAERO_VERSION)); } );
 
     beep=new QSound(":/sounds/beep.wav",this);
 
@@ -65,6 +68,10 @@ MainWindow::MainWindow(QWidget *parent) :
     QString aeroambe_object_error_str;
     QLibrary library("aeroambe.dll");
     if(!library.load())library.setFileName("aeroambe.so");
+    if(!library.load())library.setFileName(QDir::currentPath()+"/aeroambe.dll");
+    if(!library.load())library.setFileName(QDir::currentPath()+"/aeroambe.so");
+    if(!library.load())library.setFileName(QApplication::applicationDirPath()+"/aeroambe.dll");
+    if(!library.load())library.setFileName(QApplication::applicationDirPath()+"/aeroambe.so");
     if(!library.load())
     {
         aeroambe_object_error_str="Can't find or load all the libraries necessary for aeroambe. You will not get audio.";//library.errorString() is a usless description and can be missleading, not using
@@ -661,12 +668,13 @@ void MainWindow::PlottablesSlot(double freq_est,double freq_center,double bandwi
 
 void MainWindow::AboutSlot()
 {
+    QStringList date=QString(__DATE__).split(" ");
     QMessageBox::about(this,"JAERO",""
                                      "<H1>An Aero demodulator and decoder</H1>"
-                                     "<H3>v1.0.4.11</H3>"
+                                     "<H3>"+QString(JAERO_VERSION)+"</H3>"
                                      "<p>This is a program to demodulate and decode Aero signals. These signals contain SatCom ACARS (<em>Satellite Communication Aircraft Communications Addressing and Reporting System</em>) messages as used by planes beyond VHF ACARS range. This protocol is used by Inmarsat's \"Classic Aero\" system and can be received using low or medium gain L band or high gain C band antennas.</p>"
                                      "<p>For more information about this application see <a href=\"http://jontio.zapto.org/hda1/jaero.html\">http://jontio.zapto.org/hda1/jaero.html</a>.</p>"
-                                     "<p>Jonti 2019</p>" );
+                                     "<p>Jonti "+date[1]+" "+date[0]+" "+date[2]+"</p>" );
 }
 
 void MainWindow::on_comboBoxbps_currentIndexChanged(const QString &arg)

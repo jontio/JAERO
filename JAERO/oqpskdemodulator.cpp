@@ -6,7 +6,7 @@
 #include <QTextStream>
 
 OqpskDemodulator::OqpskDemodulator(QObject *parent)
-:   QIODevice(parent)
+    :   QIODevice(parent)
 {
     afc=false;
     sql=false;
@@ -107,17 +107,9 @@ OqpskDemodulator::OqpskDemodulator(QObject *parent)
 
     //just for 8400
     //maybe another type of filter would be better?
-    fir_pre = new QJFastFIRFilter(this);
     RootRaisedCosine rrc_pre_imp;
     rrc_pre_imp.design(1,1024,48000,10500/2);//8096,48000,10500/2);
-    QVector<kffsamp_t> fir_pre_imp_responce;
-    fir_pre_imp_responce.resize(rrc_pre_imp.Points.size());
-    for(int i=0;i<rrc_pre_imp.Points.size();i++)
-    {
-        fir_pre_imp_responce[i].r=rrc_pre_imp.Points.at(i);
-        fir_pre_imp_responce[i].i=0;
-    }
-    fir_pre->setKernel(fir_pre_imp_responce);
+    fir_pre.SetKernel(rrc_pre_imp.Points);
     mixer_fir_pre.SetFreq(freq_center,Fs);
 
 }
@@ -214,7 +206,7 @@ void OqpskDemodulator::setSettings(Settings _settings)
 
     RootRaisedCosine rrc;
     if(fb==8400)rrc.design(0.6,55,48000,fb/2);
-     else rrc.design(1.0,55,48000,fb/2);
+    else rrc.design(1.0,55,48000,fb/2);
     fir_re=new FIR(rrc.Points.size());
     fir_im=new FIR(rrc.Points.size());
     for(int i=0;i<rrc.Points.size();i++)
@@ -282,15 +274,8 @@ void OqpskDemodulator::setSettings(Settings _settings)
     //maybe another type of filter would be better?
     RootRaisedCosine rrc_pre_imp;
     if(fb==8400)rrc_pre_imp.design(0.6,2048,Fs,fb/2);//0.6 --> smaller number mean less interchannel interference but locking is harder
-     else rrc_pre_imp.design(1.0,2048,Fs,fb/2);
-    QVector<kffsamp_t> fir_pre_imp_responce;
-    fir_pre_imp_responce.resize(rrc_pre_imp.Points.size());
-    for(int i=0;i<rrc_pre_imp.Points.size();i++)
-    {
-        fir_pre_imp_responce[i].r=rrc_pre_imp.Points.at(i);
-        fir_pre_imp_responce[i].i=0;
-    }
-    fir_pre->setKernel(fir_pre_imp_responce,4096);//use x2 rather than the x4 rule of thumb, will make it more responsive but may use more cpu
+    else rrc_pre_imp.design(1.0,2048,Fs,fb/2);
+    fir_pre.SetKernel(rrc_pre_imp.Points,4096);//rrc_pre_imp.Points.size()*2);//use x2 rather than the x4 rule of thumb, will make it more responsive but may use more cpu
 
     emit Plottables(mixer2.GetFreqHz(),mixer_center.GetFreqHz(),lockingbw);
 
@@ -358,50 +343,36 @@ qint64 OqpskDemodulator::writeData(const char *data, qint64 len)
         //I think the org estimate good enough so dont bother
         //mixer_fir_pre.SetFreq(mixer2.GetFreqHz()*0.03+0.97*mixer_fir_pre.GetFreqHz());
 
-        //down and convert to kiss vector
-        QVector<kffsamp_t> cval_tmp;
-        cval_tmp.resize(len/sizeof(short));
+        //down
+        cval_prefiltered.resize(len/sizeof(short));
         const short *ptr2 = reinterpret_cast<const short *>(data);
         double savedphase=mixer_fir_pre.GetPhaseDeg();
-        for(int i=0;i<len/sizeof(short);i++)
+        for(int i=0;i<cval_prefiltered.size();i++)
         {
             double dval=((double)(*ptr2))/32768.0;
 
             //down
-            cpx_type cval=mixer_fir_pre.WTCISValue()*dval;
-
-            //save as kiss
-            kffsamp_t cval_kiss;
-            cval_kiss.r=cval.real();
-            cval_kiss.i=cval.imag();
-            cval_tmp[i]=cval_kiss;
+            cval_prefiltered[i]=mixer_fir_pre.WTCISValue()*dval;
 
             //next
             mixer_fir_pre.WTnextFrame();
             ptr2++;
         }
 
-        //filter kiss vector
-        fir_pre->Update(cval_tmp);
+        //filter vector
+        fir_pre.update(cval_prefiltered);
 
-        //up and convert to std::complex vector
-        cval_prefiltered.resize(cval_tmp.size());
+        //up
         mixer_fir_pre.SetPhaseDeg(savedphase);
-        for(int i=0;i<cval_tmp.size();i++)
+        for(int i=0;i<cval_prefiltered.size();i++)
         {
             //up
-            cpx_type cval=cpx_type(cval_tmp[i].r,cval_tmp[i].i);
-            cval=mixer_fir_pre.WTCISValue_conj()*cval;
-
-            //save as std::complex
-            cval_prefiltered[i]=cval;
+            cval_prefiltered[i]*=mixer_fir_pre.WTCISValue_conj();
 
             //next
             mixer_fir_pre.WTnextFrame();
         }
 
-        //clear junk
-        cval_tmp.clear();
     }
 
     //prefilter end
@@ -409,7 +380,7 @@ qint64 OqpskDemodulator::writeData(const char *data, qint64 len)
     double mixer2_freq_sum=0;
     int i=0;
     const short *ptr = reinterpret_cast<const short *>(data);
-    for(i=0;i<len/sizeof(short);i++)
+    for(i=0;i<(int)(len/sizeof(short));i++)
     {
         double dval=((double)(*ptr))/32768.0;
 
@@ -434,19 +405,19 @@ qint64 OqpskDemodulator::writeData(const char *data, qint64 len)
         if((coarseCounter >= Fs || !cpuReduce))
         {
 
-        ASSERTCH(bbcycbuff,bbcycbuff_ptr);
-        bbcycbuff[bbcycbuff_ptr]=mixer_center.WTCISValue()*dval;
-        bbcycbuff_ptr++;bbcycbuff_ptr%=bbnfft;
+            ASSERTCH(bbcycbuff,bbcycbuff_ptr);
+            bbcycbuff[bbcycbuff_ptr]=mixer_center.WTCISValue()*dval;
+            bbcycbuff_ptr++;bbcycbuff_ptr%=bbnfft;
             if (bbcycbuff_ptr % (cpuReduce? bbnfft : bbnfft/4) == 0)//75% overlap
-        {
-            for(int j=0;j<bbcycbuff.size();j++)
             {
-                ASSERTCH(bbcycbuff,bbcycbuff_ptr);
-                ASSERTCH(bbtmpbuff,j);
-                bbtmpbuff[j]=bbcycbuff[bbcycbuff_ptr];
-                bbcycbuff_ptr++;bbcycbuff_ptr%=bbnfft;
-            }
-            emit BBOverlapedBuffer(bbtmpbuff);
+                for(int j=0;j<bbcycbuff.size();j++)
+                {
+                    ASSERTCH(bbcycbuff,bbcycbuff_ptr);
+                    ASSERTCH(bbtmpbuff,j);
+                    bbtmpbuff[j]=bbcycbuff[bbcycbuff_ptr];
+                    bbcycbuff_ptr++;bbcycbuff_ptr%=bbnfft;
+                }
+                emit BBOverlapedBuffer(bbtmpbuff);
                 coarseCounter = 0;
 
             }
@@ -471,14 +442,14 @@ qint64 OqpskDemodulator::writeData(const char *data, qint64 len)
             mixer2_freq_sum+=mixer2.GetFreqHz();
 
         }
-         else
-         {
+        else
+        {
             //mix
             cval= mixer2.WTCISValue()*dval;
 
             //rrc
             sig2=cpx_type(fir_re->FIRUpdateAndProcess(cval.real()),fir_im->FIRUpdateAndProcess(cval.imag()));
-         }
+        }
 
         //Measure ebno
         ebnomeasure->Update(std::abs(sig2));
@@ -518,7 +489,7 @@ qint64 OqpskDemodulator::writeData(const char *data, qint64 len)
             yui++;yui%=2;
             static cpx_type pt_d=0;
             if(!yui)pt_d=pt;
-             else
+            else
             {
 
                 cpx_type pt_qpsk=cpx_type(pt.real(),pt_d.imag());
@@ -538,19 +509,19 @@ qint64 OqpskDemodulator::writeData(const char *data, qint64 len)
                 if(ct_ec<-M_PI)ct_ec=-M_PI;
                 if(fb>8400)
                 {
-                  ct_ec=ct_iir_loopfilter.update(ct_ec);
-                  if(ct_ec>M_PI_2)ct_ec=M_PI_2;
-                  if(ct_ec<-M_PI_2)ct_ec=-M_PI_2;
-                  mixer2.IncresePhaseDeg(1.0*ct_ec);//*cos(ct_ec));
-                  mixer2.IncreseFreqHz(0.01*ct_ec);//*(1.0-cos(ct_ec)));
+                    ct_ec=ct_iir_loopfilter.update(ct_ec);
+                    if(ct_ec>M_PI_2)ct_ec=M_PI_2;
+                    if(ct_ec<-M_PI_2)ct_ec=-M_PI_2;
+                    mixer2.IncresePhaseDeg(1.0*ct_ec);//*cos(ct_ec));
+                    mixer2.IncreseFreqHz(0.01*ct_ec);//*(1.0-cos(ct_ec)));
                 }
-                 else
-                 {
+                else
+                {
                     //8400 works better with faster phase agility
                     mixer2.IncresePhaseDeg(1.0*ct_ec);
                     mixer2.IncreseFreqHz(0.5*0.01*ct_iir_loopfilter.update(ct_ec));
                     //mixer2.IncreseFreqHz(0.5*0.01*ct_ec);
-                 }
+                }
 
                 //rotate to remove any remaining bias
                 marg->UpdateSigned(ct_ec);
@@ -661,7 +632,7 @@ qint64 OqpskDemodulator::writeData(const char *data, qint64 len)
 
 void OqpskDemodulator::FreqOffsetEstimateSlot(double freq_offset_est)//coarse est class calls this with current est
 {
-  //  qDebug()<<freq_offset_est;
+    //  qDebug()<<freq_offset_est;
 
     //update prefilter untill we have dcd and a signal
     if((mse>signalthreshold)||(!dcd))
@@ -675,11 +646,11 @@ void OqpskDemodulator::FreqOffsetEstimateSlot(double freq_offset_est)//coarse es
     if((mse<signalthreshold)&&(!dcd))//signal but we arent getting data so prob in a state that is stable but wrong
     {
         if(countdown2>0)countdown2--;
-         else
-         {
+        else
+        {
             //qDebug()<<"resetting";
             mixer2.SetFreq(mixer_center.GetFreqHz()+freq_offset_est);
-         }
+        }
     } else countdown2=5;
 
     static int countdown=4;
@@ -691,21 +662,21 @@ void OqpskDemodulator::FreqOffsetEstimateSlot(double freq_offset_est)//coarse es
     if((afc)&&(mse<signalthreshold)&&(fabs(mixer2.GetFreqHz()-mixer_center.GetFreqHz())>3.0))//got a sig, afc on, freq is getting a little to far out
     {
         if(countdown>0)countdown--;
-         else
-         {
+        else
+        {
             mixer_center.SetFreq(mixer2.GetFreqHz());
             if(mixer_center.GetFreqHz()<lockingbw/2.0)mixer_center.SetFreq(lockingbw/2.0);
             if(mixer_center.GetFreqHz()>(Fs/2.0-lockingbw/2.0))mixer_center.SetFreq(Fs/2.0-lockingbw/2.0);
             coarsefreqestimate->bigchange();
             for(int j=0;j<bbcycbuff.size();j++)bbcycbuff[j]=0;
-         }
+        }
     } else countdown=4;
     emit Plottables(mixer2.GetFreqHz(),mixer_center.GetFreqHz(),lockingbw);
 
     emit EbNoMeasurmentSignal(ebnomeasure->EbNo);
     emit MSESignal(mse);
     if(mse>signalthreshold)emit SignalStatus(false);
-     else emit SignalStatus(true);
+    else emit SignalStatus(true);
 
 }
 
