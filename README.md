@@ -34,6 +34,12 @@ The [JAERO](JAERO) directory is where the Qt pro file is for the main applicatio
 
 Compiling JAERO requires the Qt framework. I would suggest using [MSYS2] to install the Qt framework and the rest of the development environment. Qt Creator can be used to compile JAERO and comes with the Qt framework. At least version 5 of the Qt framework is required. I only use MinGW and GCC for building so don't know if MSVC works.
 
+I've now added a Windows and Linux build scripts. The Windows build script requires MSYS2, once installed run msys64 clone the repo then type `./ci-windows-build.sh`. The Linux build script is for Debian based distros and will need to be changed for others, I have only tested it on some of the Ubuntu family (Ubuntu, Kubuntu and Lubuntu). For Linux type `./ci-linux-build.sh`, it will install JAERO as a few packages so uninstalling should be clean.
+
+I've added a continuous integration script [.github/workflows/ci-windows-build.yml](.github/workflows/ci-windows-build.yml) that will get Gihub to build JAERO for both Windows and Ubuntu. Currently the script is triggered manually in the [actions](actions) tab.
+
+JAERO's dependencies will undoubtedly change over time, so I suspect eventually the build scripts will fail and will need fixing. Till then they work, but I have no idea how long they will work for; we shall see.
+
 ## Thanks
 
 I'd like to thank everyone who has given their kind support for JAERO over the years. Thanks for Otti for getting the project started, John and Bev for setting up a worldwide large dish network, everyone who has donated, the people who have send feedback, people who use JAERO, Jeroen who done an excellent job programming new code for JAERO to bring some features that I’m sure will be appreciated by many, Tomasz for adding more ACARS message support, Corrosive for adding documentation, and the many other people who have written the libraries that JAERO uses.
