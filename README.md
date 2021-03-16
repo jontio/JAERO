@@ -1,4 +1,7 @@
 # JAERO
+
+[![build](https://github.com/jontio/JAERO/actions/workflows/ci-windows-build.yml/badge.svg)](https://github.com/jontio/JAERO/actions/workflows/ci-windows-build.yml)
+
 A SatCom ACARS demodulator and decoder for the Aero standard written in C++ Qt
 
 ![](images/screenshot-win-main.png)
