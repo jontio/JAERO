@@ -19,12 +19,7 @@ if [[ ! $(sudo echo 0) ]]; then exit; fi
 #install dependancies and build tools
 sudo apt-get install qt5-default cpputest build-essential qtmultimedia5-dev cmake libvorbis-dev libogg-dev libqt5multimedia5-plugins checkinstall libqcustomplot-dev libqt5svg5-dev -y
 
-#tmp JAERO
-#git clone https://github.com/jontio/JAERO
-#cd JAERO
-#git checkout 2021
-#cd ..
-
+#get script path
 SCRIPT=$(realpath $0)
 SCRIPTPATH=$(dirname $SCRIPT)
 cd $SCRIPTPATH/..
@@ -90,7 +85,7 @@ cd libaeroambe/mbelib-master
 #needed for github actions
 git fetch --prune --unshallow --tags || true
 git status > /dev/null 2>&1
-PACKAGE_VERSION=$(git describe --tags --match 'v*' --dirty 2> /dev/null | tr -d v)-g$(git rev-parse HEAD | cut -c 1-8)
+PACKAGE_VERSION=$(git describe --tags --match 'v*' --dirty 2> /dev/null | tr -d v)
 PACKAGE_NAME=libaeroambe-dev
 MAINTAINER=nobody
 PACKAGE_SOURCE=https://github.com/jontio/libaeroambe
@@ -145,7 +140,7 @@ cd $SCRIPTPATH
 #needed for github actions
 git fetch --prune --unshallow --tags || true
 git status > /dev/null 2>&1
-PACKAGE_VERSION=$(git describe --tags --match 'v*' --dirty 2> /dev/null | tr -d v)-g$(git rev-parse HEAD | cut -c 1-8)
+PACKAGE_VERSION=$(git describe --tags --match 'v*' --dirty 2> /dev/null | tr -d v)
 PACKAGE_NAME=jaero
 MAINTAINER=https://github.com/jontio
 PACKAGE_SOURCE=https://github.com/jontio/JAERO
@@ -159,6 +154,7 @@ qmake CONFIG+="CI"
 make
 ./JAERO -v
 rm JAERO
+#build for release
 qmake CONFIG-="CI"
 make
 make INSTALL_ROOT=$PWD/${PACKAGE_NAME}_${PACKAGE_VERSION%_*}-1 install
@@ -196,5 +192,36 @@ sudo ldconfig
 cd ../..
 
 #package
+mkdir JAERO/bin
+mkdir JAERO/bin/jaero
+cp JAERO/JAERO/*.deb JAERO/bin/jaero
+cp libacars/build/*.deb JAERO/bin/jaero
+cp libcorrect/build/*.deb JAERO/bin/jaero
+cp libaeroambe/libaeroambe/release/*.deb JAERO/bin/jaero
+cd JAERO/bin
+cat <<EOT > jaero/install.sh
+#!/bin/bash
+#installs built packages
+sudo apt install ./*.deb
+sudo ldconfig
+EOT
+chmod +x jaero/install.sh
+cat <<EOT > jaero/uninstall.sh
+#!/bin/bash
+#removes built packages
+sudo dpkg --remove libacars-dev libcorrect-dev libaeroambe-dev jaero 
+sudo ldconfig
+EOT
+chmod +x jaero/uninstall.sh
+cat <<EOT > jaero/readme.md
+# JAERO ${PACKAGE_VERSION}
 
+### OS: $(lsb_release -d | cut -f 2)
+### Build Date: $(date -u)
+
+Cheers,<br>
+ci-linux-build.sh
+EOT
+#compress
+tar -czvf ${PACKAGE_NAME}_${PACKAGE_VERSION%_*}-1.tar.gz jaero
 echo "done"
