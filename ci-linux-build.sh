@@ -2,30 +2,32 @@
 
 #linux build (for github "ubuntu-latest")
 
+#will get dependancies, build and install jaero
+
 #fail on first error
 set -e
 
 #we will need sudo later may as well do a sudo now
 if [[ ! $(sudo echo 0) ]]; then exit; fi
 
-#without github actions...
+#install dependancies and build tools
+sudo apt-get install qt5-default cpputest build-essential qtmultimedia5-dev cmake libvorbis-dev libogg-dev libqt5multimedia5-plugins checkinstall libqcustomplot-dev libqt5svg5-dev -y
+
+#tmp JAERO
 #git clone https://github.com/jontio/JAERO
 #cd JAERO
 #git checkout 2021
 #cd ..
 
-sudo apt-get install qt5-default cpputest build-essential qtmultimedia5-dev cmake libvorbis-dev libogg-dev libqt5multimedia5-plugins checkinstall libqcustomplot-dev libqt5svg5-dev -y
-
-#JAERO
-git clone https://github.com/jontio/JAERO
-cd JAERO
-git checkout 2021
-cd ..
+SCRIPT=$(realpath $0)
+SCRIPTPATH=$(dirname $SCRIPT)
+cd $SCRIPTPATH
 
 #libacars
 git clone https://github.com/szpajder/libacars
 cd libacars && git checkout v1.3.1
-git fetch --prune --unshallow --tags
+#needed for github actions
+git fetch --prune --unshallow --tags || true
 git status > /dev/null 2>&1
 PACKAGE_VERSION=$(git describe --tags --match 'v*' --dirty 2> /dev/null | tr -d v)
 echo "PACKAGE_VERSION="$PACKAGE_VERSION
@@ -50,7 +52,8 @@ cd ../..
 #libcorrect
 git clone https://github.com/quiet/libcorrect
 cd libcorrect
-git fetch --prune --unshallow --tags
+#needed for github actions
+git fetch --prune --unshallow --tags || true
 git status > /dev/null 2>&1
 PACKAGE_VERSION=1_$(git rev-parse HEAD | cut -c 1-8)
 echo "PACKAGE_VERSION="$PACKAGE_VERSION
@@ -78,7 +81,8 @@ git clone https://github.com/jontio/JFFT
 #libaeroambe
 git clone https://github.com/jontio/libaeroambe
 cd libaeroambe/mbelib-master
-git fetch --prune --unshallow --tags
+#needed for github actions
+git fetch --prune --unshallow --tags || true
 git status > /dev/null 2>&1
 PACKAGE_VERSION=$(git describe --tags --match 'v*' --dirty 2> /dev/null | tr -d v)-g$(git rev-parse HEAD | cut -c 1-8)
 PACKAGE_NAME=libaeroambe-dev
@@ -95,7 +99,7 @@ cd build
 cmake -DCMAKE_POSITION_INDEPENDENT_CODE=ON ..
 make
 #dont install this as it's an old libmbe clone so instread delete the shared objects and just leave the static one to link with
-rm *.so*
+rm $PWD/*.so*
 cd ../../libaeroambe
 #change install paths as i'm not sure of the QT define that gets the standard local user install path
 sed -i 's/\$\$\[QT_INSTALL_HEADERS\]/\/usr\/local\/include/g' libaeroambe.pro
@@ -131,9 +135,9 @@ sudo ldconfig
 cd ../../..
 
 #JAERO
-#github action already has already cloned JAERO
-cd JAERO
-git fetch --prune --unshallow --tags
+cd $SCRIPTPATH
+#needed for github actions
+git fetch --prune --unshallow --tags || true
 git status > /dev/null 2>&1
 PACKAGE_VERSION=$(git describe --tags --match 'v*' --dirty 2> /dev/null | tr -d v)-g$(git rev-parse HEAD | cut -c 1-8)
 PACKAGE_NAME=jaero
@@ -185,293 +189,4 @@ sudo apt install ./${PACKAGE_NAME}*.deb -y
 sudo ldconfig
 cd ../..
 
-
------
-
-
-
-
-git clone https://github.com/jontio/libaeroambe
-cd libaeroambe/mbelib-master
-git fetch --prune --unshallow --tags
-git status > /dev/null 2>&1
-PACKAGE_VERSION=$(git describe --tags --match 'v*' --dirty 2> /dev/null | tr -d v)-g$(git rev-parse HEAD | cut -c 1-8)
-PACKAGE_NAME=libaeroambe
-MAINTAINER=nobody
-PACKAGE_SOURCE=https://github.com/jontio/libaeroambe
-echo "PACKAGE_NAME="$PACKAGE_NAME
-echo "PACKAGE_VERSION="$PACKAGE_VERSION
-echo "MAINTAINER="$MAINTAINER
-echo "PACKAGE_SOURCE="$PACKAGE_SOURCE
-mkdir build
-cd build
-cmake -DCMAKE_POSITION_INDEPENDENT_CODE=ON ..
-make
-sudo checkinstall \
-            --pkgsource="$PACKAGE_SOURCE" \
-            --pkglicense="MIT" \
-            --maintainer="$MAINTAINER" \
-            --pkgversion="$PACKAGE_VERSION" \
-            --pkgrelease="1" \
-            --pkgname=libmbe-dev \
-            --provides=libmbe-dev \
-            --summary="A formal description of a mini-m decoder library" \
-            --requires="" \
-            -y
-sudo ldconfig
-cd ../../libaeroambe
-qmake
-make
-make INSTALL_ROOT=$PWD/release/${PACKAGE_NAME}_${PACKAGE_VERSION%_*}-1 install
-cd release
-cat <<EOT > control
-Package: ${PACKAGE_NAME}
-Source: ${PACKAGE_SOURCE}
-Section: base
-Priority: extra
-Depends: qt5-default (>= 5.12)
-Provides: ${PACKAGE_NAME}
-Maintainer: ${MAINTAINER}
-Version: ${PACKAGE_VERSION%_*}
-License: MIT
-Architecture: $(dpkg --print-architecture)
-Description: Qt interface for a formal description of a mini-m decoder library
-EOT
-echo "" >> control
-mkdir -p ${PACKAGE_NAME}_${PACKAGE_VERSION%_*}-1/DEBIAN
-cp control ${PACKAGE_NAME}_${PACKAGE_VERSION%_*}-1/DEBIAN
-dpkg-deb --build ${PACKAGE_NAME}_${PACKAGE_VERSION%_*}-1
-sudo apt install ./${PACKAGE_NAME}*.deb -y
-sudo ldconfig
-cd ../../..
-
-
-
-#JAERO
-#github action already has already cloned JAERO
-cd JAERO
-git fetch --prune --unshallow --tags
-git status > /dev/null 2>&1
-PACKAGE_VERSION=$(git describe --tags --match 'v*' --dirty 2> /dev/null | tr -d v)-g$(git rev-parse HEAD | cut -c 1-8)
-PACKAGE_NAME=jaero
-MAINTAINER=https://github.com/jontio
-PACKAGE_SOURCE=https://github.com/jontio/libaeroambe
-echo "PACKAGE_NAME="$PACKAGE_NAME
-echo "PACKAGE_VERSION="$PACKAGE_VERSION
-echo "MAINTAINER="$MAINTAINER
-echo "PACKAGE_SOURCE="$PACKAGE_SOURCE
-cd JAERO
-#run unit tests
-qmake CONFIG+="CI"
-make
-./JAERO -v
-rm JAERO
-qmake CONFIG-="CI"
-make
-make INSTALL_ROOT=$PWD/${PACKAGE_NAME}_${PACKAGE_VERSION%_*}-1 install
-JAERO_INSTALL_PATH=$(cat JAERO.pro | sed -n -e 's/^INSTALL_PATH[|( ).]= //p')
-JAERO_INSTALL_PATH=${JAERO_INSTALL_PATH//$'\r'/}
-echo 'JAERO_INSTALL_PATH='${JAERO_INSTALL_PATH}
-#add control
-cat <<EOT > control
-Package: ${PACKAGE_NAME}
-Source: ${PACKAGE_SOURCE}
-Section: base
-Priority: extra
-Depends: qt5-default (>= 5.12), qtmultimedia5-dev, libvorbis-dev, libogg-dev, libqt5multimedia5-plugins, libqcustomplot-dev, libqt5svg5-dev
-Provides: ${PACKAGE_NAME}
-Maintainer: ${MAINTAINER}
-Version: ${PACKAGE_VERSION%_*}
-License: MIT
-Architecture: $(dpkg --print-architecture)
-Description: Demodulate and decode Aero signals. These signals contain SatCom ACARS messages as used by planes beyond VHF ACARS range
-EOT
-echo "" >> control
-mkdir -p ${PACKAGE_NAME}_${PACKAGE_VERSION%_*}-1/DEBIAN
-cp control ${PACKAGE_NAME}_${PACKAGE_VERSION%_*}-1/DEBIAN
-#add path command
-mkdir -p ${PACKAGE_NAME}_${PACKAGE_VERSION%_*}-1/usr/local/bin
-cat <<EOT > ${PACKAGE_NAME}_${PACKAGE_VERSION%_*}-1/usr/local/bin/jaero
-#!/bin/bash
-/opt/jaero/JAERO
-EOT
-chmod +x ${PACKAGE_NAME}_${PACKAGE_VERSION%_*}-1/usr/local/bin/jaero
-#build and install package
-dpkg-deb --build ${PACKAGE_NAME}_${PACKAGE_VERSION%_*}-1
-sudo apt install ./${PACKAGE_NAME}*.deb -y
-sudo ldconfig
-cd ../..
-
-
-
-
-
-
-
-
-
-
-#mkdir -p ${PACKAGE_NAME}_${PACKAGE_VERSION%_*}-1/usr/local/lib
-#cp -P libaeroambe.so* ${PACKAGE_NAME}_${PACKAGE_VERSION%_*}-1/usr/local/lib
-
-#add path command
-mkdir ${PACKAGE_NAME}_${PACKAGE_VERSION%_*}-1/usr/local/bin
-cat <<EOT > ${PACKAGE_NAME}_${PACKAGE_VERSION%_*}-1/usr/local/bin/jaero
-#!/bin/bash
-/opt/jontio/JAERO
-EOT
-chmod +x ${PACKAGE_NAME}_${PACKAGE_VERSION%_*}-1/usr/local/bin/jaero
-#add libmbe wrapper. this lib can be in the app path
-cp -P ../../libaeroambe/libaeroambe/libaeroambe.so* ${PACKAGE_NAME}_${PACKAGE_VERSION%_*}-1/${JAERO_INSTALL_PATH}
-#copy libmbe
-cp -PR /opt/jaero/lib ${PACKAGE_NAME}_${PACKAGE_VERSION%_*}-1/${JAERO_INSTALL_PATH}/
-#add link to it with a name that doesn't clash with libmbe
-mkdir -p ${PACKAGE_NAME}_${PACKAGE_VERSION%_*}-1/usr/local/lib
-ln -sf ${PACKAGE_NAME}_${PACKAGE_VERSION%_*}-1/opt/jaero/lib/libmbe.so ${PACKAGE_NAME}_${PACKAGE_VERSION%_*}-1/usr/local/lib/libmbe-mini-m.so
-#build and install package
-dpkg-deb --build ${PACKAGE_NAME}_${PACKAGE_VERSION%_*}-1
-sudo apt install ./${PACKAGE_NAME}*.deb -y
-sudo ldconfig
-cd ../..
-
-
-.....
-
-
-
-
-
-#libaeroambe
-#this is terrible!!!
-git clone https://github.com/jontio/libaeroambe
-cd libaeroambe/mbelib-master
-#this is not the usual libmbe library and rather a modification of it
-#this is a bother and it should have been merged into libmbe
-#this is going to cause some confusion. Please can someone fix this situation?
-git fetch --prune --unshallow --tags
-git status > /dev/null 2>&1
-PACKAGE_VERSION=$(git describe --tags --match 'v*' --dirty 2> /dev/null | tr -d v)-g$(git rev-parse HEAD | cut -c 1-8)
-PACKAGE_NAME=libaeroambe
-echo "PACKAGE_NAME="$PACKAGE_NAME
-echo "PACKAGE_VERSION="$PACKAGE_VERSION
-#sed -i 's/mbe/mbe-mini-m/g' CMakeLists.txt
-#sed -i 's/mbe-mini-mlib.h/mbelib.h/g' CMakeLists.txt
-
-echo 'install(CODE "EXECUTE_PROCESS(COMMAND ln -sf /opt/jaero/lib/libmbe.so /usr/local/lib/libmbe-mini-m.so)")' >> CMakeLists.txt
-echo "" >> CMakeLists.txt
-
-mkdir build
-cd build
-cmake -DCMAKE_INSTALL_PREFIX="/opt/jaero" ..
-make
-sudo checkinstall \
-            --pkgsource="https://github.com/jontio/libaeroambe" \
-            --pkglicense="MIT" \
-            --maintainer="root" \
-            --pkgversion="$PACKAGE_VERSION" \
-            --pkgrelease="1" \
-            --pkgname=libmbe-mini-m-dev \
-            --provides=libmbe-mini-m-dev \
-            --summary="A formal description of a mini-m decoder library" \
-            --requires="" \
-            -y
-			
-			
-#sudo cp -p /usr/local/lib/libmbe.a /usr/local/lib/libmbe-mini-m.a
-#sudo cp -p /usr/local/lib/libmbe.so.1.0 /usr/local/lib/libmbe-mini-m.so.1.0
-#sudo cp -p /usr/local/lib/libmbe.so /usr/local/lib/libmbe-mini-m.so
-
-
-
-			
-sudo ldconfig
-cd ../../libaeroambe
-#it gets worse. this is a rather silly wrapper for the previous library. however it can be placed in the dir of JAERO
-sed -i 's/lmbe/lmbe-mini-m/g' libaeroambe.pro
-qmake
-make
-cd release
-cat <<EOT > control
-Package: ${PACKAGE_NAME}
-Section: base
-Priority: extra
-Depends: qt5-default (>= 5.12), libmbe-mini-m-dev
-Provides: ${PACKAGE_NAME}
-Maintainer: nobody
-Version: ${PACKAGE_VERSION%_*}
-License: MIT
-Architecture: $(dpkg --print-architecture)
-Description: Qt interface for libmbe-mini-m-dev
-EOT
-echo "" >> control
-mkdir ${PACKAGE_NAME}_${PACKAGE_VERSION%_*}-1
-mkdir -p ${PACKAGE_NAME}_${PACKAGE_VERSION%_*}-1/usr/local/lib
-cp -P libaeroambe.so* ${PACKAGE_NAME}_${PACKAGE_VERSION%_*}-1/usr/local/lib
-mkdir -p ${PACKAGE_NAME}_${PACKAGE_VERSION%_*}-1/DEBIAN
-cp control ${PACKAGE_NAME}_${PACKAGE_VERSION%_*}-1/DEBIAN
-dpkg-deb --build ${PACKAGE_NAME}_${PACKAGE_VERSION%_*}-1
-sudo apt install ./${PACKAGE_NAME}*.deb -y
-sudo ldconfig
-cd ../../..
-
-#JAERO
-#github action already has already cloned JAERO
-cd JAERO
-git fetch --prune --unshallow --tags
-git status > /dev/null 2>&1
-PACKAGE_VERSION=$(git describe --tags --match 'v*' --dirty 2> /dev/null | tr -d v)-g$(git rev-parse HEAD | cut -c 1-8)
-PACKAGE_NAME=jaero
-echo "PACKAGE_NAME="$PACKAGE_NAME
-echo "PACKAGE_VERSION="$PACKAGE_VERSION
-cd JAERO
-#run unit tests
-qmake CONFIG+="CI"
-make
-./JAERO -v
-rm JAERO
-qmake CONFIG-="CI"
-make
-make INSTALL_ROOT=$PWD/${PACKAGE_NAME}_${PACKAGE_VERSION%_*}-1 install
-JAERO_INSTALL_PATH=$(cat JAERO.pro | sed -n -e 's/^INSTALL_PATH[|( ).]= //p')
-JAERO_INSTALL_PATH=${JAERO_INSTALL_PATH//$'\r'/}
-echo 'JAERO_INSTALL_PATH='${JAERO_INSTALL_PATH}
-#add control
-cat <<EOT > control
-Package: ${PACKAGE_NAME}
-Section: base
-Priority: extra
-Depends: qt5-default (>= 5.12), qtmultimedia5-dev, libvorbis-dev, libogg-dev, libqt5multimedia5-plugins, libqcustomplot-dev, libqt5svg5-dev
-Provides: ${PACKAGE_NAME}
-Maintainer: nobody
-Version: ${PACKAGE_VERSION%_*}
-License: MIT
-Architecture: $(dpkg --print-architecture)
-Description: Demodulate and decode Aero signals. These signals contain SatCom ACARS messages as used by planes beyond VHF ACARS range
-EOT
-echo "" >> control
-mkdir -p ${PACKAGE_NAME}_${PACKAGE_VERSION%_*}-1/DEBIAN
-cp control ${PACKAGE_NAME}_${PACKAGE_VERSION%_*}-1/DEBIAN
-
-#mkdir -p ${PACKAGE_NAME}_${PACKAGE_VERSION%_*}-1/usr/local/lib
-#cp -P libaeroambe.so* ${PACKAGE_NAME}_${PACKAGE_VERSION%_*}-1/usr/local/lib
-
-#add path command
-mkdir ${PACKAGE_NAME}_${PACKAGE_VERSION%_*}-1/usr/local/bin
-cat <<EOT > ${PACKAGE_NAME}_${PACKAGE_VERSION%_*}-1/usr/local/bin/jaero
-#!/bin/bash
-/opt/jontio/JAERO
-EOT
-chmod +x ${PACKAGE_NAME}_${PACKAGE_VERSION%_*}-1/usr/local/bin/jaero
-#add libmbe wrapper. this lib can be in the app path
-cp -P ../../libaeroambe/libaeroambe/libaeroambe.so* ${PACKAGE_NAME}_${PACKAGE_VERSION%_*}-1/${JAERO_INSTALL_PATH}
-#copy libmbe
-cp -PR /opt/jaero/lib ${PACKAGE_NAME}_${PACKAGE_VERSION%_*}-1/${JAERO_INSTALL_PATH}/
-#add link to it with a name that doesn't clash with libmbe
-mkdir -p ${PACKAGE_NAME}_${PACKAGE_VERSION%_*}-1/usr/local/lib
-ln -sf ${PACKAGE_NAME}_${PACKAGE_VERSION%_*}-1/opt/jaero/lib/libmbe.so ${PACKAGE_NAME}_${PACKAGE_VERSION%_*}-1/usr/local/lib/libmbe-mini-m.so
-#build and install package
-dpkg-deb --build ${PACKAGE_NAME}_${PACKAGE_VERSION%_*}-1
-sudo apt install ./${PACKAGE_NAME}*.deb -y
-sudo ldconfig
-cd ../..
-
+echo "done"
