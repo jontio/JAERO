@@ -68,7 +68,6 @@ SOURCES += mainwindow.cpp \
     gui_classes/settingsdialog.cpp \
     aerol.cpp \
     gui_classes/planelog.cpp \
-    downloadmanager.cpp \
     databasetext.cpp \
     oqpskdemodulator.cpp \
     audiooqpskdemodulator.cpp \
@@ -103,7 +102,6 @@ HEADERS  += mainwindow.h \
     gui_classes/settingsdialog.h \
     aerol.h \
     gui_classes/planelog.h \
-    downloadmanager.h \
     databasetext.h \
     oqpskdemodulator.h \
     audiooqpskdemodulator.h \

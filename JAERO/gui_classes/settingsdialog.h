@@ -13,7 +13,6 @@
 #include <QDialog>
 #include <QVector>
 #include <QAudioDeviceInfo>
-#include "../downloadmanager.h"
 
 extern QString settings_name;
 
@@ -41,7 +40,6 @@ public:
     QString planesfolder;
     QString planelookup;
     bool beepontextmessage;
-    void DataBaseUpdateSugestion();
 
     QList<QHostAddress> udp_for_decoded_messages_address;
     QList<quint16> udp_for_decoded_messages_port;
@@ -56,7 +54,6 @@ public:
 private:
     Ui::SettingsDialog *ui;    
     void poulatepublicvars();
-    QDate lastdbupdate;
 
 protected:
     void accept();
@@ -65,8 +62,6 @@ private slots:
 
     void on_lineEditlogdir_editingFinished();
     void on_lineEditplanesfolder_editingFinished();
-    void on_pushButtonDownloadDB_clicked();
-    void DownloadDBResult(const QUrl &url, bool result);
     void on_checkOutputADSMessageToTCP_stateChanged(int arg1);
 };
 
