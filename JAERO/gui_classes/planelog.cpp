@@ -35,23 +35,22 @@ void PlaneLog::dbUpdateslot(bool ok, int ref, const QStringList &dbitem)
     {
         if(dbitem.size())
         {
-             dbUpdateerrorslot(dbitem[0]);
+             dbUpdateerrorslot(dbitem[DataBaseTextUser::DataBaseSchema::ModeS]);
         } else dbUpdateerrorslot("Error: Unknown");
     }
     else
     {
 
-        if(dbitem.size()!=5)
+        if(dbitem.size()!=QMetaEnum::fromType<DataBaseTextUser::DataBaseSchema>().keyCount())
         {
-            dbUpdateerrorslot("Error: Database illformed");
+            dbUpdateerrorslot("Error: Database responce size wrong");
             return;
         }
-
 
         if(!selectedAESitem)return;
         if(selectedAESitem->row()<0)return;
         if(selectedAESitem->row()>=ui->tableWidget->rowCount())return;
-        if(selectedAESitem->text()!=dbitem[0])return;
+        if(selectedAESitem->text()!=dbitem[DataBaseTextUser::DataBaseSchema::ModeS])return;
         int row=selectedAESitem->row();
 
         //if sat reg and lookup reg are very different then lookup is wrong
@@ -59,31 +58,23 @@ void PlaneLog::dbUpdateslot(bool ok, int ref, const QStringList &dbitem)
         QTableWidgetItem *REGitem;
         Notesitem = ui->tableWidget->item(row, 7);
         REGitem = ui->tableWidget->item(row, 1);
-        if(REGitem->text().right(2).toLower()!=dbitem[1].right(2).toLower())
-        {
-            if(Notesitem->text().right(1)=="\u2063")ui->plainTextEditnotes->clear();
-            dbUpdateerrorslot("Database and sat regs differ.\nTry updating database.");
-            return;
-        }
 
-        ui->label_type->setText(dbitem[3]);
-        ui->label_owner->setText(dbitem[4]);
+        QString manufacturer_and_type=dbitem[DataBaseTextUser::DataBaseSchema::Manufacturer]+" "+dbitem[DataBaseTextUser::DataBaseSchema::Type];
+        manufacturer_and_type=manufacturer_and_type.trimmed();
+
+        ui->label_type->setText(manufacturer_and_type);
+        ui->label_owner->setText(dbitem[DataBaseTextUser::DataBaseSchema::RegisteredOwners]);
 
         ui->plainTextEditdatabase->clear();
-        ui->plainTextEditdatabase->appendPlainText("Reg. ID         \t"+dbitem[1]);
-        ui->plainTextEditdatabase->appendPlainText("Model           \t"+dbitem[2]);
-        ui->plainTextEditdatabase->appendPlainText("Type            \t"+dbitem[3]);
-        ui->plainTextEditdatabase->appendPlainText("Owner           \t"+dbitem[4]);
-        //ui->plainTextEditdatabase->appendPlainText("Call Sign (Last)\t"+dbitem[4]);
-        //ui->plainTextEditdatabase->appendPlainText("Flight (Last)   \t"+dbitem[5]);
-//        QDateTime timestamp;
-//        timestamp.setTime_t(((QString)dbitem[8]).toUInt());
-//        ui->plainTextEditdatabase->appendPlainText("Updated (Local) \t"+timestamp.toString("yy-MM-dd hh:mm:ss"));
+        ui->plainTextEditdatabase->appendPlainText("Reg. ID         \t"+dbitem[DataBaseTextUser::DataBaseSchema::Registration]);
+        ui->plainTextEditdatabase->appendPlainText("Model           \t"+dbitem[DataBaseTextUser::DataBaseSchema::ICAOTypeCode]);
+        ui->plainTextEditdatabase->appendPlainText("Type            \t"+manufacturer_and_type);
+        ui->plainTextEditdatabase->appendPlainText("Owner           \t"+dbitem[DataBaseTextUser::DataBaseSchema::RegisteredOwners]);
+        ui->plainTextEditdatabase->appendPlainText("Country         \t"+dbitem[DataBaseTextUser::DataBaseSchema::ModeSCountry]);
 
         if((!ui->plainTextEditnotes->toPlainText().isEmpty())&&(Notesitem->text().right(1)!="\u2063"))return;
-        ui->plainTextEditnotes->setPlainText(dbitem[3]+"\n"+dbitem[4]+"\n\u2063");
-        Notesitem->setText(dbitem[3]+"\n"+dbitem[4]+"\n\u2063");
-
+        ui->plainTextEditnotes->setPlainText(manufacturer_and_type+"\n"+dbitem[DataBaseTextUser::DataBaseSchema::RegisteredOwners]+"\n\u2063");
+        Notesitem->setText(manufacturer_and_type+"\n"+dbitem[DataBaseTextUser::DataBaseSchema::RegisteredOwners]+"\n\u2063");
 
     }
 

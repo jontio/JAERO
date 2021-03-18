@@ -11,6 +11,7 @@
 #include <QSqlQuery>
 #include <QSqlError>
 #include <QSqlRecord>
+#include <QMetaEnum>
 
 #define DataBaseTextUser_MAX_PACKETS_IN_QUEUE 100
 

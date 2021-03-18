@@ -12,29 +12,7 @@
 #include <windows.h>
 #endif
 
-
 #include "databasetext.h"
-
-
-/*void MainWindow::result(bool ok, int ref, const QStringList &result)
-{
-    ACARSItem *pai=((ACARSItem*)dbtu->getuserdata(ref));
-    if(!ok)
-    {
-        if(result.size())
-        {
-             qDebug()<<"Error: "<<result[0];
-        } else qDebug()<<"Error: Unknowen";
-    }
-    else
-    {
-        qDebug()<<"ok"<<result;
-        qDebug()<<pai->message;
-    }
-    delete pai;
-}*/
-
-
 
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
@@ -46,16 +24,6 @@ MainWindow::MainWindow(QWidget *parent) :
     QTimer::singleShot(100, [this]() { setWindowTitle("JAERO "+QString(JAERO_VERSION)); } );
 
     beep=new QSound(":/sounds/beep.wav",this);
-
-    //example of using db
-    /*dbtu=new DataBaseTextUser(this);
-    connect(dbtu,SIGNAL(result(bool,int,QStringList)),this,SLOT(result(bool,int,QStringList)));
-    ACARSItem *pai=new ACARSItem;
-    QString dirname,aes;
-    dirname="../";
-    aes="7582F8";
-    pai->message="jhbuybuy000";
-    dbtu->request(dirname,aes,pai);*/
 
     //plane logging window
     planelog = new PlaneLog;
@@ -1284,9 +1252,11 @@ void MainWindow::ACARSslot(ACARSItem &acarsitem)
         //if(acarsitem.message.isEmpty())humantext+=((QString)"").sprintf("AES:%06X GES:%02X %c %s %s %c%c %c",acarsitem.isuitem.AESID,acarsitem.isuitem.GESID,acarsitem.MODE,acarsitem.PLANEREG.data(),TAKstr.data(),(uchar)acarsitem.LABEL[0],label1,acarsitem.BI)+"\n";
         //else humantext+=(((QString)"").sprintf("AES:%06X GES:%02X %c %s %s %c%c %c",acarsitem.isuitem.AESID,acarsitem.isuitem.GESID,acarsitem.MODE,acarsitem.PLANEREG.data(),TAKstr.data(),(uchar)acarsitem.LABEL[0],label1,acarsitem.BI))+"\n\n\t"+message+"\n";
 
-        if(acarsitem.dblookupresult.size()==5)
+        if(acarsitem.dblookupresult.size()==QMetaEnum::fromType<DataBaseTextUser::DataBaseSchema>().keyCount())
         {
-            humantext+=" "+acarsitem.dblookupresult[3]+" "+acarsitem.dblookupresult[4];
+            QString manufacturer_and_type=acarsitem.dblookupresult[DataBaseTextUser::DataBaseSchema::Manufacturer]+" "+acarsitem.dblookupresult[DataBaseTextUser::DataBaseSchema::Type];
+            manufacturer_and_type=manufacturer_and_type.trimmed();
+            humantext+=" "+manufacturer_and_type+" "+acarsitem.dblookupresult[DataBaseTextUser::DataBaseSchema::RegisteredOwners];
         }
 
         if(!acarsitem.message.isEmpty())

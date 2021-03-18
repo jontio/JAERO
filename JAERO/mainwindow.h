@@ -81,8 +81,6 @@ private:
     QFile filelog;
     QTextStream outlogstream;
 
-    DataBaseTextUser *dbtu;
-
     DemodType typeofdemodtouse;
 
     void selectdemodulatorconnections(DemodType demodtype);

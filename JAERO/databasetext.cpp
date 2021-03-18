@@ -2,7 +2,6 @@
 
 #include <QFileInfo>
 #include <QDir>
-#include <QMetaEnum>
 
 DataBaseText *dbtext=NULL;
 
