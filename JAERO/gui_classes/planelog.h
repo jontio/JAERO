@@ -103,8 +103,8 @@ public:
     QString planesfolder;
     QString planelookup;
 protected:
-    void closeEvent(QCloseEvent *event);
-    void showEvent(QShowEvent *event);
+    void closeEvent(QCloseEvent *event) Q_DECL_OVERRIDE;
+    void showEvent(QShowEvent *event) Q_DECL_OVERRIDE;
     void contextMenuEvent(QContextMenuEvent *event) Q_DECL_OVERRIDE;
     void resizeEvent(QResizeEvent *event) Q_DECL_OVERRIDE;
 public slots:

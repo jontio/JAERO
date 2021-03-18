@@ -22,9 +22,7 @@ class DataBaseWorkerText : public QObject
 public:
 public slots:
     void DbLookupFromAES(const QString &dirname, const QString &AEStext,int userdata,QObject *sender,const char * member);
-    bool importdb(const QString &dirname);
 signals:
-    void dbimported(bool ok,const QString &stringresult);
 private:
     QCache<QString, QStringList> cache;
     QSqlDatabase db;
@@ -40,8 +38,6 @@ public:
     ~DataBaseText();
 signals:
     void asyncDbLookupFromAES(const QString &dirname, const QString &AEStext,int userdata,QObject *sender,const char * member);
-    void importdb(const QString &dirname);
-    void dbimported(bool ok,const QString &stringresult);
 public slots:
 private slots:
 };
@@ -56,6 +52,20 @@ class DataBaseTextUser : public QObject
 {
     Q_OBJECT
 public:
+
+    enum DataBaseSchema
+    {
+        ModeS,
+        ModeSCountry,
+        Registration,
+        Manufacturer,
+        ICAOTypeCode,
+        Type,
+        RegisteredOwners
+    };
+    Q_ENUM(DataBaseSchema)
+
+
     DataBaseTextUser(QObject *parent = 0);
     ~DataBaseTextUser();
     void clear();
