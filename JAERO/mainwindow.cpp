@@ -215,7 +215,7 @@ MainWindow::MainWindow(QWidget *parent) :
     if(typeofdemodtouse==BURSTMSK)audioburstmskdemodulator->start();
 
     //add todays date
-    ui->inputwidget->appendPlainText(QDateTime::currentDateTime().toString("h:mmap ddd d-MMM-yyyy")+" JAERO started\n");
+    ui->inputwidget->appendPlainText(QDateTime::currentDateTime().toUTC().toString("h:mmap ddd d-MMM-yyyy")+" JAERO started\n");
     QTimer::singleShot(100,ui->inputwidget,SLOT(scrolltoend()));
 
     //say if aeroabme was not found or loaded correctly
@@ -1096,7 +1096,7 @@ void MainWindow::on_action_PlaneLog_triggered()
 
 void MainWindow::CChannelAssignmentSlot(CChannelAssignmentItem &item)
 {
-    QString message=QDateTime::currentDateTime().toString("hh:mm:ss dd-MM-yy ")+((QString)"").sprintf("AES:%06X GES:%02X ",item.AESID,item.GESID);
+    QString message=QDateTime::currentDateTime().toUTC().toString("hh:mm:ss dd-MM-yy ")+((QString)"").sprintf("AES:%06X GES:%02X ",item.AESID,item.GESID);
     QString rx_beam = " Global Beam ";
     if(item.receive_spotbeam)rx_beam=" Spot Beam ";
     message += "Receive Freq: " + QString::number(item.receive_freq) + rx_beam + "Transmit " + QString::number(item.transmit_freq);
@@ -1191,7 +1191,7 @@ void MainWindow::ACARSslot(ACARSItem &acarsitem)
     if(settingsdialog->msgdisplayformat=="2")
     {
         ui->inputwidget->setLineWrapMode(QPlainTextEdit::NoWrap);
-        humantext+=QDateTime::currentDateTime().toString("hh:mm:ss dd-MM-yy ");
+        humantext+=QDateTime::currentDateTime().toUTC().toString("hh:mm:ss dd-MM-yy ");
         if(acarsitem.TAK==0x15)TAKstr=((QString)"!").toLatin1();
         uchar label1=acarsitem.LABEL[1];
         if((uchar)acarsitem.LABEL[1]==127)label1='d';
@@ -1239,7 +1239,7 @@ void MainWindow::ACARSslot(ACARSItem &acarsitem)
         if(message.left(1)=="\n")message.remove(0,1);
         message.replace("\n","\n\t");
 
-        humantext+=QDateTime::currentDateTime().toString("hh:mm:ss dd-MM-yy ");
+        humantext+=QDateTime::currentDateTime().toUTC().toString("hh:mm:ss dd-MM-yy ");
         if(acarsitem.TAK==0x15)TAKstr=((QString)"!").toLatin1();
         uchar label1=acarsitem.LABEL[1];
         if((uchar)acarsitem.LABEL[1]==127)label1='d';
@@ -1299,7 +1299,7 @@ void MainWindow::log(QString &text)
 {
     if(!settingsdialog->loggingenable)return;
     if(text.isEmpty())return;
-    QDate now=QDate::currentDate();
+    QDate now=QDateTime::currentDateTimeUtc().date();
     QString nowfilename=settingsdialog->loggingdirectory+"/acars-log-"+now.toString("yy-MM-dd")+".txt";
     if(!filelog.isOpen()||filelog.fileName()!=nowfilename)
     {

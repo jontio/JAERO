@@ -295,7 +295,7 @@ void PlaneLog::ACARSslot(ACARSItem &acarsitem)
         LastHearditem->setFlags(LastHearditem->flags()&~Qt::ItemIsEditable);
         Notesitem->setFlags(Notesitem->flags()&~Qt::ItemIsEditable);
 
-        FirstHearditem->setText(QDateTime::currentDateTime().toString("yy-MM-dd hh:mm:ss"));
+        FirstHearditem->setText(QDateTime::currentDateTime().toUTC().toString("yy-MM-dd hh:mm:ss"));
     }
     AESitem = ui->tableWidget->item(idx, 0);
     REGitem = ui->tableWidget->item(idx, 1);
@@ -306,7 +306,7 @@ void PlaneLog::ACARSslot(ACARSItem &acarsitem)
     MessageCountitem = ui->tableWidget->item(idx, 6);
 
     REGitem->setText(acarsitem.PLANEREG);
-    LastHearditem->setText(QDateTime::currentDateTime().toString("yy-MM-dd hh:mm:ss"));
+    LastHearditem->setText(QDateTime::currentDateTime().toUTC().toString("yy-MM-dd hh:mm:ss"));
 
     Countitem->setText(QString::number(Countitem->text().toInt()+1));
 
@@ -348,14 +348,14 @@ void PlaneLog::ACARSslot(ACARSItem &acarsitem)
         uchar label1=acarsitem.LABEL[1];
         if((uchar)acarsitem.LABEL[1]==127)label1='d';        
 
-        if(acarsitem.nonacars)tmp+="✈: "+QDateTime::currentDateTime().toString("hh:mm:ss dd-MM-yy ")+(((QString)"").sprintf("AES:%06X GES:%02X   %s       ●●",acarsitem.isuitem.AESID,acarsitem.isuitem.GESID,acarsitem.PLANEREG.data()));
+        if(acarsitem.nonacars)tmp+="✈: "+QDateTime::currentDateTime().toUTC().toString("hh:mm:ss dd-MM-yy ")+(((QString)"").sprintf("AES:%06X GES:%02X   %s       ●●",acarsitem.isuitem.AESID,acarsitem.isuitem.GESID,acarsitem.PLANEREG.data()));
          else
          {
             if((acarsitem.downlink)&&!arincparser.downlinkheader.flightid.isEmpty())
             {
-                tmp+="✈: "+QDateTime::currentDateTime().toString("hh:mm:ss dd-MM-yy ")+(((QString)"").sprintf("AES:%06X GES:%02X %c %s %s %c%c %c Flight %s●●",acarsitem.isuitem.AESID,acarsitem.isuitem.GESID,acarsitem.MODE,acarsitem.PLANEREG.data(),TAKstr.data(),(uchar)acarsitem.LABEL[0],label1,acarsitem.BI,arincparser.downlinkheader.flightid.toLatin1().data()));
+                tmp+="✈: "+QDateTime::currentDateTime().toUTC().toString("hh:mm:ss dd-MM-yy ")+(((QString)"").sprintf("AES:%06X GES:%02X %c %s %s %c%c %c Flight %s●●",acarsitem.isuitem.AESID,acarsitem.isuitem.GESID,acarsitem.MODE,acarsitem.PLANEREG.data(),TAKstr.data(),(uchar)acarsitem.LABEL[0],label1,acarsitem.BI,arincparser.downlinkheader.flightid.toLatin1().data()));
             }
-             else tmp+="✈: "+QDateTime::currentDateTime().toString("hh:mm:ss dd-MM-yy ")+(((QString)"").sprintf("AES:%06X GES:%02X %c %s %s %c%c %c●●",acarsitem.isuitem.AESID,acarsitem.isuitem.GESID,acarsitem.MODE,acarsitem.PLANEREG.data(),TAKstr.data(),(uchar)acarsitem.LABEL[0],label1,acarsitem.BI));
+             else tmp+="✈: "+QDateTime::currentDateTime().toUTC().toString("hh:mm:ss dd-MM-yy ")+(((QString)"").sprintf("AES:%06X GES:%02X %c %s %s %c%c %c●●",acarsitem.isuitem.AESID,acarsitem.isuitem.GESID,acarsitem.MODE,acarsitem.PLANEREG.data(),TAKstr.data(),(uchar)acarsitem.LABEL[0],label1,acarsitem.BI));
          }
 
         if((!acarsitem.nonacars)&&arincparser.arincmessage.info.size()>2)

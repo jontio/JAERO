@@ -128,36 +128,13 @@ void DataBaseWorkerText::DbLookupFromAES(const QString &dirname, const QString &
 
     }
 
-//    if((!db.isOpen())||(db.databaseName()!=(dirname+"/aircrafts_dump.db")))
-//    {
-
-//        QFile file(dirname+"/aircrafts_dump.db");
-//        if(!file.exists())
-//        {
-//            values.push_back("Database file aircrafts_dump.db missing. Download first.");
-//            QMetaObject::invokeMethod(sender,member, Qt::QueuedConnection,Q_ARG(bool, false),Q_ARG(int, userdata),Q_ARG(const QStringList&, values));
-//            return;
-//        }
-
-//        if(!db.isOpen())db = QSqlDatabase::addDatabase("QSQLITE");
-//        db.setDatabaseName(dirname+"/aircrafts_dump.db");
-//        if (!db.open())
-//        {
-//            values.push_back("Cant open SQL database");
-//            QMetaObject::invokeMethod(sender,member, Qt::QueuedConnection,Q_ARG(bool, false),Q_ARG(int, userdata),Q_ARG(const QStringList&, values));
-//            return;
-//        }
-//        qDebug()<<"db opened ("<<db.databaseName()<<")";
-//    }
-
     //req from db
     QSqlQuery query;
     bool bStatus = false;
     uint aes=AEStext.toUInt(&bStatus,16);
-//    QString aes_as_hex_uppercase_and_6_places = "A2EB0A";
     QString aes_as_hex_uppercase_and_6_places = QString("%1").arg(aes, 6, 16, QLatin1Char( '0' )).toUpper();//in case aes is less than 6 places
     QString req = "SELECT * FROM Aircraft WHERE ModeS LIKE '"+aes_as_hex_uppercase_and_6_places+"';";
-qDebug()<<req;
+
     if(!query.exec(req))
     {
         values.push_back("Error: "+query.lastError().text());
@@ -174,8 +151,6 @@ qDebug()<<req;
         return;
     }
 
-qDebug()<<"2222";
-
     //fill in the local shema DataBaseTextUser::DataBaseSchema
     QSqlRecord rec = query.record();
     QMetaEnum en = QMetaEnum::fromType<DataBaseTextUser::DataBaseSchema>();
@@ -184,28 +159,10 @@ qDebug()<<"2222";
         values.push_back(rec.value(en.key(k)).toString().trimmed());
     }
 
-//    values.push_back(AEStext);
-//    for(int i=1;i<rec.count();i++)
-//    {
-//        qDebug()<<rec.fieldName(i);
-//        values.push_back(rec.value(i).toString());
-//    }
     cache.insert(AEStext,new QStringList(values));
-
-qDebug()<<values;
-
-
-//qDebug()<<en.keyCount();
-//qDebug()<< QVariant::fromValue(DataBaseTextUser::DataBaseSchema::Big).toString();
-
-
 
     QMetaObject::invokeMethod(sender,member, Qt::QueuedConnection,Q_ARG(bool, true),Q_ARG(int, userdata),Q_ARG(const QStringList&, values));
     return;
-
-
-
-
 
 }
 
