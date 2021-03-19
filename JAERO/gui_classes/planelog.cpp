@@ -206,6 +206,72 @@ PlaneLog::PlaneLog(QWidget *parent) :
     //load settings
     QSettings settings("Jontisoft", settings_name);
     QFontMetrics fm(ui->tableWidget->font());
+
+    //capcity test
+    //this is an issue as JAERO simply loads everything into ram
+    //that limits the planelog to about 40000 on my computer more
+    //than that it will crash.
+    //something like QAbstractTableModel and on demand data might be
+    //a solution but i'm not sure how to use it. it would require
+    //figureing it out. see https://doc.qt.io/qt-5/qtwidgets-itemviews-fetchmore-example.html
+    //for a list on demand. that's not a table but it's a place to start
+    //looking.
+#ifdef PLANELOG_CAPACITY_TEST
+    const int test_rowCount=40000;
+    ui->tableWidget->setRowCount(test_rowCount);
+    for(int row=0;row<test_rowCount;row++)
+    {
+        ui->tableWidget->setRowHeight(row,fm.height()*wantedheightofrow);
+        for(int column=0;column<TableWidgetColumn::Number_Of_Cols;column++)
+        {
+            QTableWidgetItem *newItem = new QTableWidgetItem();
+            {
+                QString str="null";
+                switch (column)
+                {
+                case TableWidgetColumn::AES:
+                    str=QString::number(row,16);
+                    break;
+                case TableWidgetColumn::REG:
+                    str=QString::number(row,16);
+                    break;
+                case TableWidgetColumn::FirstHeard:
+                    str=QDateTime::currentDateTimeUtc().toString();
+                    break;
+                case TableWidgetColumn::LastHeard:
+                    str=QDateTime::currentDateTimeUtc().toString();
+                    break;
+                case TableWidgetColumn::Count:
+                    str=QString::number(qrand());
+                    break;
+                case TableWidgetColumn::LastMessage:
+                    str="04:37:58 19-03-21 AES:3C65AC GES:90 2 D-AIML ! H1 P●●- #MDPWI/WD320,GODOS,144010.CUTEL,190023.FORTY,239013.SUM,309013.GONUT,2●34018.N64000W010000,259033.N67000W020000,100014.N68000W030000,095037.●N69000W040000,123038.N69000W050000,118059.N69000W060000,121050.080C,3●3400- #MD9.N62300W090000,326035.N55300W100000,290059.VLN,278022.BIL,261019●.FFU,196038.MLF,197026.OVETO,259037.BLD,259045/WD340,GODOS,297008,340●M56.CUTEL,228012,340M59.FORTY,260012,340M59.SUM,291012,340M60.GONUT,2●55022,- #MD340M61.N64000W010000,253034,340M62.N67000W020000,106010,340M60.●N68000W030000,093035,340M66.N69000W040000,110034,340M68.N69000W050000●,120054,340M66.080C,347011,340M58.N62300W090000,326034,340M54.N55300W●100000,2- #MD89055,340M54.VLN,274025,340M57.BIL,252018,340M58.FFU,207028,3●40M56.MLF,227024,340M53.OVETO,258046,340M50/WD360,GODOS,305019.CUTEL,●276014.GONUT,262020.N64000W010000,246026.N67000W020000,131010.N68000W●030000,100- #MD031.N69000W050000,121045.N69000W060000,120056.080C,346014.N●62300W090000,324034.N55300W100000,291051.VLN,274027.BIL,240018.FFU,21●6024.MLF,241030.OVETO,259052/WD380,GODOS,305023.CUTEL,288017.SUM,2720●19.N64000W01- #MD0000,240022.N67000W020000,150010.N68000W030000,109028.N69●000W040000,094038.N69000W050000,128034.N69000W060000,128046.080C,3430●17.N62300W090000,323034.N55300W100000,297046.VLN,277028.BIL,241020.FF●U,226026.MLF,2- #MD47035.OVETO,259054/DD100252048.200248042.310258063.3502●61065.390262068704F●✈: 04:38:17 19-03-21 AES:3C65AC GES:90 2 D-AIML ! 3L U●●58536DB314852MAIRPORT WX,0002,00EGLL●SA 060950 AUTO 30004KT 7000 NCD 06/05 Q0996●  TEMPO 4000 BR BKN003●CF NOT AVBL●FT 060505 0606/0712 VRB03KT 7000 BKN040●  PROB30 TEMPO 0606/0609 1200 BR BKN002●  TEMPO 0609/0612 BKN008●  BECMG 0610/0613 9999●  BECMG 0622/0701 17010KT●  TEMPO 0623/0707 6000 RA BKN012●  PROB40 TEMPO 0703/0707 SCT005 BKN008●  BECMG 0705/0708 24012KT●●BIKF●SA 060930 07027KT CAVOK M00/M08 Q0988●CF NOT AVBL●FT 060744 0609/0709 07025G35KT 9999 SCT030 BKN050 TX04/0703Z●  TNM00/0609Z●  PROB40 TEMPO 0613/0703 07035G45KT SHRASN BKN015●  BECMG 0703/0706 14015KT RA BKN015 OVC025●●KLAX●SA 060953 00000KT 10SM FEW026 SCT040 10/07 A2993●CF NOT AVBL●FT 060902 0609/0712 01008KT P6SM FEW020 SCT035●  FM061400 11010KT P6SM -SHRA SCT025 SCT060●  FM061700 12012KT 5SM -RA BR BKN025 OVC040●  FM061900 16015G22KT 1 1/2SM +RA BR BKN007 OVC015●  FM062200 22015G22KT 4SM RA BR SCT008 OVC015●  FM070100 27010KT 6SM -RA BR SCT025 BKN035●  FM070900 VRB05KT 4SM RA BR SCT015 OVC025●";
+                    str="✈: "+str;
+                    break;
+                case TableWidgetColumn::MessageCount:
+                    str=QString::number(qrand());
+                    break;
+                case TableWidgetColumn::Model:
+                    str=QString::number(qrand());
+                    break;
+                case TableWidgetColumn::Owner:
+                    str=QString::number(qrand());
+                    break;
+                case TableWidgetColumn::Country:
+                    str=QString::number(qrand());
+                    break;
+                case TableWidgetColumn::Notes:
+                    str=QString::number(qrand());
+                    break;
+                }
+                newItem->setText(str);
+            }
+            if(column<7)newItem->setTextAlignment(Qt::AlignHCenter|Qt::AlignVCenter);
+            newItem->setFlags((newItem->flags()&~Qt::ItemIsEditable)|Qt::ItemIsSelectable);
+            ui->tableWidget->setItem(row, column, newItem);
+        }
+    }
+#else
     ui->tableWidget->setRowCount(settings.value("tableWidget-rows",0).toInt());
     for(int row=0;row<ui->tableWidget->rowCount();row++)
     {
@@ -220,6 +286,8 @@ PlaneLog::PlaneLog(QWidget *parent) :
             ui->tableWidget->setItem(row, column, newItem);
         }
     }
+#endif
+
     ui->tableWidget->selectRow(0);
     ui->splitter_2->restoreState(settings.value("splitter_2").toByteArray());
     ui->splitter->restoreState(settings.value("splitter").toByteArray());
@@ -265,7 +333,6 @@ PlaneLog::~PlaneLog()
     settings.setValue("splitter_2", ui->splitter_2->saveState());
     settings.setValue("logwindow", saveGeometry());
     settings.setValue("wantedscrollprop",wantedscrollprop);
-
 
     delete ui;    
 }
@@ -365,24 +432,12 @@ void PlaneLog::ACARSslot(ACARSItem &acarsitem)
     Countitem->setText(QString::number(Countitem->text().toInt()+1));
 
     QString tmp=LastMessageitem->text();
-    if(tmp.count('\n')>=29)
+    if(tmp.count('\n')>=10)
     {
         int idx=tmp.indexOf("\n");
         tmp=tmp.right(tmp.size()-idx-1);
     }
 
-   /* if(acarsitem.downlink&&arincparser.parseDownlinkmessage(message))//if we are on a downlink then process downlink message
-    {
-        if(!arincparser.flightid.isEmpty())humantext+=" Flight "+arincparser.flightid;
-        if(arincparser.info.size()>2)
-        {
-            arincparser.info.replace("\n","\n\t");
-            humantext+="\n\n\t"+message+"\n\n\t"+arincparser.info;
-        }
-         else humantext+="\n\n\t"+message+"\n";
-    }
-     else humantext+="\n\n\t"+message+"\n";
-*/
     if(!acarsitem.message.isEmpty())
     {
 
@@ -432,13 +487,6 @@ void PlaneLog::ACARSslot(ACARSItem &acarsitem)
 
 void PlaneLog::on_actionClear_triggered()
 {
-
-    /*QTableWidgetItem *Notesitem;
-    for(int rows = 0; rows<ui->tableWidget->rowCount(); rows++)
-    {
-        Notesitem = ui->tableWidget->item(rows,TableWidgetColumn::Number::Notes);
-        Notesitem->setText("");
-    }*/
 
     //confirm
     QMessageBox msgBox;
