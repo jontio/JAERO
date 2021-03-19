@@ -387,6 +387,21 @@
        </column>
        <column>
         <property name="text">
+         <string>Model</string>
+        </property>
+       </column>
+       <column>
+        <property name="text">
+         <string>Owner</string>
+        </property>
+       </column>
+       <column>
+        <property name="text">
+         <string>Country</string>
+        </property>
+       </column>
+       <column>
+        <property name="text">
          <string>Notes</string>
         </property>
        </column>
