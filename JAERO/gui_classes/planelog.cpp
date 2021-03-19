@@ -40,11 +40,8 @@ void PlaneLog::imageUpdateslot(const QPixmap &image)
     ui->toolButtonimg->setIcon(image);
 }
 
-
 void PlaneLog::dbUpdateUserClicked(bool ok, const QStringList &dbitem)
 {
-    qDebug()<<"UserClicked";
-
     ui->label_type->clear();
     ui->label_owner->clear();
 
@@ -70,12 +67,6 @@ void PlaneLog::dbUpdateUserClicked(bool ok, const QStringList &dbitem)
         if(selectedAESitem->text()!=dbitem[DataBaseTextUser::DataBaseSchema::ModeS])return;
         int row=selectedAESitem->row();
 
-        //if sat reg and lookup reg are very different then lookup is wrong
-        QTableWidgetItem *Notesitem;
-        QTableWidgetItem *REGitem;
-        Notesitem = ui->tableWidget->item(row, 7);
-        REGitem = ui->tableWidget->item(row, 1);
-
         QString manufacturer_and_type=dbitem[DataBaseTextUser::DataBaseSchema::Manufacturer]+" "+dbitem[DataBaseTextUser::DataBaseSchema::Type];
         manufacturer_and_type=manufacturer_and_type.trimmed();
 
@@ -89,31 +80,27 @@ void PlaneLog::dbUpdateUserClicked(bool ok, const QStringList &dbitem)
         ui->plainTextEditdatabase->appendPlainText("Owner           \t"+dbitem[DataBaseTextUser::DataBaseSchema::RegisteredOwners]);
         ui->plainTextEditdatabase->appendPlainText("Country         \t"+dbitem[DataBaseTextUser::DataBaseSchema::ModeSCountry]);
 
-        if((!ui->plainTextEditnotes->toPlainText().isEmpty())&&(Notesitem->text().right(1)!="\u2063"))return;
-        ui->plainTextEditnotes->setPlainText(manufacturer_and_type+"\n"+dbitem[DataBaseTextUser::DataBaseSchema::RegisteredOwners]+"\n\u2063");
-        Notesitem->setText(manufacturer_and_type+"\n"+dbitem[DataBaseTextUser::DataBaseSchema::RegisteredOwners]+"\n\u2063");
-
     }
-
-
-
 }
 
 void PlaneLog::dbUpdateACARSMessage(bool ok, const QStringList &dbitem)
 {
-    qDebug()<<"ACARSMessage";
     if(!ok)return;
     if(dbitem.size()!=QMetaEnum::fromType<DataBaseTextUser::DataBaseSchema>().keyCount())return;
     int row=findAESrow(dbitem[DataBaseTextUser::DataBaseSchema::ModeS]);
     if(row<0)return;
 
-    QTableWidgetItem *Notesitem;
-    Notesitem = ui->tableWidget->item(row, 7);
-    QString manufacturer_and_type=dbitem[DataBaseTextUser::DataBaseSchema::Manufacturer]+" "+dbitem[DataBaseTextUser::DataBaseSchema::Type];
-    manufacturer_and_type=manufacturer_and_type.trimmed();
-    Notesitem->setText(manufacturer_and_type+"\n"+dbitem[DataBaseTextUser::DataBaseSchema::RegisteredOwners]+"\n\u2063");
-
-
+    QTableWidgetItem *Modelitem=ui->tableWidget->item(row,TableWidgetColumn::Number::Model);
+    QTableWidgetItem *Owneritem=ui->tableWidget->item(row,TableWidgetColumn::Number::Owner);
+    QTableWidgetItem *Countryitem=ui->tableWidget->item(row,TableWidgetColumn::Number::Country);
+    if(Modelitem==nullptr||Owneritem==nullptr||Countryitem==nullptr)
+    {
+        qDebug()<<"software bug nullpointer dbUpdateACARSMessage";
+        return;
+    }
+    Modelitem->setText(dbitem[DataBaseTextUser::DataBaseSchema::ICAOTypeCode].trimmed());
+    Owneritem->setText(dbitem[DataBaseTextUser::DataBaseSchema::RegisteredOwners].trimmed());
+    Countryitem->setText(dbitem[DataBaseTextUser::DataBaseSchema::ModeSCountry].trimmed());
 }
 
 void PlaneLog::dbUpdateslot(bool ok, int ref, const QStringList &dbitem)
@@ -289,9 +276,6 @@ void PlaneLog::ACARSslot(ACARSItem &acarsitem)
 
     ui->tableWidget->setSortingEnabled(false);//!!!!!
 
-
-qDebug()<<"ACARSslot-->"<<((QString)"").sprintf("%06X",acarsitem.isuitem.AESID);//dbitem[DataBaseTextUser::DataBaseSchema::ModeS];
-
     int rows = ui->tableWidget->rowCount();
     QString AESIDstr=((QString)"").sprintf("%06X",acarsitem.isuitem.AESID);
     bool found = false;
@@ -312,6 +296,9 @@ qDebug()<<"ACARSslot-->"<<((QString)"").sprintf("%06X",acarsitem.isuitem.AESID);
     QTableWidgetItem *Countitem;
     QTableWidgetItem *LastMessageitem;
     QTableWidgetItem *MessageCountitem;
+    QTableWidgetItem *Modelitem;
+    QTableWidgetItem *Owneritem;
+    QTableWidgetItem *Countryitem;
     QTableWidgetItem *Notesitem;
     if(!found)
     {
@@ -326,15 +313,21 @@ qDebug()<<"ACARSslot-->"<<((QString)"").sprintf("%06X",acarsitem.isuitem.AESID);
         Countitem = new QTableWidgetItem;
         LastMessageitem = new QTableWidgetItem;
         MessageCountitem = new QTableWidgetItem;
+        Modelitem = new QTableWidgetItem;
+        Owneritem = new QTableWidgetItem;
+        Countryitem = new QTableWidgetItem;
         Notesitem = new QTableWidgetItem;
-        ui->tableWidget->setItem(idx,0,AESitem);
-        ui->tableWidget->setItem(idx,1,REGitem);
-        ui->tableWidget->setItem(idx,2,FirstHearditem);
-        ui->tableWidget->setItem(idx,3,LastHearditem);
-        ui->tableWidget->setItem(idx,4,Countitem);
-        ui->tableWidget->setItem(idx,5,LastMessageitem);
-        ui->tableWidget->setItem(idx,6,MessageCountitem);
-        ui->tableWidget->setItem(idx,7,Notesitem);
+        ui->tableWidget->setItem(idx,TableWidgetColumn::Number::AES,AESitem);
+        ui->tableWidget->setItem(idx,TableWidgetColumn::Number::REG,REGitem);
+        ui->tableWidget->setItem(idx,TableWidgetColumn::Number::FirstHeard,FirstHearditem);
+        ui->tableWidget->setItem(idx,TableWidgetColumn::Number::LastHeard,LastHearditem);
+        ui->tableWidget->setItem(idx,TableWidgetColumn::Number::Count,Countitem);
+        ui->tableWidget->setItem(idx,TableWidgetColumn::Number::LastMessage,LastMessageitem);
+        ui->tableWidget->setItem(idx,TableWidgetColumn::Number::MessageCount,MessageCountitem);
+        ui->tableWidget->setItem(idx,TableWidgetColumn::Number::Model,Modelitem);
+        ui->tableWidget->setItem(idx,TableWidgetColumn::Number::Owner,Owneritem);
+        ui->tableWidget->setItem(idx,TableWidgetColumn::Number::Country,Countryitem);
+        ui->tableWidget->setItem(idx,TableWidgetColumn::Number::Notes,Notesitem);
         AESitem->setText(AESIDstr);
         Countitem->setText("0");
         MessageCountitem->setText("0");
@@ -351,17 +344,20 @@ qDebug()<<"ACARSslot-->"<<((QString)"").sprintf("%06X",acarsitem.isuitem.AESID);
         Countitem->setFlags(Countitem->flags()&~Qt::ItemIsEditable);
         FirstHearditem->setFlags(FirstHearditem->flags()&~Qt::ItemIsEditable);
         LastHearditem->setFlags(LastHearditem->flags()&~Qt::ItemIsEditable);
+        Modelitem->setFlags(Modelitem->flags()&~Qt::ItemIsEditable);
+        Owneritem->setFlags(Owneritem->flags()&~Qt::ItemIsEditable);
+        Countryitem->setFlags(Countryitem->flags()&~Qt::ItemIsEditable);
         Notesitem->setFlags(Notesitem->flags()&~Qt::ItemIsEditable);
 
         FirstHearditem->setText(QDateTime::currentDateTime().toUTC().toString("yy-MM-dd hh:mm:ss"));
     }
-    AESitem = ui->tableWidget->item(idx, 0);
-    REGitem = ui->tableWidget->item(idx, 1);
-    FirstHearditem = ui->tableWidget->item(idx, 2);
-    LastHearditem = ui->tableWidget->item(idx, 3);
-    Countitem = ui->tableWidget->item(idx, 4);
-    LastMessageitem = ui->tableWidget->item(idx, 5);
-    MessageCountitem = ui->tableWidget->item(idx, 6);
+    AESitem = ui->tableWidget->item(idx,TableWidgetColumn::Number::AES);
+    REGitem = ui->tableWidget->item(idx,TableWidgetColumn::Number::REG);
+    FirstHearditem = ui->tableWidget->item(idx,TableWidgetColumn::Number::FirstHeard);
+    LastHearditem = ui->tableWidget->item(idx,TableWidgetColumn::Number::LastHeard);
+    Countitem = ui->tableWidget->item(idx,TableWidgetColumn::Number::Count);
+    LastMessageitem = ui->tableWidget->item(idx,TableWidgetColumn::Number::LastMessage);
+    MessageCountitem = ui->tableWidget->item(idx,TableWidgetColumn::Number::MessageCount);
 
     REGitem->setText(acarsitem.PLANEREG);
     LastHearditem->setText(QDateTime::currentDateTime().toUTC().toString("yy-MM-dd hh:mm:ss"));
@@ -421,7 +417,7 @@ qDebug()<<"ACARSslot-->"<<((QString)"").sprintf("%06X",acarsitem.isuitem.AESID);
             arincparser.arincmessage.info.replace("\n","●");
             LastMessageitem->setText(tmp+message+"●●"+arincparser.arincmessage.info);
         }
-         else LastMessageitem->setText(tmp+message+"●");
+        else LastMessageitem->setText(tmp+message+"●");
 
         if(selectedAESitem&&(idx==selectedAESitem->row()))updateinfopain();
 
@@ -430,8 +426,8 @@ qDebug()<<"ACARSslot-->"<<((QString)"").sprintf("%06X",acarsitem.isuitem.AESID);
 
     ui->tableWidget->setSortingEnabled(true);//allow sorting again
 
-
-if(!planesfolder.isNull())dbc->request(planesfolder,((QString)"").asprintf("%06X",acarsitem.isuitem.AESID),&dBaseRequestSourceACARSMessage);
+    //send a request off to the DB for an update. responce will be async
+    if(!planesfolder.isNull())dbc->request(planesfolder,((QString)"").asprintf("%06X",acarsitem.isuitem.AESID),&dBaseRequestSourceACARSMessage);
 }
 
 void PlaneLog::on_actionClear_triggered()
@@ -440,7 +436,7 @@ void PlaneLog::on_actionClear_triggered()
     /*QTableWidgetItem *Notesitem;
     for(int rows = 0; rows<ui->tableWidget->rowCount(); rows++)
     {
-        Notesitem = ui->tableWidget->item(rows, 7);
+        Notesitem = ui->tableWidget->item(rows,TableWidgetColumn::Number::Notes);
         Notesitem->setText("");
     }*/
 
@@ -465,7 +461,8 @@ void PlaneLog::on_actionClear_triggered()
     }
 
     ui->tableWidget->clearContents();
-    for(int rows = 0; ui->tableWidget->rowCount(); rows++){
+    for(int rows = 0; ui->tableWidget->rowCount(); rows++)
+    {
        ui->tableWidget->removeRow(0);
     }
     ui->toolButtonimg->setIcon(QPixmap(":/images/Plane_clip_art.svg"));
@@ -486,13 +483,10 @@ void PlaneLog::on_actionClear_triggered()
     // remove from registry also, the application gets very slow to load if not removed.
     QSettings settings("Jontisoft", settings_name);
     QStringList keys = settings.childKeys();
-    for(int a = 0; a<keys.size(); a++){
-
+    for(int a = 0; a<keys.size(); a++)
+    {
         QString key = keys.at(a);
-
-        if(key.startsWith("tableWidget")){
-            settings.remove(key);
-        }
+        if(key.startsWith("tableWidget"))settings.remove(key);
     }
 
 }
@@ -527,13 +521,13 @@ void PlaneLog::on_actionUpDown_triggered()
         int rows = ui->tableWidget->rowCount();
         for(int i = 0; i < rows; i++)ui->tableWidget->setRowHeight(i,fm.height()*wantedheightofrow);
     }
-     else
-     {
+    else
+    {
         wantedheightofrow=12;
         QFontMetrics fm(ui->tableWidget->font());
         int rows = ui->tableWidget->rowCount();
         for(int i = 0; i < rows; i++)ui->tableWidget->setRowHeight(i,fm.height()*wantedheightofrow);
-     }
+    }
 }
 
 void PlaneLog::on_actionLeftRight_triggered()
@@ -571,12 +565,12 @@ void PlaneLog::updateinfopain()
     if(selectedAESitem->row()>=ui->tableWidget->rowCount())return;
     int row=selectedAESitem->row();
 
-    QTableWidgetItem *LastMessageitem=ui->tableWidget->item(row, 5);
-    QTableWidgetItem *AESitem = ui->tableWidget->item(row, 0);
-    QTableWidgetItem *REGitem = ui->tableWidget->item(row, 1);
-    QTableWidgetItem *FirstHearditem = ui->tableWidget->item(row, 2);
-    QTableWidgetItem *LastHearditem = ui->tableWidget->item(row, 3);
-    QTableWidgetItem *Notesitem = ui->tableWidget->item(row, 7);
+    QTableWidgetItem *LastMessageitem=ui->tableWidget->item(row,TableWidgetColumn::Number::LastMessage);
+    QTableWidgetItem *AESitem = ui->tableWidget->item(row,TableWidgetColumn::Number::AES);
+    QTableWidgetItem *REGitem = ui->tableWidget->item(row,TableWidgetColumn::Number::REG);
+    QTableWidgetItem *FirstHearditem = ui->tableWidget->item(row,TableWidgetColumn::Number::FirstHeard);
+    QTableWidgetItem *LastHearditem = ui->tableWidget->item(row,TableWidgetColumn::Number::LastHeard);
+    QTableWidgetItem *Notesitem = ui->tableWidget->item(row,TableWidgetColumn::Number::Notes);
 
     ui->labelAES->setText(AESitem->text());
     ui->labelREG->setText(REGitem->text());
@@ -601,16 +595,6 @@ void PlaneLog::updateinfopain()
     ui->plainTextEditdatabase->clear();
     if(!planesfolder.isNull())dbc->request(planesfolder,AESitem->text(),&dBaseRequestSourceUserCliecked);
 
-    //old code. blocking
-    /*QString imagefilename=imagesfolder+"/"+AESitem->text()+".png";
-    if(QFileInfo(imagefilename).exists())ui->toolButtonimg->setIcon(QPixmap(imagefilename));
-    else
-    {
-        imagefilename=imagesfolder+"/"+AESitem->text()+".jpg";
-        if(QFileInfo(imagefilename).exists())ui->toolButtonimg->setIcon(QPixmap(imagefilename));
-        else ui->toolButtonimg->setIcon(QPixmap(":/images/Plane_clip_art.svg"));
-    }*/
-
     disconnect(ui->plainTextEditnotes,SIGNAL(textChanged()),this,SLOT(plainTextEditnotesChanged()));
     ui->plainTextEditnotes->clear();
     ui->plainTextEditnotes->setPlainText(Notesitem->text());
@@ -631,8 +615,8 @@ void PlaneLog::on_toolButtonimg_clicked()
     if(selectedAESitem->row()>=ui->tableWidget->rowCount())return;
     int row=selectedAESitem->row();
 
-    QTableWidgetItem *AESitem = ui->tableWidget->item(row, 0);
-    QTableWidgetItem *REGitem = ui->tableWidget->item(row, 1);
+    QTableWidgetItem *AESitem = ui->tableWidget->item(row,TableWidgetColumn::Number::AES);
+    QTableWidgetItem *REGitem = ui->tableWidget->item(row,TableWidgetColumn::Number::REG);
 
     QClipboard *clipboard = QApplication::clipboard();
     clipboard->setText(AESitem->text());
@@ -724,7 +708,7 @@ void PlaneLog::plainTextEditnotesChanged()
     if(selectedAESitem->row()>=ui->tableWidget->rowCount())return;
     int row=selectedAESitem->row();
 
-    QTableWidgetItem *Notesitem = ui->tableWidget->item(row, 7);
+    QTableWidgetItem *Notesitem = ui->tableWidget->item(row,TableWidgetColumn::Number::Notes);
     Notesitem->setText(ui->plainTextEditnotes->toPlainText().replace("\u2063",""));
 }
 
@@ -764,7 +748,7 @@ void PlaneLog::on_actionExport_log_triggered()
             cell.replace("\"","\\\"");
 
             //notes replacement
-            if(column==7)
+            if(column==TableWidgetColumn::Number::Notes)
             {
                 cell.remove("\r");
                 cell.replace("\n","●");
@@ -776,7 +760,6 @@ void PlaneLog::on_actionExport_log_triggered()
         line+="\n";
         outtext<<line;
     }
-
 
 }
 
@@ -852,6 +835,9 @@ void PlaneLog::on_actionImport_log_triggered()
     QTableWidgetItem *Countitem;
     QTableWidgetItem *LastMessageitem;
     QTableWidgetItem *MessageCountitem;
+    QTableWidgetItem *Modelitem;
+    QTableWidgetItem *Owneritem;
+    QTableWidgetItem *Countryitem;
     QTableWidgetItem *Notesitem;
     int ec=0;
     while (!intext.atEnd())
@@ -863,10 +849,18 @@ void PlaneLog::on_actionImport_log_triggered()
         line.remove(0,1);
         line.replace("\\\"","\x10");
         QStringList items=line.split("\",\"");
-        if(items.size()<8)
+        //hack for importing old format
+        //if number of cols is 8 then probably the old format
+        if(items.size()==8)
+        {
+            items.insert(7,"");
+            items.insert(7,"");
+            items.insert(7,"");
+        }
+        if(items.size()!=TableWidgetColumn::Number::Number_Of_Cols)
         {
             ec++;
-            if(ec<20)qDebug()<<"csv col count to small ("<<items.size()<<")";
+            if(ec<20)qDebug()<<"csv col count not right (is "<<items.size()<<" should be"<<TableWidgetColumn::Number::Number_Of_Cols<<" )";
             continue;
         }
         for(int i=0;i<items.size();i++)items[i].replace("\x10","\"");
@@ -883,15 +877,21 @@ void PlaneLog::on_actionImport_log_triggered()
         Countitem = new QTableWidgetItem;
         LastMessageitem = new QTableWidgetItem;
         MessageCountitem = new QTableWidgetItem;
+        Modelitem = new QTableWidgetItem;
+        Owneritem = new QTableWidgetItem;
+        Countryitem = new QTableWidgetItem;
         Notesitem = new QTableWidgetItem;
-        ui->tableWidget->setItem(idx,0,AESitem);
-        ui->tableWidget->setItem(idx,1,REGitem);
-        ui->tableWidget->setItem(idx,2,FirstHearditem);
-        ui->tableWidget->setItem(idx,3,LastHearditem);
-        ui->tableWidget->setItem(idx,4,Countitem);
-        ui->tableWidget->setItem(idx,5,LastMessageitem);
-        ui->tableWidget->setItem(idx,6,MessageCountitem);
-        ui->tableWidget->setItem(idx,7,Notesitem);
+        ui->tableWidget->setItem(idx,TableWidgetColumn::Number::AES,AESitem);
+        ui->tableWidget->setItem(idx,TableWidgetColumn::Number::REG,REGitem);
+        ui->tableWidget->setItem(idx,TableWidgetColumn::Number::FirstHeard,FirstHearditem);
+        ui->tableWidget->setItem(idx,TableWidgetColumn::Number::LastHeard,LastHearditem);
+        ui->tableWidget->setItem(idx,TableWidgetColumn::Number::Count,Countitem);
+        ui->tableWidget->setItem(idx,TableWidgetColumn::Number::LastMessage,LastMessageitem);
+        ui->tableWidget->setItem(idx,TableWidgetColumn::Number::MessageCount,MessageCountitem);
+        ui->tableWidget->setItem(idx,TableWidgetColumn::Number::Model,Modelitem);
+        ui->tableWidget->setItem(idx,TableWidgetColumn::Number::Owner,Owneritem);
+        ui->tableWidget->setItem(idx,TableWidgetColumn::Number::Country,Countryitem);
+        ui->tableWidget->setItem(idx,TableWidgetColumn::Number::Notes,Notesitem);
         AESitem->setTextAlignment(Qt::AlignHCenter|Qt::AlignVCenter);
         REGitem->setTextAlignment(Qt::AlignHCenter|Qt::AlignVCenter);
         Countitem->setTextAlignment(Qt::AlignHCenter|Qt::AlignVCenter);
@@ -903,16 +903,22 @@ void PlaneLog::on_actionImport_log_triggered()
         Countitem->setFlags(Countitem->flags()&~Qt::ItemIsEditable);
         FirstHearditem->setFlags(FirstHearditem->flags()&~Qt::ItemIsEditable);
         LastHearditem->setFlags(LastHearditem->flags()&~Qt::ItemIsEditable);
+        Modelitem->setFlags(Modelitem->flags()&~Qt::ItemIsEditable);
+        Owneritem->setFlags(Owneritem->flags()&~Qt::ItemIsEditable);
+        Countryitem->setFlags(Countryitem->flags()&~Qt::ItemIsEditable);
         Notesitem->setFlags(Notesitem->flags()&~Qt::ItemIsEditable);
-        AESitem->setText(items[0]);
-        REGitem->setText(items[1]);
-        FirstHearditem->setText(items[2]);
-        LastHearditem->setText(items[3]);
-        Countitem->setText(items[4]);
-        LastMessageitem->setText(items[5]);
-        MessageCountitem->setText(items[6]);
-        items[7].replace("●","\n");
-        Notesitem->setText(items[7].trimmed());
+        AESitem->setText(items[TableWidgetColumn::Number::AES]);
+        REGitem->setText(items[TableWidgetColumn::Number::REG]);
+        FirstHearditem->setText(items[TableWidgetColumn::Number::FirstHeard]);
+        LastHearditem->setText(items[TableWidgetColumn::Number::LastHeard]);
+        Countitem->setText(items[TableWidgetColumn::Number::Count]);
+        LastMessageitem->setText(items[TableWidgetColumn::Number::LastMessage]);
+        MessageCountitem->setText(items[TableWidgetColumn::Number::MessageCount]);
+        Modelitem->setText(items[TableWidgetColumn::Number::Model]);
+        Owneritem->setText(items[TableWidgetColumn::Number::Owner]);
+        Countryitem->setText(items[TableWidgetColumn::Number::Country]);
+        items[TableWidgetColumn::Number::Notes].replace("●","\n");
+        Notesitem->setText(items[TableWidgetColumn::Number::Notes].trimmed());
 
     }
 

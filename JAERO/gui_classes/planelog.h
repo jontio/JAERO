@@ -143,6 +143,27 @@ private slots:
 
 private:
 
+
+
+    struct TableWidgetColumn
+    {
+        enum Number
+        {
+            AES,
+            REG,
+            FirstHeard,
+            LastHeard,
+            Count,
+            LastMessage,
+            MessageCount,
+            Model,
+            Owner,
+            Country,
+            Notes,
+            Number_Of_Cols
+        };
+    };
+
     void dbUpdateUserClicked(bool ok, const QStringList &dbitem);
     void dbUpdateACARSMessage(bool ok, const QStringList &dbitem);
 
