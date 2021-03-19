@@ -20,14 +20,31 @@
 #include <QMenuBar>
 #include "settingsdialog.h"
 
+int PlaneLog::findAESrow(const QString &aes)
+{
+    int rows = ui->tableWidget->rowCount();
+    int idx=-1;
+    for(int i = 0; i < rows; ++i)
+    {
+        if(ui->tableWidget->item(i, 0)->text() == aes)
+        {
+            idx=i;
+            break;
+        }
+    }
+    return idx;
+}
+
 void PlaneLog::imageUpdateslot(const QPixmap &image)
 {
     ui->toolButtonimg->setIcon(image);
 }
 
-void PlaneLog::dbUpdateslot(bool ok, int ref, const QStringList &dbitem)
+
+void PlaneLog::dbUpdateUserClicked(bool ok, const QStringList &dbitem)
 {
-    Q_UNUSED(ref);
+    qDebug()<<"UserClicked";
+
     ui->label_type->clear();
     ui->label_owner->clear();
 
@@ -35,7 +52,7 @@ void PlaneLog::dbUpdateslot(bool ok, int ref, const QStringList &dbitem)
     {
         if(dbitem.size())
         {
-             dbUpdateerrorslot(dbitem[DataBaseTextUser::DataBaseSchema::ModeS]);
+             dbUpdateerrorslot(dbitem[0]);
         } else dbUpdateerrorslot("Error: Unknown");
     }
     else
@@ -78,6 +95,45 @@ void PlaneLog::dbUpdateslot(bool ok, int ref, const QStringList &dbitem)
 
     }
 
+
+
+}
+
+void PlaneLog::dbUpdateACARSMessage(bool ok, const QStringList &dbitem)
+{
+    qDebug()<<"ACARSMessage";
+    if(!ok)return;
+    if(dbitem.size()!=QMetaEnum::fromType<DataBaseTextUser::DataBaseSchema>().keyCount())return;
+    int row=findAESrow(dbitem[DataBaseTextUser::DataBaseSchema::ModeS]);
+    if(row<0)return;
+
+    QTableWidgetItem *Notesitem;
+    Notesitem = ui->tableWidget->item(row, 7);
+    QString manufacturer_and_type=dbitem[DataBaseTextUser::DataBaseSchema::Manufacturer]+" "+dbitem[DataBaseTextUser::DataBaseSchema::Type];
+    manufacturer_and_type=manufacturer_and_type.trimmed();
+    Notesitem->setText(manufacturer_and_type+"\n"+dbitem[DataBaseTextUser::DataBaseSchema::RegisteredOwners]+"\n\u2063");
+
+
+}
+
+void PlaneLog::dbUpdateslot(bool ok, int ref, const QStringList &dbitem)
+{
+    //dispatcher for who should deal with the db responce
+    DBaseRequestSource *whoCalled=(DBaseRequestSource*)dbc->getuserdata(ref);
+    if(whoCalled==nullptr)return;
+    {
+        switch (*whoCalled)
+        {
+        case DBaseRequestSource::Source::UserClicked:
+            dbUpdateUserClicked(ok,dbitem);
+            break;
+        case DBaseRequestSource::Source::ACARSMessage:
+            dbUpdateACARSMessage(ok,dbitem);
+            break;
+        default:
+            break;
+        }
+    }
 }
 
 void PlaneLog::dbUpdateerrorslot(const QString &error)
@@ -201,7 +257,6 @@ void PlaneLog::showEvent(QShowEvent *event)
     event->accept();
 }
 
-
 PlaneLog::~PlaneLog()
 {
 
@@ -233,6 +288,9 @@ void PlaneLog::ACARSslot(ACARSItem &acarsitem)
     if(!acarsitem.valid)return;
 
     ui->tableWidget->setSortingEnabled(false);//!!!!!
+
+
+qDebug()<<"ACARSslot-->"<<((QString)"").sprintf("%06X",acarsitem.isuitem.AESID);//dbitem[DataBaseTextUser::DataBaseSchema::ModeS];
 
     int rows = ui->tableWidget->rowCount();
     QString AESIDstr=((QString)"").sprintf("%06X",acarsitem.isuitem.AESID);
@@ -371,6 +429,9 @@ void PlaneLog::ACARSslot(ACARSItem &acarsitem)
 
 
     ui->tableWidget->setSortingEnabled(true);//allow sorting again
+
+
+if(!planesfolder.isNull())dbc->request(planesfolder,((QString)"").asprintf("%06X",acarsitem.isuitem.AESID),&dBaseRequestSourceACARSMessage);
 }
 
 void PlaneLog::on_actionClear_triggered()
@@ -538,7 +599,7 @@ void PlaneLog::updateinfopain()
     ui->label_type->clear();
     ui->label_owner->clear();
     ui->plainTextEditdatabase->clear();
-    if(!planesfolder.isNull())dbc->request(planesfolder,AESitem->text(),NULL);
+    if(!planesfolder.isNull())dbc->request(planesfolder,AESitem->text(),&dBaseRequestSourceUserCliecked);
 
     //old code. blocking
     /*QString imagefilename=imagesfolder+"/"+AESitem->text()+".png";
@@ -662,7 +723,6 @@ void PlaneLog::plainTextEditnotesChanged()
     if(selectedAESitem->row()<0)return;
     if(selectedAESitem->row()>=ui->tableWidget->rowCount())return;
     int row=selectedAESitem->row();
-
 
     QTableWidgetItem *Notesitem = ui->tableWidget->item(row, 7);
     Notesitem->setText(ui->plainTextEditnotes->toPlainText().replace("\u2063",""));

@@ -142,6 +142,27 @@ private slots:
     void on_actionImport_log_triggered();
 
 private:
+
+    void dbUpdateUserClicked(bool ok, const QStringList &dbitem);
+    void dbUpdateACARSMessage(bool ok, const QStringList &dbitem);
+
+    class DBaseRequestSource : public DBase
+    {
+    public:
+        enum Source
+        {
+            Unknown,
+            UserClicked,
+            ACARSMessage
+        };
+        Source source=Unknown;
+        DBaseRequestSource(DBaseRequestSource::Source source):source(source){}
+        DBaseRequestSource(){}
+        operator Source() const {return source;}
+    };
+    PlaneLog::DBaseRequestSource dBaseRequestSourceUserCliecked=PlaneLog::DBaseRequestSource(DBaseRequestSource::Source::UserClicked);
+    PlaneLog::DBaseRequestSource dBaseRequestSourceACARSMessage=PlaneLog::DBaseRequestSource(DBaseRequestSource::Source::ACARSMessage);
+
     Ui::PlaneLog *ui;
     int wantedheightofrow;
     QToolBar * toolBar;
@@ -156,6 +177,8 @@ private:
     QTableWidgetItem *selectedAESitem;
 
     ArincParse arincparser;
+
+    int findAESrow(const QString &aes);
 };
 
 #endif // PLANELOG_H
