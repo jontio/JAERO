@@ -73,7 +73,7 @@ cp release/*.dll.a /mingw64/lib/
 cd ../..
 
 #basestation
-./ci-create-basestation.sh
+$SCRIPTPATH/ci-create-basestation.sh
 
 #JAERO
 cd $SCRIPTPATH

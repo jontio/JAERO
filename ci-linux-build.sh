@@ -136,7 +136,7 @@ sudo ldconfig
 cd ../../..
 
 #basestation
-./ci-create-basestation.sh
+$SCRIPTPATH/ci-create-basestation.sh
 
 #JAERO
 cd $SCRIPTPATH

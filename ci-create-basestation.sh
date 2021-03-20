@@ -8,6 +8,8 @@ input="basestationlinks"
 outputdir="../basestation"
 save_sqb_file_as="basestation.sqb"
 
+echo "ci-create-basestation"
+
 #get script path
 SCRIPT=$(realpath $0)
 SCRIPTPATH=$(dirname "$SCRIPT")
