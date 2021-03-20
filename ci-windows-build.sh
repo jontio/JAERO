@@ -14,7 +14,7 @@
 #fail on first error
 set -e
 
-pacman -S --needed --noconfirm git mingw-w64-x86_64-toolchain autoconf libtool mingw-w64-x86_64-cpputest mingw-w64-x86_64-qt5 mingw-w64-x86_64-cmake mingw-w64-x86_64-libvorbis zip p7zip
+pacman -S --needed --noconfirm git mingw-w64-x86_64-toolchain autoconf libtool mingw-w64-x86_64-cpputest mingw-w64-x86_64-qt5 mingw-w64-x86_64-cmake mingw-w64-x86_64-libvorbis zip p7zip unzip
 
 #get script path
 SCRIPT=$(realpath $0)
@@ -72,6 +72,9 @@ cp release/*.dll /mingw64/bin/
 cp release/*.dll.a /mingw64/lib/
 cd ../..
 
+#basestation
+./ci-create-basestation.sh
+
 #JAERO
 cd $SCRIPTPATH
 #needed for github actions
@@ -126,6 +129,13 @@ cp /usr/bin/msys-gcc_s-seh-1.dll $PWD
 cp /usr/bin/msys-2.0.dll $PWD
 cp /mingw64/bin/aeroambe.dll $PWD
 cp /mingw64/bin/libmbe.dll $PWD
+#basestation if available
+if [ -f "../../../../basestation/basestation.sqb" ]; then
+   echo "basestation.sqb found. including it in package"
+   cp ../../../../basestation/basestation.sqb $PWD
+else
+   echo "basestation.sqb not found. will be missing from package"
+fi
 #add readme
 cat <<EOT > readme.md
 # JAERO ${PACKAGE_VERSION}

@@ -135,6 +135,9 @@ sudo apt install ./${PACKAGE_NAME}*.deb -y
 sudo ldconfig
 cd ../../..
 
+#basestation
+./ci-create-basestation.sh
+
 #JAERO
 cd $SCRIPTPATH
 #needed for github actions
@@ -185,6 +188,13 @@ cat <<EOT > ${PACKAGE_NAME}_${PACKAGE_VERSION%_*}-1/usr/local/bin/jaero
 /opt/jaero/JAERO
 EOT
 chmod +x ${PACKAGE_NAME}_${PACKAGE_VERSION%_*}-1/usr/local/bin/jaero
+#basestation if available
+if [ -f "../../basestation/basestation.sqb" ]; then
+   echo "basestation.sqb found. including it in package"
+   cp ../../basestation/basestation.sqb ${PACKAGE_NAME}_${PACKAGE_VERSION%_*}-1/opt/jaero/
+else
+   echo "basestation.sqb not found. will be missing from package"
+fi
 #build and install package
 dpkg-deb --build ${PACKAGE_NAME}_${PACKAGE_VERSION%_*}-1
 sudo apt install ./${PACKAGE_NAME}*.deb -y
