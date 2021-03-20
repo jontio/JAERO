@@ -13,6 +13,22 @@
 #include <QTableWidgetItem>
 #include "arincparse.h"
 
+//this unit really needs some work. it's messy and was an adhoc thing.
+//if you want to contribute feel free to toally overhall this into
+//something more standard.
+//have a look at https://github.com/sqlitebrowser/sqlitebrowser
+//this is much better
+//
+//currently PlaneLog populates during construction with QSettings
+//this should be done dynamically and be a from a db rather than QSettings
+//
+//JAERO should only do one thing and do it well. with this PlaneLog
+//thing it's trying to do too many things and I don't have the time
+//to do everything to a high standard myself.
+//
+
+#define PLANE_LOG_DB_SCHEMA_VERSION 2
+
 namespace Ui {
 class PlaneLog;
 }
@@ -103,8 +119,8 @@ public:
     QString planesfolder;
     QString planelookup;
 protected:
-    void closeEvent(QCloseEvent *event);
-    void showEvent(QShowEvent *event);
+    void closeEvent(QCloseEvent *event) Q_DECL_OVERRIDE;
+    void showEvent(QShowEvent *event) Q_DECL_OVERRIDE;
     void contextMenuEvent(QContextMenuEvent *event) Q_DECL_OVERRIDE;
     void resizeEvent(QResizeEvent *event) Q_DECL_OVERRIDE;
 public slots:
@@ -142,6 +158,48 @@ private slots:
     void on_actionImport_log_triggered();
 
 private:
+
+
+
+    struct TableWidgetColumn
+    {
+        enum Number
+        {
+            AES,
+            REG,
+            FirstHeard,
+            LastHeard,
+            Count,
+            LastMessage,
+            MessageCount,
+            Model,
+            Owner,
+            Country,
+            Notes,
+            Number_Of_Cols
+        };
+    };
+
+    void dbUpdateUserClicked(bool ok, const QStringList &dbitem);
+    void dbUpdateACARSMessage(bool ok, const QStringList &dbitem);
+
+    class DBaseRequestSource : public DBase
+    {
+    public:
+        enum Source
+        {
+            Unknown,
+            UserClicked,
+            ACARSMessage
+        };
+        Source source=Unknown;
+        DBaseRequestSource(DBaseRequestSource::Source source):source(source){}
+        DBaseRequestSource(){}
+        operator Source() const {return source;}
+    };
+    PlaneLog::DBaseRequestSource dBaseRequestSourceUserCliecked=PlaneLog::DBaseRequestSource(DBaseRequestSource::Source::UserClicked);
+    PlaneLog::DBaseRequestSource dBaseRequestSourceACARSMessage=PlaneLog::DBaseRequestSource(DBaseRequestSource::Source::ACARSMessage);
+
     Ui::PlaneLog *ui;
     int wantedheightofrow;
     QToolBar * toolBar;
@@ -156,6 +214,8 @@ private:
     QTableWidgetItem *selectedAESitem;
 
     ArincParse arincparser;
+
+    int findAESrow(const QString &aes);
 };
 
 #endif // PLANELOG_H

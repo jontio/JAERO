@@ -1,5 +1,9 @@
 #include "databasetext.h"
 
+#include <QFileInfo>
+#include <QDir>
+#include <QApplication>
+
 DataBaseText *dbtext=NULL;
 
 DataBaseTextUser::DataBaseTextUser(QObject *parent ):QObject(parent)
@@ -62,8 +66,6 @@ DataBaseText::DataBaseText(QObject *parent) : QObject(parent)
     worker->moveToThread(&workerThread);
     connect(&workerThread, &QThread::finished, worker, &QObject::deleteLater);
     connect(this, &DataBaseText::asyncDbLookupFromAES, worker, &DataBaseWorkerText::DbLookupFromAES);
-    connect(this, &DataBaseText::importdb, worker, &DataBaseWorkerText::importdb);
-    connect(worker, &DataBaseWorkerText::dbimported, this, &DataBaseText::dbimported);
     workerThread.start();
 }
 
@@ -77,231 +79,12 @@ DataBaseText::~DataBaseText()
 
 //from here on main worker. WARING not in main thread.
 
-bool DataBaseWorkerText::importdb(const QString &dirname)
-{
-
-    //clear cache
-    cache.clear();
-
-    //if new file then copy over first
-    {
-        QFile filenew(dirname+"/new.aircrafts_dump.csv");
-        if(filenew.exists())
-        {
-            QFile oldfile(dirname+"/aircrafts_dump.csv");
-            oldfile.setPermissions(QFile::ReadOther | QFile::WriteOther);
-            oldfile.remove();
-            filenew.rename(dirname+"/aircrafts_dump.csv");
-        }
-    }
-
-    QFile file(dirname+"/aircrafts_dump.csv");
-    if(!file.open(QIODevice::ReadOnly | QIODevice::Text))
-    {
-        file.rename(dirname+"/new.aircrafts_dump.csv");
-        emit dbimported(false,"Cant open csv file");
-        qDebug()<<"Cant open csv file";
-        return false;
-    }
-
-    //open db
-    if((!db.isOpen())||(db.databaseName()!=(dirname+"/aircrafts_dump.db")))
-    {
-        if(!db.isOpen())db = QSqlDatabase::addDatabase("QSQLITE");
-        db.setDatabaseName(dirname+"/aircrafts_dump.db");
-        if (!db.open())
-        {
-            file.rename(dirname+"/new.aircrafts_dump.csv");
-            emit dbimported(false,"Cant open SQL database");
-            qDebug()<<"Cant open SQL database";
-            return false;
-        }
-    }
-
-    QSqlQuery query;
-
-    //new format from http://junzisun.com/adb/download as of Feb 2016
-    //icao,regid,mdl,type,operator
-    //000334,PU-PLS,ULAC,EDRA SUPER PETREL LS,PRIVATE OWNER
-
-    query.exec("drop table main;");
-    query.exec("create table main (AES int primary key,REG varchar(8), Model varchar(20), Type varchar(40), Owner varchar(40))");
-
-
-    QStringList values;
-    db.transaction();
-    int cc=0;
-    int linenumber=0;
-    while (!file.atEnd())
-    {
-        //read line skip header
-        linenumber++;
-        QString line = file.readLine().trimmed();
-        line.remove('\r');
-        line.remove('\n');
-        values=line.split(",");
-        while((values.size()<5)&&(!file.atEnd()))//have cr/lf in entry?
-        {
-            line+=file.readLine().trimmed();
-            line.remove('\r');
-            line.remove('\n');
-            values=line.split(",");
-        }
-        if(linenumber==1)continue;//header?
-        if(values.size()>5)//have comas in entries?
-        {
-            for(int i=0;i<values.size()-1;i++)
-            {
-                if(((QString)values[i]).isEmpty())continue;
-                while(i<values.size()-1)
-                {
-                   if(((QString)values[i]).left(1)!="\"")break;
-                   if(((QString)values[i+1]).isEmpty())
-                   {
-                        values.removeAt(i+1);
-                        continue;
-                   }
-                   if((((QString)values[i+1]).right(1)!="\""))
-                   {
-                       values[i]=values[i]+","+values[i+1];
-                       values.removeAt(i+1);
-                       continue;
-                   }
-                   values[i]=((QString)values[i]).right(((QString)values[i]).size()-1)+","+((QString)values[i+1]).left(((QString)values[i+1]).size()-1);
-                   values.removeAt(i+1);
-                   break;
-                }
-            }
-        }
-        if(values.size()!=5)
-        {
-            db.rollback();
-            file.rename(dirname+"/new.aircrafts_dump.csv");
-            emit dbimported(false,"CSV file illformed");
-            qDebug()<<values;
-            qDebug()<<"CSV file illformed cols!=5, cols="<<values.size();
-            return false;
-        }
-        bool bStatus = false;
-        uint aes=values[0].toUInt(&bStatus,16);
-        if(!bStatus)
-        {
-            db.rollback();
-            file.rename(dirname+"/new.aircrafts_dump.csv");
-            emit dbimported(false,"CSV entry error");
-            qDebug()<<"CSV entry error";
-            return false;
-        }
-
-        //insert line
-        QString req = "INSERT INTO main VALUES(";
-        req+=QString::number(aes)+",'";
-        for(int i=1; i<values.length ();++i)
-        {
-            values[i].replace("'","''");//escape '
-            req.append(values.at(i));
-            req.append("','");
-        }
-        req.chop(2);
-        req.append(");");
-        if(!query.exec(req)&&cc<10)
-        {
-            cc++;
-            if(cc<10)
-            {
-                qDebug()<<req;
-                qDebug()<<"Error: "+query.lastError().text();
-            }else qDebug()<<"Suppressing more errors";
-        }
-
-    }
-    db.commit();
-
-
-    //Old format
-    //eg "006011","C9-BAP","B735","83d52a4","LAM144","TM144","Boeing 737-53S","LAM Mozambique Airlines","1449857095"
-/*    query.exec("drop table main;");
-    query.exec("create table main (AES int primary key,REG varchar(8), Model varchar(20),unknown varchar(20), Call_Sign  varchar(20), Flight  varchar(20), Type varchar(40), Owner varchar(40), Updated  varchar(20))");
-
-
-    QStringList values;
-    db.transaction();
-    int cc=0;
-    while (!file.atEnd())
-    {
-
-        //read line
-        QString line = file.readLine().trimmed();
-        while((line[line.size()-1]=='\\')&&(!file.atEnd()))line+=file.readLine().trimmed();
-        line.replace("\\N,","\"\",");
-        values=line.split("\",\"");
-        if(values.size()!=9)
-        {
-            db.rollback();
-            file.rename(dirname+"/new.aircrafts_dump.csv");
-            emit dbimported(false,"CSV file illformed");
-            return false;
-        }
-        values[0].remove(0,1);
-        values[values.size()-1].chop(1);
-        bool bStatus = false;
-        uint aes=values[0].toUInt(&bStatus,16);
-        if(!bStatus)
-        {
-            db.rollback();
-            file.rename(dirname+"/new.aircrafts_dump.csv");
-            emit dbimported(false,"CSV entry error");
-            return false;
-        }
-
-        //insert line
-        QString req = "INSERT INTO main VALUES(";
-        req+=QString::number(aes)+",'";
-        for(int i=1; i<values.length ();++i)
-        {
-            values[i].replace("'","''");//escape '
-            req.append(values.at(i));
-            req.append("','");
-        }
-        req.chop(2);
-        req.append(");");
-        if(!query.exec(req)&&cc<10)
-        {
-            cc++;
-            if(cc<10)
-            {
-                qDebug()<<req;
-                qDebug()<<"Error: "+query.lastError().text();
-            }else qDebug()<<"Suppressing more errors";
-        }
-
-    }
-    db.commit();*/
-
-    qDebug()<<"new db imported";
-
-    emit dbimported(true,"Done");
-    return true;
-}
-
 void DataBaseWorkerText::DbLookupFromAES(const QString &dirname, const QString &AEStext,int userdata,QObject *sender,const char * member)
 {
 
     QStringList values;
 
     if(cache.maxCost()<300)cache.setMaxCost(300);
-
-    //import if new csv file
-    QFile filenew(dirname+"/new.aircrafts_dump.csv");
-    if(filenew.exists())
-    {
-        if(!importdb(dirname))
-        {
-            values.push_back("Cant import CSV file into Database");
-            QMetaObject::invokeMethod(sender,member, Qt::QueuedConnection,Q_ARG(bool, false),Q_ARG(int, userdata),Q_ARG(const QStringList&, values));
-            return;
-        }
-    }
 
     //serve cached entries
     QStringList *pvalues=cache.object(AEStext);
@@ -319,19 +102,30 @@ void DataBaseWorkerText::DbLookupFromAES(const QString &dirname, const QString &
     }
 
     //open db
-    if((!db.isOpen())||(db.databaseName()!=(dirname+"/aircrafts_dump.db")))
+    if(!db.isOpen())
     {
-
-        QFile file(dirname+"/aircrafts_dump.db");
-        if(!file.exists())
+        //get a file that kind of matches, ignore case and add a bit of wildcards
+        QDir dir(dirname);
+        QStringList files=dir.entryList(QStringList()<<"basestation*.sqb",QDir::Files | QDir::Readable | QDir::NoDotAndDotDot | QDir::NoDot);
+        QFile file;
+        //if the user specified location doesn't contain the basestation file then
+        //fallback and try the application path
+        if(files.size())file.setFileName(dir.path()+"/"+files[0]);
+        if(!files.size()||!file.exists())
         {
-            values.push_back("Database file aircrafts_dump.db missing. Download first.");
+            dir.setPath(QApplication::applicationDirPath());
+            files=dir.entryList(QStringList()<<"basestation*.sqb",QDir::Files | QDir::Readable | QDir::NoDotAndDotDot | QDir::NoDot);
+            if(files.size())file.setFileName(dir.path()+"/"+files[0]);
+        }
+        if(!files.size()||!file.exists())
+        {
+            values.push_back("Database file basestation.sqb not found");
             QMetaObject::invokeMethod(sender,member, Qt::QueuedConnection,Q_ARG(bool, false),Q_ARG(int, userdata),Q_ARG(const QStringList&, values));
             return;
         }
-
-        if(!db.isOpen())db = QSqlDatabase::addDatabase("QSQLITE");
-        db.setDatabaseName(dirname+"/aircrafts_dump.db");
+        //try and open the database
+        db = QSqlDatabase::addDatabase("QSQLITE");
+        db.setDatabaseName(file.fileName());
         if (!db.open())
         {
             values.push_back("Cant open SQL database");
@@ -339,13 +133,16 @@ void DataBaseWorkerText::DbLookupFromAES(const QString &dirname, const QString &
             return;
         }
         qDebug()<<"db opened ("<<db.databaseName()<<")";
+
     }
 
     //req from db
     QSqlQuery query;
     bool bStatus = false;
     uint aes=AEStext.toUInt(&bStatus,16);
-    QString req = "SELECT * FROM main WHERE AES = "+QString::number(aes)+";";
+    QString aes_as_hex_uppercase_and_6_places = QString("%1").arg(aes, 6, 16, QLatin1Char( '0' )).toUpper();//in case aes is less than 6 places
+    QString req = "SELECT * FROM Aircraft WHERE ModeS LIKE '"+aes_as_hex_uppercase_and_6_places+"';";
+
     if(!query.exec(req))
     {
         values.push_back("Error: "+query.lastError().text());
@@ -362,16 +159,18 @@ void DataBaseWorkerText::DbLookupFromAES(const QString &dirname, const QString &
         return;
     }
 
+    //fill in the local shema DataBaseTextUser::DataBaseSchema
     QSqlRecord rec = query.record();
-    values.push_back(AEStext);
-    for(int i=1;i<rec.count();i++)
+    QMetaEnum en = QMetaEnum::fromType<DataBaseTextUser::DataBaseSchema>();
+    for(int k=0;k<en.keyCount();k++)
     {
-        values.push_back(rec.value(i).toString());
+        values.push_back(rec.value(en.key(k)).toString().trimmed());
     }
+
     cache.insert(AEStext,new QStringList(values));
+
     QMetaObject::invokeMethod(sender,member, Qt::QueuedConnection,Q_ARG(bool, true),Q_ARG(int, userdata),Q_ARG(const QStringList&, values));
     return;
-
 
 }
 

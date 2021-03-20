@@ -12,29 +12,7 @@
 #include <windows.h>
 #endif
 
-
 #include "databasetext.h"
-
-
-/*void MainWindow::result(bool ok, int ref, const QStringList &result)
-{
-    ACARSItem *pai=((ACARSItem*)dbtu->getuserdata(ref));
-    if(!ok)
-    {
-        if(result.size())
-        {
-             qDebug()<<"Error: "<<result[0];
-        } else qDebug()<<"Error: Unknowen";
-    }
-    else
-    {
-        qDebug()<<"ok"<<result;
-        qDebug()<<pai->message;
-    }
-    delete pai;
-}*/
-
-
 
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
@@ -46,16 +24,6 @@ MainWindow::MainWindow(QWidget *parent) :
     QTimer::singleShot(100, [this]() { setWindowTitle("JAERO "+QString(JAERO_VERSION)); } );
 
     beep=new QSound(":/sounds/beep.wav",this);
-
-    //example of using db
-    /*dbtu=new DataBaseTextUser(this);
-    connect(dbtu,SIGNAL(result(bool,int,QStringList)),this,SLOT(result(bool,int,QStringList)));
-    ACARSItem *pai=new ACARSItem;
-    QString dirname,aes;
-    dirname="../";
-    aes="7582F8";
-    pai->message="jhbuybuy000";
-    dbtu->request(dirname,aes,pai);*/
 
     //plane logging window
     planelog = new PlaneLog;
@@ -156,7 +124,7 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(ambe,SIGNAL(decoded_signal(QByteArray)),audioout,SLOT(audioin(QByteArray)));
     connect(aerol,SIGNAL(Voicesignal(QByteArray)),ambe,SLOT(to_decode_slot(QByteArray)));
 
-   // compresseddiskwriter->openFileForOutput("e:/delme.ogg");
+    // compresseddiskwriter->openFileForOutput("e:/delme.ogg");
 
     //statusbar setup
     freqlabel = new QLabel();
@@ -247,7 +215,7 @@ MainWindow::MainWindow(QWidget *parent) :
     if(typeofdemodtouse==BURSTMSK)audioburstmskdemodulator->start();
 
     //add todays date
-    ui->inputwidget->appendPlainText(QDateTime::currentDateTime().toString("h:mmap ddd d-MMM-yyyy")+" JAERO started\n");
+    ui->inputwidget->appendPlainText(QDateTime::currentDateTime().toUTC().toString("h:mmap ddd d-MMM-yyyy")+" UTC JAERO started\n");
     QTimer::singleShot(100,ui->inputwidget,SLOT(scrolltoend()));
 
     //say if aeroabme was not found or loaded correctly
@@ -632,13 +600,13 @@ MainWindow::~MainWindow()
 void MainWindow::SignalStatusSlot(bool signal)
 {
     if(signal)ui->ledsignal->setLED(QIcon::On);
-     else ui->ledsignal->setLED(QIcon::Off);
+    else ui->ledsignal->setLED(QIcon::Off);
 }
 
 void MainWindow::DataCarrierDetectStatusSlot(bool dcd)
 {
     if(dcd)ui->leddata->setLED(QIcon::On);
-     else ui->leddata->setLED(QIcon::Off);
+    else ui->leddata->setLED(QIcon::Off);
 }
 
 void MainWindow::EbNoSlot(double EbNo)
@@ -654,8 +622,8 @@ void MainWindow::WarningTextSlot(QString warning)
 void MainWindow::PeakVolumeSlot(double Volume)
 {
     if(Volume>0.9)ui->ledvolume->setLED(QIcon::On,QIcon::Active);
-     else if(Volume<0.1)ui->ledvolume->setLED(QIcon::Off);
-      else ui->ledvolume->setLED(QIcon::On);
+    else if(Volume<0.1)ui->ledvolume->setLED(QIcon::Off);
+    else ui->ledvolume->setLED(QIcon::On);
 }
 
 void MainWindow::PlottablesSlot(double freq_est,double freq_center,double bandwidth)
@@ -670,11 +638,11 @@ void MainWindow::AboutSlot()
 {
     QStringList date=QString(__DATE__).split(" ");
     QMessageBox::about(this,"JAERO",""
-                                     "<H1>An Aero demodulator and decoder</H1>"
-                                     "<H3>"+QString(JAERO_VERSION)+"</H3>"
-                                     "<p>This is a program to demodulate and decode Aero signals. These signals contain SatCom ACARS (<em>Satellite Communication Aircraft Communications Addressing and Reporting System</em>) messages as used by planes beyond VHF ACARS range. This protocol is used by Inmarsat's \"Classic Aero\" system and can be received using low or medium gain L band or high gain C band antennas.</p>"
-                                     "<p>For more information about this application see <a href=\"http://jontio.zapto.org/hda1/jaero.html\">http://jontio.zapto.org/hda1/jaero.html</a>.</p>"
-                                     "<p>Jonti "+date[1]+" "+date[0]+" "+date[2]+"</p>" );
+                                    "<H1>An Aero demodulator and decoder</H1>"
+                                    "<H3>"+QString(JAERO_VERSION)+"</H3>"
+                                                                  "<p>This is a program to demodulate and decode Aero signals. These signals contain SatCom ACARS (<em>Satellite Communication Aircraft Communications Addressing and Reporting System</em>) messages as used by planes beyond VHF ACARS range. This protocol is used by Inmarsat's \"Classic Aero\" system and can be received using low or medium gain L band or high gain C band antennas.</p>"
+                                                                  "<p>For more information about this application see <a href=\"http://jontio.zapto.org/hda1/jaero.html\">http://jontio.zapto.org/hda1/jaero.html</a>.</p>"
+                                                                  "<p>Jonti "+date[1]+" "+date[0]+" "+date[2]+"</p>" );
 }
 
 void MainWindow::on_comboBoxbps_currentIndexChanged(const QString &arg)
@@ -691,7 +659,7 @@ void MainWindow::on_comboBoxbps_currentIndexChanged(const QString &arg)
 
     DemodType lasttypeofdemodtouse=typeofdemodtouse;
     if(bitrate_tmp>1200){typeofdemodtouse=OQPSK;}
-     else {typeofdemodtouse=MSK;
+    else {typeofdemodtouse=MSK;
     }
     if(arg.contains("burst")&&typeofdemodtouse==OQPSK)typeofdemodtouse=BURSTOQPSK;
     if(arg.contains("burst")&&typeofdemodtouse==MSK)typeofdemodtouse=BURSTMSK;
@@ -718,7 +686,7 @@ void MainWindow::on_comboBoxbps_currentIndexChanged(const QString &arg)
     {
         audioburstoqpskdemodulatorsettings.freq_center=audiomskdemodulator->getCurrentFreq();
         audiooqpskdemodulatorsettings.freq_center=audiomskdemodulator->getCurrentFreq();
-        audiomskdemodulatorsettings.freq_center=audiomskdemodulator->getCurrentFreq();        
+        audiomskdemodulatorsettings.freq_center=audiomskdemodulator->getCurrentFreq();
         audioburstmskdemodulatorsettings.freq_center=audiomskdemodulator->getCurrentFreq();
 
     }
@@ -749,7 +717,7 @@ void MainWindow::on_comboBoxbps_currentIndexChanged(const QString &arg)
         if(idx>=0)audioburstoqpskdemodulatorsettings.lockingbw=ui->comboBoxlbw->itemText(idx).split(" ")[0].toDouble();
         audioburstoqpskdemodulatorsettings.audio_device_in=settingsdialog->audioinputdevice;
         if(arg.contains("x2"))audioburstoqpskdemodulatorsettings.channel_stereo=true;
-         else audioburstoqpskdemodulatorsettings.channel_stereo=false;
+        else audioburstoqpskdemodulatorsettings.channel_stereo=false;
         audioburstoqpskdemodulator->setSettings(audioburstoqpskdemodulatorsettings);
         if(idx>=0)ui->comboBoxlbw->setCurrentIndex(idx);
         audioburstoqpskdemodulator->start();
@@ -790,10 +758,10 @@ void MainWindow::on_comboBoxbps_currentIndexChanged(const QString &arg)
             if(audiomskdemodulatorsettings.fb==1200){audiomskdemodulatorsettings.symbolspercycle=12;audiomskdemodulatorsettings.Fs=24000;}
         }
         else
-         {
+        {
             if(audiomskdemodulatorsettings.fb==600){audiomskdemodulatorsettings.symbolspercycle=12;audiomskdemodulatorsettings.Fs=48000;}
             if(audiomskdemodulatorsettings.fb==1200){audiomskdemodulatorsettings.symbolspercycle=12;audiomskdemodulatorsettings.Fs=48000;}
-         }
+        }
 
         int idx=ui->comboBoxlbw->findText(((QString)"%1 Hz").arg(audiomskdemodulatorsettings.fb*1.5));
         if(idx>=0)audiomskdemodulatorsettings.lockingbw=ui->comboBoxlbw->itemText(idx).split(" ")[0].toDouble();
@@ -855,14 +823,14 @@ void MainWindow::on_comboBoxafc_currentIndexChanged(const QString &arg1)
         audioburstmskdemodulator->setAFC(true);
 
     }
-     else
-     {
+    else
+    {
         audiomskdemodulator->setAFC(false);
         audiooqpskdemodulator->setAFC(false);
         audioburstoqpskdemodulator->setAFC(false);
         audioburstmskdemodulator->setAFC(false);
 
-     }
+    }
 }
 
 void MainWindow::on_actionCleanConsole_triggered()
@@ -946,10 +914,10 @@ void MainWindow::on_actionConnectToUDPPort_toggled(bool arg1)
             audioburstmskdemodulator->ConnectSinkDevice(udpsocket);
 
             if(audioburstoqpskdemodulatorsettings.channel_stereo)ui->console->setEnableUpdates(false,"Console disabled while raw demodulated data from the left channel is routed to UDP port 8765 at LocalHost.");
-             else ui->console->setEnableUpdates(false,"Console disabled while raw demodulated data is routed to UDP port 8765 at LocalHost.");
+            else ui->console->setEnableUpdates(false,"Console disabled while raw demodulated data is routed to UDP port 8765 at LocalHost.");
         }
-         else
-         {
+        else
+        {
             audiomskdemodulator->ConnectSinkDevice(aerol);
             audiooqpskdemodulator->ConnectSinkDevice(aerol);
             audioburstoqpskdemodulator->ConnectSinkDevice(aerol);
@@ -957,21 +925,21 @@ void MainWindow::on_actionConnectToUDPPort_toggled(bool arg1)
 
             aerol->ConnectSinkDevice(udpsocket);
             if(audioburstoqpskdemodulatorsettings.channel_stereo) ui->console->setEnableUpdates(false,"Console disabled while decoded and demodulated data from the left channel is routed to UDP port 8765 at LocalHost.");
-             else ui->console->setEnableUpdates(false,"Console disabled while decoded and demodulated data is routed to UDP port 8765 at LocalHost.");
-         }
+            else ui->console->setEnableUpdates(false,"Console disabled while decoded and demodulated data is routed to UDP port 8765 at LocalHost.");
+        }
 
     }
-     else
-     {
-         audiomskdemodulator->ConnectSinkDevice(aerol);
-         audiooqpskdemodulator->ConnectSinkDevice(aerol);
-         audioburstoqpskdemodulator->ConnectSinkDevice(aerol);
-         audioburstoqpskdemodulator->demod2->ConnectSinkDevice(aerol2);
-         audioburstmskdemodulator->ConnectSinkDevice(aerol);
-         aerol->ConnectSinkDevice(ui->console->consoledevice);
-         aerol2->ConnectSinkDevice(ui->console->consoledevice);
-         ui->console->setEnableUpdates(true);
-     }
+    else
+    {
+        audiomskdemodulator->ConnectSinkDevice(aerol);
+        audiooqpskdemodulator->ConnectSinkDevice(aerol);
+        audioburstoqpskdemodulator->ConnectSinkDevice(aerol);
+        audioburstoqpskdemodulator->demod2->ConnectSinkDevice(aerol2);
+        audioburstmskdemodulator->ConnectSinkDevice(aerol);
+        aerol->ConnectSinkDevice(ui->console->consoledevice);
+        aerol2->ConnectSinkDevice(ui->console->consoledevice);
+        ui->console->setEnableUpdates(true);
+    }
 }
 
 void MainWindow::on_actionRawOutput_triggered()
@@ -998,7 +966,7 @@ void MainWindow::acceptsettings()
 
     //start or stop tcp server/client
     if(settingsdialog->tcp_for_ads_messages_enabled)sbs1->starttcpconnection(settingsdialog->tcp_for_ads_messages_address,settingsdialog->tcp_for_ads_messages_port,settingsdialog->tcp_as_client_enabled);
-     else sbs1->stoptcpconnection();
+    else sbs1->stoptcpconnection();
 
     //if soundcard rate changed
     if(typeofdemodtouse==MSK)
@@ -1012,11 +980,11 @@ void MainWindow::acceptsettings()
                 if(audiomskdemodulatorsettings.fb==600){audiomskdemodulatorsettings.symbolspercycle=12;audiomskdemodulatorsettings.Fs=12000;}
                 if(audiomskdemodulatorsettings.fb==1200){audiomskdemodulatorsettings.symbolspercycle=12;audiomskdemodulatorsettings.Fs=24000;}
             }
-             else
-             {
+            else
+            {
                 if(audiomskdemodulatorsettings.fb==600){audiomskdemodulatorsettings.symbolspercycle=12;audiomskdemodulatorsettings.Fs=48000;}
                 if(audiomskdemodulatorsettings.fb==1200){audiomskdemodulatorsettings.symbolspercycle=12;audiomskdemodulatorsettings.Fs=48000;}
-             }
+            }
             audiomskdemodulator->setSettings(audiomskdemodulatorsettings);
         }
 
@@ -1024,10 +992,10 @@ void MainWindow::acceptsettings()
     if(typeofdemodtouse==BURSTMSK)// we only use 48000
     {
 
-       // audioburstmskdemodulatorsettings.Fs=48000;
-       // audioburstmskdemodulator->setSettings(audioburstmskdemodulatorsettings);
+        // audioburstmskdemodulatorsettings.Fs=48000;
+        // audioburstmskdemodulator->setSettings(audioburstmskdemodulatorsettings);
 
-      }
+    }
 
 
     if(typeofdemodtouse==OQPSK)//OQPSK uses 48000 all the time so not needed
@@ -1117,7 +1085,7 @@ void MainWindow::acceptsettings()
     }
 
     if(settingsdialog->loggingenable)compresseddiskwriter->setLogDir(settingsdialog->loggingdirectory);
-     else compresseddiskwriter->setLogDir("");
+    else compresseddiskwriter->setLogDir("");
 
 }
 
@@ -1128,7 +1096,7 @@ void MainWindow::on_action_PlaneLog_triggered()
 
 void MainWindow::CChannelAssignmentSlot(CChannelAssignmentItem &item)
 {
-    QString message=QDateTime::currentDateTime().toString("hh:mm:ss dd-MM-yy ")+((QString)"").sprintf("AES:%06X GES:%02X ",item.AESID,item.GESID);
+    QString message=QDateTime::currentDateTime().toUTC().toString("hh:mm:ss dd-MM-yy ")+((QString)"").sprintf("UTC AES:%06X GES:%02X ",item.AESID,item.GESID);
     QString rx_beam = " Global Beam ";
     if(item.receive_spotbeam)rx_beam=" Spot Beam ";
     message += "Receive Freq: " + QString::number(item.receive_freq) + rx_beam + "Transmit " + QString::number(item.transmit_freq);
@@ -1183,27 +1151,27 @@ void MainWindow::ACARSslot(ACARSItem &acarsitem)
         if(acarsitem.nonacars)
         {
             if(acarsitem.message.isEmpty())humantext+=((QString)"").sprintf("ISU: AESID = %06X GESID = %02X QNO = %02X REFNO = %02X REG = %s",acarsitem.isuitem.AESID,acarsitem.isuitem.GESID,acarsitem.isuitem.QNO,acarsitem.isuitem.REFNO,acarsitem.PLANEREG.data());
-             else
-             {
+            else
+            {
                 QString message=acarsitem.message;
                 message.replace('\r','\n');
                 message.replace("\n\n","\n");
                 message.replace('\n',"●");
                 humantext+=(((QString)"").sprintf("ISU: AESID = %06X GESID = %02X QNO = %02X REFNO = %02X REG = %s TEXT = \"",acarsitem.isuitem.AESID,acarsitem.isuitem.GESID,acarsitem.isuitem.QNO,acarsitem.isuitem.REFNO,acarsitem.PLANEREG.data())+message+"\"");
-             }
+            }
         }
-         else
-         {
+        else
+        {
             if(acarsitem.message.isEmpty())humantext+=((QString)"").sprintf("ISU: AESID = %06X GESID = %02X QNO = %02X REFNO = %02X MODE = %c REG = %s TAK = %s LABEL = %02X%02X BI = %c",acarsitem.isuitem.AESID,acarsitem.isuitem.GESID,acarsitem.isuitem.QNO,acarsitem.isuitem.REFNO,acarsitem.MODE,acarsitem.PLANEREG.data(),TAKstr.data(),(uchar)acarsitem.LABEL[0],(uchar)acarsitem.LABEL[1],acarsitem.BI);
-             else
-             {
+            else
+            {
                 QString message=acarsitem.message;
                 message.replace('\r','\n');
                 message.replace("\n\n","\n");
                 message.replace('\n',"●");
                 humantext+=(((QString)"").sprintf("ISU: AESID = %06X GESID = %02X QNO = %02X REFNO = %02X MODE = %c REG = %s TAK = %s LABEL = %02X%02X BI = %c TEXT = \"",acarsitem.isuitem.AESID,acarsitem.isuitem.GESID,acarsitem.isuitem.QNO,acarsitem.isuitem.REFNO,acarsitem.MODE,acarsitem.PLANEREG.data(),TAKstr.data(),(uchar)acarsitem.LABEL[0],(uchar)acarsitem.LABEL[1],acarsitem.BI)+message+"\"");
-             }
-         }
+            }
+        }
         if(acarsitem.moretocome)humantext+=" ...more to come... ";
         humantext+="\t( ";
         for(int k=0;k<(acarsitem.isuitem.userdata.size());k++)
@@ -1223,7 +1191,7 @@ void MainWindow::ACARSslot(ACARSItem &acarsitem)
     if(settingsdialog->msgdisplayformat=="2")
     {
         ui->inputwidget->setLineWrapMode(QPlainTextEdit::NoWrap);
-        humantext+=QDateTime::currentDateTime().toString("hh:mm:ss dd-MM-yy ");
+        humantext+=QDateTime::currentDateTime().toUTC().toString("hh:mm:ss dd-MM-yy ")+"UTC ";
         if(acarsitem.TAK==0x15)TAKstr=((QString)"!").toLatin1();
         uchar label1=acarsitem.LABEL[1];
         if((uchar)acarsitem.LABEL[1]==127)label1='d';
@@ -1231,27 +1199,27 @@ void MainWindow::ACARSslot(ACARSItem &acarsitem)
         if(acarsitem.nonacars)
         {
             if(acarsitem.message.isEmpty())humantext+=((QString)"").sprintf("AES:%06X GES:%02X REG:%s",acarsitem.isuitem.AESID,acarsitem.isuitem.GESID,acarsitem.PLANEREG.data());
-             else
-             {
+            else
+            {
                 QString message=acarsitem.message;
                 message.replace('\r','\n');
                 message.replace("\n\n","\n");
                 message.replace('\n',"●");
                 humantext+=(((QString)"").sprintf("AES:%06X GES:%02X REG:%s ",acarsitem.isuitem.AESID,acarsitem.isuitem.GESID,acarsitem.PLANEREG.data()))+message;
-             }
+            }
         }
-         else
-         {
+        else
+        {
             if(acarsitem.message.isEmpty())humantext+=((QString)"").sprintf("AES:%06X GES:%02X %c %s %s %c%c %c",acarsitem.isuitem.AESID,acarsitem.isuitem.GESID,acarsitem.MODE,acarsitem.PLANEREG.data(),TAKstr.data(),(uchar)acarsitem.LABEL[0],label1,acarsitem.BI);
-             else
-             {
+            else
+            {
                 QString message=acarsitem.message;
                 message.replace('\r','\n');
                 message.replace("\n\n","\n");
                 message.replace('\n',"●");
                 humantext+=(((QString)"").sprintf("AES:%06X GES:%02X %c %s %s %c%c %c ",acarsitem.isuitem.AESID,acarsitem.isuitem.GESID,acarsitem.MODE,acarsitem.PLANEREG.data(),TAKstr.data(),(uchar)acarsitem.LABEL[0],label1,acarsitem.BI))+message;
-             }
-         }
+            }
+        }
 
         if(acarsitem.moretocome)humantext+=" ...more to come... ";
         if((!settingsdialog->dropnontextmsgs)||(!acarsitem.message.isEmpty()))
@@ -1271,7 +1239,7 @@ void MainWindow::ACARSslot(ACARSItem &acarsitem)
         if(message.left(1)=="\n")message.remove(0,1);
         message.replace("\n","\n\t");
 
-        humantext+=QDateTime::currentDateTime().toString("hh:mm:ss dd-MM-yy ");
+        humantext+=QDateTime::currentDateTime().toUTC().toString("hh:mm:ss dd-MM-yy ")+"UTC ";
         if(acarsitem.TAK==0x15)TAKstr=((QString)"!").toLatin1();
         uchar label1=acarsitem.LABEL[1];
         if((uchar)acarsitem.LABEL[1]==127)label1='d';
@@ -1279,14 +1247,16 @@ void MainWindow::ACARSslot(ACARSItem &acarsitem)
         QByteArray PLANEREG;
         PLANEREG=(((QString)".").repeated(7-acarsitem.PLANEREG.size())).toLatin1()+acarsitem.PLANEREG;
         if(acarsitem.nonacars) humantext+=((QString)"").sprintf("AES:%06X GES:%02X   %s       ",acarsitem.isuitem.AESID,acarsitem.isuitem.GESID,PLANEREG.data());
-         else humantext+=((QString)"").sprintf("AES:%06X GES:%02X %c %s %s %c%c %c",acarsitem.isuitem.AESID,acarsitem.isuitem.GESID,acarsitem.MODE,PLANEREG.data(),TAKstr.data(),(uchar)acarsitem.LABEL[0],label1,acarsitem.BI);
+        else humantext+=((QString)"").sprintf("AES:%06X GES:%02X %c %s %s %c%c %c",acarsitem.isuitem.AESID,acarsitem.isuitem.GESID,acarsitem.MODE,PLANEREG.data(),TAKstr.data(),(uchar)acarsitem.LABEL[0],label1,acarsitem.BI);
 
         //if(acarsitem.message.isEmpty())humantext+=((QString)"").sprintf("AES:%06X GES:%02X %c %s %s %c%c %c",acarsitem.isuitem.AESID,acarsitem.isuitem.GESID,acarsitem.MODE,acarsitem.PLANEREG.data(),TAKstr.data(),(uchar)acarsitem.LABEL[0],label1,acarsitem.BI)+"\n";
         //else humantext+=(((QString)"").sprintf("AES:%06X GES:%02X %c %s %s %c%c %c",acarsitem.isuitem.AESID,acarsitem.isuitem.GESID,acarsitem.MODE,acarsitem.PLANEREG.data(),TAKstr.data(),(uchar)acarsitem.LABEL[0],label1,acarsitem.BI))+"\n\n\t"+message+"\n";
 
-        if(acarsitem.dblookupresult.size()==5)
+        if(acarsitem.dblookupresult.size()==QMetaEnum::fromType<DataBaseTextUser::DataBaseSchema>().keyCount())
         {
-            humantext+=" "+acarsitem.dblookupresult[3]+" "+acarsitem.dblookupresult[4];
+            QString manufacturer_and_type=acarsitem.dblookupresult[DataBaseTextUser::DataBaseSchema::Manufacturer]+" "+acarsitem.dblookupresult[DataBaseTextUser::DataBaseSchema::Type];
+            manufacturer_and_type=manufacturer_and_type.trimmed();
+            humantext+=" "+manufacturer_and_type+" "+acarsitem.dblookupresult[DataBaseTextUser::DataBaseSchema::RegisteredOwners];
         }
 
         if(!acarsitem.message.isEmpty())
@@ -1329,7 +1299,7 @@ void MainWindow::log(QString &text)
 {
     if(!settingsdialog->loggingenable)return;
     if(text.isEmpty())return;
-    QDate now=QDate::currentDate();
+    QDate now=QDateTime::currentDateTimeUtc().date();
     QString nowfilename=settingsdialog->loggingdirectory+"/acars-log-"+now.toString("yy-MM-dd")+".txt";
     if(!filelog.isOpen()||filelog.fileName()!=nowfilename)
     {
@@ -1372,11 +1342,11 @@ void MainWindow::on_actionSound_Out_toggled(bool mute)
         disconnect(ambe,SIGNAL(decoded_signal(QByteArray)),audioout,SLOT(audioin(QByteArray)));
         audioout->stop();
     }
-     else
-     {
+    else
+    {
         connect(ambe,SIGNAL(decoded_signal(QByteArray)),audioout,SLOT(audioin(QByteArray)));
         audioout->start();
-     }
+    }
 }
 
 

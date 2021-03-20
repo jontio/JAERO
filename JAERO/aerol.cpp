@@ -500,24 +500,20 @@ void ParserISU::acarslookupresult(bool ok, int ref, const QStringList &result)
     int i=0;while((i<panacarsitem->PLANEREG.size())&&(panacarsitem->PLANEREG[i]=='.'))i++;
     panacarsitem->PLANEREG=panacarsitem->PLANEREG.right(panacarsitem->PLANEREG.size()-i);
 
-    if(result.size()==5)
+    if(result.size()==QMetaEnum::fromType<DataBaseTextUser::DataBaseSchema>().keyCount())
     {
         //if non acars message then fill in reg with lookup value
         if(panacarsitem->nonacars)
         {
-            panacarsitem->PLANEREG=result[1].toLatin1();
+            panacarsitem->PLANEREG=result[DataBaseTextUser::DataBaseSchema::Registration].toLatin1();
         }
-        //if sat reg and lookup reg are very different then lookup is wrong
-        if((panacarsitem->PLANEREG.right(2).toLower()!=result[1].right(2).toLower())&&(!panacarsitem->nonacars))
+        //if sat reg and lookup reg are very different then we have a problem
+        //do we use the db reg or the reg sent by the sv?????
+        //lets just say if panacarsitem->PLANEREG is empty then use the DB
+        if(panacarsitem->PLANEREG.trimmed().isEmpty())
         {
-            panacarsitem->dblookupresult.clear();
-            panacarsitem->dblookupresult.push_back("plane lookup dont match with sat!! old database??");
-            qDebug()<<panacarsitem->dblookupresult[0];
-            emit ACARSsignal(*panacarsitem);
-            delete panacarsitem;
-            return;
+            panacarsitem->PLANEREG=result[DataBaseTextUser::DataBaseSchema::Registration].toLatin1();
         }
-
     }
     panacarsitem->dblookupresult=result;
     emit ACARSsignal(*panacarsitem);
