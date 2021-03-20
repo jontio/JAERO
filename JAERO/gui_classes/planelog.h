@@ -19,6 +19,9 @@
 //have a look at https://github.com/sqlitebrowser/sqlitebrowser
 //this is much better
 //
+//currently PlaneLog populates during construction with QSettings
+//this should be done dynamically and be a from a db rather than QSettings
+//
 //JAERO should only do one thing and do it well. with this PlaneLog
 //thing it's trying to do too many things and I don't have the time
 //to do everything to a high standard myself.
