@@ -312,7 +312,7 @@ eg &quot;localhost:12345 localhost:12346&quot;</string>
         </rect>
        </property>
        <property name="title">
-        <string>Database and Images</string>
+        <string>Images</string>
        </property>
        <widget class="QLineEdit" name="lineEditplanesfolder">
         <property name="geometry">
@@ -324,7 +324,7 @@ eg &quot;localhost:12345 localhost:12346&quot;</string>
          </rect>
         </property>
         <property name="toolTip">
-         <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Plane images are stored as {AES}.png or {AES}.jpg and database as basestation.sqb in this folder.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+         <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Plane images are stored as {AES}.png or {AES}.jpg in this folder. Additionally if a basestation.sqb database file is present JAERO will use this file for plane lookups.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
         </property>
        </widget>
        <widget class="QLabel" name="label_10">

@@ -13,6 +13,19 @@
 #include <QTableWidgetItem>
 #include "arincparse.h"
 
+//this unit really needs some work. it's messy and was an adhoc thing.
+//if you want to contribute feel free to toally overhall this into
+//something more standard.
+//have a look at https://github.com/sqlitebrowser/sqlitebrowser
+//this is much better
+//
+//JAERO should only do one thing and do it well. with this PlaneLog
+//thing it's trying to do too many things and I don't have the time
+//to do everything to a high standard myself.
+//
+
+#define PLANE_LOG_DB_SCHEMA_VERSION 2
+
 namespace Ui {
 class PlaneLog;
 }

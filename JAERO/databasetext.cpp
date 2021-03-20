@@ -2,6 +2,7 @@
 
 #include <QFileInfo>
 #include <QDir>
+#include <QApplication>
 
 DataBaseText *dbtext=NULL;
 
@@ -101,17 +102,25 @@ void DataBaseWorkerText::DbLookupFromAES(const QString &dirname, const QString &
     }
 
     //open db
-
     if(!db.isOpen())
     {
         //get a file that kind of matches, ignore case and add a bit of wildcards
         QDir dir(dirname);
         QStringList files=dir.entryList(QStringList()<<"basestation*.sqb",QDir::Files | QDir::Readable | QDir::NoDotAndDotDot | QDir::NoDot);
         QFile file;
+        //if the user specified location doesn't contain the basestation file then
+        //fallback and try the application path
         if(files.size())file.setFileName(dirname+"/"+files[0]);
         if(!files.size()||!file.exists())
         {
-            values.push_back("Database file basestation.sqb missing. from "+dirname);
+            values.push_back("Database file basestation.sqb not found in "+dirname+" falling back to application path or db");
+            dir.setPath(QApplication::applicationDirPath());
+            files=dir.entryList(QStringList()<<"basestation*.sqb",QDir::Files | QDir::Readable | QDir::NoDotAndDotDot | QDir::NoDot);
+        }
+        if(files.size())file.setFileName(dirname+"/"+files[0]);
+        if(!files.size()||!file.exists())
+        {
+            values.push_back("Database file basestation.sqb not found");
             QMetaObject::invokeMethod(sender,member, Qt::QueuedConnection,Q_ARG(bool, false),Q_ARG(int, userdata),Q_ARG(const QStringList&, values));
             return;
         }

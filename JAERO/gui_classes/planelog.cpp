@@ -207,6 +207,8 @@ PlaneLog::PlaneLog(QWidget *parent) :
     QSettings settings("Jontisoft", settings_name);
     QFontMetrics fm(ui->tableWidget->font());
 
+    int plane_log_db_schema_version=settings.value("PLANE_LOG_DB_SCHEMA_VERSION",-1).toInt();
+
     //capcity test
     //this is an issue as JAERO simply loads everything into ram
     //that limits the planelog to about 40000 on my computer more
@@ -272,18 +274,39 @@ PlaneLog::PlaneLog(QWidget *parent) :
         }
     }
 #else
-    ui->tableWidget->setRowCount(settings.value("tableWidget-rows",0).toInt());
-    for(int row=0;row<ui->tableWidget->rowCount();row++)
+    if(plane_log_db_schema_version==PLANE_LOG_DB_SCHEMA_VERSION)
     {
-        ui->tableWidget->setRowHeight(row,fm.height()*wantedheightofrow);
-        for(int column=0;column<ui->tableWidget->columnCount();column++)
+        ui->tableWidget->setRowCount(settings.value("tableWidget-rows",0).toInt());
+        for(int row=0;row<ui->tableWidget->rowCount();row++)
         {
-            QString str=((QString)"tableWidget-%1-%2").arg(row).arg(column);
-            QTableWidgetItem *newItem = new QTableWidgetItem(settings.value(str,"").toString());
-            if(column<7)newItem->setTextAlignment(Qt::AlignHCenter|Qt::AlignVCenter);
-            //if(column<7)
-            newItem->setFlags((newItem->flags()&~Qt::ItemIsEditable)|Qt::ItemIsSelectable);
-            ui->tableWidget->setItem(row, column, newItem);
+            ui->tableWidget->setRowHeight(row,fm.height()*wantedheightofrow);
+            for(int column=0;column<ui->tableWidget->columnCount();column++)
+            {
+                QString str=((QString)"tableWidget-%1-%2").arg(row).arg(column);
+                QTableWidgetItem *newItem = new QTableWidgetItem(settings.value(str,"").toString());
+                if(column<7)newItem->setTextAlignment(Qt::AlignHCenter|Qt::AlignVCenter);
+                newItem->setFlags((newItem->flags()&~Qt::ItemIsEditable)|Qt::ItemIsSelectable);
+                ui->tableWidget->setItem(row, column, newItem);
+            }
+        }
+    }
+    //if old schema we have to change to new schema
+    if(plane_log_db_schema_version<0)//b4 we called it a schema
+    {
+        ui->tableWidget->setRowCount(settings.value("tableWidget-rows",0).toInt());
+        for(int row=0;row<ui->tableWidget->rowCount();row++)
+        {
+            ui->tableWidget->setRowHeight(row,fm.height()*wantedheightofrow);
+            for(int column=0;column<ui->tableWidget->columnCount();column++)
+            {
+                QString str=((QString)"tableWidget-%1-%2").arg(row).arg(column);
+                QTableWidgetItem *newItem = new QTableWidgetItem(settings.value(str,"").toString());
+                if(column<7)newItem->setTextAlignment(Qt::AlignHCenter|Qt::AlignVCenter);
+                if(column==7)column=10;
+                else if(column==10)column=7;
+                newItem->setFlags((newItem->flags()&~Qt::ItemIsEditable)|Qt::ItemIsSelectable);
+                ui->tableWidget->setItem(row, column, newItem);
+            }
         }
     }
 #endif
@@ -314,7 +337,6 @@ void PlaneLog::showEvent(QShowEvent *event)
 
 PlaneLog::~PlaneLog()
 {
-
     //save settings
     //other options could be then easy to backup if need be
     //QSettings settings(QSettings::IniFormat, QSettings::UserScope,"Jontisoft", "JAERO");
@@ -329,6 +351,7 @@ PlaneLog::~PlaneLog()
             if(ui->tableWidget->item(row,column))settings.setValue(str,ui->tableWidget->item(row,column)->text());
         }
     }
+    settings.setValue("PLANE_LOG_DB_SCHEMA_VERSION",PLANE_LOG_DB_SCHEMA_VERSION);
     settings.setValue("splitter", ui->splitter->saveState());
     settings.setValue("splitter_2", ui->splitter_2->saveState());
     settings.setValue("logwindow", saveGeometry());
