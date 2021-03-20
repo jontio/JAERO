@@ -110,14 +110,13 @@ void DataBaseWorkerText::DbLookupFromAES(const QString &dirname, const QString &
         QFile file;
         //if the user specified location doesn't contain the basestation file then
         //fallback and try the application path
-        if(files.size())file.setFileName(dirname+"/"+files[0]);
+        if(files.size())file.setFileName(dir.path()+"/"+files[0]);
         if(!files.size()||!file.exists())
         {
-            values.push_back("Database file basestation.sqb not found in "+dirname+" falling back to application path or db");
             dir.setPath(QApplication::applicationDirPath());
             files=dir.entryList(QStringList()<<"basestation*.sqb",QDir::Files | QDir::Readable | QDir::NoDotAndDotDot | QDir::NoDot);
+            if(files.size())file.setFileName(dir.path()+"/"+files[0]);
         }
-        if(files.size())file.setFileName(dirname+"/"+files[0]);
         if(!files.size()||!file.exists())
         {
             values.push_back("Database file basestation.sqb not found");
