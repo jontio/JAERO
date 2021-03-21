@@ -40,7 +40,7 @@ jobs:
         uses: actions/upload-artifact@v2
         with:
           name: jaero_windows
-          retention-days: 2
+          retention-days: 1
           path: |
             JAERO/JAERO/release/*.zip
       # upload linux artifacts    
@@ -49,7 +49,7 @@ jobs:
         uses: actions/upload-artifact@v2
         with:
           name: jaero_linux
-          retention-days: 2
+          retention-days: 1
           path: |
             JAERO/bin/*.tar.gz
   release:

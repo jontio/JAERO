@@ -123,10 +123,11 @@ cp /mingw64/bin/libintl-8.dll $PWD
 cp /mingw64/bin/libpcre-1.dll $PWD
 cp /mingw64/bin/libbrotlicommon.dll $PWD
 cp /mingw64/bin/libiconv-2.dll $PWD
-cp /usr/lib/p7zip/7za.exe $PWD
-cp /usr/bin/msys-stdc++-6.dll $PWD
-cp /usr/bin/msys-gcc_s-seh-1.dll $PWD
-cp /usr/bin/msys-2.0.dll $PWD
+#7za.exe not needed anymore
+#cp /usr/lib/p7zip/7za.exe $PWD
+#cp /usr/bin/msys-stdc++-6.dll $PWD
+#cp /usr/bin/msys-gcc_s-seh-1.dll $PWD
+#cp /usr/bin/msys-2.0.dll $PWD
 cp /mingw64/bin/aeroambe.dll $PWD
 cp /mingw64/bin/libmbe.dll $PWD
 #basestation if available
