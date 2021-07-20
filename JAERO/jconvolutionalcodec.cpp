@@ -200,7 +200,7 @@ QVector<int> &JConvolutionalCodec::Decode_Continuous(QByteArray& soft_bits_in)//
     return decoded_bits;
 }
 
-//this is a bit of a hack just to compre soft with hard decoding. paddinglength must be a multiple of 8
+    // unpack the re-encoded bytes
 QVector<int> &JConvolutionalCodec::Decode_Continuous_hard(const QByteArray& soft_bits_in)//0-->-1 128-->0 255-->1
 {
     int k=(2*nparitybits*paddinglength)/8;//msg is padded frount and back both times by paddinglength

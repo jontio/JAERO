@@ -12,12 +12,19 @@ AudioBurstMskDemodulator::AudioBurstMskDemodulator(QObject *parent)
 void AudioBurstMskDemodulator::start()
 {
     BurstMskDemodulator::start();
+    if(!settings.zmqAudio)
+    {
     if(m_audioInput)m_audioInput->start(this);
+}
 }
 
 void AudioBurstMskDemodulator::stop()
 {
+    if(!settings.zmqAudio)
+    {
     if(m_audioInput)m_audioInput->stop();
+
+    }
     BurstMskDemodulator::stop();
 }
 

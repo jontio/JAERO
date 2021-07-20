@@ -12,12 +12,19 @@ AudioMskDemodulator::AudioMskDemodulator(QObject *parent)
 void AudioMskDemodulator::start()
 {
     MskDemodulator::start();
+    if(!settings.zmqAudio)
+    {
     if(m_audioInput)m_audioInput->start(this);
+}
 }
 
 void AudioMskDemodulator::stop()
 {
+    if(!settings.zmqAudio)
+    {
     if(m_audioInput)m_audioInput->stop();
+
+    }
     MskDemodulator::stop();
 }
 

@@ -156,28 +156,19 @@ void SettingsDialog::populatesettings()
     ui->lineEdittcpoutputadsmessagesaddress->setText(settings.value("lineEdittcpoutputadsmessagesaddress","0.0.0.0:30003").toString());
     ui->checkOutputADSMessageToTCP->setChecked(settings.value("checkOutputADSMessageToTCP",false).toBool());
     ui->checkTCPAsClient->setChecked(settings.value("checkTCPAsClient",false).toBool());
+    ui->lineEditZMQBind->setText(settings.value("lineZMQBindAddress", "tcp://*:5551").toString());
+    ui->ambeEnabled->setChecked(settings.value("ambeEnabled", true).toBool());
 
+    ui->checkBoxZMQ->setChecked(settings.value("zmqAudioEnabled", true).toBool());
+    ui->lineEditZmqConnectAddress->setText(settings.value("zmqAudioReceiveAddress", "tcp://127.0.0.1:6003").toString());
 
-    ui->ambeEnabled->setChecked(settings.value("localAudioOutEnabled", true).toBool());
-    ui->remoteAmbeEnabled->setChecked(settings.value("remoteAudioOutEnabled", false).toBool());
+    QString default_topic = settings_name;
 
+    default_topic = settings_name.remove(QRegExp( "JAERO \\[" )).remove(QRegExp( "\\]" ));
 
-    if(!ui->remoteAmbeEnabled->isChecked())
-    {
-        ui->lineEditZMQBind->setEnabled(false);
-        ui->lineEditZMQBindTopic->setEnabled(false);
-
-    }
-    ui->lineEditZMQBind->setText(settings.value("remoteAudioOutBindAddress", "tcp://*:5551").toString());
-    ui->lineEditZMQBindTopic->setText(settings.value("remoteAudioOutBindTopic", "JAERO").toString());
-
-    ui->checkBoxZMQ->setChecked(settings.value("zmqAudioInputEnabled", true).toBool());
-    ui->lineEditZmqConnectAddress->setText(settings.value("zmqAudioInputReceiveAddress", "tcp://127.0.0.1:6003").toString());
-
-
-    QString default_topic = settings_name.remove(QRegExp( "JAERO \\[" )).remove(QRegExp( "\\]" ));
-
-    ui->lineEditZmqTopic->setText(settings.value("zmqAudioInputReceiveTopic", default_topic).toString());
+    ui->lineEditZmqTopic->setText(settings.value("zmqAudioReceiveTopic", default_topic).toString());
+//these have been tested so far as lineEditplanelookup
+//http://www.flightradar24.com/data/airplanes/{REG}
 
     on_lineEditlogdir_editingFinished();
 
@@ -204,16 +195,13 @@ void SettingsDialog::accept()
     settings.setValue("lineEdittcpoutputadsmessagesaddress", ui->lineEdittcpoutputadsmessagesaddress->text());
     settings.setValue("checkOutputADSMessageToTCP", ui->checkOutputADSMessageToTCP->isChecked());
     settings.setValue("checkTCPAsClient", ui->checkTCPAsClient->isChecked());
+    settings.setValue("lineZMQBindAddress",ui->lineEditZMQBind->text());
+    settings.setValue("ambeEnabled", ui->ambeEnabled->isChecked());
 
-    settings.setValue("localAudioOutEnabled", ui->ambeEnabled->isChecked());
-    settings.setValue("remoteAudioOutEnabled", ui->remoteAmbeEnabled->isChecked());
-    settings.setValue("remoteAudioOutBindAddress",ui->lineEditZMQBind->text());
-    settings.setValue("remoteAudioOutBindTopic",ui->lineEditZMQBindTopic->text());
+    settings.setValue("zmqAudioEnabled",  ui->checkBoxZMQ->isChecked());
+    settings.setValue("zmqAudioReceiveAddress",  ui->lineEditZmqConnectAddress->text());
+    settings.setValue("zmqAudioReceiveTopic", ui->lineEditZmqTopic->text());
 
-
-    settings.setValue("zmqAudioInputEnabled",  ui->checkBoxZMQ->isChecked());
-    settings.setValue("zmqAudioInputReceiveAddress",  ui->lineEditZmqConnectAddress->text());
-    settings.setValue("zmqAudioInputReceiveTopic", ui->lineEditZmqTopic->text());
 
     poulatepublicvars();
     QDialog::accept();

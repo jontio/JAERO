@@ -368,14 +368,16 @@ qint64 MskDemodulator::writeData(const char *data, qint64 len)
         cpx_type cval= mixer2.WTCISValue()*(dval);
         cpx_type sig2 = cpx_type(matchedfilter_re->FIRUpdateAndProcess(cval.real()),matchedfilter_im->FIRUpdateAndProcess(cval.imag()));
 
+        double dabval = std::sqrt(sig2.real()*sig2.real() + sig2.imag()*sig2.imag());
+
         //Measure ebno
-        ebnomeasure->Update(std::abs(sig2));
+        ebnomeasure->Update(dabval);
 
         //AGC
-        sig2*=agc->Update(std::abs(sig2));
+        sig2*=agc->Update(dabval);
 
         //clipping
-        double abval=std::abs(sig2);
+        double abval=std::sqrt(sig2.real()*sig2.real() + sig2.imag()*sig2.imag());
         if(abval>2.84)sig2=(2.84/abval)*sig2;
 
         cpx_type pt_d = delayedsmpl.update_dont_touch(sig2);
@@ -523,5 +525,11 @@ void MskDemodulator::DCDstatSlot(bool _dcd)
 }
 
 
+void MskDemodulator::dataReceived(const QByteArray &audio)
+{
+
+    writeData(audio, audio.length());
+
+}
 
 

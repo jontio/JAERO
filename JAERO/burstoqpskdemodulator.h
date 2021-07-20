@@ -30,6 +30,7 @@ public:
         double Fs;
         double signalthreshold;
         bool channel_stereo;
+        bool zmqAudio;
         Settings()
         {
             coarsefreqest_fft_power=13;//2^coarsefreqest_fft_power
@@ -39,12 +40,14 @@ public:
             Fs=48000;//Hz
             signalthreshold=0.6;
             channel_stereo=false;
+            zmqAudio=false;
         }
     };
     explicit BurstOqpskDemodulator(QObject *parent);
     ~BurstOqpskDemodulator();
     void setAFC(bool state);
     void setSQL(bool state);
+    void setCPUReduce(bool state);
     void setSettings(Settings settings);
     void invalidatesettings();
     void ConnectSinkDevice(QIODevice *datasinkdevice);
@@ -58,6 +61,8 @@ public:
 
     //--L/R channel selection
         bool channel_select_other;
+
+        static int sample;
     //
 
 signals:
@@ -213,9 +218,15 @@ private:
 
     bool channel_stereo;
 
+    bool cpuReduce;
+
+   
+
 public slots:
     void CenterFreqChangedSlot(double freq_center);
     void writeDataSlot(const char *data, qint64 len);
+    void dataReceived(const QByteArray &audio);
+
 
 };
 

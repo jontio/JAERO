@@ -2,9 +2,6 @@
 <ui version="4.0">
  <class>SettingsDialog</class>
  <widget class="QDialog" name="SettingsDialog">
-  <property name="windowModality">
-   <enum>Qt::NonModal</enum>
-  </property>
   <property name="geometry">
    <rect>
     <x>0</x>
@@ -20,6 +17,12 @@
    </sizepolicy>
   </property>
   <property name="minimumSize">
+   <size>
+    <width>451</width>
+    <height>720</height>
+   </size>
+  </property>
+  <property name="maximumSize">
    <size>
     <width>451</width>
     <height>720</height>
@@ -202,7 +205,7 @@ eg &quot;localhost:12345 localhost:12346&quot;</string>
       <widget class="QGroupBox" name="groupBox_5">
        <property name="geometry">
         <rect>
-         <x>10</x>
+         <x>20</x>
          <y>520</y>
          <width>401</width>
          <height>151</height>
@@ -215,7 +218,7 @@ eg &quot;localhost:12345 localhost:12346&quot;</string>
         <property name="geometry">
          <rect>
           <x>10</x>
-          <y>20</y>
+          <y>80</y>
           <width>381</width>
           <height>22</height>
          </rect>
@@ -238,7 +241,7 @@ eg &quot;localhost:12345 localhost:12346&quot;</string>
         <property name="geometry">
          <rect>
           <x>10</x>
-          <y>50</y>
+          <y>10</y>
           <width>70</width>
           <height>41</height>
          </rect>
@@ -250,9 +253,9 @@ eg &quot;localhost:12345 localhost:12346&quot;</string>
        <widget class="QLineEdit" name="lineEditZmqConnectAddress">
         <property name="geometry">
          <rect>
-          <x>190</x>
-          <y>60</y>
-          <width>201</width>
+          <x>200</x>
+          <y>20</y>
+          <width>191</width>
           <height>20</height>
          </rect>
         </property>
@@ -260,9 +263,9 @@ eg &quot;localhost:12345 localhost:12346&quot;</string>
        <widget class="QLabel" name="label_12">
         <property name="geometry">
          <rect>
-          <x>120</x>
-          <y>60</y>
-          <width>51</width>
+          <x>130</x>
+          <y>20</y>
+          <width>61</width>
           <height>25</height>
          </rect>
         </property>
@@ -288,9 +291,9 @@ eg &quot;localhost:12345 localhost:12346&quot;</string>
        <widget class="QLabel" name="label_13">
         <property name="geometry">
          <rect>
-          <x>130</x>
-          <y>90</y>
-          <width>31</width>
+          <x>140</x>
+          <y>50</y>
+          <width>51</width>
           <height>25</height>
          </rect>
         </property>
@@ -316,9 +319,9 @@ eg &quot;localhost:12345 localhost:12346&quot;</string>
        <widget class="QLineEdit" name="lineEditZmqTopic">
         <property name="geometry">
          <rect>
-          <x>190</x>
-          <y>90</y>
-          <width>101</width>
+          <x>200</x>
+          <y>50</y>
+          <width>113</width>
           <height>20</height>
          </rect>
         </property>
@@ -545,17 +548,17 @@ eg &quot;localhost:12345 localhost:12346&quot;</string>
          <x>10</x>
          <y>20</y>
          <width>401</width>
-         <height>191</height>
+         <height>91</height>
         </rect>
        </property>
        <property name="title">
-        <string>Voice decoding</string>
+        <string>ZeroMQ</string>
        </property>
-       <widget class="QLabel" name="labelBindAddress">
+       <widget class="QLabel" name="label">
         <property name="geometry">
          <rect>
           <x>20</x>
-          <y>110</y>
+          <y>20</y>
           <width>101</width>
           <height>16</height>
          </rect>
@@ -571,7 +574,7 @@ eg &quot;localhost:12345 localhost:12346&quot;</string>
         <property name="geometry">
          <rect>
           <x>150</x>
-          <y>110</y>
+          <y>20</y>
           <width>221</width>
           <height>20</height>
          </rect>
@@ -586,65 +589,30 @@ eg &quot;localhost:12345 localhost:12346&quot;</string>
          <string>tcp://*:5550</string>
         </property>
        </widget>
-       <widget class="QCheckBox" name="ambeEnabled">
+      </widget>
+      <widget class="QGroupBox" name="groupBox_8">
        <property name="geometry">
         <rect>
-          <x>20</x>
-          <y>30</y>
-          <width>171</width>
-          <height>17</height>
+         <x>10</x>
+         <y>120</y>
+         <width>401</width>
+         <height>61</height>
         </rect>
        </property>
-        <property name="text">
-         <string>JAERO voice decoding</string>
+       <property name="title">
+        <string>AMBE</string>
        </property>
-       </widget>
-       <widget class="QCheckBox" name="remoteAmbeEnabled">
+       <widget class="QCheckBox" name="ambeEnabled">
         <property name="geometry">
          <rect>
           <x>20</x>
-          <y>70</y>
-          <width>171</width>
+          <y>20</y>
+          <width>111</width>
           <height>17</height>
          </rect>
         </property>
         <property name="text">
-         <string>Remote voice decoding</string>
-        </property>
-       </widget>
-       <widget class="QLabel" name="label_2">
-        <property name="geometry">
-         <rect>
-          <x>20</x>
-          <y>150</y>
-          <width>47</width>
-          <height>13</height>
-         </rect>
-        </property>
-        <property name="text">
-         <string>Topic</string>
-        </property>
-       </widget>
-       <widget class="QLineEdit" name="lineEditZMQBindTopic">
-        <property name="enabled">
-         <bool>true</bool>
-        </property>
-        <property name="geometry">
-         <rect>
-          <x>150</x>
-          <y>150</y>
-          <width>91</width>
-          <height>20</height>
-         </rect>
-        </property>
-        <property name="sizePolicy">
-         <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
-          <horstretch>0</horstretch>
-          <verstretch>0</verstretch>
-         </sizepolicy>
-        </property>
-        <property name="text">
-         <string>JAERO</string>
+         <string>AMBE enabled</string>
         </property>
        </widget>
       </widget>
@@ -748,38 +716,6 @@ eg &quot;localhost:12345 localhost:12346&quot;</string>
     <hint type="destinationlabel">
      <x>287</x>
      <y>610</y>
-    </hint>
-   </hints>
-  </connection>
-  <connection>
-   <sender>remoteAmbeEnabled</sender>
-   <signal>toggled(bool)</signal>
-   <receiver>lineEditZMQBind</receiver>
-   <slot>setEnabled(bool)</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>126</x>
-     <y>129</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>281</x>
-     <y>170</y>
-    </hint>
-   </hints>
-  </connection>
-  <connection>
-   <sender>remoteAmbeEnabled</sender>
-   <signal>toggled(bool)</signal>
-   <receiver>lineEditZMQBindTopic</receiver>
-   <slot>setEnabled(bool)</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>126</x>
-     <y>129</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>216</x>
-     <y>210</y>
     </hint>
    </hints>
   </connection>

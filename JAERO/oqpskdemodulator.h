@@ -25,6 +25,7 @@ public:
         double fb;
         double Fs;
         double signalthreshold;
+        bool zmqAudio;
         Settings()
         {
             coarsefreqest_fft_power=14;//13;//2^coarsefreqest_fft_power
@@ -33,6 +34,7 @@ public:
             fb=10500;//bps
             Fs=48000;//Hz
             signalthreshold=0.65;//0.6;
+            zmqAudio=false;
         }
     };
     explicit OqpskDemodulator(QObject *parent);
@@ -145,6 +147,7 @@ public slots:
     void FreqOffsetEstimateSlot(double freq_offset_est);
     void CenterFreqChangedSlot(double freq_center);
     void DCDstatSlot(bool _dcd);
+    void dataReceived(const QByteArray &audio);
 
 };
 

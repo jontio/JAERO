@@ -21,7 +21,8 @@ TARGET = JAERO
 TEMPLATE = app
 
 INSTALL_PATH = /opt/jaero
-JFFT_PATH = ../../JFFT/
+JFFT_PATH = C:/work/git_repos/JFFT/
+EXT_DEP_PATH=C:/work/svn/JAERO
 
 QMAKE_CXXFLAGS += -std=c++11
 
@@ -85,7 +86,9 @@ SOURCES += mainwindow.cpp \
     $$JFFT_PATH/jfft.cpp \
     util/stdio_utils.cpp \
     util/file_utils.cpp \
-    util/RuntimeError.cpp
+    util/RuntimeError.cpp\
+    audioreceiver.cpp
+
 
 HEADERS  += mainwindow.h \
     coarsefreqestimate.h \
@@ -119,18 +122,10 @@ HEADERS  += mainwindow.h \
     $$JFFT_PATH/jfft.h \
     util/stdio_utils.h \
     util/file_utils.h \
-    util/RuntimeError.h
+    util/RuntimeError.h\
+    audioreceiver.h
 
-# Tell the qcustomplot header that it will be used as library:
-DEFINES += QCUSTOMPLOT_USE_LIBRARY
-#qcustom plot is called different names on different systems
-win32 {
-#message("windows")
-LIBS += -lqcustomplot2
-} else {
-#message("not windows")
-LIBS += -lqcustomplot
-}
+
 
 FORMS    += mainwindow.ui \
     gui_classes/settingsdialog.ui \
@@ -158,8 +153,46 @@ QMAKE_CXXFLAGS_RELEASE += -O3
 # add the desired -O3 if not present
 #QMAKE_CXXFLAGS_RELEASE *= -O3
 
+
+
+win32 {
+#on windows the libcorrect dlls are here
+INCLUDEPATH +=$$EXT_DEP_PATH/libcorrect/include
+contains(QT_ARCH, i386) {
+    #message("32-bit")
+    LIBS += -L$$EXT_DEP_PATH/libcorrect/lib/32
+} else {
+    #message("64-bit")
+    LIBS += -L$$EXT_DEP_PATH/libcorrect/lib/64
+}
+LIBS += -llibcorrect
+}
+
+win32 {
+# libacars support
+INCLUDEPATH +=$$EXT_DEP_PATH/libacars-2.1.2
+LIBS += -L$$EXT_DEP_PATH/libacars-2.1.2/build/libacars
+#in windows use the dynamic lib rather than the static one even when stattically compiling
+
+LIBS += -lacars-2.dll
+} else {
+LIBS += -lacars-2
+}
+
+win32: LIBS += -L$$EXT_DEP_PATH/libzmq/lib/ -llibzmq-v120-mt-4_0_4
+
+INCLUDEPATH += $$EXT_DEP_PATH/libzmq/include
+DEPENDPATH += $$EXT_DEP_PATH/libzmq/include
+
 #for static building order seems to matter
-LIBS += -lcorrect -lvorbis -lvorbisenc -logg -lacars
+LIBS += -lcorrect -lvorbis -lvorbisenc -logg
+
+
+#for audio compressor
+#for static building order seems to matter
+INCLUDEPATH += $$EXT_DEP_PATH/libvorbis-1.3.6/include
+LIBS += -L$$EXT_DEP_PATH/libvorbis-1.3.6/lib/.libs -lvorbis -lvorbisenc
+LIBS += -L$$EXT_DEP_PATH/libogg-1.3.3/src/.libs -logg
 
 #desktop
 desktop.path = /usr/share/applications
@@ -185,3 +218,26 @@ INSTALLS += target
 QMAKE_CXXFLAGS += '-Wno-deprecated-copy'
 
 #QMAKE_CXXFLAGS += '-Werror=format-security'
+
+win32: LIBS += -L$$PWD/../../../svn/build-qcustomplot-Desktop_Qt_MinGW_w64_64bit_MSYS2-Release/release/ -lqcustomplot
+
+INCLUDEPATH += $$PWD/../../../svn/qcustomplot
+DEPENDPATH += $$PWD/../../../svn/qcustomplot
+
+win32:!win32-g++: PRE_TARGETDEPS += $$PWD/../../../svn/build-qcustomplot-Desktop_Qt_MinGW_w64_64bit_MSYS2-Release/release/qcustomplot.lib
+else:win32-g++: PRE_TARGETDEPS += $$PWD/../../../svn/build-qcustomplot-Desktop_Qt_MinGW_w64_64bit_MSYS2-Release/release/libqcustomplot.a
+
+#define where we store everything so when using the command line we don't make the main directory messy.
+CONFIG(debug, debug|release) {
+    DESTDIR = $$PWD/debug
+    OBJECTS_DIR = $$PWD/tmp/debug/stuff
+    MOC_DIR = $$PWD/tmp/debug/stuff
+    UI_DIR = $$PWD/tmp/debug/stuff
+    RCC_DIR = $$PWD/tmp/debug/stuff
+} else {
+    DESTDIR = $$PWD/release
+    OBJECTS_DIR = $$PWD/tmp/release/stuff
+    MOC_DIR = $$PWD/tmp/release/stuff
+    UI_DIR = $$PWD/tmp/release/stuff
+    RCC_DIR = $$PWD/tmp/release/stuff
+}
