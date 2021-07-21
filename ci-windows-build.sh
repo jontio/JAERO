@@ -14,7 +14,7 @@
 #fail on first error
 set -e
 
-pacman -S --needed --noconfirm git mingw-w64-x86_64-toolchain autoconf libtool mingw-w64-x86_64-cpputest mingw-w64-x86_64-qt5 mingw-w64-x86_64-cmake mingw-w64-x86_64-libvorbis zip p7zip unzip zeromq
+pacman -S --needed --noconfirm git mingw-w64-x86_64-toolchain autoconf libtool mingw-w64-x86_64-cpputest mingw-w64-x86_64-qt5 mingw-w64-x86_64-cmake mingw-w64-x86_64-libvorbis zip p7zip unzip mingw-w64-x86_64-zeromq
 
 #get script path
 SCRIPT=$(realpath $0)
@@ -123,6 +123,7 @@ cp /mingw64/bin/libintl-8.dll $PWD
 cp /mingw64/bin/libpcre-1.dll $PWD
 cp /mingw64/bin/libbrotlicommon.dll $PWD
 cp /mingw64/bin/libiconv-2.dll $PWD
+cp /mingw64/bin/libzmq.dll $PWD
 #7za.exe not needed anymore
 #cp /usr/lib/p7zip/7za.exe $PWD
 #cp /usr/bin/msys-stdc++-6.dll $PWD
