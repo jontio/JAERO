@@ -12,12 +12,21 @@ AudioOqpskDemodulator::AudioOqpskDemodulator(QObject *parent)
 void AudioOqpskDemodulator::start()
 {
     OqpskDemodulator::start();
+
+    if(!settings.zmqAudio)
+    {
     if(m_audioInput)m_audioInput->start(this);
+}
+
 }
 
 void AudioOqpskDemodulator::stop()
 {
+    if(!settings.zmqAudio)
+    {
     if(m_audioInput)m_audioInput->stop();
+
+    }
     OqpskDemodulator::stop();
 }
 

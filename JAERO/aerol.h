@@ -397,26 +397,47 @@ class AeroLScrambler
 public:
     AeroLScrambler()
     {
-        reset();
-    }
-    void reset()
-    {
+        QVector<int> state;
+        position=0;
+        pre_state.resize(5000);
         int tmp[]={1,1,0,1,0,0,1,0,1,0,1,1,0,0,1,-1};
         state.clear();
         for(int i=0;tmp[i]>=0;i++)state.push_back(tmp[i]);
+
+
+        // populate the vector so we can reuse it
+        for(int a = 0; a<5000;a++)
+        {
+
+                int val0 = state.at(0)^state.at(14);
+                pre_state[a]=val0;
+                for(int i=state.size()-1;i>0;i--)
+                {
+                    state[i]=state.at(i-1);
     }
+                state[0] =val0;
+
+        }
+    }
+
     void update(QVector<int> &data)
     {
         for(int j=0;j<data.size();j++)
         {
-            int val0=state.at(0)^state.at(14);
-            data[j] = data.at(j)^val0;
-            for(int i=state.size()-1;i>0;i--)state[i]=state.at(i-1);
-            state[0]=val0;
+            data[j] = data.at(j)^pre_state.at(position);
+            position++;
         }
+        
+        }
+    void reset()
+    {
+
+        position = 0;
     }
 private:
-    QVector<int> state;
+
+    QVector<int> pre_state;
+    int position;
 };
 
 class PuncturedCode
@@ -626,7 +647,7 @@ public:
         bool cont = false;
 
 
-        if((((blockptr-(64*5))%(64*3))==0) && (blockptr /64 == 5 || blockptr /64 == targetBlocks || blockptr/64 == 8 || blockptr/64 == 50))
+        if((((blockptr-(64*5))%(64*3))==0) && (blockptr /64 == 5 || blockptr /64 == targetBlocks || blockptr/64 == 11 || blockptr/64 == 50))
         {
             cont = true;
         }
@@ -666,6 +687,10 @@ public:
                     lastpacketstate=OK_R_Packet;
 
                     return OK_R_Packet;
+                }else{
+
+                    return Nothing;
+
                 }
             }
 
@@ -682,11 +707,7 @@ public:
             else
             {
 
-                  if(blockptr/64 ==5){
-                    return Nothing;
-                }
-
-                if(blockptr/64 == 8){
+                 if(blockptr/64 == 11){
 
                     // we should be able to peek at the SU after the initial SU and figure out the number of SU's in this
                     // burst
@@ -703,7 +724,7 @@ public:
 
                     }
 
-                    targetBlocks = (targetSUSize*3) +2;
+                    targetBlocks = ((targetSUSize+1)*3) +2;
 
                     return Nothing;
                 }
@@ -711,7 +732,7 @@ public:
                 // this should be the target blocks for this T packet
                 if(blockptr/64 == targetBlocks)
                 {
-                    for(int i=0;i<targetSUSize;i++)
+                    for(int i=0;i<targetSUSize-3;i++)
                     {
                         crcok=crc16.calcusingbitsandcheck(deconvol.data()+(8*6)+(8*12)*i,8*12);
 
@@ -890,6 +911,7 @@ signals:
     void DataCarrierDetect(bool status);
     void ACARSsignal(ACARSItem &acarsitem);
     void Errorsignal(QString &error);
+    void Voicesignal(QByteArray &data, QString &hex);
     void Voicesignal(const QByteArray &data);
     void CChannelAssignmentSignal(CChannelAssignmentItem &item);
     void Call_progress_Signal(QByteArray infofield);
@@ -915,6 +937,8 @@ private:
     bool Start();
     void Stop();
     void SendCAssignment(int k, QString decline);
+    void SendLogOnOff(int k, QString text);
+
     CChannelAssignmentItem CreateCAssignmentItem(QByteArray su);
     QByteArray &Decode(QVector<short> &bits, bool soft = false);
     QByteArray &DecodeC(QVector<short> &bits);

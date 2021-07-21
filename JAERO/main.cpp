@@ -11,7 +11,7 @@ int main(int argc, char *argv[])
     QApplication::setApplicationVersion("1.0.4.4");
 
     QCommandLineParser cmdparser;
-    cmdparser.setApplicationDescription("Demodulatoe and decode Satcom ACARS");
+    cmdparser.setApplicationDescription("Demodulate and decode Satcom ACARS");
     cmdparser.addHelpOption();
     cmdparser.addVersionOption();
 

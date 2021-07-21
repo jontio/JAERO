@@ -2,12 +2,15 @@
 <ui version="4.0">
  <class>SettingsDialog</class>
  <widget class="QDialog" name="SettingsDialog">
+  <property name="windowModality">
+   <enum>Qt::NonModal</enum>
+  </property>
   <property name="geometry">
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>451</width>
-    <height>665</height>
+    <width>453</width>
+    <height>753</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -19,13 +22,7 @@
   <property name="minimumSize">
    <size>
     <width>451</width>
-    <height>665</height>
-   </size>
-  </property>
-  <property name="maximumSize">
-   <size>
-    <width>451</width>
-    <height>665</height>
+    <height>720</height>
    </size>
   </property>
   <property name="windowTitle">
@@ -206,19 +203,19 @@ eg &quot;localhost:12345 localhost:12346&quot;</string>
        <property name="geometry">
         <rect>
          <x>10</x>
-         <y>470</y>
+         <y>520</y>
          <width>401</width>
-         <height>101</height>
+         <height>151</height>
         </rect>
        </property>
        <property name="title">
-        <string>Soundcard</string>
+        <string>Audio source</string>
        </property>
        <widget class="QComboBox" name="comboBoxsoundcard">
         <property name="geometry">
          <rect>
           <x>10</x>
-          <y>30</y>
+          <y>20</y>
           <width>381</width>
           <height>22</height>
          </rect>
@@ -227,14 +224,103 @@ eg &quot;localhost:12345 localhost:12346&quot;</string>
        <widget class="QCheckBox" name="checkBoxlogwidebandwidthenable">
         <property name="geometry">
          <rect>
-          <x>20</x>
-          <y>67</y>
+          <x>10</x>
+          <y>120</y>
           <width>321</width>
           <height>19</height>
          </rect>
         </property>
         <property name="text">
          <string>Enable widebandwidth (CPU intensive)</string>
+        </property>
+       </widget>
+       <widget class="QCheckBox" name="checkBoxZMQ">
+        <property name="geometry">
+         <rect>
+          <x>10</x>
+          <y>50</y>
+          <width>70</width>
+          <height>41</height>
+         </rect>
+        </property>
+        <property name="text">
+         <string>ZMQ Audio</string>
+        </property>
+       </widget>
+       <widget class="QLineEdit" name="lineEditZmqConnectAddress">
+        <property name="geometry">
+         <rect>
+          <x>190</x>
+          <y>60</y>
+          <width>201</width>
+          <height>20</height>
+         </rect>
+        </property>
+       </widget>
+       <widget class="QLabel" name="label_12">
+        <property name="geometry">
+         <rect>
+          <x>120</x>
+          <y>60</y>
+          <width>51</width>
+          <height>25</height>
+         </rect>
+        </property>
+        <property name="minimumSize">
+         <size>
+          <width>0</width>
+          <height>25</height>
+         </size>
+        </property>
+        <property name="maximumSize">
+         <size>
+          <width>16777215</width>
+          <height>25</height>
+         </size>
+        </property>
+        <property name="text">
+         <string>Address</string>
+        </property>
+        <property name="alignment">
+         <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+        </property>
+       </widget>
+       <widget class="QLabel" name="label_13">
+        <property name="geometry">
+         <rect>
+          <x>130</x>
+          <y>90</y>
+          <width>31</width>
+          <height>25</height>
+         </rect>
+        </property>
+        <property name="minimumSize">
+         <size>
+          <width>0</width>
+          <height>25</height>
+         </size>
+        </property>
+        <property name="maximumSize">
+         <size>
+          <width>16777215</width>
+          <height>25</height>
+         </size>
+        </property>
+        <property name="text">
+         <string>Topic</string>
+        </property>
+        <property name="alignment">
+         <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+        </property>
+       </widget>
+       <widget class="QLineEdit" name="lineEditZmqTopic">
+        <property name="geometry">
+         <rect>
+          <x>190</x>
+          <y>90</y>
+          <width>101</width>
+          <height>20</height>
+         </rect>
         </property>
        </widget>
       </widget>
@@ -308,7 +394,7 @@ eg &quot;localhost:12345 localhost:12346&quot;</string>
          <x>10</x>
          <y>390</y>
          <width>401</width>
-         <height>71</height>
+         <height>121</height>
         </rect>
        </property>
        <property name="title">
@@ -443,6 +529,126 @@ eg &quot;localhost:12345 localhost:12346&quot;</string>
        </property>
       </widget>
      </widget>
+     <widget class="QWidget" name="voicesettings">
+      <property name="sizePolicy">
+       <sizepolicy hsizetype="Fixed" vsizetype="Preferred">
+        <horstretch>8</horstretch>
+        <verstretch>0</verstretch>
+       </sizepolicy>
+      </property>
+      <attribute name="title">
+       <string>Voice Settings</string>
+      </attribute>
+      <widget class="QGroupBox" name="groupBox_3">
+       <property name="geometry">
+        <rect>
+         <x>10</x>
+         <y>20</y>
+         <width>401</width>
+         <height>191</height>
+        </rect>
+       </property>
+       <property name="title">
+        <string>Voice decoding</string>
+       </property>
+       <widget class="QLabel" name="labelBindAddress">
+        <property name="geometry">
+         <rect>
+          <x>20</x>
+          <y>110</y>
+          <width>101</width>
+          <height>16</height>
+         </rect>
+        </property>
+        <property name="text">
+         <string>Socket bind address</string>
+        </property>
+       </widget>
+       <widget class="QLineEdit" name="lineEditZMQBind">
+        <property name="enabled">
+         <bool>true</bool>
+        </property>
+        <property name="geometry">
+         <rect>
+          <x>150</x>
+          <y>110</y>
+          <width>221</width>
+          <height>20</height>
+         </rect>
+        </property>
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+          <horstretch>0</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
+        </property>
+        <property name="text">
+         <string>tcp://*:5550</string>
+        </property>
+       </widget>
+       <widget class="QCheckBox" name="ambeEnabled">
+       <property name="geometry">
+        <rect>
+          <x>20</x>
+          <y>30</y>
+          <width>171</width>
+          <height>17</height>
+        </rect>
+       </property>
+        <property name="text">
+         <string>JAERO voice decoding</string>
+       </property>
+       </widget>
+       <widget class="QCheckBox" name="remoteAmbeEnabled">
+        <property name="geometry">
+         <rect>
+          <x>20</x>
+          <y>70</y>
+          <width>171</width>
+          <height>17</height>
+         </rect>
+        </property>
+        <property name="text">
+         <string>Remote voice decoding</string>
+        </property>
+       </widget>
+       <widget class="QLabel" name="label_2">
+        <property name="geometry">
+         <rect>
+          <x>20</x>
+          <y>150</y>
+          <width>47</width>
+          <height>13</height>
+         </rect>
+        </property>
+        <property name="text">
+         <string>Topic</string>
+        </property>
+       </widget>
+       <widget class="QLineEdit" name="lineEditZMQBindTopic">
+        <property name="enabled">
+         <bool>true</bool>
+        </property>
+        <property name="geometry">
+         <rect>
+          <x>150</x>
+          <y>150</y>
+          <width>91</width>
+          <height>20</height>
+         </rect>
+        </property>
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+          <horstretch>0</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
+        </property>
+        <property name="text">
+         <string>JAERO</string>
+        </property>
+       </widget>
+      </widget>
+     </widget>
     </widget>
    </item>
    <item>
@@ -494,6 +700,86 @@ eg &quot;localhost:12345 localhost:12346&quot;</string>
     <hint type="destinationlabel">
      <x>286</x>
      <y>274</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>checkBoxZMQ</sender>
+   <signal>toggled(bool)</signal>
+   <receiver>comboBoxsoundcard</receiver>
+   <slot>setDisabled(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>75</x>
+     <y>581</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>231</x>
+     <y>641</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>checkBoxZMQ</sender>
+   <signal>toggled(bool)</signal>
+   <receiver>lineEditZmqConnectAddress</receiver>
+   <slot>setEnabled(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>75</x>
+     <y>581</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>326</x>
+     <y>580</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>checkBoxZMQ</sender>
+   <signal>toggled(bool)</signal>
+   <receiver>lineEditZmqTopic</receiver>
+   <slot>setEnabled(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>75</x>
+     <y>581</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>287</x>
+     <y>610</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>remoteAmbeEnabled</sender>
+   <signal>toggled(bool)</signal>
+   <receiver>lineEditZMQBind</receiver>
+   <slot>setEnabled(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>126</x>
+     <y>129</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>281</x>
+     <y>170</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>remoteAmbeEnabled</sender>
+   <signal>toggled(bool)</signal>
+   <receiver>lineEditZMQBindTopic</receiver>
+   <slot>setEnabled(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>126</x>
+     <y>129</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>216</x>
+     <y>210</y>
     </hint>
    </hints>
   </connection>

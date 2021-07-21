@@ -85,7 +85,9 @@ SOURCES += mainwindow.cpp \
     $$JFFT_PATH/jfft.cpp \
     util/stdio_utils.cpp \
     util/file_utils.cpp \
-    util/RuntimeError.cpp
+    util/RuntimeError.cpp\
+    audioreceiver.cpp
+
 
 HEADERS  += mainwindow.h \
     coarsefreqestimate.h \
@@ -119,17 +121,19 @@ HEADERS  += mainwindow.h \
     $$JFFT_PATH/jfft.h \
     util/stdio_utils.h \
     util/file_utils.h \
-    util/RuntimeError.h
+    util/RuntimeError.h\
+    audioreceiver.h
+
 
 # Tell the qcustomplot header that it will be used as library:
 DEFINES += QCUSTOMPLOT_USE_LIBRARY
 #qcustom plot is called different names on different systems
 win32 {
 #message("windows")
-LIBS += -lqcustomplot2
+LIBS += -lqcustomplot2 -llibzmq
 } else {
 #message("not windows")
-LIBS += -lqcustomplot
+LIBS += -lqcustomplot -lzmq
 }
 
 FORMS    += mainwindow.ui \
@@ -159,7 +163,7 @@ QMAKE_CXXFLAGS_RELEASE += -O3
 #QMAKE_CXXFLAGS_RELEASE *= -O3
 
 #for static building order seems to matter
-LIBS += -lcorrect -lvorbis -lvorbisenc -logg -lacars
+LIBS += -lcorrect -lvorbis -lvorbisenc -logg -lacars 
 
 #desktop
 desktop.path = /usr/share/applications

@@ -127,7 +127,10 @@ void BurstMskDemodulator::setSQL(bool state)
 {
     sql=state;
 }
-
+void BurstMskDemodulator::setCPUReduce(bool state)
+{
+    cpuReduce=state;
+}
 void BurstMskDemodulator::setScatterPointType(ScatterPointType type)
 {
     scatterpointtype=type;
@@ -395,7 +398,8 @@ qint64 BurstMskDemodulator::writeData(const char *data, qint64 len)
         if(fabs(dval)>maxval)maxval=fabs(dval);
         spectrumcycbuff[spectrumcycbuff_ptr]=dval;
         spectrumcycbuff_ptr++;spectrumcycbuff_ptr%=spectrumnfft;
-        if(timer.elapsed()>150)
+        //if(timer.elapsed()>150)
+        if((!cpuReduce && timer.elapsed()>150) || (cpuReduce && timer.elapsed()>1000))
         {
             timer.start();
             emit OrgOverlapedBuffer(spectrumcycbuff);
@@ -592,6 +596,9 @@ qint64 BurstMskDemodulator::writeData(const char *data, qint64 len)
         }
 
 
+        if(startstop > 0 || mse < signalthreshold)
+        {
+
         cval= mixer2.WTCISValue()*(val_to_demod)*vol_gain;
 
         cpx_type sig2 = cpx_type(matchedfilter_re->FIRUpdateAndProcess(cval.real()),matchedfilter_im->FIRUpdateAndProcess(cval.imag()));
@@ -738,6 +745,8 @@ qint64 BurstMskDemodulator::writeData(const char *data, qint64 len)
 
         mixer2.WTnextFrame();
         mixer_center.WTnextFrame();
+
+          }
     }
 
     return len;
@@ -750,3 +759,9 @@ void BurstMskDemodulator::DCDstatSlot(bool _dcd)
     dcd=_dcd;
 }
 
+void BurstMskDemodulator::dataReceived(const QByteArray &audio)
+{
+
+    writeData(audio, audio.length());
+
+}

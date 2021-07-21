@@ -17,7 +17,7 @@ set -e
 if [[ ! $(sudo echo 0) ]]; then exit; fi
 
 #install dependancies and build tools
-sudo apt-get install qt5-default cpputest build-essential qtmultimedia5-dev cmake libvorbis-dev libogg-dev libqt5multimedia5-plugins checkinstall libqcustomplot-dev libqt5svg5-dev -y
+sudo apt-get install qt5-default cpputest build-essential qtmultimedia5-dev cmake libvorbis-dev libogg-dev libqt5multimedia5-plugins checkinstall libqcustomplot-dev libqt5svg5-dev libzmq3-dev -y
 
 #get script path
 SCRIPT=$(realpath $0)
@@ -170,7 +170,7 @@ Package: ${PACKAGE_NAME}
 Source: ${PACKAGE_SOURCE}
 Section: base
 Priority: extra
-Depends: qt5-default (>= 5.12), qtmultimedia5-dev, libvorbis-dev, libogg-dev, libqt5multimedia5-plugins, libqcustomplot-dev, libqt5svg5-dev
+Depends: qt5-default (>= 5.12), qtmultimedia5-dev, libvorbis-dev, libogg-dev, libqt5multimedia5-plugins, libqcustomplot-dev, libqt5svg5-dev, libzmq3-dev
 Provides: ${PACKAGE_NAME}
 Maintainer: ${MAINTAINER}
 Version: ${PACKAGE_VERSION%_*}
