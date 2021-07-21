@@ -13,7 +13,6 @@
 #endif
 
 #include "databasetext.h"
-#include "zmq_utils.h"
 #include "zmq.h"
 
 

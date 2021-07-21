@@ -130,10 +130,10 @@ DEFINES += QCUSTOMPLOT_USE_LIBRARY
 #qcustom plot is called different names on different systems
 win32 {
 #message("windows")
-LIBS += -lqcustomplot2
+LIBS += -lqcustomplot2 -llibzmq
 } else {
 #message("not windows")
-LIBS += -lqcustomplot
+LIBS += -lqcustomplot -lzmq
 }
 
 FORMS    += mainwindow.ui \
@@ -163,7 +163,7 @@ QMAKE_CXXFLAGS_RELEASE += -O3
 #QMAKE_CXXFLAGS_RELEASE *= -O3
 
 #for static building order seems to matter
-LIBS += -lcorrect -lvorbis -lvorbisenc -logg -lacars -llibzmq
+LIBS += -lcorrect -lvorbis -lvorbisenc -logg -lacars 
 
 #desktop
 desktop.path = /usr/share/applications
