@@ -124,6 +124,7 @@ cp /mingw64/bin/libpcre-1.dll $PWD
 cp /mingw64/bin/libbrotlicommon.dll $PWD
 cp /mingw64/bin/libiconv-2.dll $PWD
 cp /mingw64/bin/libzmq.dll $PWD
+cp /mingw64/bin/libsodium-23.dll $PWD
 #7za.exe not needed anymore
 #cp /usr/lib/p7zip/7za.exe $PWD
 #cp /usr/bin/msys-stdc++-6.dll $PWD
