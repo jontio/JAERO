@@ -23,8 +23,8 @@ MainWindow::MainWindow(QWidget *parent) :
 
     ui->setupUi(this);
 
-    // Nice with VFO name up on the title
-    //QTimer::singleShot(100, [this]() { setWindowTitle("JAERO "+QString(JAERO_VERSION)); } );
+    // Nice with VFO name up on the title. You mean it would be nice with the VFO name?
+    QTimer::singleShot(100, [this]() { setWindowTitle("JAERO "+QString(JAERO_VERSION)); } );
 
     beep=new QSound(":/sounds/beep.wav",this);
 
@@ -233,6 +233,8 @@ MainWindow::MainWindow(QWidget *parent) :
 
     ui->actionTXRX->setVisible(false);//there is a hidden audio modulator icon.
 
+    //for zmq stuff
+
     zmqStatus = -1;
     context = zmq_ctx_new();
     publisher = zmq_socket(context, ZMQ_PUB);
@@ -247,11 +249,9 @@ MainWindow::MainWindow(QWidget *parent) :
     zmq_setsockopt(publisher, ZMQ_TCP_KEEPALIVE_IDLE,(void*)&keepaliveidle,sizeof(ZMQ_TCP_KEEPALIVE_IDLE));
     zmq_setsockopt(publisher, ZMQ_TCP_KEEPALIVE_INTVL,(void*)&keepaliveintrv,sizeof(ZMQ_TCP_KEEPALIVE_INTVL));
 
-
     //set pop and accept settings
     settingsdialog->populatesettings();
     acceptsettings();
-
 
 }
 
@@ -265,7 +265,6 @@ void MainWindow::selectdemodulatorconnections(DemodType demodtype)
         audiooqpskdemodulator->invalidatesettings();
         audioburstoqpskdemodulator->invalidatesettings();
         audioburstmskdemodulator->invalidatesettings();
-
     }
     lastdemodtype=demodtype;
     switch(demodtype)
@@ -340,8 +339,6 @@ void MainWindow::selectdemodulatorconnections(DemodType demodtype)
         {
              disconnect(pRecThrd, SIGNAL(recAudio(const QByteArray&)),audioburstmskdemodulator,SLOT(dataReceived(QByteArray)));
         }
-
-
 
         //some msk connections
         connect(audiomskdemodulator, SIGNAL(Plottables(double,double,double)),              this,SLOT(PlottablesSlot(double,double,double)));
@@ -446,7 +443,6 @@ void MainWindow::selectdemodulatorconnections(DemodType demodtype)
         connect(audiooqpskdemodulator, SIGNAL(SignalStatus(bool)),aerol,SLOT(SignalStatusSlot(bool)));
         if(pRecThrd!=0)
         {
-
            connect(pRecThrd, SIGNAL(recAudio(const QByteArray&)), audiooqpskdemodulator, SLOT(dataReceived(QByteArray)), Qt::UniqueConnection);
         }
 
@@ -507,7 +503,6 @@ void MainWindow::selectdemodulatorconnections(DemodType demodtype)
         {
            disconnect(pRecThrd, SIGNAL(recAudio(const QByteArray&)),audioburstmskdemodulator,SLOT(dataReceived(QByteArray)));
         }
-
 
         //some burstoqpsk connections
         connect(audioburstoqpskdemodulator, SIGNAL(Plottables(double,double,double)),              this,SLOT(PlottablesSlot(double,double,double)));
@@ -644,22 +639,17 @@ void MainWindow::connectZMQ()
 
     if(settingsdialog->zmqAudioOutEnabled)
     {
-
-    QSettings settings("Jontisoft", settings_name);
-
-    QString url = settings.value("remoteAudioOutBindAddress", "tcp://*:5551").toString();
-
-    connected_url = url.toUtf8().constData();
-
-    zmqStatus= zmq_bind(publisher, connected_url.c_str() );
+        QSettings settings("Jontisoft", settings_name);
+        QString url = settings.value("remoteAudioOutBindAddress", "tcp://*:5551").toString();
+        connected_url = url.toUtf8().constData();
+        zmqStatus= zmq_bind(publisher, connected_url.c_str() );
     }
 
     if(pRecThrd!=0 && pRecThrd->running)
     {
-         emit ZMQaudioStop();
-         pRecThrd = 0;
+        emit ZMQaudioStop();
+        pRecThrd = 0;
     }
-
 
     if(settingsdialog->zmqAudioInputEnabled)
     {
@@ -719,7 +709,6 @@ MainWindow::~MainWindow()
          emit ZMQaudioStop();
          delete pRecThrd;
     }
-
 
 }
 
@@ -784,9 +773,8 @@ void MainWindow::on_comboBoxbps_currentIndexChanged(const QString &arg)
     double bitrate_tmp=arg1.split(" ")[0].toDouble();
 
     DemodType lasttypeofdemodtouse=typeofdemodtouse;
-    if(bitrate_tmp>1200){typeofdemodtouse=OQPSK;}
-    else {typeofdemodtouse=MSK;
-    }
+    if(bitrate_tmp>1200)typeofdemodtouse=OQPSK;
+    else typeofdemodtouse=MSK;
     if(arg.contains("burst")&&typeofdemodtouse==OQPSK)typeofdemodtouse=BURSTOQPSK;
     if(arg.contains("burst")&&typeofdemodtouse==MSK)typeofdemodtouse=BURSTMSK;
 
@@ -796,7 +784,6 @@ void MainWindow::on_comboBoxbps_currentIndexChanged(const QString &arg)
         audiooqpskdemodulatorsettings.freq_center=audioburstoqpskdemodulator->getCurrentFreq();
         audiomskdemodulatorsettings.freq_center=audioburstoqpskdemodulator->getCurrentFreq();
         audioburstmskdemodulatorsettings.freq_center=audioburstoqpskdemodulator->getCurrentFreq();
-
     }
 
     if(lasttypeofdemodtouse==OQPSK)
@@ -805,7 +792,6 @@ void MainWindow::on_comboBoxbps_currentIndexChanged(const QString &arg)
         audiooqpskdemodulatorsettings.freq_center=audiooqpskdemodulator->getCurrentFreq();
         audiomskdemodulatorsettings.freq_center=audiooqpskdemodulator->getCurrentFreq();
         audioburstmskdemodulatorsettings.freq_center=audiooqpskdemodulator->getCurrentFreq();
-
     }
 
     if(lasttypeofdemodtouse==MSK)
@@ -814,7 +800,6 @@ void MainWindow::on_comboBoxbps_currentIndexChanged(const QString &arg)
         audiooqpskdemodulatorsettings.freq_center=audiomskdemodulator->getCurrentFreq();
         audiomskdemodulatorsettings.freq_center=audiomskdemodulator->getCurrentFreq();
         audioburstmskdemodulatorsettings.freq_center=audiomskdemodulator->getCurrentFreq();
-
     }
 
     if(lasttypeofdemodtouse==BURSTMSK)
@@ -823,7 +808,6 @@ void MainWindow::on_comboBoxbps_currentIndexChanged(const QString &arg)
         audiooqpskdemodulatorsettings.freq_center=audioburstmskdemodulator->getCurrentFreq();
         audiomskdemodulatorsettings.freq_center=audioburstmskdemodulator->getCurrentFreq();
         audioburstmskdemodulatorsettings.freq_center=audioburstmskdemodulator->getCurrentFreq();
-
     }
 
     audiomskdemodulatorsettings.fb=bitrate_tmp;
@@ -836,7 +820,6 @@ void MainWindow::on_comboBoxbps_currentIndexChanged(const QString &arg)
     audioburstoqpskdemodulatorsettings.zmqAudio = settingsdialog->zmqAudioInputEnabled;
     audioburstmskdemodulatorsettings.zmqAudio = settingsdialog->zmqAudioInputEnabled;
 
-
     if(typeofdemodtouse==BURSTOQPSK)
     {
         audiomskdemodulator->stop();
@@ -844,16 +827,10 @@ void MainWindow::on_comboBoxbps_currentIndexChanged(const QString &arg)
         audioburstmskdemodulator->stop();
         selectdemodulatorconnections(BURSTOQPSK);
 
-
-        if(!settingsdialog->widebandwidthenable)
-        {
-        audioburstoqpskdemodulatorsettings.Fs=48000;
-
-        }else
-        {
-            audioburstoqpskdemodulatorsettings.Fs=96000;
-
-        }
+// BURSTOQPSK can't seem to deal with 96000. not sure why at the moment
+//
+//        if(!settingsdialog->widebandwidthenable)audioburstoqpskdemodulatorsettings.Fs=48000;
+//        else audioburstoqpskdemodulatorsettings.Fs=96000;
 
         int idx=ui->comboBoxlbw->findText(((QString)"%1 Hz").arg(audioburstoqpskdemodulatorsettings.fb*1.0));
         if(idx>=0)audioburstoqpskdemodulatorsettings.lockingbw=ui->comboBoxlbw->itemText(idx).split(" ")[0].toDouble();
@@ -863,9 +840,7 @@ void MainWindow::on_comboBoxbps_currentIndexChanged(const QString &arg)
         audioburstoqpskdemodulator->setSettings(audioburstoqpskdemodulatorsettings);
         if(idx>=0)ui->comboBoxlbw->setCurrentIndex(idx);
 
-        if(pRecThrd != 0)
-        connect(pRecThrd, SIGNAL(recAudio(const QByteArray&)), audioburstoqpskdemodulator, SLOT(dataReceived(QByteArray)), Qt::UniqueConnection);
-
+        if(pRecThrd!=0)connect(pRecThrd, SIGNAL(recAudio(const QByteArray&)), audioburstoqpskdemodulator, SLOT(dataReceived(QByteArray)), Qt::UniqueConnection);
 
         audioburstoqpskdemodulator->start();
     }
@@ -891,9 +866,7 @@ void MainWindow::on_comboBoxbps_currentIndexChanged(const QString &arg)
         audiooqpskdemodulator->setSettings(audiooqpskdemodulatorsettings);
         if(idx>=0)ui->comboBoxlbw->setCurrentIndex(idx);
 
-        if(pRecThrd != 0)
-        connect(pRecThrd, SIGNAL(recAudio(const QByteArray&)), audiooqpskdemodulator, SLOT(dataReceived(QByteArray)), Qt::UniqueConnection);
-
+        if(pRecThrd!=0)connect(pRecThrd, SIGNAL(recAudio(const QByteArray&)), audiooqpskdemodulator, SLOT(dataReceived(QByteArray)), Qt::UniqueConnection);
 
         audiooqpskdemodulator->start();
     }
@@ -921,9 +894,7 @@ void MainWindow::on_comboBoxbps_currentIndexChanged(const QString &arg)
         audiomskdemodulator->setSettings(audiomskdemodulatorsettings);
         if(idx>=0)ui->comboBoxlbw->setCurrentIndex(idx);
 
-        if(pRecThrd != 0)
-        connect(pRecThrd, SIGNAL(recAudio(const QByteArray&)), audiomskdemodulator, SLOT(dataReceived(QByteArray)), Qt::UniqueConnection);
-
+        if(pRecThrd!=0)connect(pRecThrd, SIGNAL(recAudio(const QByteArray&)), audiomskdemodulator, SLOT(dataReceived(QByteArray)), Qt::UniqueConnection);
 
         audiomskdemodulator->start();
     }
@@ -942,13 +913,10 @@ void MainWindow::on_comboBoxbps_currentIndexChanged(const QString &arg)
         audioburstmskdemodulator->setSettings(audioburstmskdemodulatorsettings);
         if(idx>=0)ui->comboBoxlbw->setCurrentIndex(idx);
 
-        if(pRecThrd != 0)
-        connect(pRecThrd, SIGNAL(recAudio(const QByteArray&)), audioburstmskdemodulator, SLOT(dataReceived(QByteArray)), Qt::UniqueConnection);
-
+        if(pRecThrd!=0)connect(pRecThrd, SIGNAL(recAudio(const QByteArray&)), audioburstmskdemodulator, SLOT(dataReceived(QByteArray)), Qt::UniqueConnection);
 
         audioburstmskdemodulator->start();
     }
-
 
 }
 
@@ -983,7 +951,6 @@ void MainWindow::on_comboBoxafc_currentIndexChanged(const QString &arg1)
         audiooqpskdemodulator->setAFC(true);
         audioburstoqpskdemodulator->setAFC(true);
         audioburstmskdemodulator->setAFC(true);
-
     }
     else
     {
@@ -991,7 +958,6 @@ void MainWindow::on_comboBoxafc_currentIndexChanged(const QString &arg1)
         audiooqpskdemodulator->setAFC(false);
         audioburstoqpskdemodulator->setAFC(false);
         audioburstmskdemodulator->setAFC(false);
-
     }
 }
 
@@ -1030,7 +996,6 @@ void MainWindow::on_comboBoxdisplay_currentIndexChanged(const QString &arg1)
         audiooqpskdemodulator->setScatterPointType(OqpskDemodulator::SPT_constellation);
         audioburstoqpskdemodulator->setScatterPointType(BurstOqpskDemodulator::SPT_constellation);
         audioburstmskdemodulator->setScatterPointType(BurstMskDemodulator::SPT_constellation);
-
     }
     if(arg1=="Symbol phase")
     {
@@ -1046,7 +1011,6 @@ void MainWindow::on_comboBoxdisplay_currentIndexChanged(const QString &arg1)
         audiooqpskdemodulator->setScatterPointType(OqpskDemodulator::SPT_None);
         audioburstoqpskdemodulator->setScatterPointType(BurstOqpskDemodulator::SPT_None);
         audioburstmskdemodulator->setScatterPointType(BurstMskDemodulator::SPT_None);
-
     }
 }
 
@@ -1057,7 +1021,6 @@ void MainWindow::on_actionConnectToUDPPort_toggled(bool arg1)
     audioburstoqpskdemodulator->DisconnectSinkDevice();
     audioburstoqpskdemodulator->demod2->DisconnectSinkDevice();
     audioburstmskdemodulator->DisconnectSinkDevice();
-
 
     aerol->DisconnectSinkDevice();
     aerol2->DisconnectSinkDevice();
@@ -1132,7 +1095,6 @@ void MainWindow::acceptsettings()
 
     connectZMQ();
 
-
     //if soundcard rate changed
     if(typeofdemodtouse==MSK)
     {
@@ -1153,9 +1115,7 @@ void MainWindow::acceptsettings()
             audiomskdemodulator->setSettings(audiomskdemodulatorsettings);
         }
 
-        if(pRecThrd != 0)
-        connect(pRecThrd, SIGNAL(recAudio(const QByteArray&)), audiomskdemodulator, SLOT(dataReceived(QByteArray)), Qt::UniqueConnection);
-
+        if(pRecThrd!=0)connect(pRecThrd, SIGNAL(recAudio(const QByteArray&)), audiomskdemodulator, SLOT(dataReceived(QByteArray)), Qt::UniqueConnection);
 
     }
     if(typeofdemodtouse==BURSTMSK)// we only use 48000
@@ -1164,30 +1124,22 @@ void MainWindow::acceptsettings()
         // audioburstmskdemodulatorsettings.Fs=48000;
         // audioburstmskdemodulator->setSettings(audioburstmskdemodulatorsettings);
 
-        if(pRecThrd != 0)
-        connect(pRecThrd, SIGNAL(recAudio(const QByteArray&)), audioburstmskdemodulator, SLOT(dataReceived(QByteArray)), Qt::UniqueConnection);
-
-
+        if(pRecThrd!=0)connect(pRecThrd, SIGNAL(recAudio(const QByteArray&)), audioburstmskdemodulator, SLOT(dataReceived(QByteArray)), Qt::UniqueConnection);
     }
-
 
     if(typeofdemodtouse==OQPSK)//OQPSK uses 48000 all the time so not needed
     {
         //audiooqpskdemodulatorsettings.Fs=48000;
         //audiooqpskdemodulator->setSettings(audiooqpskdemodulatorsettings);
 
-        if(pRecThrd != 0)
-        connect(pRecThrd, SIGNAL(recAudio(const QByteArray&)), audiooqpskdemodulator, SLOT(dataReceived(QByteArray)), Qt::UniqueConnection);
-
+        if(pRecThrd != 0)connect(pRecThrd, SIGNAL(recAudio(const QByteArray&)), audiooqpskdemodulator, SLOT(dataReceived(QByteArray)), Qt::UniqueConnection);
     }
     if(typeofdemodtouse==BURSTOQPSK)//BURSTOQPSK uses 48000 all the time so not needed
     {
         //audioburstoqpskdemodulatorsettings.Fs=48000;
         //audioburstoqpskdemodulator->setSettings(audioburstoqpskdemodulatorsettings);
 
-        if(pRecThrd != 0)
-        connect(pRecThrd, SIGNAL(recAudio(const QByteArray&)), audioburstoqpskdemodulator, SLOT(dataReceived(QByteArray)), Qt::UniqueConnection);
-
+        if(pRecThrd!=0)connect(pRecThrd, SIGNAL(recAudio(const QByteArray&)), audioburstoqpskdemodulator, SLOT(dataReceived(QByteArray)), Qt::UniqueConnection);
     }
 
     //if soundcard device changed
@@ -1272,29 +1224,11 @@ void MainWindow::acceptsettings()
     if(settingsdialog->loggingenable)compresseddiskwriter->setLogDir(settingsdialog->loggingdirectory);
     else compresseddiskwriter->setLogDir("");
 
+    if(settingsdialog->localAudioOutEnabled)connect(aerol,SIGNAL(Voicesignal(QByteArray)),ambe,SLOT(to_decode_slot(QByteArray)),Qt::UniqueConnection);
+    else disconnect(aerol,SIGNAL(Voicesignal(QByteArray)),ambe,SLOT(to_decode_slot(QByteArray)));
 
-    if(settingsdialog->localAudioOutEnabled){
-
-        connect(aerol,SIGNAL(Voicesignal(QByteArray)),ambe,SLOT(to_decode_slot(QByteArray)),Qt::UniqueConnection);
-
-    }else{
-
-        disconnect(aerol,SIGNAL(Voicesignal(QByteArray)),ambe,SLOT(to_decode_slot(QByteArray)));
-
-    }
-
-    if(settingsdialog->zmqAudioOutEnabled){
-
-        connect(aerol,SIGNAL(Voicesignal(QByteArray&, QString&)),this,SLOT(Voiceslot(QByteArray&, QString&)),Qt::UniqueConnection);
-
-    }else
-    {
-
-        disconnect(aerol,SIGNAL(Voicesignal(QByteArray&, QString&)),this,SLOT(Voiceslot(QByteArray&, QString&)));
-
-    }
-
-
+    if(settingsdialog->zmqAudioOutEnabled)connect(aerol,SIGNAL(Voicesignal(QByteArray&, QString&)),this,SLOT(Voiceslot(QByteArray&, QString&)),Qt::UniqueConnection);
+    else disconnect(aerol,SIGNAL(Voicesignal(QByteArray&, QString&)),this,SLOT(Voiceslot(QByteArray&, QString&)));
 
 }
 
@@ -1309,7 +1243,6 @@ void MainWindow::CChannelAssignmentSlot(CChannelAssignmentItem &item)
     QString rx_beam = " Global Beam ";
     if(item.receive_spotbeam)rx_beam=" Spot Beam ";
     message += "Receive Freq: " + QString::number(item.receive_freq) + rx_beam + "Transmit " + QString::number(item.transmit_freq);
-
 
     switch(item.type)
     {
@@ -1331,17 +1264,17 @@ void MainWindow::CChannelAssignmentSlot(CChannelAssignmentItem &item)
 
     ui->plainTextEdit_cchan_assignment->appendPlainText(message);
 }
+
 void MainWindow::Voiceslot(QByteArray &data, QString &hex)
 {
 
     std::string topic_text = settingsdialog->zmqAudioOutTopic.toUtf8().constData();
     zmq_setsockopt(publisher, ZMQ_IDENTITY, topic_text.c_str(), topic_text.length());
 
-    if(data.length() != 0){
-
+    if(data.length()!=0)
+    {
         zmq_send(publisher, topic_text.c_str(), topic_text.length(), ZMQ_SNDMORE);
         zmq_send(publisher, data.data(), data.length(), 0 );
-
     }
     zmq_send(publisher, topic_text.c_str(), 5, ZMQ_SNDMORE);
     zmq_send(publisher, hex.toStdString().c_str(), 6, 0 );
@@ -1543,8 +1476,6 @@ void MainWindow::ERRorslot(QString &error)
     ui->inputwidget->appendHtml("<font color=\"red\">"+error+"</font>");
 }
 
-
-
 void MainWindow::on_tabWidget_currentChanged(int index)
 {
     Q_UNUSED(index);
@@ -1574,12 +1505,8 @@ void MainWindow::on_actionSound_Out_toggled(bool mute)
     }
 }
 
-
 void MainWindow::on_actionReduce_CPU_triggered(bool checked)
 {
-
     audiooqpskdemodulator->setCPUReduce(checked);
     audiomskdemodulator->setCPUReduce(checked);
-
 }
-

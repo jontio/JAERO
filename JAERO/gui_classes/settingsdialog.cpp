@@ -171,7 +171,7 @@ void SettingsDialog::populatesettings()
     ui->lineEditZMQBind->setText(settings.value("remoteAudioOutBindAddress", "tcp://*:5551").toString());
     ui->lineEditZMQBindTopic->setText(settings.value("remoteAudioOutBindTopic", "JAERO").toString());
 
-    ui->checkBoxZMQ->setChecked(settings.value("zmqAudioInputEnabled", true).toBool());
+    ui->checkBoxZMQ->setChecked(settings.value("zmqAudioInputEnabled", false).toBool());
     ui->lineEditZmqConnectAddress->setText(settings.value("zmqAudioInputReceiveAddress", "tcp://127.0.0.1:6003").toString());
 
 

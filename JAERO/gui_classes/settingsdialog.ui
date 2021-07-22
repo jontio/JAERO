@@ -9,8 +9,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>453</width>
-    <height>753</height>
+    <width>451</width>
+    <height>720</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -203,7 +203,7 @@ eg &quot;localhost:12345 localhost:12346&quot;</string>
        <property name="geometry">
         <rect>
          <x>10</x>
-         <y>520</y>
+         <y>470</y>
          <width>401</width>
          <height>151</height>
         </rect>
@@ -239,7 +239,7 @@ eg &quot;localhost:12345 localhost:12346&quot;</string>
          <rect>
           <x>10</x>
           <y>50</y>
-          <width>70</width>
+          <width>101</width>
           <height>41</height>
          </rect>
         </property>
@@ -262,7 +262,7 @@ eg &quot;localhost:12345 localhost:12346&quot;</string>
          <rect>
           <x>120</x>
           <y>60</y>
-          <width>51</width>
+          <width>61</width>
           <height>25</height>
          </rect>
         </property>
@@ -290,7 +290,7 @@ eg &quot;localhost:12345 localhost:12346&quot;</string>
          <rect>
           <x>130</x>
           <y>90</y>
-          <width>31</width>
+          <width>51</width>
           <height>25</height>
          </rect>
         </property>
@@ -394,7 +394,7 @@ eg &quot;localhost:12345 localhost:12346&quot;</string>
          <x>10</x>
          <y>390</y>
          <width>401</width>
-         <height>121</height>
+         <height>71</height>
         </rect>
        </property>
        <property name="title">
@@ -556,12 +556,15 @@ eg &quot;localhost:12345 localhost:12346&quot;</string>
          <rect>
           <x>20</x>
           <y>110</y>
-          <width>101</width>
+          <width>121</width>
           <height>16</height>
          </rect>
         </property>
         <property name="text">
          <string>Socket bind address</string>
+        </property>
+        <property name="alignment">
+         <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
         </property>
        </widget>
        <widget class="QLineEdit" name="lineEditZMQBind">
@@ -587,17 +590,17 @@ eg &quot;localhost:12345 localhost:12346&quot;</string>
         </property>
        </widget>
        <widget class="QCheckBox" name="ambeEnabled">
-       <property name="geometry">
-        <rect>
+        <property name="geometry">
+         <rect>
           <x>20</x>
           <y>30</y>
           <width>171</width>
           <height>17</height>
-        </rect>
-       </property>
+         </rect>
+        </property>
         <property name="text">
          <string>JAERO voice decoding</string>
-       </property>
+        </property>
        </widget>
        <widget class="QCheckBox" name="remoteAmbeEnabled">
         <property name="geometry">
@@ -617,12 +620,15 @@ eg &quot;localhost:12345 localhost:12346&quot;</string>
          <rect>
           <x>20</x>
           <y>150</y>
-          <width>47</width>
-          <height>13</height>
+          <width>121</width>
+          <height>16</height>
          </rect>
         </property>
         <property name="text">
          <string>Topic</string>
+        </property>
+        <property name="alignment">
+         <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
         </property>
        </widget>
        <widget class="QLineEdit" name="lineEditZMQBindTopic">
