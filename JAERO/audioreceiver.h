@@ -8,6 +8,7 @@
 #include <QThread>
 #include <qbytearray.h>
 #include <zmq.h>
+#include <QtConcurrent/QtConcurrent>
 
 
 class AudioReceiver : public QObject
@@ -16,16 +17,13 @@ class AudioReceiver : public QObject
 
 public:
 
-   AudioReceiver(QString address, QString topic);
-   void setParameters(QString address, QString topic);
-
-   bool running;
-
+    explicit AudioReceiver(QObject *parent = 0);//QString address, QString topic);
+    ~AudioReceiver();
 
 public slots:
 
-   void process();
-   void ZMQaudioStop();
+    void ZMQaudioStop();
+    void ZMQaudioStart(QString address, QString topic);
 
 signals:
 
@@ -34,18 +32,21 @@ signals:
 
 private:
 
-   void* context;
-   void* subscriber;
+    void setParameters(QString address, QString topic);
+    volatile bool running;
 
-   int zmqStatus;
+    void process();
 
-   QString _address;
-   QString _topic;
-   int _rate;
+    void * volatile context;
+    void * volatile subscriber;
 
+    int zmqStatus;
 
+    QString _address;
+    QString _topic;
+    int _rate;
 
-
+    QFuture<void> future;
 
 signals:
     void recAudio(const QByteArray & audio);

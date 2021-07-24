@@ -101,7 +101,6 @@ private:
 
     QSound *beep;
 
-
     // zeromq for AMBE
     void* context;
     void* publisher;
@@ -110,7 +109,8 @@ private:
     int zmqStatus;
     std::string connected_url;
 
-    AudioReceiver * pRecThrd;
+    //ZeroMQ Audio Receiver
+    AudioReceiver *zmq_audio_receiver;
 
 protected:
     void closeEvent(QCloseEvent *event);
@@ -143,6 +143,7 @@ private slots:
     void on_tabWidget_currentChanged(int index);
     void on_actionSound_Out_toggled(bool mute);
     void on_actionReduce_CPU_triggered(bool checked);
+
 };
 
 #endif // MAINWINDOW_H

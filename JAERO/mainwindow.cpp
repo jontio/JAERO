@@ -31,8 +31,8 @@ MainWindow::MainWindow(QWidget *parent) :
     //plane logging window
     planelog = new PlaneLog;
 
-    //create areo decoder
-    pRecThrd = 0;
+    //create zmq audio receiver
+    zmq_audio_receiver = new AudioReceiver(this);
 
     //create areo decoder
     aerol = new AeroL(this); //Create Aero sink
@@ -81,7 +81,6 @@ MainWindow::MainWindow(QWidget *parent) :
 
     //create the burst oqpsk demodulator
     audioburstoqpskdemodulator = new AudioBurstOqpskDemodulator(this);
-
 
     //create the burst msk demodulator
     audioburstmskdemodulator = new AudioBurstMskDemodulator(this);
@@ -285,10 +284,7 @@ void MainWindow::selectdemodulatorconnections(DemodType demodtype)
         disconnect(ui->spectrumdisplay,   SIGNAL(CenterFreqChanged(double)),                     audiooqpskdemodulator,SLOT(CenterFreqChangedSlot(double)));
         disconnect(audiooqpskdemodulator, SIGNAL(BitRateChanged(double,bool)),                   aerol,SLOT(setSettings(double,bool)));
         disconnect(audiooqpskdemodulator, SIGNAL(SignalStatus(bool)),aerol,SLOT(SignalStatusSlot(bool)));
-        if(pRecThrd!=0)
-        {
-           disconnect(pRecThrd, SIGNAL(recAudio(const QByteArray&)),audiooqpskdemodulator,SLOT(dataReceived(QByteArray)));
-        }
+        disconnect(zmq_audio_receiver, SIGNAL(recAudio(const QByteArray&)),audiooqpskdemodulator,SLOT(dataReceived(QByteArray)));
 
         //some burstoqpsk connections
         disconnect(audioburstoqpskdemodulator, SIGNAL(Plottables(double,double,double)),              this,SLOT(PlottablesSlot(double,double,double)));
@@ -303,10 +299,7 @@ void MainWindow::selectdemodulatorconnections(DemodType demodtype)
         disconnect(ui->spectrumdisplay,        SIGNAL(CenterFreqChanged(double)),                     audioburstoqpskdemodulator,SLOT(CenterFreqChangedSlot(double)));
         disconnect(audioburstoqpskdemodulator, SIGNAL(BitRateChanged(double,bool)),                   aerol,SLOT(setSettings(double,bool)));
         disconnect(audioburstoqpskdemodulator, SIGNAL(SignalStatus(bool)),aerol,SLOT(SignalStatusSlot(bool)));
-        if(pRecThrd!=0)
-        {
-           disconnect(pRecThrd, SIGNAL(recAudio(const QByteArray&)),audioburstoqpskdemodulator,SLOT(dataReceived(QByteArray)));
-        }
+        disconnect(zmq_audio_receiver, SIGNAL(recAudio(const QByteArray&)),audioburstoqpskdemodulator,SLOT(dataReceived(QByteArray)));
 
         //burstdemod demod2
         disconnect(audioburstoqpskdemodulator->demod2, SIGNAL(Plottables(double,double,double)),              this,SLOT(PlottablesSlot(double,double,double)));
@@ -335,10 +328,7 @@ void MainWindow::selectdemodulatorconnections(DemodType demodtype)
         disconnect(ui->spectrumdisplay, SIGNAL(CenterFreqChanged(double)),                     audioburstmskdemodulator,SLOT(CenterFreqChangedSlot(double)));
         disconnect(audioburstmskdemodulator, SIGNAL(BitRateChanged(double,bool)),                   aerol,SLOT(setSettings(double,bool)));
         disconnect(audioburstmskdemodulator, SIGNAL(SignalStatus(bool)),aerol,SLOT(SignalStatusSlot(bool)));
-        if(pRecThrd!=0)
-        {
-             disconnect(pRecThrd, SIGNAL(recAudio(const QByteArray&)),audioburstmskdemodulator,SLOT(dataReceived(QByteArray)));
-        }
+        disconnect(zmq_audio_receiver, SIGNAL(recAudio(const QByteArray&)),audioburstmskdemodulator,SLOT(dataReceived(QByteArray)));
 
         //some msk connections
         connect(audiomskdemodulator, SIGNAL(Plottables(double,double,double)),              this,SLOT(PlottablesSlot(double,double,double)));
@@ -353,10 +343,7 @@ void MainWindow::selectdemodulatorconnections(DemodType demodtype)
         connect(ui->spectrumdisplay, SIGNAL(CenterFreqChanged(double)),                     audiomskdemodulator,SLOT(CenterFreqChangedSlot(double)));
         connect(audiomskdemodulator, SIGNAL(BitRateChanged(double,bool)),                   aerol,SLOT(setSettings(double,bool)));
         connect(audiomskdemodulator, SIGNAL(SignalStatus(bool)),aerol,SLOT(SignalStatusSlot(bool)));
-        if(pRecThrd!=0)
-        {
-           connect(pRecThrd, SIGNAL(recAudio(const QByteArray&)), audiomskdemodulator, SLOT(dataReceived(QByteArray)), Qt::UniqueConnection);
-         }
+        connect(zmq_audio_receiver, SIGNAL(recAudio(const QByteArray&)), audiomskdemodulator, SLOT(dataReceived(QByteArray)), Qt::UniqueConnection);
 
         break;
     case OQPSK: //opqsk
@@ -373,10 +360,7 @@ void MainWindow::selectdemodulatorconnections(DemodType demodtype)
         disconnect(ui->spectrumdisplay, SIGNAL(CenterFreqChanged(double)),                     audiomskdemodulator,SLOT(CenterFreqChangedSlot(double)));
         disconnect(audiomskdemodulator, SIGNAL(BitRateChanged(double,bool)),                   aerol,SLOT(setSettings(double,bool)));
         disconnect(audiomskdemodulator, SIGNAL(SignalStatus(bool)),aerol,SLOT(SignalStatusSlot(bool)));
-        if(pRecThrd!=0)
-        {
-           disconnect(pRecThrd, SIGNAL(recAudio(const QByteArray&)),audiomskdemodulator,SLOT(dataReceived(QByteArray)));
-        }
+        disconnect(zmq_audio_receiver, SIGNAL(recAudio(const QByteArray&)),audiomskdemodulator,SLOT(dataReceived(QByteArray)));
 
         //some burstoqpsk connections
         disconnect(audioburstoqpskdemodulator, SIGNAL(Plottables(double,double,double)),              this,SLOT(PlottablesSlot(double,double,double)));
@@ -391,10 +375,7 @@ void MainWindow::selectdemodulatorconnections(DemodType demodtype)
         disconnect(ui->spectrumdisplay,   SIGNAL(CenterFreqChanged(double)),                          audioburstoqpskdemodulator,SLOT(CenterFreqChangedSlot(double)));
         disconnect(audioburstoqpskdemodulator, SIGNAL(BitRateChanged(double,bool)),                   aerol,SLOT(setSettings(double,bool)));
         disconnect(audioburstoqpskdemodulator, SIGNAL(SignalStatus(bool)),aerol,SLOT(SignalStatusSlot(bool)));
-        if(pRecThrd!=0)
-        {
-           disconnect(pRecThrd, SIGNAL(recAudio(const QByteArray&)),audioburstoqpskdemodulator,SLOT(dataReceived(QByteArray)));
-        }
+        disconnect(zmq_audio_receiver, SIGNAL(recAudio(const QByteArray&)),audioburstoqpskdemodulator,SLOT(dataReceived(QByteArray)));
 
         //burstdemod demod2
         disconnect(audioburstoqpskdemodulator->demod2, SIGNAL(Plottables(double,double,double)),              this,SLOT(PlottablesSlot(double,double,double)));
@@ -423,10 +404,7 @@ void MainWindow::selectdemodulatorconnections(DemodType demodtype)
         disconnect(ui->spectrumdisplay, SIGNAL(CenterFreqChanged(double)),                     audioburstmskdemodulator,SLOT(CenterFreqChangedSlot(double)));
         disconnect(audioburstmskdemodulator, SIGNAL(BitRateChanged(double,bool)),                   aerol,SLOT(setSettings(double,bool)));
         disconnect(audioburstmskdemodulator, SIGNAL(SignalStatus(bool)),aerol,SLOT(SignalStatusSlot(bool)));
-        if(pRecThrd!=0)
-        {
-            disconnect(pRecThrd, SIGNAL(recAudio(const QByteArray&)),audioburstmskdemodulator,SLOT(dataReceived(QByteArray)));
-        }
+        disconnect(zmq_audio_receiver, SIGNAL(recAudio(const QByteArray&)),audioburstmskdemodulator,SLOT(dataReceived(QByteArray)));
 
         //some oqpsk connections
         connect(audiooqpskdemodulator, SIGNAL(Plottables(double,double,double)),              this,SLOT(PlottablesSlot(double,double,double)));
@@ -441,11 +419,7 @@ void MainWindow::selectdemodulatorconnections(DemodType demodtype)
         connect(ui->spectrumdisplay,   SIGNAL(CenterFreqChanged(double)),                     audiooqpskdemodulator,SLOT(CenterFreqChangedSlot(double)));
         connect(audiooqpskdemodulator, SIGNAL(BitRateChanged(double,bool)),                   aerol,SLOT(setSettings(double,bool)));
         connect(audiooqpskdemodulator, SIGNAL(SignalStatus(bool)),aerol,SLOT(SignalStatusSlot(bool)));
-        if(pRecThrd!=0)
-        {
-           connect(pRecThrd, SIGNAL(recAudio(const QByteArray&)), audiooqpskdemodulator, SLOT(dataReceived(QByteArray)), Qt::UniqueConnection);
-        }
-
+        connect(zmq_audio_receiver, SIGNAL(recAudio(const QByteArray&)), audiooqpskdemodulator, SLOT(dataReceived(QByteArray)), Qt::UniqueConnection);
 
         break;
     case BURSTOQPSK: //burstopqsk
@@ -463,10 +437,7 @@ void MainWindow::selectdemodulatorconnections(DemodType demodtype)
         disconnect(ui->spectrumdisplay, SIGNAL(CenterFreqChanged(double)),                     audiomskdemodulator,SLOT(CenterFreqChangedSlot(double)));
         disconnect(audiomskdemodulator, SIGNAL(BitRateChanged(double,bool)),                   aerol,SLOT(setSettings(double,bool)));
         disconnect(audiomskdemodulator, SIGNAL(SignalStatus(bool)),aerol,SLOT(SignalStatusSlot(bool)));
-        if(pRecThrd!=0)
-        {
-           disconnect(pRecThrd, SIGNAL(recAudio(const QByteArray&)),audiomskdemodulator,SLOT(dataReceived(QByteArray)));
-        }
+        disconnect(zmq_audio_receiver, SIGNAL(recAudio(const QByteArray&)),audiomskdemodulator,SLOT(dataReceived(QByteArray)));
 
         //some oqpsk connections
         disconnect(audiooqpskdemodulator, SIGNAL(Plottables(double,double,double)),              this,SLOT(PlottablesSlot(double,double,double)));
@@ -481,10 +452,7 @@ void MainWindow::selectdemodulatorconnections(DemodType demodtype)
         disconnect(ui->spectrumdisplay,   SIGNAL(CenterFreqChanged(double)),                     audiooqpskdemodulator,SLOT(CenterFreqChangedSlot(double)));
         disconnect(audiooqpskdemodulator, SIGNAL(BitRateChanged(double,bool)),                   aerol,SLOT(setSettings(double,bool)));
         disconnect(audiooqpskdemodulator, SIGNAL(SignalStatus(bool)),aerol,SLOT(SignalStatusSlot(bool)));
-        if(pRecThrd!=0)
-        {
-            disconnect(pRecThrd, SIGNAL(recAudio(const QByteArray&)),audiooqpskdemodulator,SLOT(dataReceived(QByteArray)));
-        }
+        disconnect(zmq_audio_receiver, SIGNAL(recAudio(const QByteArray&)),audiooqpskdemodulator,SLOT(dataReceived(QByteArray)));
 
         //some burst msk connections
         disconnect(audioburstmskdemodulator, SIGNAL(Plottables(double,double,double)),              this,SLOT(PlottablesSlot(double,double,double)));
@@ -499,10 +467,7 @@ void MainWindow::selectdemodulatorconnections(DemodType demodtype)
         disconnect(ui->spectrumdisplay, SIGNAL(CenterFreqChanged(double)),                     audioburstmskdemodulator,SLOT(CenterFreqChangedSlot(double)));
         disconnect(audioburstmskdemodulator, SIGNAL(BitRateChanged(double,bool)),                   aerol,SLOT(setSettings(double,bool)));
         disconnect(audioburstmskdemodulator, SIGNAL(SignalStatus(bool)),aerol,SLOT(SignalStatusSlot(bool)));
-        if(pRecThrd!=0)
-        {
-           disconnect(pRecThrd, SIGNAL(recAudio(const QByteArray&)),audioburstmskdemodulator,SLOT(dataReceived(QByteArray)));
-        }
+        disconnect(zmq_audio_receiver, SIGNAL(recAudio(const QByteArray&)),audioburstmskdemodulator,SLOT(dataReceived(QByteArray)));
 
         //some burstoqpsk connections
         connect(audioburstoqpskdemodulator, SIGNAL(Plottables(double,double,double)),              this,SLOT(PlottablesSlot(double,double,double)));
@@ -517,10 +482,7 @@ void MainWindow::selectdemodulatorconnections(DemodType demodtype)
         connect(ui->spectrumdisplay,   SIGNAL(CenterFreqChanged(double)),                          audioburstoqpskdemodulator,SLOT(CenterFreqChangedSlot(double)));
         connect(audioburstoqpskdemodulator, SIGNAL(BitRateChanged(double,bool)),                   aerol,SLOT(setSettings(double,bool)));
         connect(audioburstoqpskdemodulator, SIGNAL(SignalStatus(bool)),aerol,SLOT(SignalStatusSlot(bool)));
-        if(pRecThrd!=0)
-        {
-            connect(pRecThrd, SIGNAL(recAudio(const QByteArray&)), audioburstoqpskdemodulator, SLOT(dataReceived(QByteArray)));
-        }
+        connect(zmq_audio_receiver, SIGNAL(recAudio(const QByteArray&)), audioburstoqpskdemodulator, SLOT(dataReceived(QByteArray)));
 
         //burstdemod demod2
         connect(audioburstoqpskdemodulator->demod2, SIGNAL(Plottables(double,double,double)),              this,SLOT(PlottablesSlot(double,double,double)));
@@ -553,10 +515,8 @@ void MainWindow::selectdemodulatorconnections(DemodType demodtype)
         disconnect(ui->spectrumdisplay, SIGNAL(CenterFreqChanged(double)),                     audiomskdemodulator,SLOT(CenterFreqChangedSlot(double)));
         disconnect(audiomskdemodulator, SIGNAL(BitRateChanged(double,bool)),                   aerol,SLOT(setSettings(double,bool)));
         disconnect(audiomskdemodulator, SIGNAL(SignalStatus(bool)),aerol,SLOT(SignalStatusSlot(bool)));
-        if(pRecThrd!=0)
-        {
-            disconnect(pRecThrd, SIGNAL(recAudio(const QByteArray&)),audiomskdemodulator,SLOT(dataReceived(QByteArray)));
-        }
+        disconnect(zmq_audio_receiver, SIGNAL(recAudio(const QByteArray&)),audiomskdemodulator,SLOT(dataReceived(QByteArray)));
+
         //some oqpsk connections
         disconnect(audiooqpskdemodulator, SIGNAL(Plottables(double,double,double)),              this,SLOT(PlottablesSlot(double,double,double)));
         disconnect(audiooqpskdemodulator, SIGNAL(SignalStatus(bool)),                            this,SLOT(SignalStatusSlot(bool)));
@@ -570,10 +530,8 @@ void MainWindow::selectdemodulatorconnections(DemodType demodtype)
         disconnect(ui->spectrumdisplay,   SIGNAL(CenterFreqChanged(double)),                     audiooqpskdemodulator,SLOT(CenterFreqChangedSlot(double)));
         disconnect(audiooqpskdemodulator, SIGNAL(BitRateChanged(double,bool)),                   aerol,SLOT(setSettings(double,bool)));
         disconnect(audiooqpskdemodulator, SIGNAL(SignalStatus(bool)),aerol,SLOT(SignalStatusSlot(bool)));
-        if(pRecThrd!=0)
-        {
-            disconnect(pRecThrd, SIGNAL(recAudio(const QByteArray&)),audiooqpskdemodulator,SLOT(dataReceived(QByteArray)));
-        }
+        disconnect(zmq_audio_receiver, SIGNAL(recAudio(const QByteArray&)),audiooqpskdemodulator,SLOT(dataReceived(QByteArray)));
+
         //some burstoqpsk connections
         disconnect(audioburstoqpskdemodulator, SIGNAL(Plottables(double,double,double)),              this,SLOT(PlottablesSlot(double,double,double)));
         disconnect(audioburstoqpskdemodulator, SIGNAL(SignalStatus(bool)),                            this,SLOT(SignalStatusSlot(bool)));
@@ -587,10 +545,7 @@ void MainWindow::selectdemodulatorconnections(DemodType demodtype)
         disconnect(ui->spectrumdisplay,   SIGNAL(CenterFreqChanged(double)),                          audioburstoqpskdemodulator,SLOT(CenterFreqChangedSlot(double)));
         disconnect(audioburstoqpskdemodulator, SIGNAL(BitRateChanged(double,bool)),                   aerol,SLOT(setSettings(double,bool)));
         disconnect(audioburstoqpskdemodulator, SIGNAL(SignalStatus(bool)),aerol,SLOT(SignalStatusSlot(bool)));
-        if(pRecThrd!=0)
-        {
-             disconnect(pRecThrd, SIGNAL(recAudio(const QByteArray&)),audioburstoqpskdemodulator,SLOT(dataReceived(QByteArray)));
-        }
+        disconnect(zmq_audio_receiver, SIGNAL(recAudio(const QByteArray&)),audioburstoqpskdemodulator,SLOT(dataReceived(QByteArray)));
 
         //burstdemod demod2
         disconnect(audioburstoqpskdemodulator->demod2, SIGNAL(Plottables(double,double,double)),              this,SLOT(PlottablesSlot(double,double,double)));
@@ -619,10 +574,7 @@ void MainWindow::selectdemodulatorconnections(DemodType demodtype)
         connect(ui->spectrumdisplay, SIGNAL(CenterFreqChanged(double)),                     audioburstmskdemodulator,SLOT(CenterFreqChangedSlot(double)));
         connect(audioburstmskdemodulator, SIGNAL(BitRateChanged(double,bool)),                   aerol,SLOT(setSettings(double,bool)));
         connect(audioburstmskdemodulator, SIGNAL(SignalStatus(bool)),                           aerol,SLOT(SignalStatusSlot(bool)));
-        if(pRecThrd!=0)
-        {
-           connect(pRecThrd, SIGNAL(recAudio(const QByteArray&)), audioburstmskdemodulator, SLOT(dataReceived(QByteArray)));
-        }
+        connect(zmq_audio_receiver, SIGNAL(recAudio(const QByteArray&)), audioburstmskdemodulator, SLOT(dataReceived(QByteArray)));
 
         break;
     }
@@ -645,28 +597,8 @@ void MainWindow::connectZMQ()
         zmqStatus= zmq_bind(publisher, connected_url.c_str() );
     }
 
-    if(pRecThrd!=0 && pRecThrd->running)
-    {
-        emit ZMQaudioStop();
-        pRecThrd = 0;
-    }
-
-    if(settingsdialog->zmqAudioInputEnabled)
-    {
-        pRecThrd = new AudioReceiver(settingsdialog->zmqAudioInputAddress, settingsdialog->zmqAudioInputTopic);
-
-        QThread* thread = new QThread;
-        pRecThrd->moveToThread(thread);
-
-        connect(thread, SIGNAL (started()), pRecThrd, SLOT (process()));
-        connect(pRecThrd, SIGNAL (finished()), pRecThrd, SLOT (deleteLater()));
-        connect(thread, SIGNAL (finished()), thread, SLOT (deleteLater()));
-        connect(this, SIGNAL (ZMQaudioStop()), pRecThrd, SLOT (ZMQaudioStop()),Qt::DirectConnection);
-
-        thread->start();
-    }
-
-
+    if(settingsdialog->zmqAudioInputEnabled)zmq_audio_receiver->ZMQaudioStart(settingsdialog->zmqAudioInputAddress, settingsdialog->zmqAudioInputTopic);
+    else zmq_audio_receiver->ZMQaudioStop();
 
 }
 
@@ -703,13 +635,6 @@ MainWindow::~MainWindow()
     delete ambe;
     delete planelog;
     delete ui;
-
-    if(pRecThrd!=0 && pRecThrd->running)
-    {
-         emit ZMQaudioStop();
-         delete pRecThrd;
-    }
-
 }
 
 void MainWindow::SignalStatusSlot(bool signal)
@@ -827,11 +752,6 @@ void MainWindow::on_comboBoxbps_currentIndexChanged(const QString &arg)
         audioburstmskdemodulator->stop();
         selectdemodulatorconnections(BURSTOQPSK);
 
-// BURSTOQPSK can't seem to deal with 96000. not sure why at the moment
-//
-//        if(!settingsdialog->widebandwidthenable)audioburstoqpskdemodulatorsettings.Fs=48000;
-//        else audioburstoqpskdemodulatorsettings.Fs=96000;
-
         int idx=ui->comboBoxlbw->findText(((QString)"%1 Hz").arg(audioburstoqpskdemodulatorsettings.fb*1.0));
         if(idx>=0)audioburstoqpskdemodulatorsettings.lockingbw=ui->comboBoxlbw->itemText(idx).split(" ")[0].toDouble();
         audioburstoqpskdemodulatorsettings.audio_device_in=settingsdialog->audioinputdevice;
@@ -839,8 +759,6 @@ void MainWindow::on_comboBoxbps_currentIndexChanged(const QString &arg)
         else audioburstoqpskdemodulatorsettings.channel_stereo=false;
         audioburstoqpskdemodulator->setSettings(audioburstoqpskdemodulatorsettings);
         if(idx>=0)ui->comboBoxlbw->setCurrentIndex(idx);
-
-        if(pRecThrd!=0)connect(pRecThrd, SIGNAL(recAudio(const QByteArray&)), audioburstoqpskdemodulator, SLOT(dataReceived(QByteArray)), Qt::UniqueConnection);
 
         audioburstoqpskdemodulator->start();
     }
@@ -865,8 +783,6 @@ void MainWindow::on_comboBoxbps_currentIndexChanged(const QString &arg)
         audiooqpskdemodulatorsettings.audio_device_in=settingsdialog->audioinputdevice;
         audiooqpskdemodulator->setSettings(audiooqpskdemodulatorsettings);
         if(idx>=0)ui->comboBoxlbw->setCurrentIndex(idx);
-
-        if(pRecThrd!=0)connect(pRecThrd, SIGNAL(recAudio(const QByteArray&)), audiooqpskdemodulator, SLOT(dataReceived(QByteArray)), Qt::UniqueConnection);
 
         audiooqpskdemodulator->start();
     }
@@ -894,8 +810,6 @@ void MainWindow::on_comboBoxbps_currentIndexChanged(const QString &arg)
         audiomskdemodulator->setSettings(audiomskdemodulatorsettings);
         if(idx>=0)ui->comboBoxlbw->setCurrentIndex(idx);
 
-        if(pRecThrd!=0)connect(pRecThrd, SIGNAL(recAudio(const QByteArray&)), audiomskdemodulator, SLOT(dataReceived(QByteArray)), Qt::UniqueConnection);
-
         audiomskdemodulator->start();
     }
 
@@ -912,8 +826,6 @@ void MainWindow::on_comboBoxbps_currentIndexChanged(const QString &arg)
         audioburstmskdemodulatorsettings.audio_device_in=settingsdialog->audioinputdevice;
         audioburstmskdemodulator->setSettings(audioburstmskdemodulatorsettings);
         if(idx>=0)ui->comboBoxlbw->setCurrentIndex(idx);
-
-        if(pRecThrd!=0)connect(pRecThrd, SIGNAL(recAudio(const QByteArray&)), audioburstmskdemodulator, SLOT(dataReceived(QByteArray)), Qt::UniqueConnection);
 
         audioburstmskdemodulator->start();
     }
@@ -1115,31 +1027,22 @@ void MainWindow::acceptsettings()
             audiomskdemodulator->setSettings(audiomskdemodulatorsettings);
         }
 
-        if(pRecThrd!=0)connect(pRecThrd, SIGNAL(recAudio(const QByteArray&)), audiomskdemodulator, SLOT(dataReceived(QByteArray)), Qt::UniqueConnection);
-
     }
     if(typeofdemodtouse==BURSTMSK)// we only use 48000
     {
-
         // audioburstmskdemodulatorsettings.Fs=48000;
         // audioburstmskdemodulator->setSettings(audioburstmskdemodulatorsettings);
-
-        if(pRecThrd!=0)connect(pRecThrd, SIGNAL(recAudio(const QByteArray&)), audioburstmskdemodulator, SLOT(dataReceived(QByteArray)), Qt::UniqueConnection);
     }
 
     if(typeofdemodtouse==OQPSK)//OQPSK uses 48000 all the time so not needed
     {
         //audiooqpskdemodulatorsettings.Fs=48000;
         //audiooqpskdemodulator->setSettings(audiooqpskdemodulatorsettings);
-
-        if(pRecThrd != 0)connect(pRecThrd, SIGNAL(recAudio(const QByteArray&)), audiooqpskdemodulator, SLOT(dataReceived(QByteArray)), Qt::UniqueConnection);
     }
     if(typeofdemodtouse==BURSTOQPSK)//BURSTOQPSK uses 48000 all the time so not needed
     {
         //audioburstoqpskdemodulatorsettings.Fs=48000;
         //audioburstoqpskdemodulator->setSettings(audioburstoqpskdemodulatorsettings);
-
-        if(pRecThrd!=0)connect(pRecThrd, SIGNAL(recAudio(const QByteArray&)), audioburstoqpskdemodulator, SLOT(dataReceived(QByteArray)), Qt::UniqueConnection);
     }
 
     //if soundcard device changed
