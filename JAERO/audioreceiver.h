@@ -49,7 +49,7 @@ private:
     QFuture<void> future;
 
 signals:
-    void recAudio(const QByteArray & audio);
+    void recAudio(const QByteArray & audio,quint32 sampleRate);
 
 };
 

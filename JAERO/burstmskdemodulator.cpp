@@ -759,9 +759,11 @@ void BurstMskDemodulator::DCDstatSlot(bool _dcd)
     dcd=_dcd;
 }
 
-void BurstMskDemodulator::dataReceived(const QByteArray &audio)
+void BurstMskDemodulator::dataReceived(const QByteArray &audio,quint32 sampleRate)
 {
-
+    if(sampleRate!=Fs)
+    {
+        qDebug()<<"Sample rate not supported by demodulator";
+    }
     writeData(audio, audio.length());
-
 }

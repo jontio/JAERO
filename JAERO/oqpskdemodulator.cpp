@@ -679,11 +679,11 @@ void OqpskDemodulator::DCDstatSlot(bool _dcd)
 
 }
 
-void OqpskDemodulator::dataReceived(const QByteArray &audio)
+void OqpskDemodulator::dataReceived(const QByteArray &audio,quint32 sampleRate)
 {
-
+    if(sampleRate!=Fs)
+    {
+        qDebug()<<"Sample rate not supported by demodulator";
+    }
     writeData(audio, audio.length());
-
 }
-
-

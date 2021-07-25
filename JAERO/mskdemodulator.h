@@ -142,6 +142,7 @@ private:
     int coarseCounter;
     bool cpuReduce;
 
+    Settings last_applied_settings;
 
 signals:
     void ScatterPoints(const QVector<cpx_type> &buffer);
@@ -162,7 +163,7 @@ public slots:
     void FreqOffsetEstimateSlot(double freq_offset_est);
     void CenterFreqChangedSlot(double freq_center);
     void DCDstatSlot(bool dcd);
-    void dataReceived(const QByteArray &audio);
+    void dataReceived(const QByteArray &audio, quint32 sampleRate);
 
 
 };

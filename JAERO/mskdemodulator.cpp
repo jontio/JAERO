@@ -134,6 +134,7 @@ void MskDemodulator::invalidatesettings()
 
 void MskDemodulator::setSettings(Settings _settings)
 {
+    last_applied_settings=_settings;
     if(_settings.Fs!=Fs)emit SampleRateChanged(_settings.Fs);
     Fs=_settings.Fs;
     lockingbw=_settings.lockingbw;
@@ -524,12 +525,13 @@ void MskDemodulator::DCDstatSlot(bool _dcd)
 
 }
 
-
-void MskDemodulator::dataReceived(const QByteArray &audio)
+void MskDemodulator::dataReceived(const QByteArray &audio,quint32 sampleRate)
 {
-
+    if(sampleRate!=Fs)
+    {
+        qDebug()<<"Sample rate different than expected. Trying to change demodulator sample rate";
+        last_applied_settings.Fs=sampleRate;
+        setSettings(last_applied_settings);
+    }
     writeData(audio, audio.length());
-
 }
-
-

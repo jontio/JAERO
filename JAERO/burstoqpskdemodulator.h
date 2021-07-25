@@ -225,7 +225,7 @@ private:
 public slots:
     void CenterFreqChangedSlot(double freq_center);
     void writeDataSlot(const char *data, qint64 len);
-    void dataReceived(const QByteArray &audio);
+    void dataReceived(const QByteArray &audio, quint32 sampleRate);
 
 
 };

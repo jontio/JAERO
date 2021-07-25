@@ -1,9 +1,5 @@
 #include "audioreceiver.h"
 #include "QDebug"
-#include <iostream>
-#include "QDataStream"
-#include "QDateTime"
-
 #include <unistd.h>
 
 void AudioReceiver::ZMQaudioStart(QString address, QString topic)
@@ -13,7 +9,6 @@ void AudioReceiver::ZMQaudioStart(QString address, QString topic)
     setParameters(address,topic);
     future = QtConcurrent::run([=]() {
         process();
-        qDebug()<<"Thread finished";
         return;
     });
     //wait till the thread is running so ZMQaudioStop functions correctly
@@ -37,17 +32,21 @@ void AudioReceiver::process()
 
     char buf [recsize];
     char topic[20];
+    unsigned char rate[4];
+    quint32 sampleRate;
 
     running = true;
 
     while(running)
     {
         zmq_recv(subscriber, topic, 20, 0);
-        int received = zmq_recv(subscriber, buf, recsize, ZMQ_DONTWAIT);
+        int received = zmq_recv(subscriber, rate, 4, ZMQ_DONTWAIT);
+        memcpy(&sampleRate, rate, 4);
+        received = zmq_recv(subscriber, buf, recsize, ZMQ_DONTWAIT);
         if(received>=0)
         {
             QByteArray qdata(buf, received);
-            emit recAudio(qdata);
+            emit recAudio(qdata,sampleRate);
         }
         else
         {

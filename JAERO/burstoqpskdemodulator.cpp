@@ -303,11 +303,13 @@ qint64 BurstOqpskDemodulator::writeData(const char *data, qint64 len)
     return len;
 }
 
-void BurstOqpskDemodulator::dataReceived(const QByteArray &audio)
+void BurstOqpskDemodulator::dataReceived(const QByteArray &audio,quint32 sampleRate)
 {
-
+    if(sampleRate!=Fs)
+    {
+        qDebug()<<"Sample rate not supported by demodulator";
+    }
     writeData(audio, audio.length());
-
 }
 
 void BurstOqpskDemodulator::writeDataSlot(const char *data, qint64 len)
