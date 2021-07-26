@@ -2,8 +2,8 @@
 #include <QDebug>
 
 AudioBurstOqpskDemodulator::AudioBurstOqpskDemodulator(QObject *parent)
-:   BurstOqpskDemodulator(parent),
-  m_audioInput(NULL)
+    :   BurstOqpskDemodulator(parent),
+      m_audioInput(NULL)
 {
     demod2=new BurstOqpskDemodulator(this);
     demod2->channel_select_other=true;
@@ -17,8 +17,8 @@ void AudioBurstOqpskDemodulator::start()
     demod2->start();
     if(!settings.zmqAudio)
     {
-    if(m_audioInput)m_audioInput->start(this);
-}
+        if(m_audioInput)m_audioInput->start(this);
+    }
 }
 
 void AudioBurstOqpskDemodulator::stop()
@@ -26,8 +26,7 @@ void AudioBurstOqpskDemodulator::stop()
     if(m_audioInput)m_audioInput->stop();
     if(!settings.zmqAudio)
     {
-
-    BurstOqpskDemodulator::stop();
+        BurstOqpskDemodulator::stop();
     }
     demod2->stop();
 }
@@ -47,7 +46,7 @@ void AudioBurstOqpskDemodulator::setSettings(Settings _settings)
         //set the format
         m_format.setSampleRate(settings.Fs);
         if(settings.channel_stereo)m_format.setChannelCount(2);
-         else m_format.setChannelCount(1);
+        else m_format.setChannelCount(1);
         m_format.setSampleSize(16);
         m_format.setCodec("audio/pcm");
         m_format.setByteOrder(QAudioFormat::LittleEndian);

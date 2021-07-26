@@ -85,8 +85,9 @@ SOURCES += mainwindow.cpp \
     $$JFFT_PATH/jfft.cpp \
     util/stdio_utils.cpp \
     util/file_utils.cpp \
-    util/RuntimeError.cpp\
-    audioreceiver.cpp
+    util/RuntimeError.cpp \
+    zmq_audiosender.cpp \
+    zmq_audioreceiver.cpp
 
 
 HEADERS  += mainwindow.h \
@@ -121,8 +122,9 @@ HEADERS  += mainwindow.h \
     $$JFFT_PATH/jfft.h \
     util/stdio_utils.h \
     util/file_utils.h \
-    util/RuntimeError.h\
-    audioreceiver.h
+    util/RuntimeError.h \
+    zmq_audioreceiver.h \
+    zmq_audiosender.h
 
 
 # Tell the qcustomplot header that it will be used as library:

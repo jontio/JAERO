@@ -3,10 +3,10 @@
 #include <QDebug>
 
 AudioBurstMskDemodulator::AudioBurstMskDemodulator(QObject *parent)
-:   BurstMskDemodulator(parent),
-  m_audioInput(NULL)
+    :   BurstMskDemodulator(parent),
+      m_audioInput(NULL)
 {
-//
+    //
 }
 
 void AudioBurstMskDemodulator::start()
@@ -14,16 +14,15 @@ void AudioBurstMskDemodulator::start()
     BurstMskDemodulator::start();
     if(!settings.zmqAudio)
     {
-    if(m_audioInput)m_audioInput->start(this);
-}
+        if(m_audioInput)m_audioInput->start(this);
+    }
 }
 
 void AudioBurstMskDemodulator::stop()
 {
     if(!settings.zmqAudio)
     {
-    if(m_audioInput)m_audioInput->stop();
-
+        if(m_audioInput)m_audioInput->stop();
     }
     BurstMskDemodulator::stop();
 }

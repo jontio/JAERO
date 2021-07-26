@@ -1,34 +1,27 @@
-#ifndef AUDIORECEIVER_H
-#define AUDIORECEIVER_H
-
-
-#include "audioreceiver.h"
+#ifndef ZMQ_AUDIORECEIVER_H
+#define ZMQ_AUDIORECEIVER_H
 
 #include <QObject>
-#include <QThread>
-#include <qbytearray.h>
-#include <zmq.h>
+#include <QByteArray>
 #include <QtConcurrent/QtConcurrent>
 
-
-class AudioReceiver : public QObject
+class ZMQAudioReceiver : public QObject
 {
     Q_OBJECT
 
 public:
 
-    explicit AudioReceiver(QObject *parent = 0);//QString address, QString topic);
-    ~AudioReceiver();
+    explicit ZMQAudioReceiver(QObject *parent = 0);
+    ~ZMQAudioReceiver();
 
 public slots:
 
-    void ZMQaudioStop();
-    void ZMQaudioStart(QString address, QString topic);
+    void Stop();
+    void Start(QString address, QString topic);
 
 signals:
 
     void finished();
-
 
 private:
 

@@ -5,10 +5,6 @@
 #include <QUdpSocket>
 #include <QLabel>
 
-#ifdef _WIN32
-#include "winsock2.h"
-#endif
-
 #include "audiooqpskdemodulator.h"
 #include "audiomskdemodulator.h"
 #include "audioburstoqpskdemodulator.h"
@@ -23,11 +19,11 @@
 #include "databasetext.h"
 
 #include "arincparse.h"
-#include "zmq.h"
 
 #include "audiooutdevice.h"
 #include "compressedaudiodiskwriter.h"
-#include "audioreceiver.h"
+#include "zmq_audioreceiver.h"
+#include "zmq_audiosender.h"
 
 
 namespace Ui {
@@ -43,8 +39,6 @@ public:
     ~MainWindow();
 
 signals:
-
-    void ZMQaudioStop();
 
 private:
     enum DemodType{NoDemodType,MSK,OQPSK,BURSTOQPSK,BURSTMSK};
@@ -68,7 +62,6 @@ private:
     //Burst MSK add
     AudioBurstMskDemodulator *audioburstmskdemodulator;
     AudioBurstMskDemodulator::Settings audioburstmskdemodulatorsettings;
-
 
     //bottom textedit output
     QList<QPointer<QUdpSocket> > udpsockets_bottom_textedit;
@@ -101,16 +94,9 @@ private:
 
     QSound *beep;
 
-    // zeromq for AMBE
-    void* context;
-    void* publisher;
-
-    void connectZMQ();
-    int zmqStatus;
-    std::string connected_url;
-
     //ZeroMQ Audio Receiver
-    AudioReceiver *zmq_audio_receiver;
+    ZMQAudioReceiver *zmq_audio_receiver;
+    ZMQAudioSender   *zmq_audio_sender;
 
 protected:
     void closeEvent(QCloseEvent *event);
@@ -134,7 +120,6 @@ private slots:
     void on_action_Settings_triggered();
     void on_action_PlaneLog_triggered();
     void ACARSslot(ACARSItem &acarsitem);
-    void Voiceslot(QByteArray &data, QString &hex);
     void CChannelAssignmentSlot(CChannelAssignmentItem &item);
     void ERRorslot(QString &error);
 

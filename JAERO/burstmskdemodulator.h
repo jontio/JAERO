@@ -143,7 +143,6 @@ private:
     //delay for trident detection
     DelayThing<double> d2;
 
-
     //trident shape thing
     QVector<double> tridentbuffer;
     int tridentbuffer_ptr;

@@ -3,10 +3,10 @@
 #include <QDebug>
 
 AudioOqpskDemodulator::AudioOqpskDemodulator(QObject *parent)
-:   OqpskDemodulator(parent),
-  m_audioInput(NULL)
+    :   OqpskDemodulator(parent),
+      m_audioInput(NULL)
 {
-//
+    //
 }
 
 void AudioOqpskDemodulator::start()
@@ -15,8 +15,8 @@ void AudioOqpskDemodulator::start()
 
     if(!settings.zmqAudio)
     {
-    if(m_audioInput)m_audioInput->start(this);
-}
+        if(m_audioInput)m_audioInput->start(this);
+    }
 
 }
 
@@ -24,8 +24,7 @@ void AudioOqpskDemodulator::stop()
 {
     if(!settings.zmqAudio)
     {
-    if(m_audioInput)m_audioInput->stop();
-
+        if(m_audioInput)m_audioInput->stop();
     }
     OqpskDemodulator::stop();
 }

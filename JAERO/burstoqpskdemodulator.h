@@ -60,10 +60,7 @@ public:
     void setScatterPointType(ScatterPointType type);
 
     //--L/R channel selection
-        bool channel_select_other;
-
-        static int sample;
-    //
+    bool channel_select_other;
 
 signals:
     void ScatterPoints(const QVector<cpx_type> &buffer);

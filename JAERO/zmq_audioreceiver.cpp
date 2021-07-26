@@ -1,11 +1,12 @@
-#include "audioreceiver.h"
+#include "zmq_audioreceiver.h"
 #include "QDebug"
 #include <unistd.h>
+#include <zmq.h>
 
-void AudioReceiver::ZMQaudioStart(QString address, QString topic)
+void ZMQAudioReceiver::Start(QString address, QString topic)
 {
     //stop set prams and start thread
-    ZMQaudioStop();
+    Stop();
     setParameters(address,topic);
     future = QtConcurrent::run([=]() {
         process();
@@ -20,7 +21,7 @@ void AudioReceiver::ZMQaudioStart(QString address, QString topic)
     }
 }
 
-void AudioReceiver::process()
+void ZMQAudioReceiver::process()
 {
     // allocate enough for 96Khz sampling with 1 buffer per second
     int recsize = 192000;
@@ -60,7 +61,7 @@ void AudioReceiver::process()
 }
 
 
-AudioReceiver::AudioReceiver(QObject *parent):
+ZMQAudioReceiver::ZMQAudioReceiver(QObject *parent):
     QObject(parent),
     running(false),
     context(nullptr),
@@ -69,18 +70,18 @@ AudioReceiver::AudioReceiver(QObject *parent):
 
 }
 
-AudioReceiver::~AudioReceiver()
+ZMQAudioReceiver::~ZMQAudioReceiver()
 {
-    ZMQaudioStop();
+    Stop();
 }
 
-void AudioReceiver::setParameters(QString address, QString topic)
+void ZMQAudioReceiver::setParameters(QString address, QString topic)
 {
     _address = address;
     _topic = topic;
 }
 
-void AudioReceiver::ZMQaudioStop()
+void ZMQAudioReceiver::Stop()
 {
 
     running = false;

@@ -13,8 +13,6 @@
 #endif
 
 #include "databasetext.h"
-#include "zmq.h"
-
 
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
@@ -32,7 +30,9 @@ MainWindow::MainWindow(QWidget *parent) :
     planelog = new PlaneLog;
 
     //create zmq audio receiver
-    zmq_audio_receiver = new AudioReceiver(this);
+    zmq_audio_receiver = new ZMQAudioReceiver(this);
+    //create zmq audio sender
+    zmq_audio_sender = new ZMQAudioSender(this);
 
     //create areo decoder
     aerol = new AeroL(this); //Create Aero sink
@@ -101,7 +101,6 @@ MainWindow::MainWindow(QWidget *parent) :
     //connect(&arincparser,SIGNAL(DownlinkBasicReportGroupSignal(DownlinkBasicReportGroup&)),sbs1,SLOT(DownlinkBasicReportGroupSlot(DownlinkBasicReportGroup&)));
     //connect(&arincparser,SIGNAL(DownlinkEarthReferenceGroupSignal(DownlinkEarthReferenceGroup&)),sbs1,SLOT(DownlinkEarthReferenceGroupSlot(DownlinkEarthReferenceGroup&)));
 
-
     //default sink is the aerol device
     audiomskdemodulator->ConnectSinkDevice(aerol);
     audiooqpskdemodulator->ConnectSinkDevice(aerol);
@@ -127,7 +126,6 @@ MainWindow::MainWindow(QWidget *parent) :
     //connect(ambe,SIGNAL(decoded_signal(QByteArray)),this,SLOT(Voiceslot(QByteArray))); // an example
     connect(ambe,SIGNAL(decoded_signal(QByteArray)),compresseddiskwriter,SLOT(audioin(QByteArray)));
     connect(ambe,SIGNAL(decoded_signal(QByteArray)),audioout,SLOT(audioin(QByteArray)));
-
 
     //statusbar setup
     freqlabel = new QLabel();
@@ -231,22 +229,6 @@ MainWindow::MainWindow(QWidget *parent) :
     if(!aeroambe_object_error_str.isEmpty())ui->inputwidget->appendPlainText(aeroambe_object_error_str+"\n");
 
     ui->actionTXRX->setVisible(false);//there is a hidden audio modulator icon.
-
-    //for zmq stuff
-
-    zmqStatus = -1;
-    context = zmq_ctx_new();
-    publisher = zmq_socket(context, ZMQ_PUB);
-
-    int keepalive = 1;
-    int keepalivecnt = 10;
-    int keepaliveidle = 1;
-    int keepaliveintrv = 1;
-
-    zmq_setsockopt(publisher, ZMQ_TCP_KEEPALIVE,(void*)&keepalive, sizeof(ZMQ_TCP_KEEPALIVE));
-    zmq_setsockopt(publisher, ZMQ_TCP_KEEPALIVE_CNT,(void*)&keepalivecnt,sizeof(ZMQ_TCP_KEEPALIVE_CNT));
-    zmq_setsockopt(publisher, ZMQ_TCP_KEEPALIVE_IDLE,(void*)&keepaliveidle,sizeof(ZMQ_TCP_KEEPALIVE_IDLE));
-    zmq_setsockopt(publisher, ZMQ_TCP_KEEPALIVE_INTVL,(void*)&keepaliveintrv,sizeof(ZMQ_TCP_KEEPALIVE_INTVL));
 
     //set pop and accept settings
     settingsdialog->populatesettings();
@@ -578,28 +560,6 @@ void MainWindow::selectdemodulatorconnections(DemodType demodtype)
 
         break;
     }
-}
-
-void MainWindow::connectZMQ()
-{
-    // bind socket
-
-    if(zmqStatus == 0)
-    {
-        zmq_disconnect(publisher, connected_url.c_str());
-    }
-
-    if(settingsdialog->zmqAudioOutEnabled)
-    {
-        QSettings settings("Jontisoft", settings_name);
-        QString url = settings.value("remoteAudioOutBindAddress", "tcp://*:5551").toString();
-        connected_url = url.toUtf8().constData();
-        zmqStatus= zmq_bind(publisher, connected_url.c_str() );
-    }
-
-    if(settingsdialog->zmqAudioInputEnabled)zmq_audio_receiver->ZMQaudioStart(settingsdialog->zmqAudioInputAddress, settingsdialog->zmqAudioInputTopic);
-    else zmq_audio_receiver->ZMQaudioStop();
-
 }
 
 void MainWindow::closeEvent(QCloseEvent *event)
@@ -1005,8 +965,6 @@ void MainWindow::acceptsettings()
     if(settingsdialog->tcp_for_ads_messages_enabled)sbs1->starttcpconnection(settingsdialog->tcp_for_ads_messages_address,settingsdialog->tcp_for_ads_messages_port,settingsdialog->tcp_as_client_enabled);
     else sbs1->stoptcpconnection();
 
-    connectZMQ();
-
     //if soundcard rate changed
     if(typeofdemodtouse==MSK)
     {
@@ -1127,11 +1085,25 @@ void MainWindow::acceptsettings()
     if(settingsdialog->loggingenable)compresseddiskwriter->setLogDir(settingsdialog->loggingdirectory);
     else compresseddiskwriter->setLogDir("");
 
+    //zmq audio in from remote sdr
+    if(settingsdialog->zmqAudioInputEnabled)zmq_audio_receiver->Start(settingsdialog->zmqAudioInputAddress, settingsdialog->zmqAudioInputTopic);
+    else zmq_audio_receiver->Stop();
+
+    //local audio decode
     if(settingsdialog->localAudioOutEnabled)connect(aerol,SIGNAL(Voicesignal(QByteArray)),ambe,SLOT(to_decode_slot(QByteArray)),Qt::UniqueConnection);
     else disconnect(aerol,SIGNAL(Voicesignal(QByteArray)),ambe,SLOT(to_decode_slot(QByteArray)));
 
-    if(settingsdialog->zmqAudioOutEnabled)connect(aerol,SIGNAL(Voicesignal(QByteArray&, QString&)),this,SLOT(Voiceslot(QByteArray&, QString&)),Qt::UniqueConnection);
-    else disconnect(aerol,SIGNAL(Voicesignal(QByteArray&, QString&)),this,SLOT(Voiceslot(QByteArray&, QString&)));
+    //zmq compressed audio output
+    if(settingsdialog->zmqAudioOutEnabled)
+    {
+        zmq_audio_sender->Start(settingsdialog->zmqAudioOutBind,settingsdialog->zmqAudioOutTopic);
+        connect(aerol,SIGNAL(Voicesignal(QByteArray&, QString&)),zmq_audio_sender,SLOT(Voiceslot(QByteArray&, QString&)),Qt::UniqueConnection);
+    }
+    else
+    {
+        zmq_audio_sender->Stop();
+        disconnect(aerol,SIGNAL(Voicesignal(QByteArray&, QString&)),zmq_audio_sender,SLOT(Voiceslot(QByteArray&, QString&)));
+    }
 
 }
 
@@ -1166,22 +1138,6 @@ void MainWindow::CChannelAssignmentSlot(CChannelAssignmentItem &item)
     }
 
     ui->plainTextEdit_cchan_assignment->appendPlainText(message);
-}
-
-void MainWindow::Voiceslot(QByteArray &data, QString &hex)
-{
-
-    std::string topic_text = settingsdialog->zmqAudioOutTopic.toUtf8().constData();
-    zmq_setsockopt(publisher, ZMQ_IDENTITY, topic_text.c_str(), topic_text.length());
-
-    if(data.length()!=0)
-    {
-        zmq_send(publisher, topic_text.c_str(), topic_text.length(), ZMQ_SNDMORE);
-        zmq_send(publisher, data.data(), data.length(), 0 );
-    }
-    zmq_send(publisher, topic_text.c_str(), 5, ZMQ_SNDMORE);
-    zmq_send(publisher, hex.toStdString().c_str(), 6, 0 );
-
 }
 
 //--new method of mainwindow getting second channel from aerol
