@@ -26,12 +26,10 @@ void ZMQAudioSender::Start(QString &address, QString &topic)
     this->topic=topic;
     connected_url=address.toUtf8().constData();
     zmqStatus=zmq_bind(publisher, connected_url.c_str() );
-    qDebug()<<"ZMQAudioSender::Start";
 }
 
 void ZMQAudioSender::Stop()
 {
-    qDebug()<<"ZMQAudioSender::Stop";
     if(zmqStatus == 0)
     {
         zmqStatus = zmq_disconnect(publisher, connected_url.c_str());
@@ -40,7 +38,6 @@ void ZMQAudioSender::Stop()
 
 void ZMQAudioSender::Voiceslot(QByteArray &data, QString &hex)
 {
-    qDebug()<<"ZMQAudioSender::Voiceslot";
     std::string topic_text = topic.toUtf8().constData();
     zmq_setsockopt(publisher, ZMQ_IDENTITY, topic_text.c_str(), topic_text.length());
 
@@ -52,4 +49,3 @@ void ZMQAudioSender::Voiceslot(QByteArray &data, QString &hex)
     zmq_send(publisher, topic_text.c_str(), 5, ZMQ_SNDMORE);
     zmq_send(publisher, hex.toStdString().c_str(), 6, 0 );
 }
-

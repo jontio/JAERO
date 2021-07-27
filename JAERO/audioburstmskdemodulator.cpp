@@ -20,10 +20,7 @@ void AudioBurstMskDemodulator::start()
 
 void AudioBurstMskDemodulator::stop()
 {
-    if(!settings.zmqAudio)
-    {
-        if(m_audioInput)m_audioInput->stop();
-    }
+    if(m_audioInput)m_audioInput->stop();
     BurstMskDemodulator::stop();
 }
 

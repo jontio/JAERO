@@ -22,10 +22,7 @@ void AudioOqpskDemodulator::start()
 
 void AudioOqpskDemodulator::stop()
 {
-    if(!settings.zmqAudio)
-    {
-        if(m_audioInput)m_audioInput->stop();
-    }
+    if(m_audioInput)m_audioInput->stop();
     OqpskDemodulator::stop();
 }
 

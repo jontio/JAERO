@@ -461,7 +461,9 @@ qint64 OqpskDemodulator::writeData(const char *data, qint64 len)
         ebnomeasure->Update(dabval);
 
         //AGC
-        sig2*=agc->Update(dabval);      //clipping
+        sig2*=agc->Update(dabval);
+
+        //clipping
         double abval=std::abs(sig2);
         if(abval>2.84)sig2=(2.84/abval)*sig2;
 

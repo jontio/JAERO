@@ -24,10 +24,7 @@ void AudioBurstOqpskDemodulator::start()
 void AudioBurstOqpskDemodulator::stop()
 {
     if(m_audioInput)m_audioInput->stop();
-    if(!settings.zmqAudio)
-    {
-        BurstOqpskDemodulator::stop();
-    }
+    BurstOqpskDemodulator::stop();
     demod2->stop();
 }
 
