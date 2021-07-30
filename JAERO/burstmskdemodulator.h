@@ -33,6 +33,7 @@ public:
         double Fs;
         int symbolspercycle;
         double signalthreshold;
+        bool zmqAudio;
         Settings()
         {
             coarsefreqest_fft_power=13;//2^coarsefreqest_fft_power
@@ -42,6 +43,7 @@ public:
             Fs=8000;//Hz
             symbolspercycle=16;
             signalthreshold=0.6;
+            zmqAudio=false;
         }
     };
     explicit BurstMskDemodulator(QObject *parent);
@@ -58,6 +60,7 @@ public:
     void invalidatesettings();
     void setAFC(bool state);
     void setSQL(bool state);
+    void setCPUReduce(bool state);
     void setScatterPointType(ScatterPointType type);
     double getCurrentFreq();
 private:
@@ -140,7 +143,6 @@ private:
     //delay for trident detection
     DelayThing<double> d2;
 
-
     //trident shape thing
     QVector<double> tridentbuffer;
     int tridentbuffer_ptr;
@@ -188,6 +190,7 @@ private:
 
     DelayThing<cpx_type> delayedsmpl;
 
+    bool cpuReduce;
 
 signals:
     void ScatterPoints(const QVector<cpx_type> &buffer);
@@ -209,6 +212,8 @@ signals:
 public slots:
      void CenterFreqChangedSlot(double freq_center);
      void DCDstatSlot(bool dcd);
+     void dataReceived(const QByteArray &audio, quint32 sampleRate);
+
 
 };
 

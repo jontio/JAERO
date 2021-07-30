@@ -56,7 +56,7 @@ OqpskDemodulator::OqpskDemodulator(QObject *parent)
     connect(coarsefreqestimate, SIGNAL(FreqOffsetEstimate(double)),this,SLOT(FreqOffsetEstimateSlot(double)));
 
     RootRaisedCosine rrc;
-    rrc.design(1,55,48000,10500/2);
+    rrc.design(1,55,Fs,10500/2);
     fir_re=new FIR(rrc.Points.size());
     fir_im=new FIR(rrc.Points.size());
     for(int i=0;i<rrc.Points.size();i++)
@@ -66,7 +66,7 @@ OqpskDemodulator::OqpskDemodulator(QObject *parent)
     }
 
     //st delays
-    double T=48000.0/5250.0;
+    double T=Fs/5250.0;
     delays.setdelay(1);
     delayt41.setdelay(T/4.0);
     delayt42.setdelay(T/4.0);
@@ -84,8 +84,8 @@ OqpskDemodulator::OqpskDemodulator(QObject *parent)
     st_iir_resonator.init();
 
     //st osc
-    st_osc.SetFreq(10500,48000);
-    st_osc_ref.SetFreq(10500,48000);
+    st_osc.SetFreq(10500,Fs);
+    st_osc_ref.SetFreq(10500,Fs);
 
     //ct LPF
     ct_iir_loopfilter.a.resize(3);
@@ -108,7 +108,7 @@ OqpskDemodulator::OqpskDemodulator(QObject *parent)
     //just for 8400
     //maybe another type of filter would be better?
     RootRaisedCosine rrc_pre_imp;
-    rrc_pre_imp.design(1,1024,48000,10500/2);//8096,48000,10500/2);
+    rrc_pre_imp.design(1,1024,Fs,10500/2);//8096,48000,10500/2);
     fir_pre.SetKernel(rrc_pre_imp.Points);
     mixer_fir_pre.SetFreq(freq_center,Fs);
 
@@ -205,8 +205,8 @@ void OqpskDemodulator::setSettings(Settings _settings)
     if(fir_im) delete fir_im;
 
     RootRaisedCosine rrc;
-    if(fb==8400)rrc.design(0.6,55,48000,fb/2);
-    else rrc.design(1.0,55,48000,fb/2);
+    if(fb==8400)rrc.design(0.6,55,Fs,fb/2);
+    else rrc.design(1.0,55,Fs,fb/2);
     fir_re=new FIR(rrc.Points.size());
     fir_im=new FIR(rrc.Points.size());
     for(int i=0;i<rrc.Points.size();i++)
@@ -216,7 +216,7 @@ void OqpskDemodulator::setSettings(Settings _settings)
     }
 
     //st delays
-    double T=48000.0/(fb/2);
+    double T=Fs/(fb/2);
     delays.setdelay(1);
     delayt41.setdelay(T/4.0);
     delayt42.setdelay(T/4.0);
@@ -264,8 +264,11 @@ void OqpskDemodulator::setSettings(Settings _settings)
     st_iir_resonator.init();
 
     //st osc
-    st_osc.SetFreq(fb,48000);
-    st_osc_ref.SetFreq(fb,48000);
+
+    st_osc.SetFreq(fb,Fs);
+    st_osc_ref.SetFreq(fb,Fs);
+
+
 
     //ebno measurement ok at 10.5k not
     ebnomeasure->setup_update(Fs,fb);
@@ -452,10 +455,13 @@ qint64 OqpskDemodulator::writeData(const char *data, qint64 len)
         }
 
         //Measure ebno
-        ebnomeasure->Update(std::abs(sig2));
+
+        double dabval = std::sqrt(sig2.real()*sig2.real() + sig2.imag()*sig2.imag());
+
+        ebnomeasure->Update(dabval);
 
         //AGC
-        sig2*=agc->Update(std::abs(sig2));
+        sig2*=agc->Update(dabval);
 
         //clipping
         double abval=std::abs(sig2);
@@ -535,7 +541,7 @@ qint64 OqpskDemodulator::writeData(const char *data, qint64 len)
                 if(!slowdown)
                 {
                     ASSERTCH(pointbuff,pointbuff_ptr);
-                    pointbuff[pointbuff_ptr]=pt_qpsk;
+                    pointbuff.replace(pointbuff_ptr,pt_qpsk);
                     pointbuff_ptr++;pointbuff_ptr%=pointbuff.size();
                     //if(scatterpointtype==SPT_constellation&&(pointbuff_ptr%100==0))emit ScatterPoints(pointbuff);
                     if(scatterpointtype==SPT_constellation&&sendscatterpoints){sendscatterpoints=false;emit ScatterPoints(pointbuff);}
@@ -545,7 +551,7 @@ qint64 OqpskDemodulator::writeData(const char *data, qint64 len)
                 {
                     cpx_type st_phase_offset_pt=st_osc_ref.WTCISValue()*std::conj(st_osc.WTCISValue());
                     ASSERTCH(phasepointbuff,phasepointbuff_ptr);
-                    phasepointbuff[phasepointbuff_ptr]=st_phase_offset_pt;
+                    phasepointbuff.replace(phasepointbuff_ptr,st_phase_offset_pt);
                     phasepointbuff_ptr++;phasepointbuff_ptr%=phasepointbuff.size();
                     //if(scatterpointtype==SPT_phaseoffsetest)emit ScatterPoints(phasepointbuff);
                     if(scatterpointtype==SPT_phaseoffsetest&&sendscatterpoints){sendscatterpoints=false;emit ScatterPoints(phasepointbuff);}
@@ -554,21 +560,8 @@ qint64 OqpskDemodulator::writeData(const char *data, qint64 len)
                 //calc MSE of the points
                 mse=msecalc->Update(pt_qpsk);
 
-                /*
-                //hard BPSK demod x2
-                bool pt_qpsk_imag_demod=0;
-                bool pt_qpsk_real_demod=0;
-                if(pt_qpsk.imag()>0)pt_qpsk_imag_demod=1;
-                if(pt_qpsk.real()>0)pt_qpsk_real_demod=1;
-
-                //if you want packed bits
-                bc.LoadSymbol(pt_qpsk_imag_demod);
-                bc.LoadSymbol(pt_qpsk_real_demod);
-                while(bc.DataAvailable)
+                if(mse<signalthreshold)
                 {
-                    bc.GetNextSymbol();
-                    RxDataBytes.push_back((uchar)bc.Result);
-                }*/
 
                 // soft bits
                 int ibit=qRound(0.75*pt_qpsk.imag()*127.0+128.0);
@@ -596,6 +589,7 @@ qint64 OqpskDemodulator::writeData(const char *data, qint64 len)
                     RxDataBits.clear();
                 }
             }
+        }
         }
         sig2_last=sig2;
 
@@ -685,4 +679,13 @@ void OqpskDemodulator::DCDstatSlot(bool _dcd)
 
     dcd=_dcd;
 
+}
+
+void OqpskDemodulator::dataReceived(const QByteArray &audio,quint32 sampleRate)
+{
+    if(sampleRate!=Fs)
+    {
+        qDebug()<<"Sample rate not supported by demodulator";
+    }
+    writeData(audio, audio.length());
 }

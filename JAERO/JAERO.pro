@@ -11,7 +11,7 @@
 #if you are having trubbles focus on things like "LIBS += -L$$OGG_PATH/src/.libs"
 #remember to compile libvorbis,libogg, and libcorrect before compiling this
 
-DEFINES += JAERO_VERSION=\\\"v1.0.4.12-alpha\\\"
+DEFINES += JAERO_VERSION=\\\"v1.0.4.13-alpha\\\"
 
 QT       += multimedia core network gui svg sql
 
@@ -85,7 +85,10 @@ SOURCES += mainwindow.cpp \
     $$JFFT_PATH/jfft.cpp \
     util/stdio_utils.cpp \
     util/file_utils.cpp \
-    util/RuntimeError.cpp
+    util/RuntimeError.cpp \
+    zmq_audiosender.cpp \
+    zmq_audioreceiver.cpp
+
 
 HEADERS  += mainwindow.h \
     coarsefreqestimate.h \
@@ -119,17 +122,20 @@ HEADERS  += mainwindow.h \
     $$JFFT_PATH/jfft.h \
     util/stdio_utils.h \
     util/file_utils.h \
-    util/RuntimeError.h
+    util/RuntimeError.h \
+    zmq_audioreceiver.h \
+    zmq_audiosender.h
+
 
 # Tell the qcustomplot header that it will be used as library:
 DEFINES += QCUSTOMPLOT_USE_LIBRARY
 #qcustom plot is called different names on different systems
 win32 {
 #message("windows")
-LIBS += -lqcustomplot2
+LIBS += -lqcustomplot2 -llibzmq
 } else {
 #message("not windows")
-LIBS += -lqcustomplot
+LIBS += -lqcustomplot -lzmq
 }
 
 FORMS    += mainwindow.ui \
@@ -159,7 +165,7 @@ QMAKE_CXXFLAGS_RELEASE += -O3
 #QMAKE_CXXFLAGS_RELEASE *= -O3
 
 #for static building order seems to matter
-LIBS += -lcorrect -lvorbis -lvorbisenc -logg -lacars
+LIBS += -lcorrect -lvorbis -lvorbisenc -logg -lacars 
 
 #desktop
 desktop.path = /usr/share/applications

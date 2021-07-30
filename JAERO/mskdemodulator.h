@@ -30,6 +30,7 @@ public:
         double Fs;
         int symbolspercycle;
         double signalthreshold;
+        bool zmqAudio;
         Settings()
         {
             coarsefreqest_fft_power=13;//2^coarsefreqest_fft_power
@@ -39,6 +40,7 @@ public:
             Fs=48000;//Hz
             symbolspercycle=16;
             signalthreshold=0.5;
+            zmqAudio=false;
         }
     };
     explicit MskDemodulator(QObject *parent);
@@ -140,6 +142,7 @@ private:
     int coarseCounter;
     bool cpuReduce;
 
+    Settings last_applied_settings;
 
 signals:
     void ScatterPoints(const QVector<cpx_type> &buffer);
@@ -160,6 +163,8 @@ public slots:
     void FreqOffsetEstimateSlot(double freq_offset_est);
     void CenterFreqChangedSlot(double freq_center);
     void DCDstatSlot(bool dcd);
+    void dataReceived(const QByteArray &audio, quint32 sampleRate);
+
 
 };
 

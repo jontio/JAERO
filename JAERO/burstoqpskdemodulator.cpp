@@ -172,6 +172,12 @@ void BurstOqpskDemodulator::setSQL(bool state)
     sql=state;
 }
 
+void BurstOqpskDemodulator::setCPUReduce(bool state)
+{
+    cpuReduce=state;
+
+}
+
 void BurstOqpskDemodulator::setScatterPointType(ScatterPointType type)
 {
     scatterpointtype=type;
@@ -297,6 +303,14 @@ qint64 BurstOqpskDemodulator::writeData(const char *data, qint64 len)
     return len;
 }
 
+void BurstOqpskDemodulator::dataReceived(const QByteArray &audio,quint32 sampleRate)
+{
+    if(sampleRate!=Fs)
+    {
+        qDebug()<<"Sample rate not supported by demodulator";
+    }
+    writeData(audio, audio.length());
+}
 
 void BurstOqpskDemodulator::writeDataSlot(const char *data, qint64 len)
 {
@@ -342,7 +356,9 @@ void BurstOqpskDemodulator::writeDataSlot(const char *data, qint64 len)
         if(fabs(dval)>maxval)maxval=fabs(dval);
         spectrumcycbuff[spectrumcycbuff_ptr]=dval;
         spectrumcycbuff_ptr++;spectrumcycbuff_ptr%=spectrumnfft;
-        if(timer.elapsed()>150)
+
+        if((!cpuReduce && timer.elapsed()>150) || (cpuReduce && timer.elapsed()>1000))
+
         {
             sendscatterpoints=true;
             timer.start();
@@ -373,7 +389,6 @@ void BurstOqpskDemodulator::writeDataSlot(const char *data, qint64 len)
         if(pdet.update(bt_sig))
         {
             tridentbuffer_ptr=0;
-
         }
 
         if(tridentbuffer_ptr<tridentbuffer_sz)//fill trident buffer
@@ -384,7 +399,6 @@ void BurstOqpskDemodulator::writeDataSlot(const char *data, qint64 len)
          else if(tridentbuffer_ptr==tridentbuffer_sz)//trident buffer is now filled so now check for trident and carrier freq and phase and amplitude
          {
             tridentbuffer_ptr++;
-
 
             //base
             in=tridentbuffer.mid(0,qRound(128.0*SamplesPerSymbol));
@@ -401,9 +415,7 @@ void BurstOqpskDemodulator::writeDataSlot(const char *data, qint64 len)
             //diff
             for(int i=0;i<out_abs_diff.size();i++)
             {
-
                 out_abs_diff[i]=(std::abs(out_top[i])-std::abs(out_base[i]));
-
             }
 
             //find best trident loc
@@ -464,7 +476,6 @@ void BurstOqpskDemodulator::writeDataSlot(const char *data, qint64 len)
                 //set gain given estimate
                 vol_gain=1.4142*500.0/minval;
 
-
                 //set when we want to store points for display
                 //if using rotation bias correction
                 //pointbuff_ptr=-128-128-256;//-128-128;//-400;//-500;//-100;
@@ -490,9 +501,7 @@ void BurstOqpskDemodulator::writeDataSlot(const char *data, qint64 len)
                 mse=0;
                 msema->Zero();
 
-
             }
-
 
          }//end of trident check
 
@@ -512,16 +521,11 @@ void BurstOqpskDemodulator::writeDataSlot(const char *data, qint64 len)
                 startstop=startstopstart;
             }
 
-
-
         }
         if(startstop==0)
         {
             startstop--;
-            //            qDebug()<<"stop";
-
             emit SignalStatus(false);
-
         }
 
         if((cntr>((256-10)*SamplesPerSymbol))&&insertpreamble)
@@ -555,26 +559,25 @@ void BurstOqpskDemodulator::writeDataSlot(const char *data, qint64 len)
 
         //correct carrier phase
 
-
         sig2*=symboltone_averotator;
 
         rotator=rotator*std::exp(imag*rotator_freq);
         sig2*=rotator;
 
+        double sig2abs = std::abs(sig2);
+
         //Measure ebno
-        ebnomeasure->Update(std::abs(sig2));
+        ebnomeasure->Update(sig2abs);
 
         //send ebno when right time
         if(fabs(cntr-((128.0+128.0+128.0)*SamplesPerSymbol))<0.5)emit EbNoMeasurmentSignal(ebnomeasure->EbNo);
 
         //AGC
-        sig2*=agc2->Update(std::abs(sig2));
+        sig2*=agc2->Update(sig2abs);
 
         //clipping
         double abval=std::abs(sig2);
         if(abval>2.84)sig2=(2.84/abval)*sig2;
-
-
 
         //normal symbol timer
         double st_diff=delays.update(abval*abval)-(abval*abval);
@@ -683,7 +686,7 @@ void BurstOqpskDemodulator::writeDataSlot(const char *data, qint64 len)
                 }
 
 
-                //if(startstop>0)//if signal then may as well demodulate
+                if(startstop>0)//if signal then may as well demodulate
                 {
 
 
@@ -732,3 +735,4 @@ void BurstOqpskDemodulator::writeDataSlot(const char *data, qint64 len)
 
     return;
 }
+

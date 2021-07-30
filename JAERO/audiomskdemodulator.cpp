@@ -3,16 +3,19 @@
 #include <QDebug>
 
 AudioMskDemodulator::AudioMskDemodulator(QObject *parent)
-:   MskDemodulator(parent),
-  m_audioInput(NULL)
+    :   MskDemodulator(parent),
+      m_audioInput(NULL)
 {
-//
+    //
 }
 
 void AudioMskDemodulator::start()
 {
     MskDemodulator::start();
-    if(m_audioInput)m_audioInput->start(this);
+    if(!settings.zmqAudio)
+    {
+        if(m_audioInput)m_audioInput->start(this);
+    }
 }
 
 void AudioMskDemodulator::stop()

@@ -1407,8 +1407,6 @@ QByteArray &AeroL::Decode(QVector<short> &bits, bool soft)//0 bit --> oldest bit
 
                         uchar SEQINDICATOR=((byte1&0xF0)>>4);
                         uchar SUTYPE=byte1&0x0F;
-                        uchar QNO=((byte2&0xF0)>>4);
-                        uchar REFNO=byte2&0x07;
                         quint32 AESID=byte3<<8*2|byte4<<8*1|byte5<<8*0;
                         int GES=byte6;
 
@@ -1446,8 +1444,6 @@ QByteArray &AeroL::Decode(QVector<short> &bits, bool soft)//0 bit --> oldest bit
 
                         int BytesInSU=0;
                         if((SUTYPE>=1)&&(SUTYPE<=11))BytesInSU=SUTYPE;
-                        bool SignalingInfoSU=false;
-                        if(SUTYPE==15)SignalingInfoSU=true;
 
                         decline+=((QString)" SU %1 of %2. AES: %3 GES: %4").arg(SUindex+1).arg(SUTotal).arg((((QString)"%1").arg(AESID,6, 16, QChar('0'))).toUpper()).arg((((QString)"%1").arg(GES,2, 16, QChar('0'))).toUpper())   ;
                         /*decline+=" \"";
@@ -1735,6 +1731,10 @@ QByteArray &AeroL::Decode(QVector<short> &bits, bool soft)//0 bit --> oldest bit
                                     break;
                                 case Log_on_confirm:
                                     decline+="Log_on_confirm";
+
+                                {
+                                    SendLogOnOff(k, "Log on confirm");
+                                }
                                     break;
                                 case Log_control_P_channel_log_off_request:
                                     decline+="Log_control_P_channel_log_off_request";
@@ -2166,9 +2166,21 @@ void AeroL::SendCAssignment(int k, QString decline)
     QString beam = " Global Beam ";
     if(byte7&0x80)beam=" Spot Beam ";
 
-
-
     item.message = "Receive Freq: " + receive + beam + "Transmit " + transmit + "\r\n" + decline;
+    emit ACARSsignal(item);
+}
+void AeroL::SendLogOnOff(int k, QString text)
+{
+    ACARSItem item;
+    item.isuitem.AESID=((uchar)infofield[k*12-1+2])<<8*2|((uchar)infofield[k*12-1+3])<<8*1|((uchar)infofield[k*12-1+4])<<8*0;
+    item.isuitem.GESID=infofield[k*12-1+5];
+
+    item.hastext = true;
+    item.downlink = true;
+    item.nonacars = true;
+    item.valid = true;
+
+    item.message = text;
     emit ACARSsignal(item);
 }
 
@@ -2181,6 +2193,8 @@ QByteArray &AeroL::DecodeC(QVector<short> &bits)
 
     quint16 bit=0;
     quint16 soft_bit=0;
+
+    QString hex = "000000";
 
     for(int i=0;i<bits.size();i++)
     {
@@ -2394,6 +2408,14 @@ QByteArray &AeroL::DecodeC(QVector<short> &bits)
                                 decline+=" GES = "+infofield.mid(4,1).toHex().toUpper();
                                 decline+=" Call_progress \r\n";
                                 emit Call_progress_Signal(infofield);
+
+                                QString thex = infofield.mid(1,3).toHex().toUpper();
+
+                                if(thex.length() == 6)
+                                {
+                                    hex = thex;
+                                }
+
                             }
                             break;
 
@@ -2457,12 +2479,14 @@ QByteArray &AeroL::DecodeC(QVector<short> &bits)
                        }
                 }
 
+                // send for external decoding
+                emit Voicesignal(data, hex);
+
                 //25 primary fields. this is where the audio lives in a compressed format
                 for(int i=0;i<25;i++)
                 {
-                    emit Voicesignal(data.mid(i*12,12));//send one frame at a time
+                     emit Voicesignal(data.mid(i*12,12));//send one frame at a time
                 }
-
 
               // reset for next block
               index = -1;

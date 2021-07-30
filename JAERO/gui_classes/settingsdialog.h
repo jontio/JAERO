@@ -51,6 +51,21 @@ public:
     bool tcp_for_ads_messages_enabled;
     bool tcp_as_client_enabled;
 
+
+    bool cpuSaveMode;
+    bool disableAcarsConsole;
+
+    bool localAudioOutEnabled;
+    bool zmqAudioOutEnabled;
+    QString zmqAudioOutBind;
+    QString zmqAudioOutTopic;
+
+    bool zmqAudioInputEnabled;
+    QString zmqAudioInputAddress;
+    QString zmqAudioInputTopic;
+
+
+
 private:
     Ui::SettingsDialog *ui;    
     void poulatepublicvars();

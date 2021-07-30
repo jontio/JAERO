@@ -4,6 +4,7 @@
 #include <QMainWindow>
 #include <QUdpSocket>
 #include <QLabel>
+
 #include "audiooqpskdemodulator.h"
 #include "audiomskdemodulator.h"
 #include "audioburstoqpskdemodulator.h"
@@ -21,6 +22,9 @@
 
 #include "audiooutdevice.h"
 #include "compressedaudiodiskwriter.h"
+#include "zmq_audioreceiver.h"
+#include "zmq_audiosender.h"
+
 
 namespace Ui {
 class MainWindow;
@@ -33,6 +37,8 @@ class MainWindow : public QMainWindow
 public:
     explicit MainWindow(QWidget *parent = 0);
     ~MainWindow();
+
+signals:
 
 private:
     enum DemodType{NoDemodType,MSK,OQPSK,BURSTOQPSK,BURSTMSK};
@@ -56,7 +62,6 @@ private:
     //Burst MSK add
     AudioBurstMskDemodulator *audioburstmskdemodulator;
     AudioBurstMskDemodulator::Settings audioburstmskdemodulatorsettings;
-
 
     //bottom textedit output
     QList<QPointer<QUdpSocket> > udpsockets_bottom_textedit;
@@ -88,6 +93,11 @@ private:
     ArincParse arincparser;
 
     QSound *beep;
+
+    //ZeroMQ Audio Receiver
+    ZMQAudioReceiver *zmq_audio_receiver;
+    ZMQAudioSender   *zmq_audio_sender;
+
 protected:
     void closeEvent(QCloseEvent *event);
 
@@ -118,6 +128,7 @@ private slots:
     void on_tabWidget_currentChanged(int index);
     void on_actionSound_Out_toggled(bool mute);
     void on_actionReduce_CPU_triggered(bool checked);
+
 };
 
 #endif // MAINWINDOW_H
