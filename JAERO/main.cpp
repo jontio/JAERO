@@ -8,7 +8,7 @@ int main(int argc, char *argv[])
     QApplication a(argc, argv);
 
     QApplication::setApplicationName("JAERO");
-    QApplication::setApplicationVersion("1.0.4.4");
+    QApplication::setApplicationVersion(QString(JAERO_VERSION));
 
     QCommandLineParser cmdparser;
     cmdparser.setApplicationDescription("Demodulate and decode Satcom ACARS");
