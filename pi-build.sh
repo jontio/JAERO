@@ -238,7 +238,7 @@ cp control ${PACKAGE_NAME}_${PACKAGE_VERSION%_*}-1/DEBIAN
 mkdir -p ${PACKAGE_NAME}_${PACKAGE_VERSION%_*}-1/usr/local/bin
 cat <<EOT > ${PACKAGE_NAME}_${PACKAGE_VERSION%_*}-1/usr/local/bin/jaero
 #!/bin/bash
-/opt/jaero/JAERO
+/opt/jaero/JAERO "\$@"
 EOT
 chmod +x ${PACKAGE_NAME}_${PACKAGE_VERSION%_*}-1/usr/local/bin/jaero
 #basestation if available
