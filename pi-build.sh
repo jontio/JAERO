@@ -1,6 +1,6 @@
 #!/bin/bash
 
-#linux build (for github "ubuntu-latest")
+#linux build (for raspberry pi raspberrian os)
 
 #will get dependancies, build and install jaero
 #NB will create folders at the same level as the JAERO folder. e.g if you cloned into ~/git/JAERO then you will have the following folders..
@@ -17,26 +17,51 @@ set -e
 if [[ ! $(sudo echo 0) ]]; then exit; fi
 
 #install dependancies and build tools
-sudo apt-get install qt5-default cpputest build-essential qtmultimedia5-dev cmake libvorbis-dev libogg-dev libqt5multimedia5-plugins checkinstall libqcustomplot-dev libqt5svg5-dev libzmq3-dev -y
+sudo apt-get install qt5-default cpputest build-essential qtmultimedia5-dev cmake libvorbis-dev libogg-dev libqt5multimedia5-plugins checkinstall libqcustomplot-dev libqt5svg5-dev libzmq3-dev gettext -y
 
 #get script path
 SCRIPT=$(realpath $0)
 SCRIPTPATH=$(dirname $SCRIPT)
 cd $SCRIPTPATH/..
 
+#checkinstall on my buster raspberrian fails with make: *** [Makefile:332: cmake_check_build_system] Segmentation fault
+#so clone and install a version that works on the pi
+FOLDER="checkinstall"
+URL="https://github.com/giuliomoro/checkinstall"
+if [ ! -d "$FOLDER" ] ; then
+    git clone $URL $FOLDER
+    cd "$FOLDER"
+else
+    cd "$FOLDER"
+    git pull $URL
+fi
+make
+sudo make install
+sudo ldconfig
+cd ..
+
 #libacars
-git clone https://github.com/szpajder/libacars
-cd libacars && git checkout v1.3.1
+FOLDER="libacars"
+URL="https://github.com/szpajder/libacars"
+if [ ! -d "$FOLDER" ] ; then
+    git clone $URL $FOLDER
+    cd "$FOLDER"
+else
+    cd "$FOLDER"
+    git pull $URL
+fi
+git checkout v1.3.1
 #needed for github actions
 git fetch --prune --unshallow --tags || true
 git status > /dev/null 2>&1
 PACKAGE_VERSION=$(git describe --tags --match 'v*' --dirty 2> /dev/null | tr -d v)
 echo "PACKAGE_VERSION="$PACKAGE_VERSION
-mkdir build
+mkdir -p build
 cd build
 cmake ..
 make
 sudo checkinstall \
+            -D \
             --pkgsource="https://github.com/szpajder/libacars" \
             --pkglicense="MIT" \
             --maintainer="https://github.com/szpajder" \
@@ -47,22 +72,31 @@ sudo checkinstall \
             --summary="A library for decoding various ACARS message payloads" \
             --requires="" \
             -y
+sudo apt install --reinstall ./libacars-dev*.deb -y         
 sudo ldconfig
 cd ../..
 
 #libcorrect
-git clone https://github.com/quiet/libcorrect
-cd libcorrect
+FOLDER="libcorrect"
+URL="https://github.com/quiet/libcorrect"
+if [ ! -d "$FOLDER" ] ; then
+    git clone $URL $FOLDER
+    cd "$FOLDER"
+else
+    cd "$FOLDER"
+    git pull $URL
+fi
 #needed for github actions
 git fetch --prune --unshallow --tags || true
 git status > /dev/null 2>&1
 PACKAGE_VERSION=1_$(git rev-parse HEAD | cut -c 1-8)
 echo "PACKAGE_VERSION="$PACKAGE_VERSION
-mkdir build
+mkdir -p build
 cd build
 cmake ..
 make
 sudo checkinstall \
+            -D \
             --pkgsource="https://github.com/quiet/libcorrect" \
             --pkglicense="BSD-3-Clause License" \
             --maintainer="https://github.com/quiet" \
@@ -73,15 +107,33 @@ sudo checkinstall \
             --summary="C library for Convolutional codes and Reed-Solomon" \
             --requires="" \
             -y
+sudo apt install --reinstall ./libcorrect-dev*.deb -y
 sudo ldconfig
 cd ../..
 
 #JFFT
-git clone https://github.com/jontio/JFFT
+FOLDER="JFFT"
+URL="https://github.com/jontio/JFFT"
+if [ ! -d "$FOLDER" ] ; then
+    git clone $URL $FOLDER
+    cd "$FOLDER"
+else
+    cd "$FOLDER"
+    git pull $URL
+fi
+cd ..
 
 #libaeroambe
-git clone https://github.com/jontio/libaeroambe
-cd libaeroambe/mbelib-master
+FOLDER="libaeroambe"
+URL="https://github.com/jontio/libaeroambe"
+if [ ! -d "$FOLDER" ] ; then
+    git clone $URL $FOLDER
+    cd "$FOLDER"
+else
+    cd "$FOLDER"
+    git pull $URL
+fi
+cd mbelib-master
 #needed for github actions
 git fetch --prune --unshallow --tags || true
 git status > /dev/null 2>&1
@@ -94,7 +146,7 @@ echo "PACKAGE_VERSION="$PACKAGE_VERSION
 echo "MAINTAINER="$MAINTAINER
 echo "PACKAGE_SOURCE="$PACKAGE_SOURCE
 #build the old modified libmbe with mini-m patch
-mkdir build
+mkdir -p build
 cd build
 #need to turn of -fPIC for static linking
 cmake -DCMAKE_POSITION_INDEPENDENT_CODE=ON ..
@@ -118,7 +170,7 @@ Package: ${PACKAGE_NAME}
 Source: ${PACKAGE_SOURCE}
 Section: base
 Priority: extra
-Depends: qt5-default (>= 5.12)
+Depends: qt5-default (>= 5.11)
 Provides: ${PACKAGE_NAME}
 Maintainer: ${MAINTAINER}
 Version: ${PACKAGE_VERSION%_*}
@@ -131,7 +183,7 @@ mkdir -p ${PACKAGE_NAME}_${PACKAGE_VERSION%_*}-1/DEBIAN
 cp control ${PACKAGE_NAME}_${PACKAGE_VERSION%_*}-1/DEBIAN
 dpkg-deb --build ${PACKAGE_NAME}_${PACKAGE_VERSION%_*}-1
 #install the deb package and go back to the main path
-sudo apt install ./${PACKAGE_NAME}*.deb -y
+sudo apt install --reinstall ./${PACKAGE_NAME}*.deb -y
 sudo ldconfig
 cd ../../..
 
@@ -153,6 +205,7 @@ echo "MAINTAINER="$MAINTAINER
 echo "PACKAGE_SOURCE="$PACKAGE_SOURCE
 cd JAERO
 #run unit tests
+rm -fr JAERO
 qmake CONFIG+="CI"
 make
 ./JAERO -v
@@ -170,7 +223,7 @@ Package: ${PACKAGE_NAME}
 Source: ${PACKAGE_SOURCE}
 Section: base
 Priority: extra
-Depends: qt5-default (>= 5.12), qtmultimedia5-dev, libvorbis-dev, libogg-dev, libqt5multimedia5-plugins, libqcustomplot-dev, libqt5svg5-dev, libzmq3-dev
+Depends: qt5-default (>= 5.11), qtmultimedia5-dev, libvorbis-dev, libogg-dev, libqt5multimedia5-plugins, libqcustomplot-dev, libqt5svg5-dev, libzmq3-dev
 Provides: ${PACKAGE_NAME}
 Maintainer: ${MAINTAINER}
 Version: ${PACKAGE_VERSION%_*}
@@ -197,7 +250,7 @@ else
 fi
 #build and install package
 dpkg-deb --build ${PACKAGE_NAME}_${PACKAGE_VERSION%_*}-1
-sudo apt install ./${PACKAGE_NAME}*.deb -y
+sudo apt install --reinstall ./${PACKAGE_NAME}*.deb -y
 sudo ldconfig
 cd ../..
 
@@ -212,7 +265,7 @@ cd JAERO/bin
 cat <<EOT > jaero/install.sh
 #!/bin/bash
 #installs built packages
-sudo apt install ./*.deb
+sudo apt install --reinstall ./*.deb
 sudo ldconfig
 EOT
 chmod +x jaero/install.sh
