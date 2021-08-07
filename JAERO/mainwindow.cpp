@@ -979,6 +979,17 @@ void MainWindow::acceptsettings()
     if(settingsdialog->zmqAudioInputEnabled)sourcelabel->setText(" "+settingsdialog->zmqAudioInputTopic+" ");
     else sourcelabel->setText(" "+settingsdialog->audioinputdevice.deviceName()+" ");
 
+    if(settingsdialog->localAudioOutEnabled&&(!ui->actionSound_Out->isVisible()))
+    {
+        on_actionSound_Out_toggled(false);
+        ui->actionSound_Out->setVisible(true);
+    }
+    else if(!settingsdialog->localAudioOutEnabled)
+    {
+        on_actionSound_Out_toggled(true);
+        ui->actionSound_Out->setVisible(false);
+    }
+
     //start or stop tcp server/client
     if(settingsdialog->tcp_for_ads_messages_enabled)sbs1->starttcpconnection(settingsdialog->tcp_for_ads_messages_address,settingsdialog->tcp_for_ads_messages_port,settingsdialog->tcp_as_client_enabled);
     else sbs1->stoptcpconnection();
@@ -1380,6 +1391,7 @@ void MainWindow::on_actionSound_Out_toggled(bool mute)
         connect(ambe,SIGNAL(decoded_signal(QByteArray)),audioout,SLOT(audioin(QByteArray)));
         audioout->start();
     }
+    qDebug()<<"on_actionSound_Out_toggled"<<mute;
 }
 
 void MainWindow::on_actionReduce_CPU_triggered(bool checked)

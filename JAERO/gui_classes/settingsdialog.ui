@@ -607,12 +607,12 @@ eg &quot;localhost:12345 localhost:12346&quot;</string>
          <rect>
           <x>20</x>
           <y>30</y>
-          <width>171</width>
+          <width>331</width>
           <height>17</height>
          </rect>
         </property>
         <property name="text">
-         <string>JAERO voice decoding</string>
+         <string>Local voice decoding in JAERO</string>
         </property>
        </widget>
        <widget class="QCheckBox" name="remoteAmbeEnabled">
@@ -620,7 +620,7 @@ eg &quot;localhost:12345 localhost:12346&quot;</string>
          <rect>
           <x>20</x>
           <y>70</y>
-          <width>171</width>
+          <width>261</width>
           <height>17</height>
          </rect>
         </property>
