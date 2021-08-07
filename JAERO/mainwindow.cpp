@@ -1391,7 +1391,6 @@ void MainWindow::on_actionSound_Out_toggled(bool mute)
         connect(ambe,SIGNAL(decoded_signal(QByteArray)),audioout,SLOT(audioin(QByteArray)));
         audioout->start();
     }
-    qDebug()<<"on_actionSound_Out_toggled"<<mute;
 }
 
 void MainWindow::on_actionReduce_CPU_triggered(bool checked)
