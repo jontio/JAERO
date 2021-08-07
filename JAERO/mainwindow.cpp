@@ -128,9 +128,11 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(ambe,SIGNAL(decoded_signal(QByteArray)),audioout,SLOT(audioin(QByteArray)));
 
     //statusbar setup
+    sourcelabel = new QLabel();
     freqlabel = new QLabel();
     ebnolabel = new QLabel();
     ui->statusBar->addPermanentWidget(new QLabel());
+    ui->statusBar->addPermanentWidget(sourcelabel);
     ui->statusBar->addPermanentWidget(freqlabel);
     ui->statusBar->addPermanentWidget(ebnolabel);
 
@@ -147,7 +149,7 @@ MainWindow::MainWindow(QWidget *parent) :
 
     //aeroL connections
     connect(aerol,SIGNAL(DataCarrierDetect(bool)),this,SLOT(DataCarrierDetectStatusSlot(bool)));
-    connect(aerol,SIGNAL(ACARSsignal(ACARSItem&)),planelog,SLOT(ACARSslot(ACARSItem&)));
+////    connect(aerol,SIGNAL(ACARSsignal(ACARSItem&)),planelog,SLOT(ACARSslot(ACARSItem&)));
     connect(aerol,SIGNAL(ACARSsignal(ACARSItem&)),this,SLOT(ACARSslot(ACARSItem&)));
     connect(aerol,SIGNAL(DataCarrierDetect(bool)),audiomskdemodulator,SLOT(DCDstatSlot(bool)));
     connect(aerol,SIGNAL(DataCarrierDetect(bool)),audioburstmskdemodulator,SLOT(DCDstatSlot(bool)));
@@ -157,7 +159,7 @@ MainWindow::MainWindow(QWidget *parent) :
 
     //aeroL2 connections
     connect(aerol2,SIGNAL(DataCarrierDetect(bool)),this,SLOT(DataCarrierDetectStatusSlot(bool)));
-    connect(aerol2,SIGNAL(ACARSsignal(ACARSItem&)),planelog,SLOT(ACARSslot(ACARSItem&)));
+////    connect(aerol2,SIGNAL(ACARSsignal(ACARSItem&)),planelog,SLOT(ACARSslot(ACARSItem&)));
     connect(aerol2,SIGNAL(ACARSsignal(ACARSItem&)),this,SLOT(ACARSslot(ACARSItem&)));
 
     //load settings
@@ -960,6 +962,22 @@ void MainWindow::acceptsettings()
 
     aerol2->setDoNotDisplaySUs(settingsdialog->donotdisplaysus);
     aerol2->setDataBaseDir(settingsdialog->planesfolder);
+
+    if(settingsdialog->disablePlaneLogWindow)
+    {
+        disconnect(aerol,SIGNAL(ACARSsignal(ACARSItem&)),planelog,SLOT(ACARSslot(ACARSItem&)));
+        disconnect(aerol2,SIGNAL(ACARSsignal(ACARSItem&)),planelog,SLOT(ACARSslot(ACARSItem&)));
+        ui->action_PlaneLog->setVisible(false);
+    }
+    else
+    {
+        connect(aerol,SIGNAL(ACARSsignal(ACARSItem&)),planelog,SLOT(ACARSslot(ACARSItem&)),Qt::UniqueConnection);
+        connect(aerol2,SIGNAL(ACARSsignal(ACARSItem&)),planelog,SLOT(ACARSslot(ACARSItem&)),Qt::UniqueConnection);
+        ui->action_PlaneLog->setVisible(true);
+    }
+
+    if(settingsdialog->zmqAudioInputEnabled)sourcelabel->setText(" "+settingsdialog->zmqAudioInputTopic+" ");
+    else sourcelabel->setText(" "+settingsdialog->audioinputdevice.deviceName()+" ");
 
     //start or stop tcp server/client
     if(settingsdialog->tcp_for_ads_messages_enabled)sbs1->starttcpconnection(settingsdialog->tcp_for_ads_messages_address,settingsdialog->tcp_for_ads_messages_port,settingsdialog->tcp_as_client_enabled);

@@ -503,7 +503,7 @@ eg &quot;localhost:12345 localhost:12346&quot;</string>
        <property name="geometry">
         <rect>
          <x>120</x>
-         <y>28</y>
+         <y>58</y>
          <width>291</width>
          <height>21</height>
         </rect>
@@ -512,20 +512,33 @@ eg &quot;localhost:12345 localhost:12346&quot;</string>
         <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;URL for plane lookup. {AES} is the plane ICAO number in hex and {REG} is the registration.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
        </property>
        <property name="text">
-        <string>http://junzisun.com/aif/?q={AES}#</string>
+        <string>http://www.flightradar24.com/data/airplanes/{REG}</string>
        </property>
       </widget>
       <widget class="QLabel" name="label_5">
        <property name="geometry">
         <rect>
          <x>10</x>
-         <y>30</y>
+         <y>60</y>
          <width>101</width>
          <height>16</height>
         </rect>
        </property>
        <property name="text">
         <string>Plane lookup</string>
+       </property>
+      </widget>
+      <widget class="QCheckBox" name="checkBoxDisablePlaneLogWindow">
+       <property name="geometry">
+        <rect>
+         <x>10</x>
+         <y>20</y>
+         <width>201</width>
+         <height>19</height>
+        </rect>
+       </property>
+       <property name="text">
+        <string>Disable plane log window</string>
        </property>
       </widget>
      </widget>
@@ -786,6 +799,38 @@ eg &quot;localhost:12345 localhost:12346&quot;</string>
     <hint type="destinationlabel">
      <x>216</x>
      <y>210</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>checkBoxDisablePlaneLogWindow</sender>
+   <signal>toggled(bool)</signal>
+   <receiver>lineEditplanelookup</receiver>
+   <slot>setDisabled(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>123</x>
+     <y>65</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>278</x>
+     <y>104</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>checkBoxZMQ</sender>
+   <signal>toggled(bool)</signal>
+   <receiver>checkBoxlogwidebandwidthenable</receiver>
+   <slot>setDisabled(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>83</x>
+     <y>576</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>193</x>
+     <y>635</y>
     </hint>
    </hints>
   </connection>

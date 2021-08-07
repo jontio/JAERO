@@ -40,7 +40,7 @@ void ZMQAudioReceiver::process()
 
     char buf [recsize];
     unsigned char rate[4];
-    quint32 sampleRate;
+    quint32 sampleRate=48000;
     int received;
 
     running = true;

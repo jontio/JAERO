@@ -51,7 +51,6 @@ public:
     bool tcp_for_ads_messages_enabled;
     bool tcp_as_client_enabled;
 
-
     bool cpuSaveMode;
     bool disableAcarsConsole;
 
@@ -64,7 +63,7 @@ public:
     QString zmqAudioInputAddress;
     QString zmqAudioInputTopic;
 
-
+    bool disablePlaneLogWindow;
 
 private:
     Ui::SettingsDialog *ui;    

@@ -115,14 +115,13 @@ void SettingsDialog::poulatepublicvars()
     }
     tcp_for_ads_messages_enabled=ui->checkOutputADSMessageToTCP->isChecked();
     tcp_as_client_enabled=ui->checkTCPAsClient->isChecked();
-
     ui->checkTCPAsClient->setEnabled(ui->checkOutputADSMessageToTCP->isChecked());
+    disablePlaneLogWindow=ui->checkBoxDisablePlaneLogWindow->isChecked();
 
     localAudioOutEnabled=ui->ambeEnabled->isChecked();
     zmqAudioOutEnabled=ui->remoteAmbeEnabled->isChecked();
     zmqAudioOutBind=ui->lineEditZMQBind->text();
     zmqAudioOutTopic=ui->lineEditZMQBindTopic->text();
-
     zmqAudioInputAddress = ui->lineEditZmqConnectAddress->text();
     zmqAudioInputTopic = ui->lineEditZmqTopic->text();
     zmqAudioInputEnabled = ui->checkBoxZMQ->isChecked();
@@ -156,27 +155,20 @@ void SettingsDialog::populatesettings()
     ui->lineEdittcpoutputadsmessagesaddress->setText(settings.value("lineEdittcpoutputadsmessagesaddress","0.0.0.0:30003").toString());
     ui->checkOutputADSMessageToTCP->setChecked(settings.value("checkOutputADSMessageToTCP",false).toBool());
     ui->checkTCPAsClient->setChecked(settings.value("checkTCPAsClient",false).toBool());
-
+    ui->checkBoxDisablePlaneLogWindow->setChecked(settings.value("checkBoxDisablePlaneLogWindow",false).toBool());
 
     ui->ambeEnabled->setChecked(settings.value("localAudioOutEnabled", true).toBool());
     ui->remoteAmbeEnabled->setChecked(settings.value("remoteAudioOutEnabled", false).toBool());
-
-
     if(!ui->remoteAmbeEnabled->isChecked())
     {
         ui->lineEditZMQBind->setEnabled(false);
         ui->lineEditZMQBindTopic->setEnabled(false);
-
     }
     ui->lineEditZMQBind->setText(settings.value("remoteAudioOutBindAddress", "tcp://*:5551").toString());
     ui->lineEditZMQBindTopic->setText(settings.value("remoteAudioOutBindTopic", "JAERO").toString());
-
     ui->checkBoxZMQ->setChecked(settings.value("zmqAudioInputEnabled", false).toBool());
     ui->lineEditZmqConnectAddress->setText(settings.value("zmqAudioInputReceiveAddress", "tcp://127.0.0.1:6003").toString());
-
-
     QString default_topic = settings_name.remove(QRegExp( "JAERO \\[" )).remove(QRegExp( "\\]" ));
-
     ui->lineEditZmqTopic->setText(settings.value("zmqAudioInputReceiveTopic", default_topic).toString());
 
     on_lineEditlogdir_editingFinished();
@@ -204,12 +196,12 @@ void SettingsDialog::accept()
     settings.setValue("lineEdittcpoutputadsmessagesaddress", ui->lineEdittcpoutputadsmessagesaddress->text());
     settings.setValue("checkOutputADSMessageToTCP", ui->checkOutputADSMessageToTCP->isChecked());
     settings.setValue("checkTCPAsClient", ui->checkTCPAsClient->isChecked());
+    settings.setValue("checkBoxDisablePlaneLogWindow",ui->checkBoxDisablePlaneLogWindow->isChecked());
 
     settings.setValue("localAudioOutEnabled", ui->ambeEnabled->isChecked());
     settings.setValue("remoteAudioOutEnabled", ui->remoteAmbeEnabled->isChecked());
     settings.setValue("remoteAudioOutBindAddress",ui->lineEditZMQBind->text());
     settings.setValue("remoteAudioOutBindTopic",ui->lineEditZMQBindTopic->text());
-
 
     settings.setValue("zmqAudioInputEnabled",  ui->checkBoxZMQ->isChecked());
     settings.setValue("zmqAudioInputReceiveAddress",  ui->lineEditZmqConnectAddress->text());

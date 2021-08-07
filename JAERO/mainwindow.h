@@ -47,6 +47,7 @@ private:
     AudioMskDemodulator::Settings audiomskdemodulatorsettings;
     QLabel *ebnolabel;
     QLabel *freqlabel;
+    QLabel *sourcelabel;
     QUdpSocket *udpsocket;
 
     //OQPSK add
