@@ -21,9 +21,6 @@ MainWindow::MainWindow(QWidget *parent) :
 
     ui->setupUi(this);
 
-    // Nice with VFO name up on the title. You mean it would be nice with the VFO name?
-    QTimer::singleShot(100, [this]() { setWindowTitle("JAERO "+QString(JAERO_VERSION)); } );
-
     beep=new QSound(":/sounds/beep.wav",this);
 
     //plane logging window

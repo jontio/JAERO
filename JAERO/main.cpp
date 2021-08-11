@@ -21,7 +21,7 @@ int main(int argc, char *argv[])
 
     cmdparser.process(a);
     settings_name=cmdparser.value(settingsnameoption);
-    if(settings_name.isEmpty())settings_name="JAERO";
+    if(settings_name.isEmpty())settings_name="JAERO "+QString(JAERO_VERSION);
      else settings_name="JAERO ["+settings_name+"]";
 
     MainWindow w;
