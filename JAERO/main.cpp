@@ -20,12 +20,19 @@ int main(int argc, char *argv[])
     cmdparser.addOption(settingsnameoption);
 
     cmdparser.process(a);
-    settings_name=cmdparser.value(settingsnameoption);
-    if(settings_name.isEmpty())settings_name="JAERO "+QString(JAERO_VERSION);
-     else settings_name="JAERO ["+settings_name+"]";
+    settings_name=cmdparser.value(settingsnameoption).trimmed();
+    if(settings_name.isEmpty())
+    {
+        QApplication::setApplicationDisplayName(QString(JAERO_VERSION));
+        settings_name="JAERO";
+    }
+    else
+    {
+        QApplication::setApplicationDisplayName(settings_name);
+        settings_name="JAERO ["+settings_name+"]";
+    }
 
     MainWindow w;
-    w.setWindowTitle(settings_name);
     w.show();
 
     return a.exec();
