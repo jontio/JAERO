@@ -1333,7 +1333,58 @@ void MainWindow::ACARSslot(ACARSItem &acarsitem)
             log(humantext);
         }
     }
+    if(settingsdialog->msgdisplayformat=="4") {
+        ui->inputwidget->setLineWrapMode(QPlainTextEdit::NoWrap);
+    
+        QString utcdate = humantext+=QDateTime::currentDateTime().toUTC().toString("yyyy-MM-dd hh:mm:ss");
 
+        humantext+="{\"time\":\""+utcdate+"\", ";
+
+        if(acarsitem.TAK==0x15)TAKstr=((QString)"!").toLatin1();
+        uchar label1=acarsitem.LABEL[1];
+        if((uchar)acarsitem.LABEL[1]==127)label1='d';
+    
+        if(acarsitem.nonacars) {
+            char* nonacars = "true";
+            if(acarsitem.message.isEmpty()) {
+                humantext+=((QString)"").sprintf("\"nonacars\":%s, \"AES\": \"%06X\", \"GES\": \"%02X\", \"QNO\": \"%02X\", \"REFNO\": \"%02X\", \"REG\": \"%s\"}",nonacars,acarsitem.isuitem.AESID,acarsitem.isuitem.GESID,acarsitem.isuitem.QNO,acarsitem.isuitem.REFNO,acarsitem.PLANEREG.data());
+            } else {
+                QString message=acarsitem.message;
+                message.replace('\r','\n');
+                message.replace("\n\n","\n");
+                message.replace('\n',"●");
+                humantext+=((QString)"").sprintf("\"nonacars\":%s, \"AES\": \"%06X\", \"GES\": \"%02X\", \"QNO\": \"%02X\", \"REFNO\": \"%02X\", \"REG\": \"%s\",\"TEXT\": \"",nonacars,acarsitem.isuitem.AESID,acarsitem.isuitem.GESID,acarsitem.isuitem.QNO,acarsitem.isuitem.REFNO,acarsitem.PLANEREG.data());
+                humantext+=message+"\"}";        
+            }
+        } else {
+            char* nonacars = "false";
+            if(acarsitem.message.isEmpty()) {
+                humantext+=((QString)"").sprintf("\"nonacars\":%s, \"AES\": \"%06X\", \"GES\": \"%02X\", \"QNO\": \"%02X\", \"REFNO\": \"%02X\", \"MODE\": \"%c\", \"REG\": \"%s\", \"TAK\": \"%s\", \"LABEL\": \"%c%c\", \"BI\": \"%c\"}",nonacars,acarsitem.isuitem.AESID,acarsitem.isuitem.GESID,acarsitem.isuitem.QNO,acarsitem.isuitem.REFNO,acarsitem.MODE,acarsitem.PLANEREG.data(),TAKstr.data(),(uchar)acarsitem.LABEL[0],label1,acarsitem.BI);
+            } else {
+                QString message=acarsitem.message;
+                message.replace('\r','\n');
+                message.replace("\n\n","\n");
+                message.replace('\n',"●");
+                humantext+=((QString)"").sprintf("\"nonacars\":%s, \"AES\": \"%06X\", \"GES\": \"%02X\", \"QNO\": \"%02X\", \"REFNO\": \"%02X\", \"MODE\": \"%c\", \"REG\": \"%s\", \"TAK\": \"%s\", \"LABEL\": \"%c%c\", \"BI\": \"%c\",\"TEXT\": \"",nonacars,acarsitem.isuitem.AESID,acarsitem.isuitem.GESID,acarsitem.isuitem.QNO,acarsitem.isuitem.REFNO,acarsitem.MODE,acarsitem.PLANEREG.data(),TAKstr.data(),(uchar)acarsitem.LABEL[0],label1,acarsitem.BI);
+                humantext+=message+"\"}";
+            }
+        }
+    
+        if(settingsdialog->udp_for_decoded_messages_enabled) {
+            for(int ii=0;ii<udpsockets_bottom_textedit.size();ii++) {
+                if(ii>=settingsdialog->udp_for_decoded_messages_address.size())continue;
+                if(ii>=settingsdialog->udp_for_decoded_messages_port.size())continue;
+                QUdpSocket *sock=udpsockets_bottom_textedit[ii].data();
+                if((!sock->isOpen())||(!sock->isWritable())) {
+                    sock->close();
+                    sock->connectToHost(settingsdialog->udp_for_decoded_messages_address[ii], settingsdialog->udp_for_decoded_messages_port[ii]);
+                }
+                if((sock->isOpen())&&(sock->isWritable()))sock->write((humantext+"\n").toLatin1().data());
+            }
+        }
+        ui->inputwidget->appendPlainText(humantext);
+        log(humantext);
+    }
 }
 
 void MainWindow::log(QString &text)
