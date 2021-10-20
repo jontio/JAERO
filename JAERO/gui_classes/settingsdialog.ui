@@ -153,6 +153,11 @@
           <string>3</string>
          </property>
         </item>
+        <item>
+         <property name="text">
+          <string>JSON</string>
+         </property>
+        </item>
        </widget>
        <widget class="QCheckBox" name="checkBoxbeepontextmessage">
         <property name="geometry">

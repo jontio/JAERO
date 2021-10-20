@@ -3,6 +3,12 @@
 #include <unistd.h>
 #include <zmq.h>
 
+//this is so I can easily use old streams that some people are still using for testing.
+//commenting this out is for the old format that didn't have samplerate info message.
+//without this samplerate is always 48000 and wont work for streams that are using anything else.
+//10500bps streams are at 48000 and are what I use for testing.
+#define ZMQ_HAS_SAMPLERATE_MESSAGE
+
 void ZMQAudioReceiver::Start(QString address, QString topic)
 {
     //stop set prams and start thread
@@ -57,9 +63,11 @@ void ZMQAudioReceiver::process()
         if(!running)break;
 
         //rate message is next
+#ifdef ZMQ_HAS_SAMPLERATE_MESSAGE
         received = zmq_recv(subscriber, rate, 4, ZMQ_DONTWAIT);
         if(!running)break;
         memcpy(&sampleRate, rate, 4);
+#endif
 
         //then audio data
         received = zmq_recv(subscriber, buf, recsize, ZMQ_DONTWAIT);
