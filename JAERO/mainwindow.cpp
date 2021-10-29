@@ -3,6 +3,8 @@
 #include <QDebug>
 #include <QStandardPaths>
 #include <QLibrary>
+#include <QJsonObject>
+#include <QJsonDocument>
 
 #ifdef __linux__
 #include <unistd.h>
@@ -850,7 +852,7 @@ void MainWindow::on_actionCleanConsole_triggered()
 }
 
 void MainWindow::on_comboBoxdisplay_currentIndexChanged(const QString &arg1)
-{  
+{
 #if QCUSTOMPLOT_VERSION >= 0x020000
     ui->scatterplot->graph(0)->data().clear();
 #else
@@ -1276,7 +1278,7 @@ void MainWindow::ACARSslot(ACARSItem &acarsitem)
         QString message=acarsitem.message;
         message.replace('\r','\n');
         message.replace("\n\n","\n");
-        if(message.right(1)=="\n")message.chop(1);//.remove(acarsitem.message.size()-1,1);
+        if(message.right(1)=="\n")message.chop(1);
         if(message.left(1)=="\n")message.remove(0,1);
         message.replace("\n","\n\t");
 
@@ -1334,6 +1336,79 @@ void MainWindow::ACARSslot(ACARSItem &acarsitem)
         }
     }
 
+    if(settingsdialog->msgdisplayformat=="JSON")
+    {
+        ui->inputwidget->setLineWrapMode(QPlainTextEdit::NoWrap);
+        QString message=acarsitem.message;
+        message.replace('\r','\n');
+        message.replace("\n\n","\n");
+        if(message.right(1)=="\n")message.chop(1);
+        if(message.left(1)=="\n")message.remove(0,1);
+        message.replace("\n","\n\t");
+
+        QString utcdate = QDateTime::currentDateTime().toUTC().toString("yyyy-MM-dd hh:mm:ss");
+        if(acarsitem.TAK==0x15)TAKstr=((QString)"!").toLatin1();
+        uchar label1=acarsitem.LABEL[1];
+        if((uchar)acarsitem.LABEL[1]==127)label1='d';
+
+        //json object creation
+        QJsonObject json;
+        //add database lookup info if available
+        if(acarsitem.dblookupresult.size()==QMetaEnum::fromType<DataBaseTextUser::DataBaseSchema>().keyCount())
+        {
+            json["DB_MANUFACTURER"]=acarsitem.dblookupresult[DataBaseTextUser::DataBaseSchema::Manufacturer].trimmed();
+            json["DB_TYPE"]=acarsitem.dblookupresult[DataBaseTextUser::DataBaseSchema::Type].trimmed();
+            json["DB_OWNERS"]=acarsitem.dblookupresult[DataBaseTextUser::DataBaseSchema::RegisteredOwners].trimmed();
+        }
+        //add common things
+        json["TIME"]=utcdate;
+        json["NONACARS"]="false";
+        json["AESID"]=((QString)"").sprintf("%06X",acarsitem.isuitem.AESID);
+        json["GESID"]=((QString)"").sprintf("%02X",acarsitem.isuitem.GESID);
+        json["QNO"]=((QString)"").sprintf("%02X",acarsitem.isuitem.QNO);
+        json["REFNO"]=((QString)"").sprintf("%02X",acarsitem.isuitem.REFNO);
+        json["REG"]=(QString)acarsitem.PLANEREG;
+        //add acars message things
+        if(!acarsitem.nonacars)
+        {
+            json["MODE"]=(QString)acarsitem.MODE;
+            json["TAK"]=(QString)TAKstr;
+            json["LABEL"]=(((QString)"").sprintf("%c%c",(uchar)acarsitem.LABEL[0],label1));
+            json["BI"]=(QString)acarsitem.BI;
+        }
+        //if there is a message then add it and any parsing using arincparser
+        if(!message.isEmpty())
+        {
+            json["MESSAGE"]=message;
+            if(!arincparser.downlinkheader.flightid.isEmpty())json["FLIGHT"]=arincparser.downlinkheader.flightid;
+            if(arincparser.arincmessage.info.size()>2)json["ARINCPARSER_MESSAGE_INFO"]=arincparser.arincmessage.info;
+        }
+        //convert json object to string
+        humantext=QJsonDocument(json).toJson(QJsonDocument::Compact);
+
+        //output result to udp and screen
+        if((!settingsdialog->dropnontextmsgs)||(!message.isEmpty()&&(!acarsitem.nonacars)))
+        {
+            if(settingsdialog->udp_for_decoded_messages_enabled)
+            {
+                //send bottom text window to all udp sockects
+                for(int ii=0;ii<udpsockets_bottom_textedit.size();ii++)
+                {
+                    if(ii>=settingsdialog->udp_for_decoded_messages_address.size())continue;
+                    if(ii>=settingsdialog->udp_for_decoded_messages_port.size())continue;
+                    QUdpSocket *sock=udpsockets_bottom_textedit[ii].data();
+                    if((!sock->isOpen())||(!sock->isWritable()))
+                    {
+                        sock->close();
+                        sock->connectToHost(settingsdialog->udp_for_decoded_messages_address[ii], settingsdialog->udp_for_decoded_messages_port[ii]);
+                    }
+                    if((sock->isOpen())&&(sock->isWritable()))sock->write((humantext+"\n").toLatin1().data());
+                }
+            }
+            ui->inputwidget->appendPlainText(humantext);
+            log(humantext);
+        }
+    }
 }
 
 void MainWindow::log(QString &text)
