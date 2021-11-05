@@ -23,6 +23,9 @@ MainWindow::MainWindow(QWidget *parent) :
 
     ui->setupUi(this);
 
+    last_dcd=false;
+    last_frequency=0;
+
     beep=new QSound(":/sounds/beep.wav",this);
 
     //plane logging window
@@ -232,6 +235,11 @@ MainWindow::MainWindow(QWidget *parent) :
     //set pop and accept settings
     settingsdialog->populatesettings();
     acceptsettings();
+
+    //periodic timer for sending status info if using UDP and JSON
+    QTimer *timer = new QTimer(this);
+    connect(timer, SIGNAL(timeout()), this, SLOT(statusToUDPifJSONset()));
+    timer->start(10000);
 
 }
 
@@ -1402,7 +1410,7 @@ void MainWindow::ACARSslot(ACARSItem &acarsitem)
                         sock->close();
                         sock->connectToHost(settingsdialog->udp_for_decoded_messages_address[ii], settingsdialog->udp_for_decoded_messages_port[ii]);
                     }
-                    if((sock->isOpen())&&(sock->isWritable()))sock->write((humantext+"\n").toLatin1().data());
+                    if((sock->isOpen())&&(sock->isWritable()))sock->write((humantext).toLatin1().data());
                 }
             }
             ui->inputwidget->appendPlainText(humantext);
@@ -1465,6 +1473,40 @@ void MainWindow::on_actionSound_Out_toggled(bool mute)
 
 void MainWindow::on_actionReduce_CPU_triggered(bool checked)
 {
-    audiooqpskdemodulator->setCPUReduce(checked);
-    audiomskdemodulator->setCPUReduce(checked);
+    audiomskdemodulator->setCPUReduce(ui->actionReduce_CPU->isChecked());
+    audiooqpskdemodulator->setCPUReduce(ui->actionReduce_CPU->isChecked());
+    audioburstoqpskdemodulator->setCPUReduce(ui->actionReduce_CPU->isChecked());
+    audioburstmskdemodulator->setCPUReduce(ui->actionReduce_CPU->isChecked());
+}
+
+//periodic info to be sent via UDP if JSON format used
+void MainWindow::statusToUDPifJSONset()
+{
+    if((settingsdialog->udp_for_decoded_messages_enabled)&&(settingsdialog->msgdisplayformat=="JSON"))
+    {
+
+        //json object creation
+        QJsonObject json;
+        json["DCD"]=last_dcd;
+        json["FREQUENCY"]=last_frequency;
+        json["NAME"]=QApplication::applicationDisplayName();
+
+        //convert json object to string
+        QString humantext=QJsonDocument(json).toJson(QJsonDocument::Compact);
+
+        //send to all udp sockects
+        for(int ii=0;ii<udpsockets_bottom_textedit.size();ii++)
+        {
+            if(ii>=settingsdialog->udp_for_decoded_messages_address.size())continue;
+            if(ii>=settingsdialog->udp_for_decoded_messages_port.size())continue;
+            QUdpSocket *sock=udpsockets_bottom_textedit[ii].data();
+            if((!sock->isOpen())||(!sock->isWritable()))
+            {
+                sock->close();
+                sock->connectToHost(settingsdialog->udp_for_decoded_messages_address[ii], settingsdialog->udp_for_decoded_messages_port[ii]);
+            }
+            if((sock->isOpen())&&(sock->isWritable()))sock->write((humantext).toLatin1().data());
+        }
+
+    }
 }

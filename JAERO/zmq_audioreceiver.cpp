@@ -7,7 +7,7 @@
 //commenting this out is for the old format that didn't have samplerate info message.
 //without this samplerate is always 48000 and wont work for streams that are using anything else.
 //10500bps streams are at 48000 and are what I use for testing.
-#define ZMQ_HAS_SAMPLERATE_MESSAGE
+//#define ZMQ_HAS_SAMPLERATE_MESSAGE
 
 void ZMQAudioReceiver::Start(QString address, QString topic)
 {

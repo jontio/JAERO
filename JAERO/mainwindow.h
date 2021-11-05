@@ -99,6 +99,9 @@ private:
     ZMQAudioReceiver *zmq_audio_receiver;
     ZMQAudioSender   *zmq_audio_sender;
 
+    bool last_dcd;
+    double last_frequency;
+
 protected:
     void closeEvent(QCloseEvent *event);
 
@@ -129,6 +132,8 @@ private slots:
     void on_tabWidget_currentChanged(int index);
     void on_actionSound_Out_toggled(bool mute);
     void on_actionReduce_CPU_triggered(bool checked);
+
+    void statusToUDPifJSONset();
 
 };
 
