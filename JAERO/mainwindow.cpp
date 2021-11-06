@@ -613,6 +613,7 @@ void MainWindow::SignalStatusSlot(bool signal)
 
 void MainWindow::DataCarrierDetectStatusSlot(bool dcd)
 {
+    last_dcd=dcd;
     if(dcd)ui->leddata->setLED(QIcon::On);
     else ui->leddata->setLED(QIcon::Off);
 }
@@ -639,6 +640,7 @@ void MainWindow::PlottablesSlot(double freq_est,double freq_center,double bandwi
 {
     Q_UNUSED(freq_center);
     Q_UNUSED(bandwidth);
+    last_frequency=freq_est;
     QString str=(((QString)"%1Hz  ").arg(freq_est,0, 'f', 2)).rightJustified(11,' ');
     freqlabel->setText("  Freq: "+str);
 }
