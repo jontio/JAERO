@@ -101,6 +101,7 @@ private:
 
     bool last_dcd;
     double last_frequency;
+    double last_EbNo;
 
 protected:
     void closeEvent(QCloseEvent *event);

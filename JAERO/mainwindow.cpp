@@ -25,6 +25,7 @@ MainWindow::MainWindow(QWidget *parent) :
 
     last_dcd=false;
     last_frequency=0;
+    last_EbNo=0;
 
     beep=new QSound(":/sounds/beep.wav",this);
 
@@ -239,7 +240,7 @@ MainWindow::MainWindow(QWidget *parent) :
     //periodic timer for sending status info if using UDP and JSON
     QTimer *timer = new QTimer(this);
     connect(timer, SIGNAL(timeout()), this, SLOT(statusToUDPifJSONset()));
-    timer->start(10000);
+    timer->start(30000);
 
 }
 
@@ -618,6 +619,7 @@ void MainWindow::DataCarrierDetectStatusSlot(bool dcd)
 
 void MainWindow::EbNoSlot(double EbNo)
 {
+    last_EbNo=EbNo;
     ebnolabel->setText(((QString)" EbNo: %1dB ").arg((int)round(EbNo),2, 10, QChar('0')));
 }
 
@@ -1354,7 +1356,8 @@ void MainWindow::ACARSslot(ACARSItem &acarsitem)
         if(message.left(1)=="\n")message.remove(0,1);
         message.replace("\n","\n\t");
 
-        QString utcdate = QDateTime::currentDateTime().toUTC().toString("yyyy-MM-dd hh:mm:ss");
+
+        QDateTime time=QDateTime::currentDateTimeUtc();
         if(acarsitem.TAK==0x15)TAKstr=((QString)"!").toLatin1();
         uchar label1=acarsitem.LABEL[1];
         if((uchar)acarsitem.LABEL[1]==127)label1='d';
@@ -1369,8 +1372,10 @@ void MainWindow::ACARSslot(ACARSItem &acarsitem)
             json["DB_OWNERS"]=acarsitem.dblookupresult[DataBaseTextUser::DataBaseSchema::RegisteredOwners].trimmed();
         }
         //add common things
-        json["TIME"]=utcdate;
-        json["NONACARS"]="false";
+        json["TIME"]=time.toSecsSinceEpoch();
+        json["TIME_UTC"]=time.toUTC().toString("yyyy-MM-dd hh:mm:ss");
+        json["NAME"]=QApplication::applicationDisplayName();
+        json["NONACARS"]=acarsitem.nonacars;
         json["AESID"]=((QString)"").sprintf("%06X",acarsitem.isuitem.AESID);
         json["GESID"]=((QString)"").sprintf("%02X",acarsitem.isuitem.GESID);
         json["QNO"]=((QString)"").sprintf("%02X",acarsitem.isuitem.QNO);
@@ -1473,10 +1478,10 @@ void MainWindow::on_actionSound_Out_toggled(bool mute)
 
 void MainWindow::on_actionReduce_CPU_triggered(bool checked)
 {
-    audiomskdemodulator->setCPUReduce(ui->actionReduce_CPU->isChecked());
-    audiooqpskdemodulator->setCPUReduce(ui->actionReduce_CPU->isChecked());
-    audioburstoqpskdemodulator->setCPUReduce(ui->actionReduce_CPU->isChecked());
-    audioburstmskdemodulator->setCPUReduce(ui->actionReduce_CPU->isChecked());
+    audiomskdemodulator->setCPUReduce(checked);
+    audiooqpskdemodulator->setCPUReduce(checked);
+    audioburstoqpskdemodulator->setCPUReduce(checked);
+    audioburstmskdemodulator->setCPUReduce(checked);
 }
 
 //periodic info to be sent via UDP if JSON format used
@@ -1490,6 +1495,8 @@ void MainWindow::statusToUDPifJSONset()
         json["DCD"]=last_dcd;
         json["FREQUENCY"]=last_frequency;
         json["NAME"]=QApplication::applicationDisplayName();
+        json["SNR"]=last_EbNo;
+        json["TIME"]=QDateTime::currentDateTimeUtc().toSecsSinceEpoch();
 
         //convert json object to string
         QString humantext=QJsonDocument(json).toJson(QJsonDocument::Compact);
