@@ -173,7 +173,9 @@ void SettingsDialog::populatesettings()
     ui->lineEditZMQBindTopic->setText(settings.value("remoteAudioOutBindTopic", "JAERO").toString());
     ui->checkBoxZMQ->setChecked(settings.value("zmqAudioInputEnabled", false).toBool());
     ui->lineEditZmqConnectAddress->setText(settings.value("zmqAudioInputReceiveAddress", "tcp://127.0.0.1:6003").toString());
-    QString default_topic = settings_name.remove(QRegExp( "JAERO \\[" )).remove(QRegExp( "\\]" )).trimmed();
+    QString default_topic = settings_name;
+    default_topic.remove(QRegExp( "JAERO \\[" )).remove(QRegExp( "\\]" ));
+    default_topic=default_topic.trimmed();
     ui->lineEditZmqTopic->setText(settings.value("zmqAudioInputReceiveTopic", default_topic).toString());
 
     on_lineEditlogdir_editingFinished();

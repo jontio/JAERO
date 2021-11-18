@@ -12,6 +12,8 @@ OqpskDemodulator::OqpskDemodulator(QObject *parent)
     sql=false;
     scatterpointtype=SPT_constellation;
 
+    dcd=false;
+
     mse=100;
 
     Fs=48000;
