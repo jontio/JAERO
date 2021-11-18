@@ -27,12 +27,16 @@ QMAKE_CXXFLAGS += -std=c++11
 
 INCLUDEPATH += $$JFFT_PATH
 
-win32 {
-#message("windows")
-#?????
-} else {
-#message("not windows")
-INCLUDEPATH += /usr/local/include/libacars-2/
+#libacars-2 support
+#this is a bit of a mess to get working.
+#he put them in libacars-2/libacars but references in libacars-2/libacars only use libacars in paths
+#so i have to find where libacars-2 is and add that to the INCLUDEPATH
+for(var, $$list($${QMAKE_DEFAULT_INCDIRS})) {
+    new_inc_path_posibility=$$files($${var}/libacars-2, false)
+    !equals(new_inc_path_posibility,"") {
+        #message( "libacars-2 location is "$${new_inc_path_posibility} )
+        INCLUDEPATH += $$new_inc_path_posibility
+    }
 }
 
 DEFINES += _USE_MATH_DEFINES

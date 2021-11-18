@@ -23,9 +23,10 @@ cd $SCRIPTPATH/..
 
 #libacars
 git clone https://github.com/szpajder/libacars
-cd libacars && git checkout v1.3.1
+#cd libacars && git checkout v1.3.1
+cd libacars
 mkdir build && cd build
-sed -i -e 's/.*find_library(LIBM m REQUIRED).*/# find_library(LIBM m REQUIRED)/' ../src/libacars/CMakeLists.txt
+sed -i -e 's/.*find_library(LIBM m REQUIRED).*/# find_library(LIBM m REQUIRED)/' ../libacars/CMakeLists.txt
 cmake -G "MinGW Makefiles" -DCMAKE_INSTALL_PREFIX:PATH=/mingw64/ ..
 mingw32-make
 mingw32-make DESTDIR=/../ install
@@ -100,7 +101,7 @@ cp /mingw64/bin/libgcc_s_seh-1.dll $PWD
 cp /mingw64/bin/libvorbisenc-2.dll $PWD
 cp /mingw64/bin/libvorbis-0.dll $PWD
 cp /mingw64/bin/libogg-0.dll $PWD
-cp /mingw64/bin/libacars.dll $PWD
+cp /mingw64/bin/libacars-2.dll $PWD
 cp /mingw64/lib/libcorrect.dll $PWD
 cp /mingw64/bin/libwinpthread-1.dll $PWD
 cp /mingw64/bin/zlib1.dll $PWD
