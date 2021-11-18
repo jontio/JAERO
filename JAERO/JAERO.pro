@@ -27,6 +27,14 @@ QMAKE_CXXFLAGS += -std=c++11
 
 INCLUDEPATH += $$JFFT_PATH
 
+win32 {
+#message("windows")
+#?????
+} else {
+#message("not windows")
+INCLUDEPATH += /usr/local/include/libacars-2/
+}
+
 DEFINES += _USE_MATH_DEFINES
 
 #for unit tests
@@ -165,7 +173,7 @@ QMAKE_CXXFLAGS_RELEASE += -O3
 #QMAKE_CXXFLAGS_RELEASE *= -O3
 
 #for static building order seems to matter
-LIBS += -lcorrect -lvorbis -lvorbisenc -logg -lacars 
+LIBS += -lcorrect -lvorbis -lvorbisenc -logg -lacars-2
 
 #desktop
 desktop.path = /usr/share/applications

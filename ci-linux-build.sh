@@ -28,7 +28,8 @@ cd $SCRIPTPATH/..
 
 #libacars
 git clone https://github.com/szpajder/libacars
-cd libacars && git checkout v1.3.1
+#cd libacars && git checkout v1.3.1
+cd libacars
 #needed for github actions
 git fetch --prune --unshallow --tags || true
 git status > /dev/null 2>&1
