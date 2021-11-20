@@ -50,7 +50,7 @@ else
     cd "$FOLDER"
     git pull $URL
 fi
-git checkout v1.3.1
+#git checkout v1.3.1
 #needed for github actions
 git fetch --prune --unshallow --tags || true
 git status > /dev/null 2>&1
