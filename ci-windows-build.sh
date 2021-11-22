@@ -134,6 +134,7 @@ cp /mingw64/bin/libmd4c.dll $PWD
 #cp /usr/bin/msys-2.0.dll $PWD
 cp /mingw64/bin/aeroambe.dll $PWD
 cp /mingw64/bin/libmbe.dll $PWD
+cp /mingw64/bin/libxml2-2.dll $PWD
 #basestation if available
 if [ -f "../../../../basestation/basestation.sqb" ]; then
    echo "basestation.sqb found. including it in package"
