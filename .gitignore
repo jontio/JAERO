@@ -82,3 +82,4 @@ libaeroambe/*
 libcorrect/*
 bin/*
 JAERO/*.bak
+release/jaero/*
