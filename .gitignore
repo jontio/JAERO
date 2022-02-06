@@ -83,3 +83,5 @@ libcorrect/*
 bin/*
 JAERO/*.bak
 release/jaero/*
+JAERO/release
+*.bak
