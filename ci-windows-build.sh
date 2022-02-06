@@ -24,6 +24,21 @@ SCRIPT=$(realpath $0)
 SCRIPTPATH=$(dirname $SCRIPT)
 cd $SCRIPTPATH/..
 
+#qmqtt
+FOLDER="qmqtt"
+URL="https://github.com/emqx/qmqtt.git"
+if [ ! -d "$FOLDER" ] ; then
+    git clone $URL $FOLDER
+    cd "$FOLDER"
+else
+    cd "$FOLDER"
+    git pull $URL
+fi
+qmake
+mingw32-make
+mingw32-make install
+cd ..
+
 #libacars
 FOLDER="libacars"
 URL="https://github.com/szpajder/libacars"

@@ -134,7 +134,6 @@ void SettingsDialog::poulatepublicvars()
 
 }
 
-
 void SettingsDialog::populatesettings()
 {
 
@@ -178,6 +177,11 @@ void SettingsDialog::populatesettings()
     default_topic=default_topic.trimmed();
     ui->lineEditZmqTopic->setText(settings.value("zmqAudioInputReceiveTopic", default_topic).toString());
 
+    ui->checkBoxlogwidebandwidthenable->setEnabled(!ui->checkBoxZMQ->isChecked());
+    ui->comboBoxsoundcard->setEnabled(!ui->checkBoxZMQ->isChecked());
+    ui->lineEditZmqConnectAddress->setEnabled(ui->checkBoxZMQ->isChecked());
+    ui->lineEditZmqTopic->setEnabled(ui->checkBoxZMQ->isChecked());
+
     on_lineEditlogdir_editingFinished();
 
     poulatepublicvars();
@@ -217,7 +221,6 @@ void SettingsDialog::accept()
     poulatepublicvars();
     QDialog::accept();
 }
-
 
 void SettingsDialog::on_lineEditlogdir_editingFinished()
 {
