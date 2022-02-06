@@ -14,6 +14,9 @@
 #fail on first error
 set -e
 
+#update system else we might have a version problem with the upcomeing install
+pacman -Syu
+
 pacman -S --needed --noconfirm git mingw-w64-x86_64-toolchain autoconf libtool mingw-w64-x86_64-cpputest mingw-w64-x86_64-qt5 mingw-w64-x86_64-cmake mingw-w64-x86_64-libvorbis zip p7zip unzip mingw-w64-x86_64-zeromq
 
 #get script path
@@ -22,9 +25,16 @@ SCRIPTPATH=$(dirname $SCRIPT)
 cd $SCRIPTPATH/..
 
 #libacars
-git clone https://github.com/szpajder/libacars
-#cd libacars && git checkout v1.3.1
-cd libacars
+FOLDER="libacars"
+URL="https://github.com/szpajder/libacars"
+if [ ! -d "$FOLDER" ] ; then
+    git clone $URL $FOLDER
+    cd "$FOLDER"
+else
+    cd "$FOLDER"
+    git pull $URL
+fi
+rm -fr build
 mkdir build && cd build
 sed -i -e 's/.*find_library(LIBM m REQUIRED).*/# find_library(LIBM m REQUIRED)/' ../libacars/CMakeLists.txt
 cmake -G "MinGW Makefiles" -DCMAKE_INSTALL_PREFIX:PATH=/mingw64/ ..
@@ -47,8 +57,16 @@ cp ../../qcustomplot.h /mingw64/include/
 cd ../../..
 
 #libcorrect
-git clone https://github.com/quiet/libcorrect
-cd libcorrect
+FOLDER="libcorrect"
+URL="https://github.com/quiet/libcorrect"
+if [ ! -d "$FOLDER" ] ; then
+    git clone $URL $FOLDER
+    cd "$FOLDER"
+else
+    cd "$FOLDER"
+    git pull $URL
+fi
+rm -fr build
 mkdir build && cd build
 cmake -G "MinGW Makefiles" -DCMAKE_INSTALL_PREFIX:PATH=/mingw64/ ..
 mingw32-make
@@ -56,11 +74,28 @@ mingw32-make DESTDIR=/../ install
 cd ../..
 
 #JFFT
-git clone https://github.com/jontio/JFFT
+FOLDER="JFFT"
+URL="https://github.com/jontio/JFFT"
+if [ ! -d "$FOLDER" ] ; then
+    git clone $URL $FOLDER
+else
+    cd "$FOLDER"
+    git pull $URL
+	cd ..
+fi
 
 #libaeroambe
-git clone https://github.com/jontio/libaeroambe
-cd libaeroambe/mbelib-master
+FOLDER="libaeroambe"
+URL="https://github.com/jontio/libaeroambe"
+if [ ! -d "$FOLDER" ] ; then
+    git clone $URL $FOLDER
+    cd "$FOLDER"
+else
+    cd "$FOLDER"
+    git pull $URL
+fi
+cd mbelib-master
+rm -fr build
 mkdir build && cd build
 cmake -G "MinGW Makefiles" -DCMAKE_INSTALL_PREFIX:PATH=/mingw64/ ..
 mingw32-make
