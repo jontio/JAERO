@@ -242,7 +242,7 @@ MainWindow::MainWindow(QWidget *parent) :
 
     //publish test
 #ifdef MQTT_PUBLISH_TEST
-    MqttSubscriber mqttpublisher=new MqttSubscriber(this);
+    MqttSubscriber *mqttpublisher=new MqttSubscriber(this);
     MqttSubscriber_Settings_Object mqtt_settings=settingsdialog->mqtt_settings_object;
     mqtt_settings.clientId="pub_41349f7ug134bhof";
     mqtt_settings.publish=true;
