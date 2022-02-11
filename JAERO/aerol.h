@@ -41,7 +41,6 @@ typedef enum MessageType
 } MessageType;
 }
 
-
 namespace AEROTypeC {
 typedef enum MessageType
 {
@@ -133,7 +132,6 @@ struct ISUItem {
     }
 };
 
-
 struct RISUItem : ISUItem{
     int SEQINDICATOR;
     int SUTYPE;
@@ -178,6 +176,7 @@ public:
 class ACARSItem : public DBase
 {
 public:
+
     ISUItem isuitem;
 
     char MODE;

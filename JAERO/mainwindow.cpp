@@ -6,6 +6,10 @@
 #include <QJsonObject>
 #include <QJsonDocument>
 
+//create a publisher based of the GUI MQTT settings
+//used for testing
+//#define MQTT_PUBLISH_TEST
+
 #ifdef __linux__
 #include <unistd.h>
 #define Sleep(x) usleep(x * 1000);
@@ -31,6 +35,9 @@ MainWindow::MainWindow(QWidget *parent) :
 
     //plane logging window
     planelog = new PlaneLog;
+
+    //mqtt pub & sub
+    mqttsubscriber=new MqttSubscriber(this);
 
     //create zmq audio receiver
     zmq_audio_receiver = new ZMQAudioReceiver(this);
@@ -232,6 +239,24 @@ MainWindow::MainWindow(QWidget *parent) :
     if(!aeroambe_object_error_str.isEmpty())ui->inputwidget->appendPlainText(aeroambe_object_error_str+"\n");
 
     ui->actionTXRX->setVisible(false);//there is a hidden audio modulator icon.
+
+    //publish test
+#ifdef MQTT_PUBLISH_TEST
+    MqttSubscriber mqttpublisher=new MqttSubscriber(this);
+    MqttSubscriber_Settings_Object mqtt_settings=settingsdialog->mqtt_settings_object;
+    mqtt_settings.clientId="pub_41349f7ug134bhof";
+    mqtt_settings.publish=true;
+    mqtt_settings.subscribe=false;
+    connect(aerol,SIGNAL(ACARSsignal(ACARSItem&)),mqttpublisher,SLOT(ACARSslot(ACARSItem&)),Qt::UniqueConnection);
+    connect(aerol2,SIGNAL(ACARSsignal(ACARSItem&)),mqttpublisher,SLOT(ACARSslot(ACARSItem&)),Qt::UniqueConnection);
+    mqttpublisher->connectToHost(mqtt_settings);
+#endif
+
+    //MQTT connections
+    connect(mqttsubscriber,SIGNAL(ACARSsignal(ACARSItem&)),this,SLOT(ACARSslot(ACARSItem&)),Qt::UniqueConnection);
+    connect(mqttsubscriber,SIGNAL(ACARSsignal(ACARSItem&)),planelog,SLOT(ACARSslot(ACARSItem&)),Qt::UniqueConnection);
+    connect(aerol,SIGNAL(ACARSsignal(ACARSItem&)),mqttsubscriber,SLOT(ACARSslot(ACARSItem&)),Qt::UniqueConnection);
+    connect(aerol2,SIGNAL(ACARSsignal(ACARSItem&)),mqttsubscriber,SLOT(ACARSslot(ACARSItem&)),Qt::UniqueConnection);
 
     //set pop and accept settings
     settingsdialog->populatesettings();
@@ -966,6 +991,9 @@ void MainWindow::acceptsettings()
 
     ui->statusBar->clearMessage();
 
+    if(settingsdialog->mqtt_enable)mqttsubscriber->connectToHost(settingsdialog->mqtt_settings_object);
+    else mqttsubscriber->disconnectFromHost();
+
     aerol->setDoNotDisplaySUs(settingsdialog->donotdisplaysus);
     aerol->setDataBaseDir(settingsdialog->planesfolder);
 
@@ -976,12 +1004,14 @@ void MainWindow::acceptsettings()
     {
         disconnect(aerol,SIGNAL(ACARSsignal(ACARSItem&)),planelog,SLOT(ACARSslot(ACARSItem&)));
         disconnect(aerol2,SIGNAL(ACARSsignal(ACARSItem&)),planelog,SLOT(ACARSslot(ACARSItem&)));
+        disconnect(mqttsubscriber,SIGNAL(ACARSsignal(ACARSItem&)),planelog,SLOT(ACARSslot(ACARSItem&)));
         ui->action_PlaneLog->setVisible(false);
     }
     else
     {
         connect(aerol,SIGNAL(ACARSsignal(ACARSItem&)),planelog,SLOT(ACARSslot(ACARSItem&)),Qt::UniqueConnection);
         connect(aerol2,SIGNAL(ACARSsignal(ACARSItem&)),planelog,SLOT(ACARSslot(ACARSItem&)),Qt::UniqueConnection);
+        connect(mqttsubscriber,SIGNAL(ACARSsignal(ACARSItem&)),planelog,SLOT(ACARSslot(ACARSItem&)),Qt::UniqueConnection);
         ui->action_PlaneLog->setVisible(true);
     }
 
@@ -1186,6 +1216,8 @@ void MainWindow::ACARSslot(ACARSItem &acarsitem)
     QString humantext;
     QByteArray TAKstr;
     TAKstr+=acarsitem.TAK;
+
+    while(acarsitem.LABEL.size()<2)acarsitem.LABEL.append((char)0x00);
 
     arincparser.parseDownlinkmessage(acarsitem);//parse ARINC 745-2 and header
     arincparser.parseUplinkmessage(acarsitem);

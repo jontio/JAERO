@@ -25,6 +25,7 @@
 #include "zmq_audioreceiver.h"
 #include "zmq_audiosender.h"
 
+#include "mqttsubscriber.h"
 
 namespace Ui {
 class MainWindow;
@@ -74,6 +75,8 @@ private:
 
     AeroL *aerol;
     AeroL *aerol2;
+
+    MqttSubscriber *mqttsubscriber;
 
     SettingsDialog *settingsdialog;
 
