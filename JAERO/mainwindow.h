@@ -15,6 +15,7 @@
 #include <QFile>
 #include <QSound>
 #include "sbs1.h"
+#include "gui_classes/qled.h"
 
 #include "databasetext.h"
 
@@ -42,6 +43,8 @@ public:
 signals:
 
 private:
+    enum class LedState{Disable,Off,On,Overload};
+
     enum DemodType{NoDemodType,MSK,OQPSK,BURSTOQPSK,BURSTMSK};
     Ui::MainWindow *ui;
     AudioMskDemodulator *audiomskdemodulator;
@@ -106,6 +109,8 @@ private:
     double last_frequency;
     double last_EbNo;
 
+    void setLedState(QLed *led, LedState state);
+
 protected:
     void closeEvent(QCloseEvent *event);
 
@@ -138,6 +143,8 @@ private slots:
     void on_actionReduce_CPU_triggered(bool checked);
 
     void statusToUDPifJSONset();
+
+    void onMqttConnectionStateChange(MqttSubscriber::ConnectionState state);
 
 };
 

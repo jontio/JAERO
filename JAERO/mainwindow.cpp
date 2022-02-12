@@ -20,6 +20,61 @@
 
 #include "databasetext.h"
 
+void MainWindow::setLedState(QLed *led, LedState state)
+{
+    QLabel *label=nullptr;
+    if(led==ui->ledmqtt)label=ui->labelmqtt;
+    else if(led==ui->leddata)label=ui->labeldata;
+    else if(led==ui->ledsignal)label=ui->labelsignal;
+    else if(led==ui->ledvolume)label=ui->labelvolume;
+    switch(state)
+    {
+    case LedState::Disable:
+        led->setVisible(false);
+        if(label)label->setVisible(false);
+        break;
+    default:
+        led->setVisible(true);
+        if(label)label->setVisible(true);
+        break;
+    }
+    switch(state)
+    {
+    case LedState::Off:
+        led->setLED(QIcon::Off);
+        break;
+    case LedState::On:
+        led->setLED(QIcon::On);
+        break;
+    case LedState::Overload:
+        led->setLED(QIcon::On,QIcon::Active);
+        break;
+    default:
+        break;
+    }
+}
+
+void MainWindow::onMqttConnectionStateChange(MqttSubscriber::ConnectionState state)
+{
+    qDebug()<<"MainWindow::onMqttConnectionStateChange"<<state;
+    if(!settingsdialog->mqtt_enable)
+    {
+        setLedState(ui->ledmqtt,LedState::Disable);
+        return;
+    }
+    if(state==MqttSubscriber::STATE_CONNECTED)
+    {
+        setLedState(ui->ledmqtt,LedState::Off);
+        return;
+    }
+    if(state==MqttSubscriber::STATE_CONNECTED_SUBSCRIBED)
+    {
+        setLedState(ui->ledmqtt,LedState::On);
+        return;
+    }
+    setLedState(ui->ledmqtt,LedState::Overload);
+}
+
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
     ui(new Ui::MainWindow)
@@ -147,8 +202,10 @@ MainWindow::MainWindow(QWidget *parent) :
     ui->statusBar->addPermanentWidget(ebnolabel);
 
     //led setup
-    ui->ledvolume->setLED(QIcon::Off);
-    ui->ledsignal->setLED(QIcon::Off);
+    setLedState(ui->ledvolume,LedState::Off);
+    setLedState(ui->ledsignal,LedState::Off);
+    setLedState(ui->leddata,LedState::Off);
+    setLedState(ui->ledmqtt,LedState::Disable);
 
     //misc connections
     connect(ui->action_About,    SIGNAL(triggered()),                                   this, SLOT(AboutSlot()));
@@ -253,6 +310,7 @@ MainWindow::MainWindow(QWidget *parent) :
 #endif
 
     //MQTT connections
+    connect(mqttsubscriber,SIGNAL(connectionStateChange(MqttSubscriber::ConnectionState)),this,SLOT(onMqttConnectionStateChange(MqttSubscriber::ConnectionState)));
     connect(mqttsubscriber,SIGNAL(ACARSsignal(ACARSItem&)),this,SLOT(ACARSslot(ACARSItem&)),Qt::UniqueConnection);
     connect(mqttsubscriber,SIGNAL(ACARSsignal(ACARSItem&)),planelog,SLOT(ACARSslot(ACARSItem&)),Qt::UniqueConnection);
     connect(aerol,SIGNAL(ACARSsignal(ACARSItem&)),mqttsubscriber,SLOT(ACARSslot(ACARSItem&)),Qt::UniqueConnection);
@@ -991,8 +1049,16 @@ void MainWindow::acceptsettings()
 
     ui->statusBar->clearMessage();
 
-    if(settingsdialog->mqtt_enable)mqttsubscriber->connectToHost(settingsdialog->mqtt_settings_object);
-    else mqttsubscriber->disconnectFromHost();
+    if(settingsdialog->mqtt_enable)
+    {
+        setLedState(ui->ledmqtt,LedState::Off);
+        mqttsubscriber->connectToHost(settingsdialog->mqtt_settings_object);
+    }
+    else
+    {
+        setLedState(ui->ledmqtt,LedState::Disable);
+        mqttsubscriber->disconnectFromHost();
+    }
 
     aerol->setDoNotDisplaySUs(settingsdialog->donotdisplaysus);
     aerol->setDataBaseDir(settingsdialog->planesfolder);

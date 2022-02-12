@@ -143,9 +143,6 @@
        </size>
       </property>
       <layout class="QHBoxLayout" name="horizontalLayout_2">
-       <property name="spacing">
-        <number>7</number>
-       </property>
        <property name="leftMargin">
         <number>0</number>
        </property>
@@ -184,7 +181,7 @@
         </widget>
        </item>
        <item>
-        <widget class="QLabel" name="label_2">
+        <widget class="QLabel" name="labelvolume">
          <property name="minimumSize">
           <size>
            <width>0</width>
@@ -228,7 +225,7 @@
         </widget>
        </item>
        <item>
-        <widget class="QLabel" name="label_3">
+        <widget class="QLabel" name="labelsignal">
          <property name="minimumSize">
           <size>
            <width>0</width>
@@ -272,7 +269,7 @@
         </widget>
        </item>
        <item>
-        <widget class="QLabel" name="label_7">
+        <widget class="QLabel" name="labeldata">
          <property name="minimumSize">
           <size>
            <width>0</width>
@@ -287,6 +284,50 @@
          </property>
          <property name="text">
           <string>Data</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QLed" name="ledmqtt">
+         <property name="minimumSize">
+          <size>
+           <width>25</width>
+           <height>25</height>
+          </size>
+         </property>
+         <property name="maximumSize">
+          <size>
+           <width>25</width>
+           <height>25</height>
+          </size>
+         </property>
+         <property name="text">
+          <string/>
+         </property>
+         <property name="pixmap">
+          <pixmap resource="jaero.qrc">:/images/off_led.svg</pixmap>
+         </property>
+         <property name="scaledContents">
+          <bool>true</bool>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QLabel" name="labelmqtt">
+         <property name="minimumSize">
+          <size>
+           <width>0</width>
+           <height>25</height>
+          </size>
+         </property>
+         <property name="maximumSize">
+          <size>
+           <width>16777215</width>
+           <height>25</height>
+          </size>
+         </property>
+         <property name="text">
+          <string>MQTT</string>
          </property>
         </widget>
        </item>
@@ -521,7 +562,7 @@
      <x>0</x>
      <y>0</y>
      <width>999</width>
-     <height>23</height>
+     <height>26</height>
     </rect>
    </property>
    <widget class="QMenu" name="menu_File">

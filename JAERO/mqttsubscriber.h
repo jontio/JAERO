@@ -38,6 +38,18 @@ class MqttSubscriber : public QObject
 {
     Q_OBJECT
 public:
+
+    //has QMQTT::ConnectionState enum is a subset of this
+    enum ConnectionState
+    {
+        STATE_INIT = 0,
+        STATE_CONNECTING,
+        STATE_CONNECTED,
+        STATE_DISCONNECTED,
+        STATE_CONNECTED_SUBSCRIBED=0xFF
+    };
+    Q_ENUM(ConnectionState)
+
     explicit MqttSubscriber(QObject* parent = NULL);
     virtual ~MqttSubscriber();
 public slots:
@@ -48,6 +60,7 @@ public slots:
     void ACARSslot(ACARSItem &acarsitem);
 signals:
     void ACARSsignal(ACARSItem &acarsitem);
+    void connectionStateChange(MqttSubscriber::ConnectionState state);
 private:
     ACARSItem_QObject aco;
     MqttSubscriber_Settings_Object settings;
@@ -56,8 +69,14 @@ private:
     QList<QMQTT::Client *> client_list;
     int messageId;
 
-    //?? not sure if thisis needed or not
-    bool subscribeed_to_topic_sucseeded;
+    //if you subscribe to something you don't
+    //have access to m_lastSubscriptionState
+    //still gets set.
+    bool m_lastSubscriptionState;
+    QMQTT::ConnectionState m_lastClientConnectionState;
+
+    void updateState(bool subscriptionState);
+    void updateState();
 
 private slots:
     void onConnected();
@@ -67,6 +86,8 @@ private slots:
     void onDisconnected();
     void onClientDestroyed(QObject * = nullptr);
     void onSubscribeTimeout();
+    void onError(const QMQTT::ClientError error);
+    void onUnsubscribed(const QString& topic);
 };
 
 #endif // MQTTSUBSCRIBER_H

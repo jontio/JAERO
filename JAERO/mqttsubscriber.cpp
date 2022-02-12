@@ -2,10 +2,45 @@
 #include <QCoreApplication>
 #include <QDebug>
 
+void MqttSubscriber::updateState(bool subscriptionState)
+{
+    //what we emitted last time
+    QMQTT::ConnectionState org_state=m_lastClientConnectionState;
+    if((m_lastClientConnectionState==QMQTT::STATE_CONNECTED)&&(m_lastSubscriptionState))
+    {
+        org_state=(QMQTT::ConnectionState)MqttSubscriber::STATE_CONNECTED_SUBSCRIBED;
+    }
+
+    //update state
+    QMQTT::ConnectionState state=QMQTT::STATE_DISCONNECTED;
+    if(client)state=client->connectionState();
+    m_lastSubscriptionState=subscriptionState;
+    m_lastClientConnectionState=state;
+
+    //what we will emit this time if changed
+    if((state==QMQTT::STATE_CONNECTED)&&(subscriptionState))
+    {
+        state=(QMQTT::ConnectionState)MqttSubscriber::STATE_CONNECTED_SUBSCRIBED;
+    }
+
+    //emit if changed
+    if(state!=org_state)
+    {
+        emit connectionStateChange((MqttSubscriber::ConnectionState)state);
+    }
+
+}
+
+void MqttSubscriber::updateState()
+{
+    updateState(m_lastSubscriptionState);
+}
+
 MqttSubscriber::MqttSubscriber(QObject* parent) : QObject(parent),
     client(nullptr),
     messageId(0),
-    subscribeed_to_topic_sucseeded(false)
+    m_lastSubscriptionState(false),
+    m_lastClientConnectionState(QMQTT::STATE_DISCONNECTED)
 {
 
 }
@@ -20,6 +55,7 @@ MqttSubscriber::~MqttSubscriber()
 void MqttSubscriber::onSslErrors(const QList<QSslError>& errors)
 {
     Q_UNUSED(errors)
+    updateState();
     // Optionally, set ssl errors you want to ignore. Be careful, because this may weaken security.
     // See QSslSocket::ignoreSslErrors(const QList<QSslError> &) for more information.
 
@@ -84,10 +120,12 @@ void MqttSubscriber::connectToHost()
     //add the connections
     connect(client, &QMQTT::Client::connected, this, &MqttSubscriber::onConnected);
     connect(client, &QMQTT::Client::subscribed, this, &MqttSubscriber::onSubscribed);
-    connect(client, &QMQTT::Client::received, this, &MqttSubscriber::onReceived,Qt::UniqueConnection);
+    connect(client, &QMQTT::Client::received, this, &MqttSubscriber::onReceived);
     connect(client, &QMQTT::Client::sslErrors, this, &MqttSubscriber::onSslErrors);
     connect(client, &QMQTT::Client::disconnected, this, &MqttSubscriber::onDisconnected);
     connect(client, &QMQTT::Client::destroyed, this, &MqttSubscriber::onClientDestroyed);
+    connect(client, &QMQTT::Client::error, this, &MqttSubscriber::onError);
+    connect(client, &QMQTT::Client::unsubscribed, this, &MqttSubscriber::onUnsubscribed);
 
     client->setClientId(settings.clientId);
     client->setUsername(settings.username);
@@ -98,6 +136,8 @@ void MqttSubscriber::connectToHost()
     messageId=0;
 
     client->connectToHost();
+
+    updateState(false);
 
 }
 
@@ -111,6 +151,7 @@ void MqttSubscriber::onClientDestroyed(QObject *client)
     }
 #endif
     client_list.removeAll((QMQTT::Client*)client);
+    updateState(false);
 }
 
 void MqttSubscriber::onDisconnected()
@@ -118,6 +159,7 @@ void MqttSubscriber::onDisconnected()
 #ifdef QMQTT_DEBUG_SUBSCRIBER
     qDebug()<<"MqttSubscriber::onDisconnected";
 #endif
+    updateState(false);
 }
 
 void MqttSubscriber::setSettings(const MqttSubscriber_Settings_Object &settings)
@@ -141,9 +183,9 @@ void MqttSubscriber::setSettings(const MqttSubscriber_Settings_Object &settings)
 void MqttSubscriber::onConnected()
 {
 #ifdef QMQTT_DEBUG_SUBSCRIBER
-    qDebug()<<"MqttSubscriber::connected";
+    qDebug()<<"MqttSubscriber::onConnected";
 #endif
-    subscribeed_to_topic_sucseeded=false;
+    updateState(false);
     onSubscribeTimeout();
 }
 
@@ -151,14 +193,34 @@ void MqttSubscriber::onSubscribed(const QString& topic)
 {
 #ifdef QMQTT_DEBUG_SUBSCRIBER
     qDebug()<<"MqttSubscriber::onSubscribed:"<<topic;
+#endif
     if((settings.topic==topic)&&(settings.subscribe))
     {
-        subscribeed_to_topic_sucseeded=true;
+        updateState(true);
 #ifdef QMQTT_DEBUG_SUBSCRIBER
         qDebug()<<"MqttSubscriber::onSubscribed: subscribed to wanted topic";
 #endif
     }
+}
+
+void MqttSubscriber::onError(const QMQTT::ClientError error)
+{
+    Q_UNUSED(error)
+#ifdef QMQTT_DEBUG_SUBSCRIBER
+    qDebug()<<"MqttSubscriber::onError"<<error;
 #endif
+    updateState();
+}
+
+void MqttSubscriber::onUnsubscribed(const QString& topic)
+{
+#ifdef QMQTT_DEBUG_SUBSCRIBER
+    qDebug()<<"MqttSubscriber::onUnsubscribed";
+#endif
+    if((settings.topic==topic)&&(settings.subscribe))
+    {
+        updateState(false);
+    }
 }
 
 void MqttSubscriber::onSubscribeTimeout()
@@ -166,7 +228,7 @@ void MqttSubscriber::onSubscribeTimeout()
     if(
             (client)&&
             (settings.subscribe)&&
-            (!subscribeed_to_topic_sucseeded)&&
+            (!m_lastSubscriptionState)&&
             ((client->connectionState()==QMQTT::STATE_CONNECTED))
       )
     {
