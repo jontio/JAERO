@@ -177,6 +177,7 @@ cp /mingw64/bin/libiconv-2.dll $PWD
 cp /mingw64/bin/libzmq.dll $PWD
 cp /mingw64/bin/libsodium-23.dll $PWD
 cp /mingw64/bin/libmd4c.dll $PWD
+cp /mingw64/bin/libjpeg-8.dll $PWD
 #7za.exe not needed anymore
 #cp /usr/lib/p7zip/7za.exe $PWD
 #cp /usr/bin/msys-stdc++-6.dll $PWD

@@ -296,7 +296,7 @@ cd JAERO/bin
 cat <<EOT > jaero/install.sh
 #!/bin/bash
 #installs built packages
-sudo apt install ./*.deb
+sudo apt install --reinstall ./*.deb
 sudo ldconfig
 EOT
 chmod +x jaero/install.sh
