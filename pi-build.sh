@@ -16,6 +16,8 @@ set -e
 #we will need sudo later may as well do a sudo now
 if [[ ! $(sudo echo 0) ]]; then exit; fi
 
+sudo apt update || true
+
 #install dependancies and build tools
 sudo apt-get install qt5-default cpputest build-essential qtmultimedia5-dev cmake libvorbis-dev libogg-dev libqt5multimedia5-plugins checkinstall libqcustomplot-dev libqt5svg5-dev libzmq3-dev gettext -y
 
@@ -121,8 +123,18 @@ sudo checkinstall \
             --summary="A library for decoding various ACARS message payloads" \
             --requires="" \
             -y
-sudo apt install --reinstall ./libacars-dev*.deb -y         
+sudo apt install --reinstall ./libacars-dev*.deb -y --allow-downgrades       
 sudo ldconfig
+#checkinstall with libacars seems to not always install the softlink
+if ! compgen -G "/usr/local/lib/libacars-2.so" > /dev/null; then
+    echo "stupid .so soft link missing grrr"
+    find "/usr/local/lib/" -name "libacars-2.so.*"|while read fname; do
+        echo "found something like it. creating softlink"
+        echo "$fname"
+        sudo ln -s $fname /usr/local/lib/libacars-2.so
+        break;
+    done
+fi
 cd ../..
 
 #libcorrect
@@ -232,7 +244,7 @@ mkdir -p ${PACKAGE_NAME}_${PACKAGE_VERSION%_*}-1/DEBIAN
 cp control ${PACKAGE_NAME}_${PACKAGE_VERSION%_*}-1/DEBIAN
 dpkg-deb --build ${PACKAGE_NAME}_${PACKAGE_VERSION%_*}-1
 #install the deb package and go back to the main path
-sudo apt install --reinstall ./${PACKAGE_NAME}*.deb -y
+sudo apt install --reinstall ./${PACKAGE_NAME}*.deb -y  --allow-downgrades
 sudo ldconfig
 cd ../../..
 
@@ -317,12 +329,23 @@ cat <<EOT > jaero/install.sh
 #installs built packages
 sudo apt install --reinstall ./*.deb
 sudo ldconfig
+#checkinstall with libacars seems to not always install the softlink
+if ! compgen -G "/usr/local/lib/libacars-2.so" > /dev/null; then
+    echo "libacars .so soft link missing"
+    find "/usr/local/lib/" -name "libacars-2.so.*"|while read fname; do
+        echo "found something like it. creating softlink"
+        echo "$fname"
+        sudo ln -s $fname /usr/local/lib/libacars-2.so
+        break;
+    done
+fi
 EOT
 chmod +x jaero/install.sh
 cat <<EOT > jaero/uninstall.sh
 #!/bin/bash
 #removes built packages
-sudo dpkg --remove qmqtt-dev libacars-dev libcorrect-dev libaeroambe-dev jaero 
+sudo dpkg --remove qmqtt-dev libacars-dev libcorrect-dev libaeroambe-dev jaero
+sudo rm /usr/local/lib/libacars-2.so
 sudo ldconfig
 EOT
 chmod +x jaero/uninstall.sh
