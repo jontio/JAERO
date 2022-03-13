@@ -142,10 +142,18 @@ echo "PACKAGE_SOURCE="$PACKAGE_SOURCE
 cd JAERO
 qmake
 mingw32-make
+echo "jaero make done"
+ls
 mkdir release/jaero
+echo "mkdir done"
+ls
 cp release/JAERO.exe release/jaero/
+echo "copy exe done"
+ls
 cd release/jaero
-windeployqt.exe --force JAERO.exe
+echo "starting windeployqt"
+ls
+windeployqt.exe --force JAERO.exe --verbose 2
 echo "deploy done"
 ls /mingw64/bin/
 echo "copying dlls"
