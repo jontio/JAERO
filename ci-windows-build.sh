@@ -146,6 +146,9 @@ mkdir release/jaero
 cp release/JAERO.exe release/jaero/
 cd release/jaero
 windeployqt.exe --force JAERO.exe
+echo "deploy done"
+ls /mingw64/bin/
+echo "copying dlls"
 cp /mingw64/bin/libstdc++-6.dll $PWD
 cp /mingw64/bin/libgcc_s_seh-1.dll $PWD
 cp /mingw64/bin/libvorbisenc-2.dll $PWD
@@ -189,6 +192,7 @@ cp /mingw64/bin/libxml2-2.dll $PWD
 cp /mingw64/bin/liblzma-5.dll $PWD
 cp /mingw64/bin/libsqlite3-0.dll $PWD
 cp /mingw64/bin/Qt5Qmqtt.dll $PWD
+echo "copying dlls done"
 #basestation if available
 if [ -f "../../../../basestation/basestation.sqb" ]; then
    echo "basestation.sqb found. including it in package"
