@@ -143,19 +143,12 @@ cd JAERO
 qmake
 mingw32-make
 echo "jaero make done"
-ls
 mkdir release/jaero
-echo "mkdir done"
-ls
 cp release/JAERO.exe release/jaero/
-echo "copy exe done"
-ls
 cd release/jaero
 echo "starting windeployqt"
-ls
-windeployqt.exe --force JAERO.exe --verbose 2
+windeployqt.exe --no-translations --force JAERO.exe
 echo "deploy done"
-ls /mingw64/bin/
 echo "copying dlls"
 cp /mingw64/bin/libstdc++-6.dll $PWD
 cp /mingw64/bin/libgcc_s_seh-1.dll $PWD

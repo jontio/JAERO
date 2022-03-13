@@ -7,7 +7,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, windows-2019]
+        os: [ubuntu-latest, windows-latest]
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v2
@@ -15,7 +15,7 @@ jobs:
           path: JAERO
       # install MSYS2 for windows
       - name: if windows install MSYS2
-        if: ${{ matrix.os == 'windows-2019' }}
+        if: ${{ matrix.os == 'windows-latest' }}
         uses: msys2/setup-msys2@v2
         with:
           msystem: MINGW64
@@ -23,7 +23,7 @@ jobs:
           install: git mingw-w64-x86_64-toolchain autoconf libtool mingw-w64-x86_64-cpputest mingw-w64-x86_64-qt5 mingw-w64-x86_64-cmake mingw-w64-x86_64-libvorbis mingw-w64-x86_64-zeromq zip p7zip unzip
       # build for windows
       - name: Windows-CI-Build
-        if: ${{ matrix.os == 'windows-2019' }}
+        if: ${{ matrix.os == 'windows-latest' }}
         run: |
           echo 'Running in MSYS2!'
           ./JAERO/ci-windows-build.sh
@@ -36,7 +36,7 @@ jobs:
           ./JAERO/ci-linux-build.sh          
       # upload windows artifacts    
       - name: Upload windows binary artifacts
-        if: ${{ matrix.os == 'windows-2019' }}
+        if: ${{ matrix.os == 'windows-latest' }}
         uses: actions/upload-artifact@v2
         with:
           name: jaero_windows
