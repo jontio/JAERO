@@ -19,7 +19,16 @@ if [[ ! $(sudo echo 0) ]]; then exit; fi
 sudo apt update
 
 #install dependancies and build tools
-sudo apt-get install qt5-default cpputest build-essential qtmultimedia5-dev cmake libvorbis-dev libogg-dev libqt5multimedia5-plugins checkinstall libqcustomplot-dev libqt5svg5-dev libzmq3-dev unzip -y
+
+if ! apt search qt5-default 2>/dev/null  | grep -q qt5-default ; then
+    echo "cant find qt5-default in repo"
+    sudo apt-get install qtbase5-dev qtchooser qt5-qmake qtbase5-dev-tools
+else
+    echo "found qt5-default in repo"
+    sudo apt-get install qt5-default
+fi
+
+sudo apt-get install cpputest build-essential qtmultimedia5-dev cmake libvorbis-dev libogg-dev libqt5multimedia5-plugins checkinstall libqcustomplot-dev libqt5svg5-dev libzmq3-dev unzip -y
 
 #get script path
 SCRIPT=$(realpath $0)
