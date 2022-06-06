@@ -15,6 +15,7 @@
 #include <QFile>
 #include <QSound>
 #include "sbs1.h"
+#include "gui_classes/qled.h"
 
 #include "databasetext.h"
 
@@ -25,6 +26,7 @@
 #include "zmq_audioreceiver.h"
 #include "zmq_audiosender.h"
 
+#include "mqttsubscriber.h"
 
 namespace Ui {
 class MainWindow;
@@ -41,6 +43,8 @@ public:
 signals:
 
 private:
+    enum class LedState{Disable,Off,On,Overload};
+
     enum DemodType{NoDemodType,MSK,OQPSK,BURSTOQPSK,BURSTMSK};
     Ui::MainWindow *ui;
     AudioMskDemodulator *audiomskdemodulator;
@@ -75,6 +79,8 @@ private:
     AeroL *aerol;
     AeroL *aerol2;
 
+    MqttSubscriber *mqttsubscriber;
+
     SettingsDialog *settingsdialog;
 
     SBS1 *sbs1;
@@ -102,6 +108,8 @@ private:
     bool last_dcd;
     double last_frequency;
     double last_EbNo;
+
+    void setLedState(QLed *led, LedState state);
 
 protected:
     void closeEvent(QCloseEvent *event);
@@ -135,6 +143,8 @@ private slots:
     void on_actionReduce_CPU_triggered(bool checked);
 
     void statusToUDPifJSONset();
+
+    void onMqttConnectionStateChange(MqttSubscriber::ConnectionState state);
 
 };
 

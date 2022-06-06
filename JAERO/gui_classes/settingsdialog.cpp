@@ -132,8 +132,18 @@ void SettingsDialog::poulatepublicvars()
     zmqAudioInputTopic = ui->lineEditZmqTopic->text();
     zmqAudioInputEnabled = ui->checkBoxZMQ->isChecked();
 
-}
 
+    ui->MQTT_host->setText(mqtt_settings_object.host);
+    ui->MQTT_port->setValue(mqtt_settings_object.port);
+    ui->MQTT_topic->setText(mqtt_settings_object.topic);
+    ui->MQTT_clientId->setText(mqtt_settings_object.clientId);
+    ui->MQTT_username->setText(mqtt_settings_object.username);
+    ui->MQTT_password->setText(mqtt_settings_object.password);
+    ui->MQTT_publish->setChecked(mqtt_settings_object.publish);
+    ui->MQTT_encryption->setChecked(mqtt_settings_object.encryption);
+    mqtt_enable=ui->MQTT_enable->isChecked();
+
+}
 
 void SettingsDialog::populatesettings()
 {
@@ -178,6 +188,15 @@ void SettingsDialog::populatesettings()
     default_topic=default_topic.trimmed();
     ui->lineEditZmqTopic->setText(settings.value("zmqAudioInputReceiveTopic", default_topic).toString());
 
+    ui->checkBoxlogwidebandwidthenable->setEnabled(!ui->checkBoxZMQ->isChecked());
+    ui->comboBoxsoundcard->setEnabled(!ui->checkBoxZMQ->isChecked());
+    ui->lineEditZmqConnectAddress->setEnabled(ui->checkBoxZMQ->isChecked());
+    ui->lineEditZmqTopic->setEnabled(ui->checkBoxZMQ->isChecked());
+
+    //new simple object method for lots of settings
+    mqtt_settings_object.fromQByteArray(settings.value("mqtt_settings_object", mqtt_settings_object.toQByteArray()).toByteArray());
+    ui->MQTT_enable->setChecked(settings.value("MQTT_enable",false).toBool());
+
     on_lineEditlogdir_editingFinished();
 
     poulatepublicvars();
@@ -214,10 +233,22 @@ void SettingsDialog::accept()
     settings.setValue("zmqAudioInputReceiveAddress",  ui->lineEditZmqConnectAddress->text());
     settings.setValue("zmqAudioInputReceiveTopic", ui->lineEditZmqTopic->text());
 
+    //new object method for lots of settings. doesn't really fit the old schema but oh well
+    mqtt_settings_object.host=ui->MQTT_host->text();
+    mqtt_settings_object.port=ui->MQTT_port->value();
+    mqtt_settings_object.topic=ui->MQTT_topic->text();
+    mqtt_settings_object.clientId=ui->MQTT_clientId->text();
+    mqtt_settings_object.username=ui->MQTT_username->text();
+    mqtt_settings_object.password=ui->MQTT_password->text().toLatin1();
+    mqtt_settings_object.publish=ui->MQTT_publish->isChecked();
+    mqtt_settings_object.subscribe=!ui->MQTT_publish->isChecked();
+    mqtt_settings_object.encryption=ui->MQTT_encryption->isChecked();
+    settings.setValue("mqtt_settings_object", mqtt_settings_object.toQByteArray());
+    settings.setValue("MQTT_enable", ui->MQTT_enable->isChecked());
+
     poulatepublicvars();
     QDialog::accept();
 }
-
 
 void SettingsDialog::on_lineEditlogdir_editingFinished()
 {

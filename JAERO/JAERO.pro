@@ -13,7 +13,7 @@
 
 DEFINES += JAERO_VERSION=\\\"v1.0.4.13\\\"
 
-QT       += multimedia core network gui svg sql
+QT       += multimedia core network gui svg sql qmqtt
 
 greaterThan(QT_MAJOR_VERSION, 4): QT += widgets  printsupport
 
@@ -99,7 +99,10 @@ SOURCES += mainwindow.cpp \
     util/file_utils.cpp \
     util/RuntimeError.cpp \
     zmq_audiosender.cpp \
-    zmq_audioreceiver.cpp
+    zmq_audioreceiver.cpp \
+    mqttsubscriber.cpp \
+    acarsitem_converter.cpp \
+    jserialize.cpp
 
 
 HEADERS  += mainwindow.h \
@@ -136,8 +139,10 @@ HEADERS  += mainwindow.h \
     util/file_utils.h \
     util/RuntimeError.h \
     zmq_audioreceiver.h \
-    zmq_audiosender.h
-
+    zmq_audiosender.h \
+    mqttsubscriber.h \
+    acarsitem_converter.h \
+    jserialize.h
 
 # Tell the qcustomplot header that it will be used as library:
 DEFINES += QCUSTOMPLOT_USE_LIBRARY

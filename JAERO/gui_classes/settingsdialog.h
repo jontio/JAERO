@@ -13,6 +13,7 @@
 #include <QDialog>
 #include <QVector>
 #include <QAudioDeviceInfo>
+#include "mqttsubscriber.h"
 
 extern QString settings_name;
 
@@ -64,6 +65,9 @@ public:
     QString zmqAudioInputTopic;
 
     bool disablePlaneLogWindow;
+
+    MqttSubscriber_Settings_Object mqtt_settings_object;
+    bool mqtt_enable;
 
 private:
     Ui::SettingsDialog *ui;    

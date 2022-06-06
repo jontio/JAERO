@@ -14,6 +14,9 @@
 #fail on first error
 set -e
 
+#update system else we might have a version problem with the upcomeing install
+pacman -Syu
+
 pacman -S --needed --noconfirm git mingw-w64-x86_64-toolchain autoconf libtool mingw-w64-x86_64-cpputest mingw-w64-x86_64-qt5 mingw-w64-x86_64-cmake mingw-w64-x86_64-libvorbis zip p7zip unzip mingw-w64-x86_64-zeromq
 
 #get script path
@@ -21,10 +24,32 @@ SCRIPT=$(realpath $0)
 SCRIPTPATH=$(dirname $SCRIPT)
 cd $SCRIPTPATH/..
 
+#qmqtt
+FOLDER="qmqtt"
+URL="https://github.com/emqx/qmqtt.git"
+if [ ! -d "$FOLDER" ] ; then
+    git clone $URL $FOLDER
+    cd "$FOLDER"
+else
+    cd "$FOLDER"
+    git pull $URL
+fi
+qmake
+mingw32-make
+mingw32-make install
+cd ..
+
 #libacars
-git clone https://github.com/szpajder/libacars
-#cd libacars && git checkout v1.3.1
-cd libacars
+FOLDER="libacars"
+URL="https://github.com/szpajder/libacars"
+if [ ! -d "$FOLDER" ] ; then
+    git clone $URL $FOLDER
+    cd "$FOLDER"
+else
+    cd "$FOLDER"
+    git pull $URL
+fi
+rm -fr build
 mkdir build && cd build
 sed -i -e 's/.*find_library(LIBM m REQUIRED).*/# find_library(LIBM m REQUIRED)/' ../libacars/CMakeLists.txt
 cmake -G "MinGW Makefiles" -DCMAKE_INSTALL_PREFIX:PATH=/mingw64/ ..
@@ -47,8 +72,16 @@ cp ../../qcustomplot.h /mingw64/include/
 cd ../../..
 
 #libcorrect
-git clone https://github.com/quiet/libcorrect
-cd libcorrect
+FOLDER="libcorrect"
+URL="https://github.com/quiet/libcorrect"
+if [ ! -d "$FOLDER" ] ; then
+    git clone $URL $FOLDER
+    cd "$FOLDER"
+else
+    cd "$FOLDER"
+    git pull $URL
+fi
+rm -fr build
 mkdir build && cd build
 cmake -G "MinGW Makefiles" -DCMAKE_INSTALL_PREFIX:PATH=/mingw64/ ..
 mingw32-make
@@ -56,11 +89,28 @@ mingw32-make DESTDIR=/../ install
 cd ../..
 
 #JFFT
-git clone https://github.com/jontio/JFFT
+FOLDER="JFFT"
+URL="https://github.com/jontio/JFFT"
+if [ ! -d "$FOLDER" ] ; then
+    git clone $URL $FOLDER
+else
+    cd "$FOLDER"
+    git pull $URL
+	cd ..
+fi
 
 #libaeroambe
-git clone https://github.com/jontio/libaeroambe
-cd libaeroambe/mbelib-master
+FOLDER="libaeroambe"
+URL="https://github.com/jontio/libaeroambe"
+if [ ! -d "$FOLDER" ] ; then
+    git clone $URL $FOLDER
+    cd "$FOLDER"
+else
+    cd "$FOLDER"
+    git pull $URL
+fi
+cd mbelib-master
+rm -fr build
 mkdir build && cd build
 cmake -G "MinGW Makefiles" -DCMAKE_INSTALL_PREFIX:PATH=/mingw64/ ..
 mingw32-make
@@ -92,10 +142,14 @@ echo "PACKAGE_SOURCE="$PACKAGE_SOURCE
 cd JAERO
 qmake
 mingw32-make
+echo "jaero make done"
 mkdir release/jaero
 cp release/JAERO.exe release/jaero/
 cd release/jaero
-windeployqt.exe --force JAERO.exe
+echo "starting windeployqt"
+windeployqt.exe --no-translations --force JAERO.exe
+echo "deploy done"
+echo "copying dlls"
 cp /mingw64/bin/libstdc++-6.dll $PWD
 cp /mingw64/bin/libgcc_s_seh-1.dll $PWD
 cp /mingw64/bin/libvorbisenc-2.dll $PWD
@@ -127,6 +181,7 @@ cp /mingw64/bin/libiconv-2.dll $PWD
 cp /mingw64/bin/libzmq.dll $PWD
 cp /mingw64/bin/libsodium-23.dll $PWD
 cp /mingw64/bin/libmd4c.dll $PWD
+cp /mingw64/bin/libjpeg-8.dll $PWD
 #7za.exe not needed anymore
 #cp /usr/lib/p7zip/7za.exe $PWD
 #cp /usr/bin/msys-stdc++-6.dll $PWD
@@ -137,6 +192,8 @@ cp /mingw64/bin/libmbe.dll $PWD
 cp /mingw64/bin/libxml2-2.dll $PWD
 cp /mingw64/bin/liblzma-5.dll $PWD
 cp /mingw64/bin/libsqlite3-0.dll $PWD
+cp /mingw64/bin/Qt5Qmqtt.dll $PWD
+echo "copying dlls done"
 #basestation if available
 if [ -f "../../../../basestation/basestation.sqb" ]; then
    echo "basestation.sqb found. including it in package"

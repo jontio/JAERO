@@ -6,6 +6,10 @@
 #include <QJsonObject>
 #include <QJsonDocument>
 
+//create a publisher based of the GUI MQTT settings
+//used for testing
+//#define MQTT_PUBLISH_TEST
+
 #ifdef __linux__
 #include <unistd.h>
 #define Sleep(x) usleep(x * 1000);
@@ -15,6 +19,61 @@
 #endif
 
 #include "databasetext.h"
+
+void MainWindow::setLedState(QLed *led, LedState state)
+{
+    QLabel *label=nullptr;
+    if(led==ui->ledmqtt)label=ui->labelmqtt;
+    else if(led==ui->leddata)label=ui->labeldata;
+    else if(led==ui->ledsignal)label=ui->labelsignal;
+    else if(led==ui->ledvolume)label=ui->labelvolume;
+    switch(state)
+    {
+    case LedState::Disable:
+        led->setVisible(false);
+        if(label)label->setVisible(false);
+        break;
+    default:
+        led->setVisible(true);
+        if(label)label->setVisible(true);
+        break;
+    }
+    switch(state)
+    {
+    case LedState::Off:
+        led->setLED(QIcon::Off);
+        break;
+    case LedState::On:
+        led->setLED(QIcon::On);
+        break;
+    case LedState::Overload:
+        led->setLED(QIcon::On,QIcon::Active);
+        break;
+    default:
+        break;
+    }
+}
+
+void MainWindow::onMqttConnectionStateChange(MqttSubscriber::ConnectionState state)
+{
+    qDebug()<<"MainWindow::onMqttConnectionStateChange"<<state;
+    if(!settingsdialog->mqtt_enable)
+    {
+        setLedState(ui->ledmqtt,LedState::Disable);
+        return;
+    }
+    if(state==MqttSubscriber::STATE_CONNECTED)
+    {
+        setLedState(ui->ledmqtt,LedState::Off);
+        return;
+    }
+    if(state==MqttSubscriber::STATE_CONNECTED_SUBSCRIBED)
+    {
+        setLedState(ui->ledmqtt,LedState::On);
+        return;
+    }
+    setLedState(ui->ledmqtt,LedState::Overload);
+}
 
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
@@ -31,6 +90,9 @@ MainWindow::MainWindow(QWidget *parent) :
 
     //plane logging window
     planelog = new PlaneLog;
+
+    //mqtt pub & sub
+    mqttsubscriber=new MqttSubscriber(this);
 
     //create zmq audio receiver
     zmq_audio_receiver = new ZMQAudioReceiver(this);
@@ -140,8 +202,10 @@ MainWindow::MainWindow(QWidget *parent) :
     ui->statusBar->addPermanentWidget(ebnolabel);
 
     //led setup
-    ui->ledvolume->setLED(QIcon::Off);
-    ui->ledsignal->setLED(QIcon::Off);
+    setLedState(ui->ledvolume,LedState::Off);
+    setLedState(ui->ledsignal,LedState::Off);
+    setLedState(ui->leddata,LedState::Off);
+    setLedState(ui->ledmqtt,LedState::Disable);
 
     //misc connections
     connect(ui->action_About,    SIGNAL(triggered()),                                   this, SLOT(AboutSlot()));
@@ -232,6 +296,25 @@ MainWindow::MainWindow(QWidget *parent) :
     if(!aeroambe_object_error_str.isEmpty())ui->inputwidget->appendPlainText(aeroambe_object_error_str+"\n");
 
     ui->actionTXRX->setVisible(false);//there is a hidden audio modulator icon.
+
+    //publish test
+#ifdef MQTT_PUBLISH_TEST
+    MqttSubscriber *mqttpublisher=new MqttSubscriber(this);
+    MqttSubscriber_Settings_Object mqtt_settings=settingsdialog->mqtt_settings_object;
+    mqtt_settings.clientId="pub_41349f7ug134bhof";
+    mqtt_settings.publish=true;
+    mqtt_settings.subscribe=false;
+    connect(aerol,SIGNAL(ACARSsignal(ACARSItem&)),mqttpublisher,SLOT(ACARSslot(ACARSItem&)),Qt::UniqueConnection);
+    connect(aerol2,SIGNAL(ACARSsignal(ACARSItem&)),mqttpublisher,SLOT(ACARSslot(ACARSItem&)),Qt::UniqueConnection);
+    mqttpublisher->connectToHost(mqtt_settings);
+#endif
+
+    //MQTT connections
+    connect(mqttsubscriber,SIGNAL(connectionStateChange(MqttSubscriber::ConnectionState)),this,SLOT(onMqttConnectionStateChange(MqttSubscriber::ConnectionState)));
+    connect(mqttsubscriber,SIGNAL(ACARSsignal(ACARSItem&)),this,SLOT(ACARSslot(ACARSItem&)),Qt::UniqueConnection);
+    connect(mqttsubscriber,SIGNAL(ACARSsignal(ACARSItem&)),planelog,SLOT(ACARSslot(ACARSItem&)),Qt::UniqueConnection);
+    connect(aerol,SIGNAL(ACARSsignal(ACARSItem&)),mqttsubscriber,SLOT(ACARSslot(ACARSItem&)),Qt::UniqueConnection);
+    connect(aerol2,SIGNAL(ACARSsignal(ACARSItem&)),mqttsubscriber,SLOT(ACARSslot(ACARSItem&)),Qt::UniqueConnection);
 
     //set pop and accept settings
     settingsdialog->populatesettings();
@@ -966,6 +1049,17 @@ void MainWindow::acceptsettings()
 
     ui->statusBar->clearMessage();
 
+    if(settingsdialog->mqtt_enable)
+    {
+        setLedState(ui->ledmqtt,LedState::Off);
+        mqttsubscriber->connectToHost(settingsdialog->mqtt_settings_object);
+    }
+    else
+    {
+        setLedState(ui->ledmqtt,LedState::Disable);
+        mqttsubscriber->disconnectFromHost();
+    }
+
     aerol->setDoNotDisplaySUs(settingsdialog->donotdisplaysus);
     aerol->setDataBaseDir(settingsdialog->planesfolder);
 
@@ -976,12 +1070,14 @@ void MainWindow::acceptsettings()
     {
         disconnect(aerol,SIGNAL(ACARSsignal(ACARSItem&)),planelog,SLOT(ACARSslot(ACARSItem&)));
         disconnect(aerol2,SIGNAL(ACARSsignal(ACARSItem&)),planelog,SLOT(ACARSslot(ACARSItem&)));
+        disconnect(mqttsubscriber,SIGNAL(ACARSsignal(ACARSItem&)),planelog,SLOT(ACARSslot(ACARSItem&)));
         ui->action_PlaneLog->setVisible(false);
     }
     else
     {
         connect(aerol,SIGNAL(ACARSsignal(ACARSItem&)),planelog,SLOT(ACARSslot(ACARSItem&)),Qt::UniqueConnection);
         connect(aerol2,SIGNAL(ACARSsignal(ACARSItem&)),planelog,SLOT(ACARSslot(ACARSItem&)),Qt::UniqueConnection);
+        connect(mqttsubscriber,SIGNAL(ACARSsignal(ACARSItem&)),planelog,SLOT(ACARSslot(ACARSItem&)),Qt::UniqueConnection);
         ui->action_PlaneLog->setVisible(true);
     }
 
@@ -1186,6 +1282,8 @@ void MainWindow::ACARSslot(ACARSItem &acarsitem)
     QString humantext;
     QByteArray TAKstr;
     TAKstr+=acarsitem.TAK;
+
+    while(acarsitem.LABEL.size()<2)acarsitem.LABEL.append((char)0x00);
 
     arincparser.parseDownlinkmessage(acarsitem);//parse ARINC 745-2 and header
     arincparser.parseUplinkmessage(acarsitem);
