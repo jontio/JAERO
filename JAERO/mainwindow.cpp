@@ -86,7 +86,7 @@ MainWindow::MainWindow(QWidget *parent) :
     last_frequency=0;
     last_EbNo=0;
 
-    beep=new QSound(":/sounds/beep.wav",this);
+    beep=nullptr;
 
     //plane logging window
     planelog = new PlaneLog;
@@ -1238,7 +1238,17 @@ void MainWindow::acceptsettings()
         zmq_audio_sender->Stop();
         disconnect(aerol,SIGNAL(Voicesignal(QByteArray&, QString&)),zmq_audio_sender,SLOT(Voiceslot(QByteArray&, QString&)));
     }
-
+   if(settingsdialog->beepontextmessage)
+   {
+        if(!beep)
+            beep=new QSound(":/sounds/beep.wav", this);
+   }else{
+        if(beep)
+        {
+            beep->deleteLater();
+            beep=nullptr;
+        }
+   }
 }
 
 void MainWindow::on_action_PlaneLog_triggered()
