@@ -94,7 +94,15 @@ qint64 AudioOutDevice::readData(char *data, qint64 maxlen)
     if(numofsamples<1)
     {
         circ_buffer[circ_buffer_tail]=((double)circ_buffer[circ_buffer_tail])*0.75;
-        *ptr=circ_buffer[circ_buffer_tail];
+        if(maxlen > 2000)
+        {
+            for(int i=0;i<2000;i++)
+            {
+                *ptr=circ_buffer[circ_buffer_tail];
+                ptr++;
+            }
+            return 2000;
+        }
         return sizeof(qint16);
     }
 
