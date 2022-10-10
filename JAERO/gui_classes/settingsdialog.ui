@@ -10,7 +10,7 @@
     <x>0</x>
     <y>0</y>
     <width>451</width>
-    <height>720</height>
+    <height>741</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -73,7 +73,7 @@
          <x>10</x>
          <y>80</y>
          <width>401</width>
-         <height>121</height>
+         <height>151</height>
         </rect>
        </property>
        <property name="title">
@@ -158,12 +158,17 @@
           <string>JSON</string>
          </property>
         </item>
+        <item>
+         <property name="text">
+          <string>JSON4</string>
+         </property>
+        </item>
        </widget>
        <widget class="QCheckBox" name="checkBoxbeepontextmessage">
         <property name="geometry">
          <rect>
           <x>20</x>
-          <y>60</y>
+          <y>90</y>
           <width>301</width>
           <height>19</height>
          </rect>
@@ -176,7 +181,7 @@
         <property name="geometry">
          <rect>
           <x>20</x>
-          <y>90</y>
+          <y>120</y>
           <width>131</width>
           <height>19</height>
          </rect>
@@ -189,7 +194,7 @@
         <property name="geometry">
          <rect>
           <x>150</x>
-          <y>90</y>
+          <y>120</y>
           <width>231</width>
           <height>21</height>
          </rect>
@@ -203,12 +208,25 @@ eg &quot;localhost:12345 localhost:12346&quot;</string>
          <string>localhost:18765</string>
         </property>
        </widget>
+       <widget class="QCheckBox" name="checkBoxonlyuselibacars">
+        <property name="geometry">
+         <rect>
+          <x>20</x>
+          <y>60</y>
+          <width>301</width>
+          <height>19</height>
+         </rect>
+        </property>
+        <property name="text">
+         <string>Only use libacars for ADS parsing</string>
+        </property>
+       </widget>
       </widget>
       <widget class="QGroupBox" name="groupBox_5">
        <property name="geometry">
         <rect>
          <x>10</x>
-         <y>470</y>
+         <y>500</y>
          <width>401</width>
          <height>151</height>
         </rect>
@@ -333,7 +351,7 @@ eg &quot;localhost:12345 localhost:12346&quot;</string>
        <property name="geometry">
         <rect>
          <x>10</x>
-         <y>310</y>
+         <y>340</y>
          <width>401</width>
          <height>71</height>
         </rect>
@@ -397,7 +415,7 @@ eg &quot;localhost:12345 localhost:12346&quot;</string>
        <property name="geometry">
         <rect>
          <x>10</x>
-         <y>390</y>
+         <y>420</y>
          <width>401</width>
          <height>71</height>
         </rect>
@@ -451,7 +469,7 @@ eg &quot;localhost:12345 localhost:12346&quot;</string>
        <property name="geometry">
         <rect>
          <x>10</x>
-         <y>210</y>
+         <y>240</y>
          <width>401</width>
          <height>91</height>
         </rect>
@@ -702,13 +720,13 @@ eg &quot;localhost:12345 localhost:12346&quot;</string>
          <string>Use MQTT</string>
         </property>
        </widget>
-       <widget class="QWidget" name="">
+       <widget class="QWidget" name="layoutWidget">
         <property name="geometry">
          <rect>
           <x>20</x>
           <y>250</y>
-          <width>131</width>
-          <height>49</height>
+          <width>134</width>
+          <height>54</height>
          </rect>
         </property>
         <layout class="QGridLayout" name="gridLayout">
@@ -728,13 +746,13 @@ eg &quot;localhost:12345 localhost:12346&quot;</string>
          </item>
         </layout>
        </widget>
-       <widget class="QWidget" name="">
+       <widget class="QWidget" name="layoutWidget">
         <property name="geometry">
          <rect>
           <x>20</x>
           <y>60</y>
           <width>371</width>
-          <height>169</height>
+          <height>183</height>
          </rect>
         </property>
         <layout class="QGridLayout" name="gridLayout_2">

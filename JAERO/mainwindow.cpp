@@ -1295,7 +1295,7 @@ void MainWindow::ACARSslot(ACARSItem &acarsitem)
 
     while(acarsitem.LABEL.size()<2)acarsitem.LABEL.append((char)0x00);
 
-    arincparser.parseDownlinkmessage(acarsitem);//parse ARINC 745-2 and header
+    arincparser.parseDownlinkmessage(acarsitem,settingsdialog->onlyuselibacars);//parse ARINC 745-2 and header
     arincparser.parseUplinkmessage(acarsitem);
 
     if(acarsitem.hastext&&settingsdialog->beepontextmessage)
@@ -1456,7 +1456,7 @@ void MainWindow::ACARSslot(ACARSItem &acarsitem)
         }
     }
 
-    if(settingsdialog->msgdisplayformat=="JSON")
+    if(settingsdialog->msgdisplayformat.startsWith("JSON"))
     {
         ui->inputwidget->setLineWrapMode(QPlainTextEdit::NoWrap);
         QString message=acarsitem.message;
@@ -1474,38 +1474,115 @@ void MainWindow::ACARSslot(ACARSItem &acarsitem)
 
         //json object creation
         QJsonObject json;
-        //add database lookup info if available
-        if(acarsitem.dblookupresult.size()==QMetaEnum::fromType<DataBaseTextUser::DataBaseSchema>().keyCount())
+
+        if(settingsdialog->msgdisplayformat=="JSON")
         {
-            json["DB_MANUFACTURER"]=acarsitem.dblookupresult[DataBaseTextUser::DataBaseSchema::Manufacturer].trimmed();
-            json["DB_TYPE"]=acarsitem.dblookupresult[DataBaseTextUser::DataBaseSchema::Type].trimmed();
-            json["DB_OWNERS"]=acarsitem.dblookupresult[DataBaseTextUser::DataBaseSchema::RegisteredOwners].trimmed();
-        }
-        //add common things
-        json["TIME"]=time.toSecsSinceEpoch();
-        json["TIME_UTC"]=time.toUTC().toString("yyyy-MM-dd hh:mm:ss");
-        json["NAME"]=QApplication::applicationDisplayName();
-        json["NONACARS"]=acarsitem.nonacars;
-        json["AESID"]=((QString)"").sprintf("%06X",acarsitem.isuitem.AESID);
-        json["GESID"]=((QString)"").sprintf("%02X",acarsitem.isuitem.GESID);
-        json["QNO"]=((QString)"").sprintf("%02X",acarsitem.isuitem.QNO);
-        json["REFNO"]=((QString)"").sprintf("%02X",acarsitem.isuitem.REFNO);
-        json["REG"]=(QString)acarsitem.PLANEREG;
-        //add acars message things
-        if(!acarsitem.nonacars)
+            //add database lookup info if available
+            if(acarsitem.dblookupresult.size()==QMetaEnum::fromType<DataBaseTextUser::DataBaseSchema>().keyCount())
+            {
+                json["DB_MANUFACTURER"]=acarsitem.dblookupresult[DataBaseTextUser::DataBaseSchema::Manufacturer].trimmed();
+                json["DB_TYPE"]=acarsitem.dblookupresult[DataBaseTextUser::DataBaseSchema::Type].trimmed();
+                json["DB_OWNERS"]=acarsitem.dblookupresult[DataBaseTextUser::DataBaseSchema::RegisteredOwners].trimmed();
+            }
+            //add common things
+            json["TIME"]=time.toSecsSinceEpoch();
+            json["TIME_UTC"]=time.toUTC().toString("yyyy-MM-dd hh:mm:ss");
+            json["NAME"]=QApplication::applicationDisplayName();
+            json["NONACARS"]=acarsitem.nonacars;
+            json["AESID"]=((QString)"").sprintf("%06X",acarsitem.isuitem.AESID);
+            json["GESID"]=((QString)"").sprintf("%02X",acarsitem.isuitem.GESID);
+            json["QNO"]=((QString)"").sprintf("%02X",acarsitem.isuitem.QNO);
+            json["REFNO"]=((QString)"").sprintf("%02X",acarsitem.isuitem.REFNO);
+            json["REG"]=(QString)acarsitem.PLANEREG;
+            //add acars message things
+            if(!acarsitem.nonacars)
+            {
+                json["MODE"]=(QString)acarsitem.MODE;
+                json["TAK"]=(QString)TAKstr;
+                json["LABEL"]=(((QString)"").sprintf("%c%c",(uchar)acarsitem.LABEL[0],label1));
+                json["BI"]=(QString)acarsitem.BI;
+            }
+            //if there is a message then add it and any parsing using arincparser
+            if(!message.isEmpty())
+            {
+                json["MESSAGE"]=message;
+                if(!arincparser.downlinkheader.flightid.isEmpty())json["FLIGHT"]=arincparser.downlinkheader.flightid;
+                if(arincparser.arincmessage.info.size()>2)json["ARINCPARSER_MESSAGE_INFO"]=arincparser.arincmessage.info;
+            }
+        } 
+        else if(settingsdialog->msgdisplayformat=="JSON4") 
         {
-            json["MODE"]=(QString)acarsitem.MODE;
-            json["TAK"]=(QString)TAKstr;
-            json["LABEL"]=(((QString)"").sprintf("%c%c",(uchar)acarsitem.LABEL[0],label1));
-            json["BI"]=(QString)acarsitem.BI;
+            QJsonObject body;
+
+            QJsonObject app;
+            app["name"]="JAERO";
+            app["ver"]=QApplication::applicationDisplayName();
+            body["app"]=QJsonValue(app);
+
+            QJsonObject isu;
+            QJsonObject src;
+            QJsonObject dst;
+
+            if(acarsitem.downlink) 
+            {
+                src["type"]="Ground Earth Station";
+                src["addr"]=((QString)"").sprintf("%02X",acarsitem.isuitem.GESID);
+
+                dst["type"]="Aircraft Earth Station";
+                dst["addr"]=((QString)"").sprintf("%06X",acarsitem.isuitem.AESID);
+            } 
+            else 
+            {
+                src["type"]="Aircraft Earth Station";
+                src["addr"]=((QString)"").sprintf("%06X",acarsitem.isuitem.AESID);
+
+                dst["type"]="Ground Earth Station";
+                dst["addr"]=((QString)"").sprintf("%02X",acarsitem.isuitem.GESID);
+            }
+
+            if(!acarsitem.nonacars) 
+            {
+                QJsonObject acars;
+                acars["mode"]=(QString)acarsitem.MODE;
+                acars["ack"]=(QString)TAKstr;
+                acars["blk_id"]=(QString)acarsitem.BI;
+                acars["label"]=(((QString)"").sprintf("%c%c",(uchar)acarsitem.LABEL[0],label1));
+                acars["reg"]=(QString)acarsitem.PLANEREG;
+
+                if(!arincparser.downlinkheader.flightid.isEmpty())acars["flight"]=arincparser.downlinkheader.flightid;
+
+                if(!message.isEmpty())
+                {
+                    acars["msg_text"]=message;
+
+                    if(arincparser.arincmessage.info.size()>2)acars["libacars"]=QJsonValue(arincparser.arincmessage.info_json);
+                    if (arincparser.arincmessage.info_json.size()>0)
+                    {
+                        for(auto it=arincparser.arincmessage.info_json.constBegin();it!=arincparser.arincmessage.info_json.constEnd();it++)
+                        {
+                            acars.insert(it.key(),it.value());
+                        }
+                    }
+                }
+
+                isu["acars"]=QJsonValue(acars);
+            }
+
+            isu["refno"]=((QString)"").sprintf("%02X",acarsitem.isuitem.REFNO);
+            isu["qno"]=((QString)"").sprintf("%02X",acarsitem.isuitem.QNO);
+            isu["dst"]=QJsonValue(dst);
+            isu["src"]=QJsonValue(src);
+
+            QJsonObject t;
+            QDateTime ts=time.toUTC();
+            t["sec"]=ts.toSecsSinceEpoch();
+            t["usec"]=(ts.toMSecsSinceEpoch() % 1000) * 1000;
+            body["t"]=QJsonValue(t);
+
+            body["isu"]=QJsonValue(isu);
+            json["jaero"]=QJsonValue(body);
         }
-        //if there is a message then add it and any parsing using arincparser
-        if(!message.isEmpty())
-        {
-            json["MESSAGE"]=message;
-            if(!arincparser.downlinkheader.flightid.isEmpty())json["FLIGHT"]=arincparser.downlinkheader.flightid;
-            if(arincparser.arincmessage.info.size()>2)json["ARINCPARSER_MESSAGE_INFO"]=arincparser.arincmessage.info;
-        }
+
         //convert json object to string
         humantext=QJsonDocument(json).toJson(QJsonDocument::Compact);
 

@@ -41,6 +41,7 @@ public:
     QString planesfolder;
     QString planelookup;
     bool beepontextmessage;
+    bool onlyuselibacars;
 
     QList<QHostAddress> udp_for_decoded_messages_address;
     QList<quint16> udp_for_decoded_messages_port;
@@ -71,7 +72,7 @@ public:
 
 private:
     Ui::SettingsDialog *ui;    
-    void poulatepublicvars();
+    void populatepublicvars();
 
 protected:
     void accept();

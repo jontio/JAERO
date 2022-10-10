@@ -24,7 +24,7 @@ SettingsDialog::~SettingsDialog()
     delete ui;
 }
 
-void SettingsDialog::poulatepublicvars()
+void SettingsDialog::populatepublicvars()
 {
 
     msgdisplayformat=ui->comboBoxDisplayformat->currentText();
@@ -57,6 +57,7 @@ void SettingsDialog::poulatepublicvars()
     planesfolder=ui->lineEditplanesfolder->text();
     planelookup=ui->lineEditplanelookup->text();
 
+    onlyuselibacars=ui->checkBoxonlyuselibacars->isChecked();
     beepontextmessage=ui->checkBoxbeepontextmessage->isChecked();
 
     //bottom text window output settings
@@ -164,6 +165,7 @@ void SettingsDialog::populatesettings()
     ui->checkBoxlogwidebandwidthenable->setChecked(settings.value("checkBoxlogwidebandwidthenable",false).toBool());
     ui->lineEditplanesfolder->setText(settings.value("lineEditplanesfolder",QStandardPaths::standardLocations(APPDATALOCATIONS)[0]+"/planes").toString());
     ui->lineEditplanelookup->setText(settings.value("lineEditplanelookup","http://www.flightradar24.com/data/airplanes/{REG}").toString());
+    ui->checkBoxonlyuselibacars->setChecked(settings.value("checkBoxonlyuselibacars",false).toBool());
     ui->checkBoxbeepontextmessage->setChecked(settings.value("checkBoxbeepontextmessage",true).toBool());
     ui->lineEditudpoutputdecodedmessagesaddress->setText(settings.value("lineEditudpoutputdecodedmessagesaddress","localhost:18765").toString());
     ui->checkOutputDecodedMessageToUDPPort->setChecked(settings.value("checkOutputDecodedMessageToUDPPort",false).toBool());
@@ -199,7 +201,7 @@ void SettingsDialog::populatesettings()
 
     on_lineEditlogdir_editingFinished();
 
-    poulatepublicvars();
+    populatepublicvars();
 }
 
 void SettingsDialog::accept()
@@ -216,6 +218,7 @@ void SettingsDialog::accept()
     settings.setValue("checkBoxlogwidebandwidthenable", ui->checkBoxlogwidebandwidthenable->isChecked());
     settings.setValue("lineEditplanesfolder", ui->lineEditplanesfolder->text());
     settings.setValue("lineEditplanelookup", ui->lineEditplanelookup->text());
+    settings.setValue("checkBoxonlyuselibacars", ui->checkBoxonlyuselibacars->isChecked());
     settings.setValue("checkBoxbeepontextmessage", ui->checkBoxbeepontextmessage->isChecked());
     settings.setValue("lineEditudpoutputdecodedmessagesaddress", ui->lineEditudpoutputdecodedmessagesaddress->text());
     settings.setValue("checkOutputDecodedMessageToUDPPort", ui->checkOutputDecodedMessageToUDPPort->isChecked());  
@@ -246,7 +249,7 @@ void SettingsDialog::accept()
     settings.setValue("mqtt_settings_object", mqtt_settings_object.toQByteArray());
     settings.setValue("MQTT_enable", ui->MQTT_enable->isChecked());
 
-    poulatepublicvars();
+    populatepublicvars();
     QDialog::accept();
 }
 
