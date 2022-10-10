@@ -84,4 +84,6 @@ bin/*
 JAERO/*.bak
 release/jaero/*
 JAERO/release
+JAERO/JAERO
+JAERO/moc_predefs.h
 *.bak
