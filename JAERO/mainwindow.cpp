@@ -1555,7 +1555,6 @@ void MainWindow::ACARSslot(ACARSItem &acarsitem)
                 {
                     acars["msg_text"]=message;
 
-                    if(arincparser.arincmessage.info.size()>2)acars["libacars"]=QJsonValue(arincparser.arincmessage.info_json);
                     if (arincparser.arincmessage.info_json.size()>0)
                     {
                         for(auto it=arincparser.arincmessage.info_json.constBegin();it!=arincparser.arincmessage.info_json.constEnd();it++)
