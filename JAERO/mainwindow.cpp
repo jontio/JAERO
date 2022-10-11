@@ -1520,25 +1520,14 @@ void MainWindow::ACARSslot(ACARSItem &acarsitem)
             body["app"]=QJsonValue(app);
 
             QJsonObject isu;
-            QJsonObject src;
-            QJsonObject dst;
 
-            if(acarsitem.downlink) 
-            {
-                src["type"]="Ground Earth Station";
-                src["addr"]=((QString)"").sprintf("%02X",acarsitem.isuitem.GESID);
+            QJsonObject aes;
+            aes["type"]="Aircraft Earth Station";
+            aes["addr"]=((QString)"").sprintf("%06X",acarsitem.isuitem.AESID);
 
-                dst["type"]="Aircraft Earth Station";
-                dst["addr"]=((QString)"").sprintf("%06X",acarsitem.isuitem.AESID);
-            } 
-            else 
-            {
-                src["type"]="Aircraft Earth Station";
-                src["addr"]=((QString)"").sprintf("%06X",acarsitem.isuitem.AESID);
-
-                dst["type"]="Ground Earth Station";
-                dst["addr"]=((QString)"").sprintf("%02X",acarsitem.isuitem.GESID);
-            }
+            QJsonObject ges;
+            ges["type"]="Ground Earth Station";
+            ges["addr"]=((QString)"").sprintf("%02X",acarsitem.isuitem.GESID);
 
             if(!acarsitem.nonacars) 
             {
@@ -1569,8 +1558,8 @@ void MainWindow::ACARSslot(ACARSItem &acarsitem)
 
             isu["refno"]=((QString)"").sprintf("%02X",acarsitem.isuitem.REFNO);
             isu["qno"]=((QString)"").sprintf("%02X",acarsitem.isuitem.QNO);
-            isu["dst"]=QJsonValue(dst);
-            isu["src"]=QJsonValue(src);
+            isu["src"]=QJsonValue(acarsitem.downlink?aes:ges);
+            isu["dst"]=QJsonValue(acarsitem.downlink?ges:aes);
 
             QJsonObject t;
             QDateTime ts=time.toUTC();
