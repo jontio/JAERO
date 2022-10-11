@@ -1512,12 +1512,10 @@ void MainWindow::ACARSslot(ACARSItem &acarsitem)
         } 
         else if(settingsdialog->msgdisplayformat=="JSON4") 
         {
-            QJsonObject body;
-
             QJsonObject app;
             app["name"]="JAERO";
             app["ver"]=QApplication::applicationDisplayName();
-            body["app"]=QJsonValue(app);
+            json["app"]=QJsonValue(app);
 
             QJsonObject isu;
 
@@ -1565,10 +1563,9 @@ void MainWindow::ACARSslot(ACARSItem &acarsitem)
             QDateTime ts=time.toUTC();
             t["sec"]=ts.toSecsSinceEpoch();
             t["usec"]=(ts.toMSecsSinceEpoch() % 1000) * 1000;
-            body["t"]=QJsonValue(t);
+            json["t"]=QJsonValue(t);
 
-            body["isu"]=QJsonValue(isu);
-            json["jaero"]=QJsonValue(body);
+            json["isu"]=QJsonValue(isu);
         }
 
         //convert json object to string
