@@ -43,6 +43,9 @@ public:
     bool beepontextmessage;
     bool onlyuselibacars;
 
+    bool set_station_id_enabled;
+    QString station_id;
+
     QList<QHostAddress> udp_for_decoded_messages_address;
     QList<quint16> udp_for_decoded_messages_port;
     bool udp_for_decoded_messages_enabled;

@@ -1566,6 +1566,8 @@ void MainWindow::ACARSslot(ACARSItem &acarsitem)
             json["t"]=QJsonValue(t);
 
             json["isu"]=QJsonValue(isu);
+
+            if(settingsdialog->set_station_id_enabled&&settingsdialog->station_id.size()>0)json["station"]=settingsdialog->station_id;
         }
 
         //convert json object to string

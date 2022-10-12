@@ -1,6 +1,7 @@
 #include "settingsdialog.h"
 #include "ui_settingsdialog.h"
 #include <QDebug>
+#include <QHostInfo>
 #include <QSettings>
 #include <QStandardPaths>
 #include <QFile>
@@ -60,6 +61,9 @@ void SettingsDialog::populatepublicvars()
     onlyuselibacars=ui->checkBoxonlyuselibacars->isChecked();
     beepontextmessage=ui->checkBoxbeepontextmessage->isChecked();
 
+    set_station_id_enabled=ui->checkSetStationId->isChecked();
+    station_id=ui->lineEditstationid->text();
+    
     //bottom text window output settings
     QStringList hosts=ui->lineEditudpoutputdecodedmessagesaddress->text().simplified().split(" ");
     udp_for_decoded_messages_address.clear();
@@ -173,6 +177,8 @@ void SettingsDialog::populatesettings()
     ui->checkOutputADSMessageToTCP->setChecked(settings.value("checkOutputADSMessageToTCP",false).toBool());
     ui->checkTCPAsClient->setChecked(settings.value("checkTCPAsClient",false).toBool());
     ui->checkBoxDisablePlaneLogWindow->setChecked(settings.value("checkBoxDisablePlaneLogWindow",false).toBool());
+    ui->checkSetStationId->setChecked(settings.value("checkSetStationId",false).toBool());
+    ui->lineEditstationid->setText(settings.value("lineEditstationid",QHostInfo::localHostName()).toString());
 
     ui->ambeEnabled->setChecked(settings.value("localAudioOutEnabled", true).toBool());
     ui->remoteAmbeEnabled->setChecked(settings.value("remoteAudioOutEnabled", false).toBool());
@@ -226,6 +232,8 @@ void SettingsDialog::accept()
     settings.setValue("checkOutputADSMessageToTCP", ui->checkOutputADSMessageToTCP->isChecked());
     settings.setValue("checkTCPAsClient", ui->checkTCPAsClient->isChecked());
     settings.setValue("checkBoxDisablePlaneLogWindow",ui->checkBoxDisablePlaneLogWindow->isChecked());
+    settings.setValue("checkSetStationId",ui->checkSetStationId->isChecked());
+    settings.setValue("lineEditstationid",ui->lineEditstationid->text());
 
     settings.setValue("localAudioOutEnabled", ui->ambeEnabled->isChecked());
     settings.setValue("remoteAudioOutEnabled", ui->remoteAmbeEnabled->isChecked());
