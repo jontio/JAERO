@@ -1510,7 +1510,7 @@ void MainWindow::ACARSslot(ACARSItem &acarsitem)
                 if(arincparser.arincmessage.info.size()>2)json["ARINCPARSER_MESSAGE_INFO"]=arincparser.arincmessage.info;
             }
         } 
-        else if(settingsdialog->msgdisplayformat=="JSON4") 
+        else if(settingsdialog->msgdisplayformat=="JSONdump")
         {
             QJsonObject app;
             app["name"]="JAERO";

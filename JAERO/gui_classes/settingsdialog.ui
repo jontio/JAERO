@@ -160,7 +160,7 @@
         </item>
         <item>
          <property name="text">
-          <string>JSON4</string>
+          <string>JSONdump</string>
          </property>
         </item>
        </widget>
