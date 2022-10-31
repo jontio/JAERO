@@ -265,10 +265,12 @@ void SettingsDialog::populatesettings()
     populatepublicvars();
 }
 
-bool SettingsDialog::isUniqueFeederHostPort(const QString &host, const QString &port)
+bool SettingsDialog::isUniqueFeederHostPort(const QString &host, const QString &port, int row)
 {
     for (int i=0;i<ui->outputListTable->rowCount();i++)
     {
+        //for edit requests, ignore the row itself
+        if(row>=0&&row==i) continue;
         if (QString::compare(ui->outputListTable->item(i,1)->text(), host, Qt::CaseInsensitive)==0 &&
             QString::compare(ui->outputListTable->item(i,2)->text(), port, Qt::CaseInsensitive)==0)
         {
@@ -419,7 +421,7 @@ void SettingsDialog::on_editEntryButton_clicked()
 
     if (dialog.exec()==QDialog::Accepted)
     {
-        if (isUniqueFeederHostPort(dialog.getHost(),dialog.getPort()))
+        if (isUniqueFeederHostPort(dialog.getHost(),dialog.getPort(),row))
         {
             ui->outputListTable->setItem(row,0,new QTableWidgetItem(dialog.getFormat()));
             ui->outputListTable->setItem(row,1,new QTableWidgetItem(dialog.getHost()));

@@ -77,7 +77,7 @@ private:
     Ui::SettingsDialog *ui;
     QStringList outputformats = {"1", "2", "3", "JSON", "JSONdump"};
     void populatepublicvars();
-    bool isUniqueFeederHostPort(const QString &host, const QString &port);
+    bool isUniqueFeederHostPort(const QString &host, const QString &port, int row = -1);
     int validateOutputFormatIdx(int idx);
 
 protected:
