@@ -13,6 +13,7 @@
 #include <QDialog>
 #include <QVector>
 #include <QAudioDeviceInfo>
+#include <QJsonArray>
 #include "mqttsubscriber.h"
 
 extern QString settings_name;
@@ -46,8 +47,7 @@ public:
     bool set_station_id_enabled;
     QString station_id;
 
-    QList<QHostAddress> udp_for_decoded_messages_address;
-    QList<quint16> udp_for_decoded_messages_port;
+    QJsonArray udp_feeders;
     bool udp_for_decoded_messages_enabled;
 
 
@@ -74,8 +74,11 @@ public:
     bool mqtt_enable;
 
 private:
-    Ui::SettingsDialog *ui;    
+    Ui::SettingsDialog *ui;
+    QStringList outputformats = {"1", "2", "3", "JSON", "JSONdump"};
     void populatepublicvars();
+    bool isUniqueFeederHostPort(const QString &host, const QString &port);
+    int validateOutputFormatIdx(int idx);
 
 protected:
     void accept();
@@ -85,6 +88,10 @@ private slots:
     void on_lineEditlogdir_editingFinished();
     void on_lineEditplanesfolder_editingFinished();
     void on_checkOutputADSMessageToTCP_stateChanged(int arg1);
+    void on_newEntryButton_clicked();
+    void on_editEntryButton_clicked();
+    void on_removeEntryButton_clicked();
+    void on_outputListTable_itemSelectionChanged();
 };
 
 #endif // SETTINGSDIALOG_H
