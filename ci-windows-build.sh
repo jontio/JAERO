@@ -17,7 +17,7 @@ set -e
 #update system else we might have a version problem with the upcomeing install
 pacman -Syu
 
-pacman -S --needed --noconfirm git mingw-w64-x86_64-toolchain autoconf libtool mingw-w64-x86_64-cpputest mingw-w64-x86_64-qt5 mingw-w64-x86_64-cmake mingw-w64-x86_64-libvorbis zip p7zip unzip mingw-w64-x86_64-zeromq
+pacman -S --needed --noconfirm git mingw-w64-x86_64-toolchain autoconf libtool libxml2 mingw-w64-x86_64-cpputest mingw-w64-x86_64-qt5 mingw-w64-x86_64-cmake mingw-w64-x86_64-libvorbis zip p7zip unzip mingw-w64-x86_64-zeromq
 
 #get script path
 SCRIPT=$(realpath $0)
@@ -149,9 +149,9 @@ cd release/jaero
 echo "starting windeployqt"
 windeployqt.exe --no-translations --force JAERO.exe
 echo "deploy done"
-echo "mingw64 bin list start"
+echo "====="
 ls /mingw64/bin
-echo "mingw64 bin list end"
+echo "====="
 echo "copying dlls"
 cp /mingw64/bin/libstdc++-6.dll $PWD
 cp /mingw64/bin/libgcc_s_seh-1.dll $PWD
@@ -178,7 +178,7 @@ cp /mingw64/bin/libicudt72.dll $PWD
 cp /mingw64/bin/libbz2-1.dll $PWD
 cp /mingw64/bin/libbrotlidec.dll $PWD
 cp /mingw64/bin/libintl-8.dll $PWD
-cp /mingw64/bin/libpcre-1.dll $PWD
+cp /mingw64/bin/libpcre-2-8-0.dll $PWD
 cp /mingw64/bin/libbrotlicommon.dll $PWD
 cp /mingw64/bin/libiconv-2.dll $PWD
 cp /mingw64/bin/libzmq.dll $PWD
