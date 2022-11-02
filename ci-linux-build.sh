@@ -235,6 +235,10 @@ cd $SCRIPTPATH
 #needed for github actions
 git fetch --prune --unshallow --tags || true
 git status > /dev/null 2>&1
+echo "VERSION OUT"
+git describe --tags --match 'v*' --dirty
+git describe --tags --match 'v*' --dirty 2> /dev/null | tr -d v
+echo "VERSION END"
 PACKAGE_VERSION=$(git describe --tags --match 'v*' --dirty 2> /dev/null | tr -d v)
 PACKAGE_NAME=jaero
 MAINTAINER=https://github.com/jontio
@@ -256,7 +260,6 @@ make INSTALL_ROOT=$PWD/${PACKAGE_NAME}_${PACKAGE_VERSION%_*}-1 install
 JAERO_INSTALL_PATH=$(cat JAERO.pro | sed -n -e 's/^INSTALL_PATH[|( ).]= //p')
 JAERO_INSTALL_PATH=${JAERO_INSTALL_PATH//$'\r'/}
 echo 'JAERO_INSTALL_PATH='${JAERO_INSTALL_PATH}
-echo 'PACKAGE_VERSION='${PACKAGE_VERSION}
 #add control
 cat <<EOT > control
 Package: ${PACKAGE_NAME}
