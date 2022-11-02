@@ -17,7 +17,7 @@ set -e
 #update system else we might have a version problem with the upcomeing install
 pacman -Syu
 
-pacman -S --needed --noconfirm git mingw-w64-x86_64-toolchain autoconf libtool libxml2 mingw-w64-x86_64-pcre mingw-w64-x86_64-cpputest mingw-w64-x86_64-qt5 mingw-w64-x86_64-cmake mingw-w64-x86_64-libvorbis zip p7zip unzip mingw-w64-x86_64-zeromq
+pacman -S --needed --noconfirm git mingw-w64-x86_64-toolchain autoconf libtool mingw-w64-x86_64-pcre mingw-w64-x86_64-cpputest mingw-w64-x86_64-qt5 mingw-w64-x86_64-cmake mingw-w64-x86_64-libvorbis zip p7zip unzip mingw-w64-x86_64-zeromq
 
 #get script path
 SCRIPT=$(realpath $0)
@@ -150,8 +150,7 @@ echo "starting windeployqt"
 windeployqt.exe --no-translations --force JAERO.exe
 echo "deploy done"
 echo "====="
-ls /mingw64/bin
-ls /mingw64/lib
+find /mingw64/ -name libxml2-2.dll
 echo "====="
 echo "copying dlls"
 cp /mingw64/bin/libstdc++-6.dll $PWD
