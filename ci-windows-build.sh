@@ -165,6 +165,7 @@ cp /mingw64/bin/libdouble-conversion.dll $PWD
 cp /mingw64/bin/libicuin72.dll $PWD
 cp /mingw64/bin/libicuuc72.dll $PWD
 cp /mingw64/bin/libpcre2-16-0.dll $PWD
+cp /mingw64/bin/libpcre2-8-0.dll $PWD
 cp /mingw64/bin/libzstd.dll $PWD
 cp /mingw64/bin/libharfbuzz-0.dll $PWD
 cp /mingw64/bin/libpng16-16.dll $PWD
