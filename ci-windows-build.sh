@@ -149,6 +149,9 @@ cd release/jaero
 echo "starting windeployqt"
 windeployqt.exe --no-translations --force JAERO.exe
 echo "deploy done"
+echo "mingw64 bin list start"
+ls /mingw64/bin
+echo "mingw64 bin list end"
 echo "copying dlls"
 cp /mingw64/bin/libstdc++-6.dll $PWD
 cp /mingw64/bin/libgcc_s_seh-1.dll $PWD
