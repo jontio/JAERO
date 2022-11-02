@@ -236,8 +236,7 @@ cd $SCRIPTPATH
 git fetch --prune --unshallow --tags || true
 git status > /dev/null 2>&1
 echo "VERSION OUT"
-git describe --tags --match 'v*' --dirty
-git describe --tags --match 'v*' --dirty 2> /dev/null | tr -d v
+git log | head -n 50
 echo "VERSION END"
 PACKAGE_VERSION=$(git describe --tags --match 'v*' --dirty 2> /dev/null | tr -d v)
 PACKAGE_NAME=jaero
