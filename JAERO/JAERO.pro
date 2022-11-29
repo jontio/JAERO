@@ -11,7 +11,7 @@
 #if you are having trubbles focus on things like "LIBS += -L$$OGG_PATH/src/.libs"
 #remember to compile libvorbis,libogg, and libcorrect before compiling this
 
-DEFINES += JAERO_VERSION=\\\"v1.0.4.13\\\"
+DEFINES += JAERO_VERSION=\\\"v1.0.4.14\\\"
 
 QT       += multimedia core network gui svg sql qmqtt
 
