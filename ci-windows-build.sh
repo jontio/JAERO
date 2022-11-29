@@ -17,7 +17,7 @@ set -e
 #update system else we might have a version problem with the upcomeing install
 pacman -Syu
 
-pacman -S --needed --noconfirm git mingw-w64-x86_64-toolchain autoconf libtool mingw-w64-x86_64-cpputest mingw-w64-x86_64-qt5 mingw-w64-x86_64-cmake mingw-w64-x86_64-libvorbis zip p7zip unzip mingw-w64-x86_64-zeromq
+pacman -S --needed --noconfirm git mingw-w64-x86_64-toolchain autoconf libtool mingw-w64-x86_64-pcre mingw-w64-x86_64-libxml2 mingw-w64-x86_64-cpputest mingw-w64-x86_64-qt5 mingw-w64-x86_64-cmake mingw-w64-x86_64-libvorbis zip p7zip unzip mingw-w64-x86_64-zeromq
 
 #get script path
 SCRIPT=$(realpath $0)
@@ -162,16 +162,17 @@ cp /mingw64/bin/zlib1.dll $PWD
 cp /mingw64/bin/qcustomplot2.dll $PWD
 cp /mingw64/bin/Qt5PrintSupport.dll $PWD
 cp /mingw64/bin/libdouble-conversion.dll $PWD
-cp /mingw64/bin/libicuin69.dll $PWD
-cp /mingw64/bin/libicuuc69.dll $PWD
+cp /mingw64/bin/libicuin72.dll $PWD
+cp /mingw64/bin/libicuuc72.dll $PWD
 cp /mingw64/bin/libpcre2-16-0.dll $PWD
+cp /mingw64/bin/libpcre2-8-0.dll $PWD
 cp /mingw64/bin/libzstd.dll $PWD
 cp /mingw64/bin/libharfbuzz-0.dll $PWD
 cp /mingw64/bin/libpng16-16.dll $PWD
 cp /mingw64/bin/libfreetype-6.dll $PWD
 cp /mingw64/bin/libgraphite2.dll $PWD
 cp /mingw64/bin/libglib-2.0-0.dll $PWD
-cp /mingw64/bin/libicudt69.dll $PWD
+cp /mingw64/bin/libicudt72.dll $PWD
 cp /mingw64/bin/libbz2-1.dll $PWD
 cp /mingw64/bin/libbrotlidec.dll $PWD
 cp /mingw64/bin/libintl-8.dll $PWD

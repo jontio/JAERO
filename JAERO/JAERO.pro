@@ -68,6 +68,7 @@ CI {
 SOURCES += mainwindow.cpp \
     coarsefreqestimate.cpp \
     DSP.cpp \
+    gui_classes/createeditinputdialog.cpp \
     mskdemodulator.cpp \
     audiomskdemodulator.cpp \
     gui_classes/console.cpp \
@@ -108,6 +109,7 @@ SOURCES += mainwindow.cpp \
 HEADERS  += mainwindow.h \
     coarsefreqestimate.h \
     DSP.h \
+    gui_classes/createeditinputdialog.h \
     mskdemodulator.h \
     audiomskdemodulator.h \
     gui_classes/console.h \
@@ -156,6 +158,7 @@ LIBS += -lqcustomplot -lzmq
 }
 
 FORMS    += mainwindow.ui \
+    gui_classes/createeditinputdialog.ui \
     gui_classes/settingsdialog.ui \
     gui_classes/planelog.ui
 

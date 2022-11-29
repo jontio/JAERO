@@ -76,6 +76,14 @@ void ArincParse::try_acars_apps(ACARSItem &acarsitem, la_msg_dir msg_dir)
 //        qDebug()<<"vstr->str="<<vstr->str;
         arincmessage.info += vstr->str;
         la_vstring_destroy(vstr, true);
+
+        QByteArray arr;
+
+        vstr = la_proto_tree_format_json(NULL, node);
+        arr = QString(vstr->str).toUtf8();
+        la_vstring_destroy(vstr, true);
+
+        arincmessage.info_json = QJsonDocument::fromJson(arr).object();
     }
     la_proto_tree_destroy(node);
 
@@ -91,7 +99,7 @@ bool ArincParse::parseUplinkmessage(ACARSItem &acarsitem)
 }
 
 //returns true if something for the user to read. need to check what is valid on return
-bool ArincParse::parseDownlinkmessage(ACARSItem &acarsitem)
+bool ArincParse::parseDownlinkmessage(ACARSItem &acarsitem, bool onlyuselibacars)
 {
     //qDebug()<<acarsitem.message;
 
@@ -185,6 +193,12 @@ bool ArincParse::parseDownlinkmessage(ACARSItem &acarsitem)
         return false;
     }
     arincmessage.valid=true;
+
+    if (onlyuselibacars) 
+    {
+        try_acars_apps(acarsitem, LA_MSG_DIR_AIR2GND);
+        return true;
+    }
 
     //switch on IMI
     bool fail=false;

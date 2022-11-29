@@ -3,6 +3,8 @@
 
 #include "aerol.h"
 
+#include <QJsonDocument>
+#include <QJsonObject>
 #include <QObject>
 #include <QMetaEnum>
 #include <QBitArray>
@@ -45,6 +47,7 @@ struct ArincMessage
     bool valid;//if crc is true
     bool downlink;//if is downlink
     QString info;//human readable message
+    QJsonObject info_json;
     QString IMI;//ADS AT1 etc
     QString tailno;//REG
     void clear()
@@ -52,6 +55,7 @@ struct ArincMessage
         valid=false;
         downlink=false;
         info.clear();
+        info_json=QJsonObject();
         IMI.clear();
         tailno.clear();
     }
@@ -178,7 +182,7 @@ public:
 
 
     explicit ArincParse(QObject *parent = 0);
-    bool parseDownlinkmessage(ACARSItem &acarsitem);//QString &msg);
+    bool parseDownlinkmessage(ACARSItem &acarsitem, bool onlyuselibacars = false);//QString &msg);
     bool parseUplinkmessage(ACARSItem &acarsitem);
 
     ArincMessage arincmessage;

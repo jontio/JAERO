@@ -1,12 +1,15 @@
+#include "createeditinputdialog.h"
 #include "settingsdialog.h"
 #include "ui_settingsdialog.h"
 #include <QDebug>
+#include <QHostInfo>
 #include <QSettings>
 #include <QStandardPaths>
 #include <QFile>
 #include <QMessageBox>
 #include <QProcess>
 #include <QDir>
+#include <QJsonObject>
 #include "../databasetext.h"
 
 QString settings_name="";
@@ -16,7 +19,16 @@ SettingsDialog::SettingsDialog(QWidget *parent) :
     ui(new Ui::SettingsDialog)
 {
     ui->setupUi(this);
+    ui->comboBoxoutputfmt->insertItems(0,outputformats);
+
     populatesettings();
+
+    // NOTE: I know this is haphazard but the column width should add together to under 431 (width of QTableWidget)
+    ui->outputListTable->setColumnWidth(0, 85);
+    ui->outputListTable->setColumnWidth(1, 260);
+    ui->outputListTable->setColumnWidth(2, 55);
+    ui->outputListTable->horizontalHeader()->setSectionResizeMode(QHeaderView::Fixed);
+    ui->outputListTable->horizontalHeader()->setDefaultAlignment(Qt::AlignLeft);
 }
 
 SettingsDialog::~SettingsDialog()
@@ -24,10 +36,9 @@ SettingsDialog::~SettingsDialog()
     delete ui;
 }
 
-void SettingsDialog::poulatepublicvars()
+void SettingsDialog::populatepublicvars()
 {
-
-    msgdisplayformat=ui->comboBoxDisplayformat->currentText();
+    msgdisplayformat=ui->comboBoxoutputfmt->currentText();
     dropnontextmsgs=ui->checkBoxdropnontextmsgs->isChecked();
     donotdisplaysus.clear();
     QRegExp rx("([\\da-fA-F]+)");
@@ -57,41 +68,29 @@ void SettingsDialog::poulatepublicvars()
     planesfolder=ui->lineEditplanesfolder->text();
     planelookup=ui->lineEditplanelookup->text();
 
+    onlyuselibacars=ui->checkBoxonlyuselibacars->isChecked();
     beepontextmessage=ui->checkBoxbeepontextmessage->isChecked();
 
-    //bottom text window output settings
-    QStringList hosts=ui->lineEditudpoutputdecodedmessagesaddress->text().simplified().split(" ");
-    udp_for_decoded_messages_address.clear();
-    udp_for_decoded_messages_port.clear();
-    for(int i=0;i<hosts.size();i++)
-    {
-        QString host=hosts[i];
-        QHostAddress hostaddress;
-        quint16 hostport;
-        QString hostaddress_string=host.section(':',0,0).simplified();
-        if(hostaddress_string.toUpper()=="LOCALHOST")hostaddress_string="127.0.0.1";
-        if(!hostaddress.setAddress(hostaddress_string))
-        {
-            qDebug()<<"Can't set UDP address";
-        }
-        hostport=host.section(':',1,1).toInt();
-        if(hostport==0)
-        {
-            qDebug()<<"Can't set UDP port reverting to 18765";
-            hostport=18765;
-        }
-        if(!((udp_for_decoded_messages_port.contains(hostport)&&udp_for_decoded_messages_address.contains(hostaddress))))
-        {
-            udp_for_decoded_messages_address.push_back(hostaddress);
-            udp_for_decoded_messages_port.push_back(hostport);
-        }
-         else
-         {
-              qDebug()<<"Can't set UDP address:port as it's already used";
-         }
-    }
-    udp_for_decoded_messages_enabled=ui->checkOutputDecodedMessageToUDPPort->isChecked();
+    set_station_id_enabled=ui->checkSetStationId->isChecked();
+    station_id=ui->lineEditstationid->text();
+    
+    udp_feeders = QJsonArray();
 
+    for (int i=0;i<ui->outputListTable->rowCount();i++)
+    {
+        QJsonObject obj;
+
+        int idx=outputformats.indexOf(ui->outputListTable->item(i,0)->text());
+        if (idx==-1) idx=outputformats.count()-1;
+
+        obj.insert("format", outputformats[idx]);
+        obj.insert("host", ui->outputListTable->item(i,1)->text());
+        obj.insert("port", ui->outputListTable->item(i,2)->text().toInt());
+
+        udp_feeders.push_back(QJsonValue(obj));
+    }
+
+    udp_for_decoded_messages_enabled=ui->checkBoxenablefeeding->isChecked();
 
     //ads message output using SBS1 protocol over TCP
     QString hostaddr=ui->lineEdittcpoutputadsmessagesaddress->text().section(':',0,0);
@@ -155,7 +154,8 @@ void SettingsDialog::populatesettings()
 
     //load settings
     QSettings settings("Jontisoft", settings_name);
-    ui->comboBoxDisplayformat->setCurrentIndex(settings.value("comboBoxDisplayformat",2).toInt());
+
+    ui->comboBoxoutputfmt->setCurrentIndex(validateOutputFormatIdx(settings.value("comboBoxDisplayformat",2).toInt()));
     ui->lineEditdonotdisplaysus->setText(settings.value("lineEditdonotdisplaysus","26 0A C0 00 14 16").toString());
     ui->checkBoxdropnontextmsgs->setChecked(settings.value("checkBoxdropnontextmsgs",true).toBool());
     ui->comboBoxsoundcard->setCurrentText(settings.value("comboBoxsoundcard","").toString());
@@ -164,13 +164,76 @@ void SettingsDialog::populatesettings()
     ui->checkBoxlogwidebandwidthenable->setChecked(settings.value("checkBoxlogwidebandwidthenable",false).toBool());
     ui->lineEditplanesfolder->setText(settings.value("lineEditplanesfolder",QStandardPaths::standardLocations(APPDATALOCATIONS)[0]+"/planes").toString());
     ui->lineEditplanelookup->setText(settings.value("lineEditplanelookup","http://www.flightradar24.com/data/airplanes/{REG}").toString());
+    ui->checkBoxonlyuselibacars->setChecked(settings.value("checkBoxonlyuselibacars",false).toBool());
     ui->checkBoxbeepontextmessage->setChecked(settings.value("checkBoxbeepontextmessage",true).toBool());
-    ui->lineEditudpoutputdecodedmessagesaddress->setText(settings.value("lineEditudpoutputdecodedmessagesaddress","localhost:18765").toString());
-    ui->checkOutputDecodedMessageToUDPPort->setChecked(settings.value("checkOutputDecodedMessageToUDPPort",false).toBool());
+
+    ui->outputListTable->setRowCount(0);
+
+    int size = settings.beginReadArray("feeders");
+    if (size>0)
+    {
+        for (int i=0;i<size;i++)
+        {
+            settings.setArrayIndex(i);
+
+            QString host=settings.value("host","localhost").toString();
+            QString port=QString("%1").arg(settings.value("port",18765).toInt());
+            int fmtidx=validateOutputFormatIdx(settings.value("format",0).toInt());
+
+            if (isUniqueFeederHostPort(host,port))
+            {
+                int row=ui->outputListTable->rowCount();
+                ui->outputListTable->insertRow(row);
+                ui->outputListTable->setItem(row,0,new QTableWidgetItem(outputformats.at(fmtidx)));
+                ui->outputListTable->setItem(row,1,new QTableWidgetItem(host));
+                ui->outputListTable->setItem(row,2,new QTableWidgetItem(port));
+            }
+            else
+            {
+                qDebug() << "Dropped duplicate host/port UDP feeder pairing";
+            }
+        }
+        settings.endArray();
+    }
+    else
+    {
+        settings.endArray();
+
+        QStringList hosts=settings.value("lineEditudpoutputdecodedmessagesaddress","").toString().simplified().split(" ");
+        for (int i=0;i<hosts.size();i++)
+        {
+            QString host=hosts[i];
+            if (host.size()>0)
+            {
+                QString hostaddress_string=host.section(':',0,0).simplified();
+                quint16 hostport=host.section(':',1,1).toInt();
+                if (hostport==0) hostport=18765;
+
+                QString port=QString("%1").arg(hostport);
+
+                if (isUniqueFeederHostPort(hostaddress_string,port))
+                {
+                    int row=ui->outputListTable->rowCount();
+                    ui->outputListTable->insertRow(row);
+                    ui->outputListTable->setItem(row,0,new QTableWidgetItem(outputformats.at(ui->comboBoxoutputfmt->currentIndex())));
+                    ui->outputListTable->setItem(row,1,new QTableWidgetItem(hostaddress_string));
+                    ui->outputListTable->setItem(row,2,new QTableWidgetItem(port));
+                }
+                else
+                {
+                    qDebug() << "Dropped duplicate host/port UDP feeder pairing from legacy settings";
+                }
+            }
+        }
+    }
+
+    ui->checkBoxenablefeeding->setChecked(settings.value("checkOutputDecodedMessageToUDPPort",false).toBool());
     ui->lineEdittcpoutputadsmessagesaddress->setText(settings.value("lineEdittcpoutputadsmessagesaddress","0.0.0.0:30003").toString());
     ui->checkOutputADSMessageToTCP->setChecked(settings.value("checkOutputADSMessageToTCP",false).toBool());
     ui->checkTCPAsClient->setChecked(settings.value("checkTCPAsClient",false).toBool());
     ui->checkBoxDisablePlaneLogWindow->setChecked(settings.value("checkBoxDisablePlaneLogWindow",false).toBool());
+    ui->checkSetStationId->setChecked(settings.value("checkSetStationId",false).toBool());
+    ui->lineEditstationid->setText(settings.value("lineEditstationid",QHostInfo::localHostName()).toString());
 
     ui->ambeEnabled->setChecked(settings.value("localAudioOutEnabled", true).toBool());
     ui->remoteAmbeEnabled->setChecked(settings.value("remoteAudioOutEnabled", false).toBool());
@@ -199,7 +262,28 @@ void SettingsDialog::populatesettings()
 
     on_lineEditlogdir_editingFinished();
 
-    poulatepublicvars();
+    populatepublicvars();
+}
+
+bool SettingsDialog::isUniqueFeederHostPort(const QString &host, const QString &port, int row)
+{
+    for (int i=0;i<ui->outputListTable->rowCount();i++)
+    {
+        //for edit requests, ignore the row itself
+        if(row>=0&&row==i) continue;
+        if (QString::compare(ui->outputListTable->item(i,1)->text(), host, Qt::CaseInsensitive)==0 &&
+            QString::compare(ui->outputListTable->item(i,2)->text(), port, Qt::CaseInsensitive)==0)
+        {
+            return false;
+        }
+    }
+    return true;
+}
+
+int SettingsDialog::validateOutputFormatIdx(int idx)
+{
+    if (idx >= 0 && idx < outputformats.count()) return idx;
+    return outputformats.count() - 1;
 }
 
 void SettingsDialog::accept()
@@ -207,7 +291,7 @@ void SettingsDialog::accept()
 
     //save settings
     QSettings settings("Jontisoft", settings_name);
-    settings.setValue("comboBoxDisplayformat", ui->comboBoxDisplayformat->currentIndex());
+    settings.setValue("comboBoxDisplayformat", ui->comboBoxoutputfmt->currentIndex());
     settings.setValue("lineEditdonotdisplaysus", ui->lineEditdonotdisplaysus->text());
     settings.setValue("checkBoxdropnontextmsgs", ui->checkBoxdropnontextmsgs->isChecked());
     settings.setValue("comboBoxsoundcard", ui->comboBoxsoundcard->currentText());
@@ -216,13 +300,35 @@ void SettingsDialog::accept()
     settings.setValue("checkBoxlogwidebandwidthenable", ui->checkBoxlogwidebandwidthenable->isChecked());
     settings.setValue("lineEditplanesfolder", ui->lineEditplanesfolder->text());
     settings.setValue("lineEditplanelookup", ui->lineEditplanelookup->text());
+    settings.setValue("checkBoxonlyuselibacars", ui->checkBoxonlyuselibacars->isChecked());
     settings.setValue("checkBoxbeepontextmessage", ui->checkBoxbeepontextmessage->isChecked());
-    settings.setValue("lineEditudpoutputdecodedmessagesaddress", ui->lineEditudpoutputdecodedmessagesaddress->text());
-    settings.setValue("checkOutputDecodedMessageToUDPPort", ui->checkOutputDecodedMessageToUDPPort->isChecked());  
+
+    //remove deprecated setting
+    settings.remove("lineEditudpoutputdecodedmessagesaddress");
+
+    settings.beginWriteArray("feeders");
+    settings.remove("");
+
+    for (int i=0;i<ui->outputListTable->rowCount();i++)
+    {
+        settings.setArrayIndex(i);
+
+        int idx=outputformats.indexOf(ui->outputListTable->item(i,0)->text());
+        if (idx==-1) idx=outputformats.count()-1;
+
+        settings.setValue("format", idx);
+        settings.setValue("host", ui->outputListTable->item(i,1)->text());
+        settings.setValue("port", ui->outputListTable->item(i,2)->text());
+    }
+    settings.endArray();
+
+    settings.setValue("checkOutputDecodedMessageToUDPPort", ui->checkBoxenablefeeding->isChecked());
     settings.setValue("lineEdittcpoutputadsmessagesaddress", ui->lineEdittcpoutputadsmessagesaddress->text());
     settings.setValue("checkOutputADSMessageToTCP", ui->checkOutputADSMessageToTCP->isChecked());
     settings.setValue("checkTCPAsClient", ui->checkTCPAsClient->isChecked());
     settings.setValue("checkBoxDisablePlaneLogWindow",ui->checkBoxDisablePlaneLogWindow->isChecked());
+    settings.setValue("checkSetStationId",ui->checkSetStationId->isChecked());
+    settings.setValue("lineEditstationid",ui->lineEditstationid->text());
 
     settings.setValue("localAudioOutEnabled", ui->ambeEnabled->isChecked());
     settings.setValue("remoteAudioOutEnabled", ui->remoteAmbeEnabled->isChecked());
@@ -246,7 +352,7 @@ void SettingsDialog::accept()
     settings.setValue("mqtt_settings_object", mqtt_settings_object.toQByteArray());
     settings.setValue("MQTT_enable", ui->MQTT_enable->isChecked());
 
-    poulatepublicvars();
+    populatepublicvars();
     QDialog::accept();
 }
 
@@ -267,3 +373,95 @@ void SettingsDialog::on_checkOutputADSMessageToTCP_stateChanged(int arg1)
     if(!arg1)ui->checkTCPAsClient->setEnabled(false);
      else ui->checkTCPAsClient->setEnabled(true);
 }
+
+void SettingsDialog::on_newEntryButton_clicked()
+{
+    CreateEditInputDialog dialog(this,outputformats);
+    dialog.setWindowFlags(Qt::Dialog|Qt::FramelessWindowHint);
+
+    if (dialog.exec() == QDialog::Accepted)
+    {
+        if (isUniqueFeederHostPort(dialog.getHost(),dialog.getPort()))
+        {
+            int newRow=ui->outputListTable->rowCount();
+            ui->outputListTable->insertRow(newRow);
+            ui->outputListTable->setItem(newRow,0,new QTableWidgetItem(dialog.getFormat()));
+            ui->outputListTable->setItem(newRow,1,new QTableWidgetItem(dialog.getHost()));
+            ui->outputListTable->setItem(newRow,2,new QTableWidgetItem(dialog.getPort()));
+        }
+        else
+        {
+            QMessageBox msg(this);
+            msg.setWindowFlags(Qt::Dialog|Qt::FramelessWindowHint);
+            msg.setIcon(QMessageBox::Warning);
+            msg.setText("Unable to Add New Feeder Entry");
+            msg.setInformativeText(
+                QString("New feeder host/port pairing, \"%1:%2\", already exists. Please try again with a different host/port pairing.")
+                    .arg(dialog.getHost())
+                    .arg(dialog.getPort())
+            );
+            msg.exec();
+        }
+    }
+}
+
+void SettingsDialog::on_editEntryButton_clicked()
+{
+    QModelIndexList selection = ui->outputListTable->selectionModel()->selectedRows();
+
+    // NOTE: we explicitly disabled multiselection and made sure edit/remove buttons are disabled if no selection is active
+
+    int row=selection.at(0).row();
+
+    CreateEditInputDialog dialog(this,outputformats,true);
+    dialog.setWindowFlags(Qt::Dialog|Qt::FramelessWindowHint);
+    dialog.setFormat(ui->outputListTable->item(row,0)->text());
+    dialog.setHost(ui->outputListTable->item(row,1)->text());
+    dialog.setPort(ui->outputListTable->item(row,2)->text());
+
+    if (dialog.exec()==QDialog::Accepted)
+    {
+        if (isUniqueFeederHostPort(dialog.getHost(),dialog.getPort(),row))
+        {
+            ui->outputListTable->setItem(row,0,new QTableWidgetItem(dialog.getFormat()));
+            ui->outputListTable->setItem(row,1,new QTableWidgetItem(dialog.getHost()));
+            ui->outputListTable->setItem(row,2,new QTableWidgetItem(dialog.getPort()));
+        }
+        else
+        {
+            QMessageBox msg(this);
+            msg.setWindowFlags(Qt::Dialog|Qt::FramelessWindowHint);
+            msg.setIcon(QMessageBox::Warning);
+            msg.setText("Unable to Edit Feeder Entry");
+            msg.setInformativeText(
+                QString("Edited feeder host/port pairing, \"%1:%2\", already exists. Please try again with a different host/port pairing.")
+                    .arg(dialog.getHost())
+                    .arg(dialog.getPort())
+            );
+            msg.exec();
+        }
+    }
+}
+
+void SettingsDialog::on_removeEntryButton_clicked()
+{
+    QModelIndexList selection = ui->outputListTable->selectionModel()->selectedRows();
+
+    // NOTE: we explicitly disabled multiselection and made sure edit/remove buttons are disabled if no selection is active
+
+    ui->outputListTable->removeRow(selection.at(0).row());
+
+    if (ui->outputListTable->rowCount() == 0) {
+        ui->editEntryButton->setDisabled(true);
+        ui->removeEntryButton->setDisabled(true);
+    }
+}
+
+void SettingsDialog::on_outputListTable_itemSelectionChanged()
+{
+    if (ui->outputListTable->selectionModel()->selectedRows().count() > 0) {
+        ui->editEntryButton->setDisabled(false);
+        ui->removeEntryButton->setDisabled(false);
+    }
+}
+
