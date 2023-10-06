@@ -2161,8 +2161,8 @@ void AeroL::SendCAssignment(int k, QString decline)
     int channel2=((((byte9&0x7F)<<8)&0xFF00)|(byte10&0x00FF));
     double rx=(((double)channel1)*0.0025)+1510.0;
     double tx=(((double)channel2)*0.0025)+1611.5;
-    QString receive = QString::number(rx);
-    QString transmit = QString::number(tx);
+    QString receive = QString::number(rx, 'f', 4);
+    QString transmit = QString::number(tx, 'f', 4);
     QString beam = " Global Beam ";
     if(byte7&0x80)beam=" Spot Beam ";
 

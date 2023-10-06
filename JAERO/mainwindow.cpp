@@ -1281,7 +1281,7 @@ void MainWindow::CChannelAssignmentSlot(CChannelAssignmentItem &item)
                                                                                             .arg(upperHex(item.GESID, 2, 16, QChar('0')));
     QString rx_beam = " Global Beam ";
     if(item.receive_spotbeam)rx_beam=" Spot Beam ";
-    message += "Receive Freq: " + QString::number(item.receive_freq) + rx_beam + "Transmit " + QString::number(item.transmit_freq);
+    message += "Receive Freq: " + QString::number(item.receive_freq, 'f', 4) + rx_beam + "Transmit " + QString::number(item.transmit_freq, 'f', 4);
 
     switch(item.type)
     {
