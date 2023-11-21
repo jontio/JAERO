@@ -65,7 +65,20 @@ void ArincParse::try_acars_apps(ACARSItem &acarsitem, la_msg_dir msg_dir)
     }
     else
     {
+        // look for a sublabel and if found strip the sublabel(s) from the message before decoding
         ba = acarsitem.message.toLatin1();
+        char sublabel[3];
+        char mfi[3];
+        int offset = la_acars_extract_sublabel_and_mfi(acarsitem.LABEL.data(), msg_dir, ba.data(),strlen( ba.data()), sublabel, mfi);
+
+        if(offset > 0)
+        {
+            ba = "/" + acarsitem.message.right(acarsitem.message.length()-offset).replace("- #" + QString(sublabel),"").trimmed().toLatin1();
+        }
+        else
+        {
+            ba = acarsitem.message.toLatin1();
+        }
     }
     if(ba.isEmpty())return;
 
