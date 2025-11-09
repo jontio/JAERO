@@ -1269,6 +1269,21 @@ QByteArray &AeroL::Decode(QVector<short> &bits, bool soft)//0 bit --> oldest bit
           else
           {
             gotsync=preambledetector.Update(bit);
+
+            if(preambledetector.inverted)
+            {
+
+                bit=1-bit;
+
+                if(soft_bit > 128)
+                {
+                    soft_bit = 255-soft_bit;
+                }
+                else if (soft_bit < 128)
+                {
+                    soft_bit = 255-soft_bit;
+                }
+            }
           }
 
         if(cntr<1000000000)cntr++;
@@ -2406,7 +2421,110 @@ QByteArray &AeroL::DecodeC(QVector<short> &bits)
                                 for(int k=0;k<infofield.size()-2;k++)decline+=((QString)" 0x%1").arg(((QString)"").sprintf("%02X", (uchar)infofield[k]));
                                 decline+=" AES = "+infofield.mid(1,3).toHex().toUpper();
                                 decline+=" GES = "+infofield.mid(4,1).toHex().toUpper();
-                                decline+=" Call_progress \r\n";
+                                decline+= " Call_progress ";
+
+                                uint8_t raw6 = static_cast<uint8_t>(infofield[6]);
+                                uint8_t raw5 = static_cast<uint8_t>(infofield[5]);
+
+                                // High nibble = EIRP adjustment
+                                AEROTypeC::Qno qno =
+                                static_cast<AEROTypeC::Qno>((raw5 >> 4) & 0x0F);
+
+                                uint8_t appRef = raw5 & 0x0F;
+
+                                // High nibble = EIRP adjustment
+                                AEROTypeC::EirpAdjustment eirp =
+                                static_cast<AEROTypeC::EirpAdjustment>((raw6 >> 4) & 0x0F);
+
+                                // Low nibble = Report type
+                                AEROTypeC::ReportType report =
+                                static_cast<AEROTypeC::ReportType>(raw6 & 0x0F);
+
+
+                                switch(qno)
+                                {
+                                    case Qno::NonSafety_0:          decline += " QNO = Non_safety"; break;
+                                    case Qno::NonSafety_1:          decline += " QNO = Non_safety"; break;
+                                    case Qno::NonSafety_2:          decline += " QNO = Non_safety"; break;
+                                    case Qno::NonSafety_3:          decline += " QNO = Non_safety"; break;
+                                    case Qno::NonSafety_4:          decline += " QNO = Non_safety"; break;
+                                    case Qno::OtherSafety_5:        decline += " QNO = Other_safety"; break;
+                                    case Qno::OtherSafety_6:        decline += " QNO = Other_safety"; break;
+                                    case Qno::OtherSafety_7:        decline += " QNO = Other_safety"; break;
+                                    case Qno::OtherSafety_8:        decline += " QNO = Other_safety"; break;
+                                    case Qno::NonSafety_9:          decline += " QNO = Non_safety"; break;
+                                    case Qno::OtherSafety_10:       decline += " QNO = Other_safety"; break;
+                                    case Qno::FlightSafety_11:      decline += " QNO = Flight_safety"; break;
+                                    case Qno::FlightSafety_12:      decline += " QNO = Flight_safety"; break;
+                                    case Qno::SignalOther:          decline += " QNO = Signal_other"; break;
+                                    case Qno::DistressUrgency_14:   decline += " QNO = Distress_urgency"; break;
+                                    case Qno::DistressUrgency_15:   decline += " QNO = Distress_urgency"; break;
+                                    default:     break;
+                                }
+
+
+                                if(appRef <= 7)
+                                {
+                                    decline += " Application = Air_to_ground " + QString::number(static_cast<unsigned int>(appRef));
+                                }
+                                else
+                                {
+                                    decline += " Application = Ground_to_air " + QString::number(static_cast<unsigned int>(appRef));
+                                }
+
+                                switch (report)
+                                {
+                                    case AEROTypeC::Channel_status_report:
+
+                                        decline += " Report = Channel_status_report";
+
+                                        switch (eirp)
+                                        {
+                                            case AEROTypeC::NoAdjustment: decline += " EIRP = No_adjustment "; break;
+                                            case AEROTypeC::Plus1dB:      decline += " EIRP = +1 dB "; break;
+                                            case AEROTypeC::Plus2dB:      decline += " EIRP = +2 dB "; break;
+                                            case AEROTypeC::Plus3dB:      decline += " EIRP = +3 dB "; break;
+                                            case AEROTypeC::Minus3dB:     decline += " EIRP = -3 dB "; break;
+                                            case AEROTypeC::Minus2dB:     decline += " EIRP = -2 dB "; break;
+                                            case AEROTypeC::Minus1dB:     decline += " EIRP = -1 dB "; break;
+                                            default:                      break;
+                                        }
+
+                                        break;
+
+                                    case AEROTypeC::Connect:
+                                        decline += " Report = Connect";
+                                        break;
+
+                                    case AEROTypeC::Test:
+                                        decline += " Report = Test";
+                                        break;
+
+                                    case AEROTypeC::Call_attempt_result:
+                                        decline += " Report = Call_attempt_result";
+                                        break;
+
+                                    case AEROTypeC::Channel_Release:
+                                        decline += " Report = Release";
+                                        break;
+
+                                    case AEROTypeC::Reserved_6:
+                                        decline += " Report = Reserved";
+                                        break;
+
+                                    case AEROTypeC::Reserved_7:
+                                        decline += " Report = Reserved";
+                                        break;
+
+                                    case AEROTypeC::Reserved_8:
+                                        decline += " Report = Reserved";
+                                        break;
+
+                                    default:
+                                        decline += " Report = Unassigned";
+                                        break;
+                                    }
+
                                 emit Call_progress_Signal(infofield);
 
                                 QString thex = infofield.mid(1,3).toHex().toUpper();
@@ -2415,6 +2533,8 @@ QByteArray &AeroL::DecodeC(QVector<short> &bits)
                                 {
                                     hex = thex;
                                 }
+
+                                decline += "\r\n";
 
                             }
                             break;

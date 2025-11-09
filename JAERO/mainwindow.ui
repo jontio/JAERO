@@ -470,6 +470,11 @@
          </item>
          <item>
           <property name="text">
+           <string>3600 Hz</string>
+          </property>
+         </item>
+         <item>
+          <property name="text">
            <string>5000 Hz</string>
           </property>
          </item>

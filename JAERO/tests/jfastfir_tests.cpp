@@ -23,7 +23,7 @@ TEST_GROUP(Test_JFastFir)
     void teardown()
     {
 #ifdef __linux__
-        MemoryLeakWarningPlugin::turnOnNewDeleteOverloads();
+        MemoryLeakWarningPlugin::restoreNewDeleteOverloads();
 #endif
     }
 };

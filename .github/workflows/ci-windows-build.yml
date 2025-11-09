@@ -10,7 +10,7 @@ jobs:
         os: [ubuntu-latest, windows-latest]
     runs-on: ${{ matrix.os }}
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
         with:
           path: JAERO
       # install MSYS2 for windows
@@ -20,12 +20,20 @@ jobs:
         with:
           msystem: MINGW64
           update: true
-          install: git mingw-w64-x86_64-toolchain autoconf libtool mingw-w64-x86_64-cpputest mingw-w64-x86_64-qt5 mingw-w64-x86_64-cmake mingw-w64-x86_64-libvorbis mingw-w64-x86_64-zeromq zip p7zip unzip
+          install: git mingw-w64-x86_64-toolchain autoconf libtool mingw-w64-x86_64-cpputest mingw-w64-x86_64-qt5 mingw-w64-x86_64-libvorbis mingw-w64-x86_64-zeromq zip p7zip unzip
+      # Install CMake 3.29.6 due to libacars 
+      - name: Install CMake 3.29.6
+        if: ${{ matrix.os == 'windows-latest' }}
+        uses: jwlawson/actions-setup-cmake@v2
+        with:
+          cmake-version: 3.29.6
       # build for windows
       - name: Windows-CI-Build
         if: ${{ matrix.os == 'windows-latest' }}
         run: |
           echo 'Running in MSYS2!'
+          export PATH="/c/Program Files/CMake/bin:$PATH"
+          cmake --version
           ./JAERO/ci-windows-build.sh
         shell:  msys2 {0}
       # build for linux
@@ -37,7 +45,7 @@ jobs:
       # upload windows artifacts    
       - name: Upload windows binary artifacts
         if: ${{ matrix.os == 'windows-latest' }}
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v4
         with:
           name: jaero_windows
           retention-days: 1
@@ -46,7 +54,7 @@ jobs:
       # upload linux artifacts    
       - name: Upload linux binary artifacts
         if: ${{ matrix.os == 'ubuntu-latest' }}
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v4
         with:
           name: jaero_linux
           retention-days: 1
@@ -58,7 +66,7 @@ jobs:
     steps:
       # download all artifacts for this workflow
       - name: Download all workflow artifacts
-        uses: actions/download-artifact@v2
+        uses: actions/download-artifact@v4
       # Create a release
       - name: Create a release
         uses: "marvinpinto/action-automatic-releases@latest"

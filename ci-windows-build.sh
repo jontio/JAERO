@@ -17,7 +17,7 @@ set -e
 #update system else we might have a version problem with the upcomeing install
 pacman -Syu
 
-pacman -S --needed --noconfirm git mingw-w64-x86_64-toolchain autoconf libtool mingw-w64-x86_64-pcre mingw-w64-x86_64-libxml2 mingw-w64-x86_64-cpputest mingw-w64-x86_64-qt5 mingw-w64-x86_64-cmake mingw-w64-x86_64-libvorbis zip p7zip unzip mingw-w64-x86_64-zeromq
+pacman -S --needed --noconfirm git mingw-w64-x86_64-toolchain autoconf libtool mingw-w64-x86_64-pcre mingw-w64-x86_64-libxml2 mingw-w64-x86_64-cpputest mingw-w64-x86_64-qt5 mingw-w64-x86_64-libvorbis zip p7zip unzip mingw-w64-x86_64-zeromq
 
 #get script path
 SCRIPT=$(realpath $0)
@@ -147,7 +147,7 @@ mkdir release/jaero
 cp release/JAERO.exe release/jaero/
 cd release/jaero
 echo "starting windeployqt"
-windeployqt.exe --no-translations --force JAERO.exe
+windeployqt.exe --no-angle --no-translations --force JAERO.exe
 echo "deploy done"
 echo "copying dlls"
 cp /mingw64/bin/libstdc++-6.dll $PWD
@@ -162,8 +162,8 @@ cp /mingw64/bin/zlib1.dll $PWD
 cp /mingw64/bin/qcustomplot2.dll $PWD
 cp /mingw64/bin/Qt5PrintSupport.dll $PWD
 cp /mingw64/bin/libdouble-conversion.dll $PWD
-cp /mingw64/bin/libicuin74.dll $PWD
-cp /mingw64/bin/libicuuc74.dll $PWD
+cp /mingw64/bin/libicuin78.dll $PWD
+cp /mingw64/bin/libicuuc78.dll $PWD
 cp /mingw64/bin/libpcre2-16-0.dll $PWD
 cp /mingw64/bin/libpcre2-8-0.dll $PWD
 cp /mingw64/bin/libzstd.dll $PWD
@@ -172,7 +172,7 @@ cp /mingw64/bin/libpng16-16.dll $PWD
 cp /mingw64/bin/libfreetype-6.dll $PWD
 cp /mingw64/bin/libgraphite2.dll $PWD
 cp /mingw64/bin/libglib-2.0-0.dll $PWD
-cp /mingw64/bin/libicudt74.dll $PWD
+cp /mingw64/bin/libicudt78.dll $PWD
 cp /mingw64/bin/libbz2-1.dll $PWD
 cp /mingw64/bin/libbrotlidec.dll $PWD
 cp /mingw64/bin/libintl-8.dll $PWD
@@ -190,7 +190,7 @@ cp /mingw64/bin/libjpeg-8.dll $PWD
 #cp /usr/bin/msys-2.0.dll $PWD
 cp /mingw64/bin/aeroambe.dll $PWD
 cp /mingw64/bin/libmbe.dll $PWD
-cp /mingw64/bin/libxml2-2.dll $PWD
+cp /mingw64/bin/libxml2-16.dll $PWD
 cp /mingw64/bin/liblzma-5.dll $PWD
 cp /mingw64/bin/libsqlite3-0.dll $PWD
 cp /mingw64/bin/Qt5Qmqtt.dll $PWD

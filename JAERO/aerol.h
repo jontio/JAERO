@@ -48,6 +48,53 @@ typedef enum MessageType
     Call_progress=0x30,
     Telephony_acknowledge=0x60,
 } MessageType;
+
+typedef enum ReportType : uint8_t
+{
+    Channel_status_report    = 0x01,
+    Connect                  = 0x02,
+    Test                     = 0x03,
+    Call_attempt_result      = 0x04,
+    Channel_Release          = 0x05,
+    Reserved_6               = 0x06,
+    Reserved_7               = 0x07,
+    Reserved_8               = 0x08,
+
+} ReportType;
+
+typedef enum EirpAdjustment : uint8_t
+{
+    NoAdjustment  = 0x00,
+    Plus1dB       = 0x01,
+    Plus2dB       = 0x02,
+    Plus3dB       = 0x03,
+    Minus3dB      = 0x0D,
+    Minus2dB      = 0x0E,
+    Minus1dB      = 0x0F,
+
+} EirpAdjustment;
+
+typedef enum Qno : uint8_t
+{
+    NonSafety_0        = 0x00,
+    NonSafety_1        = 0x01,
+    NonSafety_2        = 0x02,
+    NonSafety_3        = 0x03,
+    NonSafety_4        = 0x04,
+    OtherSafety_5      = 0x05,
+    OtherSafety_6      = 0x06,
+    OtherSafety_7      = 0x07,
+    OtherSafety_8      = 0x08,
+    NonSafety_9        = 0x09,
+    OtherSafety_10     = 0x0A,
+    FlightSafety_11    = 0x0B,
+    FlightSafety_12    = 0x0C,
+    SignalOther        = 0x0D,
+    DistressUrgency_14 = 0x0E,
+    DistressUrgency_15 = 0x0F,
+
+} Qno;
+
 }
 
 namespace AEROTypeP {
@@ -945,7 +992,7 @@ private:
     QPointer<QIODevice> psinkdevice;
     QVector<short> sbits;
     QByteArray decodedbytes;
-    PreambleDetector preambledetector;
+    PreambleDetectorPhaseInvariant preambledetector;
 
     //burstmode really not sure this is used
     PreambleDetector preambledetectorburst;

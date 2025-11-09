@@ -28,7 +28,7 @@ else
     sudo apt-get install qt5-default
 fi
 
-sudo apt-get install cpputest build-essential qtmultimedia5-dev cmake libvorbis-dev libogg-dev libqt5multimedia5-plugins checkinstall libqcustomplot-dev libqt5svg5-dev libzmq3-dev unzip -y
+sudo apt-get install cpputest build-essential qtmultimedia5-dev cmake libvorbis-dev libogg-dev libqt5multimedia5-plugins checkinstall libqt5svg5-dev libzmq3-dev unzip -y
 
 #get script path
 SCRIPT=$(realpath $0)
@@ -148,6 +148,23 @@ sudo checkinstall \
             -y
 sudo ldconfig
 cd ../..
+
+# QCustomPlot 2.0
+wget -c https://www.qcustomplot.com/release/2.0.1/QCustomPlot.tar.gz -O - | tar -xz
+cd qcustomplot
+wget -c https://www.qcustomplot.com/release/2.0.1/QCustomPlot-sharedlib.tar.gz -O - | tar -xz
+cd qcustomplot-sharedlib/sharedlib-compilation/
+
+# Use Linux tools
+qmake -qt=qt5
+make -j$(nproc)
+sudo make install   
+
+sudo cp ../../qcustomplot.h /usr/local/include/
+sudo cp libqcustomplot.so* /usr/local/lib/
+sudo ldconfig
+
+cd ../../..
 
 #JFFT
 FOLDER="JFFT"

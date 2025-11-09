@@ -844,8 +844,11 @@ void MainWindow::on_comboBoxbps_currentIndexChanged(const QString &arg)
         //if ambe then use a smaller locking bw by default
         if(audiooqpskdemodulatorsettings.fb==8400)
         {
+            if(ui->comboBoxlbw->itemText(ui->comboBoxlbw->currentIndex()).split(" ")[0].toDouble() != audiooqpskdemodulatorsettings.fb)
+            {
             idx=ui->comboBoxlbw->findText(((QString)"%1 Hz").arg(5000));
             if(idx>=0)audiooqpskdemodulatorsettings.lockingbw=ui->comboBoxlbw->itemText(idx).split(" ")[0].toDouble();
+        }
         }
 
         audiooqpskdemodulatorsettings.audio_device_in=settingsdialog->audioinputdevice;
@@ -872,11 +875,15 @@ void MainWindow::on_comboBoxbps_currentIndexChanged(const QString &arg)
             if(audiomskdemodulatorsettings.fb==1200){audiomskdemodulatorsettings.symbolspercycle=12;audiomskdemodulatorsettings.Fs=48000;}
         }
 
+        //if a locking bw of 3 times the fb is already set, keep this, otherwise auto-select 1.5 times
+        if(ui->comboBoxlbw->itemText(ui->comboBoxlbw->currentIndex()).split(" ")[0].toDouble() != 3.0*audiomskdemodulatorsettings.fb)
+        {
         int idx=ui->comboBoxlbw->findText(((QString)"%1 Hz").arg(audiomskdemodulatorsettings.fb*1.5));
         if(idx>=0)audiomskdemodulatorsettings.lockingbw=ui->comboBoxlbw->itemText(idx).split(" ")[0].toDouble();
         audiomskdemodulatorsettings.audio_device_in=settingsdialog->audioinputdevice;
         audiomskdemodulator->setSettings(audiomskdemodulatorsettings);
         if(idx>=0)ui->comboBoxlbw->setCurrentIndex(idx);
+        }
 
         audiomskdemodulator->start();
     }

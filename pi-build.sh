@@ -19,28 +19,28 @@ if [[ ! $(sudo echo 0) ]]; then exit; fi
 sudo apt update || true
 
 #install dependancies and build tools
-sudo apt-get install qt5-default cpputest build-essential qtmultimedia5-dev cmake libvorbis-dev libogg-dev libqt5multimedia5-plugins checkinstall libqcustomplot-dev libqt5svg5-dev libzmq3-dev gettext -y
+sudo apt-get install cpputest build-essential qtmultimedia5-dev cmake libvorbis-dev libogg-dev libqt5multimedia5-plugins checkinstall libqt5svg5-dev libzmq3-dev gettext -y
 
 #get script path
 SCRIPT=$(realpath $0)
 SCRIPTPATH=$(dirname $SCRIPT)
 cd $SCRIPTPATH/..
 
-#checkinstall on my buster raspberrian fails with make: *** [Makefile:332: cmake_check_build_system] Segmentation fault
-#so clone and install a version that works on the pi
-FOLDER="checkinstall"
-URL="https://github.com/giuliomoro/checkinstall"
-if [ ! -d "$FOLDER" ] ; then
-    git clone $URL $FOLDER
-    cd "$FOLDER"
-else
-    cd "$FOLDER"
-    git pull $URL
-fi
-make
-sudo make install
-sudo ldconfig
-cd ..
+																													   
+													
+					 
+												
+							
+						  
+				
+	
+				
+				 
+  
+	
+				 
+			 
+	 
 
 
 #qmqtt
@@ -73,7 +73,7 @@ Package: ${PACKAGE_NAME}
 Source: ${PACKAGE_SOURCE}
 Section: base
 Priority: extra
-Depends: qt5-default (>= 5.11)
+Depends: libqt5core5a, libqt5network5
 Provides: ${PACKAGE_NAME}
 Maintainer: ${MAINTAINER}
 Version: ${PACKAGE_VERSION%_*}
@@ -172,6 +172,24 @@ sudo apt install --reinstall ./libcorrect-dev*.deb -y
 sudo ldconfig
 cd ../..
 
+# QCustomPlot 2.0
+wget -c https://www.qcustomplot.com/release/2.0.1/QCustomPlot.tar.gz -O - | tar -xz
+cd qcustomplot
+wget -c https://www.qcustomplot.com/release/2.0.1/QCustomPlot-sharedlib.tar.gz -O - | tar -xz
+cd qcustomplot-sharedlib/sharedlib-compilation/
+
+# Use Linux tools
+qmake -qt=qt5
+make -j$(nproc)
+sudo make install   
+
+sudo cp ../../qcustomplot.h /usr/local/include/
+sudo cp libqcustomplot.so* /usr/local/lib/
+sudo ldconfig
+
+cd ../../..
+
+
 #JFFT
 FOLDER="JFFT"
 URL="https://github.com/jontio/JFFT"
@@ -231,7 +249,7 @@ Package: ${PACKAGE_NAME}
 Source: ${PACKAGE_SOURCE}
 Section: base
 Priority: extra
-Depends: qt5-default (>= 5.11)
+Depends: libqt5core5a
 Provides: ${PACKAGE_NAME}
 Maintainer: ${MAINTAINER}
 Version: ${PACKAGE_VERSION%_*}
@@ -284,7 +302,7 @@ Package: ${PACKAGE_NAME}
 Source: ${PACKAGE_SOURCE}
 Section: base
 Priority: extra
-Depends: qt5-default (>= 5.11), qtmultimedia5-dev, libvorbis-dev, libogg-dev, libqt5multimedia5-plugins, libqcustomplot-dev, libqt5svg5-dev, libzmq3-dev
+Depends: qtbase5-dev, qtmultimedia5-dev, libvorbis-dev, libogg-dev, libqt5multimedia5-plugins, libqcustomplot-dev, libqt5svg5-dev, libzmq3-dev
 Provides: ${PACKAGE_NAME}
 Maintainer: ${MAINTAINER}
 Version: ${PACKAGE_VERSION%_*}
